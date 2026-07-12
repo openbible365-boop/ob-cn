@@ -81,17 +81,19 @@ enum CommunityStatus {
 }
 
 model Community {
-  id             String          @id @default(cuid())
-  name           String
-  avatarColor    String          @default("#FFD465")
-  isOfficial     Boolean         @default(false)
-  tier           CommunityTier   @default(BASIC_FREE)
-  tierPriceCents Int             @default(0)
-  ownerId        String?
-  warningCount   Int             @default(0)
-  status         CommunityStatus @default(ACTIVE)
-  dailyActivity  Int             @default(0)
-  createdAt      DateTime        @default(now())
+  id                String          @id @default(cuid())
+  name              String
+  avatarColor       String          @default("#FFD465")
+  isOfficial        Boolean         @default(false)
+  tier              CommunityTier   @default(BASIC_FREE)
+  tierPriceCents    Int             @default(0)
+  ownerId           String?
+  warningCount      Int             @default(0)
+  status            CommunityStatus @default(ACTIVE)
+  dailyActivity     Int             @default(0)
+  aiTokensToday     Int             @default(0)
+  aiTokenDailyLimit Int?
+  createdAt         DateTime        @default(now())
 
   owner       User?        @relation("CommunityOwner", fields: [ownerId], references: [id])
   memberships Membership[]
@@ -114,4 +116,88 @@ model Membership {
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, communityId])
+}
+
+// ---------- Dashboard: daily snapshots ----------
+// Real end-user apps don't emit usage events yet (mobile/web clients are
+// still static prototypes). Until a real event pipeline exists, an
+// aggregation job (or this seed script) writes one row per day here, and
+// the dashboard reads it like any other real table. Swapping the seed for
+// a real nightly aggregation later requires no page changes.
+
+model DailyMetric {
+  id                  String   @id @default(cuid())
+  date                DateTime @unique @db.Date
+  dau                 Int
+  mau                 Int
+  retentionD1Pct      Float
+  retentionD7Pct      Float
+  retentionD30Pct     Float
+  huiduPenetrationPct Float
+  avgRoundsPerSession Float
+  bibleReadingPct     Int
+  huiduPct            Int
+  communityPct        Int
+  annotationPct       Int
+  aiCallCount         Int
+  aiTokenCount        Int
+  aiAvgFirstTokenMs   Int
+  aiLikeRatePct       Float
+}
+
+model HotTopic {
+  id    String   @id @default(cuid())
+  date  DateTime @db.Date
+  label String
+  rank  Int
+}
+
+// ---------- AI model & prompt management ----------
+
+model AiSettings {
+  id                  String  @id @default("singleton")
+  autoFallbackEnabled Boolean @default(true)
+  rateLimited         Boolean @default(false)
+  monthLabel          String
+  monthlyBudgetCents  Int
+  monthSpendCents     Int
+}
+
+enum AiModelRole {
+  PRIMARY
+  BACKUP
+}
+
+enum AiModelStatus {
+  NORMAL
+  STANDBY
+  DEGRADED
+}
+
+model AiModel {
+  id              String        @id @default(cuid())
+  role            AiModelRole   @unique
+  provider        String
+  modelName       String
+  temperature     Float
+  status          AiModelStatus @default(NORMAL)
+  apiKeyLast4     String?
+  apiKeyUpdatedAt DateTime?
+}
+
+enum PromptVersionStatus {
+  CANARY
+  GA
+  ARCHIVED
+}
+
+model PromptVersion {
+  id             String              @id @default(cuid())
+  version        String              @unique
+  description    String
+  status         PromptVersionStatus @default(CANARY)
+  rolloutPercent Int                 @default(10)
+  likeRatePct    Float?
+  dislikeRatePct Float?
+  createdAt      DateTime            @default(now())
 }

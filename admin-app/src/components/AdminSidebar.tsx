@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "数据看板", disabled: true },
+  { href: "/dashboard", label: "数据看板" },
   { href: "/content", label: "内容管理", disabled: true },
-  { href: "/ai", label: "AI 模型与提示词", disabled: true },
+  { href: "/ai", label: "AI 模型与提示词" },
   { href: "/communities", label: "社群管理" },
   { href: "/users", label: "用户管理" },
   { href: "/moderation", label: "内容审核", disabled: true },
