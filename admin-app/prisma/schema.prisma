@@ -1,0 +1,117 @@
+// OpenBible admin backend — data model for user & community management.
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Admin backend operators (separate from app end-users) ----------
+
+enum OperatorRole {
+  SUPER_ADMIN
+}
+
+model Operator {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  name         String
+  role         OperatorRole @default(SUPER_ADMIN)
+  createdAt    DateTime     @default(now())
+}
+
+// ---------- End-users of the OpenBible app ----------
+
+enum UserStatus {
+  ACTIVE
+  MUTED
+  BANNED
+}
+
+enum AuthProvider {
+  EMAIL
+  APPLE
+  GOOGLE
+}
+
+model User {
+  id          String     @id @default(cuid())
+  uid         Int        @unique @default(autoincrement())
+  name        String
+  avatarColor String     @default("#FFD465")
+  status      UserStatus @default(ACTIVE)
+  mutedUntil  DateTime?
+  banReason   String?
+  createdAt   DateTime   @default(now())
+
+  authAccounts     AuthAccount[]
+  memberships      Membership[]
+  ownedCommunities Community[]   @relation("CommunityOwner")
+}
+
+model AuthAccount {
+  id                String       @id @default(cuid())
+  userId            String
+  provider          AuthProvider
+  providerAccountId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+}
+
+// ---------- Communities (分社群) ----------
+
+enum CommunityTier {
+  OFFICIAL_FREE
+  BASIC_FREE
+  MID
+  HIGH
+}
+
+enum CommunityStatus {
+  ACTIVE
+  BANNED
+  DISSOLVED
+}
+
+model Community {
+  id             String          @id @default(cuid())
+  name           String
+  avatarColor    String          @default("#FFD465")
+  isOfficial     Boolean         @default(false)
+  tier           CommunityTier   @default(BASIC_FREE)
+  tierPriceCents Int             @default(0)
+  ownerId        String?
+  warningCount   Int             @default(0)
+  status         CommunityStatus @default(ACTIVE)
+  dailyActivity  Int             @default(0)
+  createdAt      DateTime        @default(now())
+
+  owner       User?        @relation("CommunityOwner", fields: [ownerId], references: [id])
+  memberships Membership[]
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  userId      String
+  communityId String
+  role        MembershipRole @default(MEMBER)
+  joinedAt    DateTime       @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+}

@@ -1,0 +1,381 @@
+:root {
+  --ink: #18191f;
+  --body: #474a57;
+  --line: #c4c4c4;
+  --surface: #f4f5f7;
+  --surface-2: #eeeff4;
+  --white: #ffffff;
+
+  --yellow: #ffd465;
+  --purple: #bf78f6;
+  --purple-deep: #a06cc9;
+  --orange: #e98264;
+  --pink: #e1317d;
+
+  --shadow-card: 0 2px 6px rgba(48, 49, 51, 0.12);
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-pill: 100px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  flex: none;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink);
+  color: #fff;
+  padding: 20px 12px;
+}
+
+.admin-sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 22px;
+}
+
+.admin-sidebar .brand .mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--yellow);
+  border-radius: 8px;
+}
+
+.admin-sidebar .brand .name {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.admin-nav-item.active {
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.admin-nav-item.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.admin-nav-item .badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  background: var(--pink);
+  color: #fff;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-sidebar .operator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-sidebar .operator .avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 28px 0;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-header .title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.admin-header .meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--body);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  height: 34px;
+  padding: 0 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  color: var(--body);
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.admin-table-head,
+.admin-table-row {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.admin-table-head {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--surface-2);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--body);
+}
+
+.admin-table-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.admin-table-row:last-child {
+  border-bottom: none;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.pill-muted {
+  background: var(--surface-2);
+  color: var(--body);
+}
+.pill-purple {
+  background: rgba(191, 120, 246, 0.16);
+  color: var(--purple);
+}
+.pill-pink {
+  background: rgba(225, 49, 125, 0.12);
+  color: var(--pink);
+}
+.pill-orange {
+  background: rgba(233, 130, 100, 0.18);
+  color: #d15b46;
+}
+.pill-yellow {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.row-actions {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.row-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.action-body {
+  color: var(--body);
+}
+.action-orange {
+  color: var(--orange);
+}
+.action-pink {
+  color: var(--pink);
+}
+.action-purple {
+  color: var(--purple);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+}
+
+.login-card {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px 28px;
+}
+
+.login-card .mark {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--yellow);
+  border-radius: 14px;
+}
+
+.login-card h1 {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.login-card .sub {
+  font-size: 12px;
+  color: var(--body);
+  font-weight: 500;
+  margin-top: -12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--body);
+}
+
+.field input {
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.field input:focus {
+  outline: 2px solid var(--purple);
+  outline-offset: -1px;
+}
+
+.btn-primary {
+  height: 48px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--purple);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.btn-primary:hover {
+  background: var(--purple-deep);
+}
+
+.login-error {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pink);
+  background: rgba(225, 49, 125, 0.1);
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+}
