@@ -1,0 +1,25 @@
+/* OpenBible — design tokens, transcribed from the Design Canvas inline styles
+   (Neobrutalism style language: hard borders, offset shadows, yellow/purple accents) */
+:root {
+  --ink: #18191F;
+  --body: #474A57;
+  --line: #C4C4C4;
+  --surface: #F4F5F7;
+  --surface-2: #EEEFF4;
+  --white: #FFFFFF;
+
+  --yellow: #FFD465;
+  --purple: #BF78F6;
+  --purple-deep: #A06CC9;
+  --orange: #E98264;
+  --pink: #E1317D;
+
+  --shadow-card: 0 2px 6px rgba(48, 49, 51, .12);
+  --shadow-float: 0 12px 32px rgba(48, 49, 51, .16);
+
+  --font-ui: Montserrat, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-pill: 100px;
+}

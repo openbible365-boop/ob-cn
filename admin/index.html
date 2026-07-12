@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenBible · 后台管理</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  body { background: var(--surface); }
+  .topbar {
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--white);
+    border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50;
+  }
+  .topbar a.back { font-size: 12px; font-weight: 700; color: var(--ink); text-decoration: none; }
+  .topbar .title { font-size: 13px; font-weight: 800; }
+  .topbar .current { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--body); }
+  .admin-nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,.75);
+    font-weight: 600; cursor: pointer; border-radius: 10px;
+  }
+  .admin-nav-item.active { background: var(--yellow); color: var(--ink); font-weight: 800; }
+  .admin-nav-item.disabled { cursor: default; opacity: .45; }
+  .admin-table-row { display: grid; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--surface-2); font-size: 12px; align-items: center; }
+  .admin-table-head { display: grid; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--surface-2); font-size: 11px; font-weight: 800; color: var(--body); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="../index.html">&larr; OpenBible 原型</a>
+  <div class="title">后台管理</div>
+  <div class="current" id="current-panel-label"></div>
+</div>
+
+<div class="stage" style="justify-content:center;padding-top:32px;">
+  <div class="chrome-window" style="width:1280px;height:820px;">
+    <div class="chrome-tabbar">
+      <div class="chrome-traffic"><div></div><div></div><div></div></div>
+      <div class="chrome-tab" id="chrome-tab-title">OpenBible 后台 · 数据看板</div>
+    </div>
+    <div class="chrome-toolbar">
+      <div class="dot"><div></div></div>
+      <div class="chrome-url" id="chrome-url">admin.openbible.live/dashboard</div>
+      <div class="dot"><div></div></div>
+    </div>
+    <div class="chrome-body" style="flex-direction:row;">
+
+      <!-- persistent sidebar -->
+      <div style="flex:none;width:220px;display:flex;flex-direction:column;background:var(--ink);color:#fff;padding:20px 12px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:0 10px 22px;">
+          <div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--yellow);border-radius:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+          <div style="font-size:14px;font-weight:800;">OpenBible 后台</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;" id="admin-sidebar"></div>
+        <div style="flex:1;"></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:12px;color:rgba(255,255,255,.6);">
+          <div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:rgba(255,255,255,.15);border-radius:100px;font-size:11px;font-weight:800;">运</div>
+          运营 · 超级管理员
+        </div>
+      </div>
+
+      <!-- ============ 7a 运营数据看板 ============ -->
+      <div class="panel active" data-panel="7a" style="flex-direction:column;padding:20px 24px 0;overflow:auto;">
+        <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="font-size:18px;font-weight:800;">数据看板</div>
+          <div style="font-size:11px;font-weight:600;color:var(--body);">数据 T+1 · 更新于 2026-07-11 06:00</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;">近 30 天 <span data-icon="chevron-down" data-size="12"></span></div>
+          <div style="display:flex;align-items:center;height:32px;padding:0 14px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;">导出</div>
+        </div>
+
+        <div style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;" id="admin-kpis"></div>
+
+        <div style="flex:1;display:grid;grid-template-columns:1.3fr 1fr;gap:12px;min-height:0;">
+          <div class="card" style="border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+            <div style="font-size:13px;font-weight:800;margin-bottom:14px;">各模块使用时长占比</div>
+            <div style="display:flex;flex-direction:column;gap:12px;" id="admin-module-usage"></div>
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--surface-2);">
+              <div style="font-size:13px;font-weight:800;margin-bottom:10px;">AI 用量（今日）</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;font-weight:600;color:var(--body);" id="admin-ai-usage"></div>
+            </div>
+          </div>
+
+          <div class="card" style="border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+            <div style="display:flex;align-items:center;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:800;">社群活跃度排行</div>
+              <div style="margin-left:auto;font-size:11px;font-weight:600;color:var(--body);">每日更新 · 可下钻</div>
+            </div>
+            <div id="admin-community-ranking"></div>
+            <div style="margin-top:12px;font-size:12px;font-weight:800;">热门 AI 话题</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="admin-hot-topics"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 7b AI 模型与提示词管理 ============ -->
+      <div class="panel" data-panel="7b" style="flex-direction:column;padding:20px 24px 0;overflow:auto;">
+        <div style="flex:none;font-size:18px;font-weight:800;margin-bottom:16px;">AI 模型与提示词</div>
+        <div style="flex:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="card" style="padding:16px 18px;">
+            <div style="display:flex;align-items:center;margin-bottom:12px;"><div style="font-size:13px;font-weight:800;">核心慧读配置</div><div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--purple);">变更不停服生效</div></div>
+            <div id="admin-models"></div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:12px;font-weight:700;">主模型异常自动降级</div>
+              <div style="display:flex;justify-content:flex-end;width:40px;height:24px;background:var(--purple);border-radius:100px;padding:3px;cursor:pointer;"><div style="width:18px;height:18px;background:var(--white);border-radius:100px;"></div></div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;align-items:center;height:32px;padding:0 14px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;">管理 API Key</div>
+            </div>
+          </div>
+          <div class="card" style="padding:16px 18px;">
+            <div style="display:flex;align-items:center;margin-bottom:12px;"><div style="font-size:13px;font-weight:800;">成本告警</div><div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--body);">邮件 / IM 触达值班</div></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px;"><span>7 月预算 $600</span><span>已用 $372 · 62%</span></div>
+            <div style="height:10px;background:var(--surface-2);border-radius:100px;margin-bottom:14px;"><div style="width:62%;height:100%;background:var(--orange);border-radius:100px;"></div></div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:11px;font-weight:600;color:var(--body);">超限自动告警，可一键全局限流</div>
+              <div style="margin-left:auto;display:flex;align-items:center;height:32px;padding:0 14px;background:var(--pink);border-radius:100px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;">一键限流</div>
+            </div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--surface-2);">
+              <div style="font-size:12px;font-weight:800;margin-bottom:8px;">社群 AI 助理 Token 消耗 Top</div>
+              <div id="admin-token-top"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="flex:1;border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+          <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:800;">系统 Prompt 版本管理</div>
+            <div style="margin-left:auto;display:flex;align-items:center;height:32px;padding:0 14px;background:var(--purple);border-radius:100px;font-size:12px;font-weight:700;color:#fff;box-shadow:var(--shadow-card);cursor:pointer;">新建版本</div>
+          </div>
+          <div class="admin-table-head" style="grid-template-columns:90px 1fr 130px 110px 110px 130px;"><div>版本</div><div>说明</div><div>状态</div><div>点赞率</div><div>点踩率</div><div>操作</div></div>
+          <div id="admin-prompt-versions"></div>
+        </div>
+      </div>
+
+      <!-- ============ 7c 内容审核与用户管控 ============ -->
+      <div class="panel" data-panel="7c" style="flex-direction:column;padding:20px 24px 0;overflow:auto;">
+        <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="font-size:18px;font-weight:800;">内容审核</div>
+          <div style="font-size:11px;font-weight:600;color:var(--body);">举报处理 SLA ≤ 24h · 结果反馈举报人</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;height:32px;padding:0 14px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;">敏感词库</div>
+          <div style="display:flex;align-items:center;height:32px;padding:0 14px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;">操作日志</div>
+        </div>
+        <div style="flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;" id="admin-word-tiers"></div>
+        <div class="card" style="flex:1;border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:12px;">举报审核队列 · 5 条待处理</div>
+          <div class="admin-table-head" style="grid-template-columns:1.6fr 130px 130px 110px 220px;"><div>被举报内容</div><div>所在社群</div><div>举报原因</div><div>命中级别</div><div>操作</div></div>
+          <div id="admin-report-queue"></div>
+          <div style="margin-top:12px;font-size:11px;font-weight:600;color:var(--body);">所有写操作留痕（操作人 / 时间 / 对象 / 前后值），日志保留 ≥180 天，不可篡改。</div>
+        </div>
+      </div>
+
+      <!-- ============ 7d 社群管理 ============ -->
+      <div class="panel" data-panel="7d" style="flex-direction:column;padding:20px 24px 0;overflow:auto;">
+        <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="font-size:18px;font-weight:800;">社群管理</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:500;color:var(--body);"><span data-icon="search" data-size="13"></span> 搜索社群 / 群主</div>
+        </div>
+        <div class="card" style="flex:1;border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+          <div style="display:flex;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:800;">全网分社群清单 · 1,286 个</div>
+            <div style="margin-left:auto;font-size:11px;font-weight:600;color:var(--body);">解散前二次确认并通知群主 · 数据按合规归档</div>
+          </div>
+          <div class="admin-table-head" style="grid-template-columns:1.4fr 100px 90px 100px 110px 110px 210px;"><div>社群</div><div>群主</div><div>成员数</div><div>活跃度/日</div><div>创建时间</div><div>群组等级</div><div>操作</div></div>
+          <div id="admin-communities"></div>
+        </div>
+      </div>
+
+      <!-- ============ 7e 用户管理 ============ -->
+      <div class="panel" data-panel="7e" style="flex-direction:column;padding:20px 24px 0;overflow:auto;">
+        <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="font-size:18px;font-weight:800;">用户管理</div>
+          <div style="font-size:11px;font-weight:600;color:var(--body);">共 41,286 名注册用户</div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;background:var(--white);border:1px solid var(--line);border-radius:100px;font-size:12px;font-weight:500;color:var(--body);"><span data-icon="search" data-size="13"></span> 搜索用户名 / email / UID</div>
+        </div>
+        <div class="card" style="flex:1;border-radius:16px 16px 0 0;padding:16px 18px;overflow:auto;">
+          <div style="display:flex;align-items:center;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:800;">用户列表</div>
+            <div style="margin-left:auto;font-size:11px;font-weight:600;color:var(--body);">封禁需填写原因并通知用户 · 即时生效于全端 · 操作留痕</div>
+          </div>
+          <div class="admin-table-head" style="grid-template-columns:1.2fr 150px 120px 110px 110px 200px;"><div>用户</div><div>登录方式</div><div>所属群组</div><div>群用户级别</div><div>状态</div><div>操作</div></div>
+          <div id="admin-users"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/mock-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

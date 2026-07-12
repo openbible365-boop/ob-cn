@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenBible · 网页端</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  @keyframes ob-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  @keyframes ob-dot { 0%, 80%, 100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-3px); opacity: 1; } }
+  body { background: var(--surface); }
+  .topbar {
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--white);
+    border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50;
+  }
+  .topbar a.back { font-size: 12px; font-weight: 700; color: var(--ink); text-decoration: none; }
+  .topbar .title { font-size: 13px; font-weight: 800; }
+  .topbar .current { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--body); }
+  .web-nav-item { font-weight: 600; color: var(--body); cursor: pointer; }
+  .web-nav-item.active { font-weight: 800; color: var(--ink); border-bottom: 3px solid var(--purple); padding-bottom: 18px; }
+  .group-list-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; cursor: pointer; }
+  .group-list-row.active { background: rgba(191,120,246,.14); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="../index.html">&larr; OpenBible 原型</a>
+  <div class="title">网页端</div>
+  <div class="current" id="current-panel-label"></div>
+</div>
+
+<div class="stage" style="justify-content:center;padding-top:32px;">
+  <div class="chrome-window" style="width:1280px;height:820px;">
+    <div class="chrome-tabbar">
+      <div class="chrome-traffic"><div></div><div></div><div></div></div>
+      <div class="chrome-tab" id="chrome-tab-title">OpenBible · 阅读页</div>
+    </div>
+    <div class="chrome-toolbar">
+      <div class="dot"><div></div></div>
+      <div class="chrome-url" id="chrome-url">openbible.live/bible/john/3</div>
+      <div class="dot"><div></div></div>
+    </div>
+    <div class="chrome-body">
+
+      <!-- ============ 6a 阅读页 三栏联动 ============ -->
+      <div class="panel active" data-panel="6a" style="flex-direction:column;">
+        <div style="flex:none;display:flex;align-items:center;gap:28px;height:60px;padding:0 28px;border-bottom:1px solid var(--line);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--yellow);border-radius:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+            <div style="font-size:16px;font-weight:800;">OpenBible</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;font-size:14px;">
+            <div class="web-nav-item active" data-web-nav="6a">圣经</div>
+            <div class="web-nav-item">注释</div>
+            <div class="web-nav-item">慧读</div>
+            <div class="web-nav-item" data-web-nav="6b">社群</div>
+            <div class="web-nav-item">我的</div>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;background:var(--yellow);border:1px solid var(--line);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">和合本 <span data-icon="chevron-down" data-size="14"></span></div>
+          <div style="display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;background:var(--white);border:1px solid var(--line);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">约翰福音 3 <span data-icon="chevron-down" data-size="14"></span></div>
+          <button data-action="open-audio-modal" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(191,120,246,.16);border:1px solid var(--line);border-radius:12px;color:var(--purple);cursor:pointer;" title="有声圣经"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>
+          <div class="icon-btn"><span data-icon="search" data-size="16"></span></div>
+          <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--yellow);border-radius:100px;font-size:14px;font-weight:800;">王</div>
+        </div>
+
+        <div style="flex:1;display:flex;min-height:0;">
+          <div style="flex:1;padding:32px 40px;overflow:auto;border-right:1px solid var(--line);">
+            <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:20px;">
+              <div style="font-size:26px;font-weight:800;">约翰福音 第 3 章</div>
+              <div style="font-size:12px;font-weight:700;color:var(--body);letter-spacing:.08em;">和合本</div>
+            </div>
+            <div id="web-verses-container"></div>
+          </div>
+
+          <div style="flex:none;width:340px;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--line);">
+            <div style="flex:none;display:flex;align-items:center;gap:10px;padding:16px 20px 12px;">
+              <div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--yellow);border-radius:8px;font-size:12px;font-weight:800;">精</div>
+              <div style="font-size:14px;font-weight:800;">精读本注释</div>
+              <div style="flex:1;"></div>
+              <div style="font-size:11px;font-weight:600;color:var(--body);cursor:pointer;">收起 ›</div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:0 16px;" id="web-commentary-list"></div>
+            <div style="flex:none;padding:10px 20px 14px;font-size:11px;font-weight:600;color:var(--body);">注释随经文滚动定位</div>
+          </div>
+
+          <div style="flex:none;width:360px;display:flex;flex-direction:column;background:var(--white);">
+            <div style="flex:none;display:flex;align-items:center;gap:10px;padding:16px 20px 12px;">
+              <div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--purple);border-radius:100px;color:#fff;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 6.3L20.5 12l-6.3 2.7L12 21l-2.2-6.3L3.5 12l6.3-2.7z"></path><path d="M19 2v4"></path><path d="M17 4h4"></path></svg></div>
+              <div style="font-size:14px;font-weight:800;">慧读</div>
+              <div style="flex:1;"></div>
+              <div style="font-size:11px;font-weight:600;color:var(--body);">与手机端历史互通</div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:0 16px;display:flex;flex-direction:column;gap:10px;">
+              <div style="background:var(--yellow);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+                <div style="font-size:10px;font-weight:800;letter-spacing:.1em;background:var(--ink);color:#fff;padding:3px 6px;border-radius:6px;">经文引用</div>
+                <div style="font-size:12px;font-weight:800;">约翰福音 3:16</div>
+              </div>
+              <div style="align-self:flex-end;max-width:80%;background:var(--ink);color:#fff;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:600;line-height:1.6;">请为我解释这节经文</div>
+              <div class="card" style="padding:12px 14px;">
+                <div style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--yellow);border-radius:6px;padding:2px 8px;margin-bottom:6px;">历史背景</div>
+                <p style="margin:0 0 10px;font-size:12px;line-height:1.75;color:var(--body);font-weight:500;">这句话出自耶稣与尼哥底母的夜间对话，「举蛇」呼应民数记 21 章。</p>
+                <div style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--purple);color:#fff;border-radius:6px;padding:2px 8px;margin-bottom:6px;">核心含义</div>
+                <p style="margin:0;font-size:12px;line-height:1.75;color:var(--body);font-weight:500;">救恩源于神主动的爱；领受永生的途径是信靠，而非行为的<span style="display:inline-block;width:7px;height:13px;background:var(--ink);margin-left:2px;vertical-align:text-bottom;animation:ob-blink 1s step-end infinite;"></span></p>
+              </div>
+            </div>
+            <div style="flex:none;padding:10px 16px 14px;">
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div style="flex:1;display:flex;align-items:center;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:12px;font-size:13px;font-weight:500;color:var(--body);">继续追问…</div>
+                <div style="flex:none;display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:var(--purple);border-radius:12px;color:#fff;cursor:pointer;"><span data-icon="send" data-size="16"></span></div>
+              </div>
+              <div style="text-align:center;font-size:10px;font-weight:600;color:var(--body);padding-top:8px;">AI 解释仅供参考，不替代教会教导与权威释经</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- audio bible modal -->
+        <div class="modal-overlay" id="audio-modal-overlay">
+          <div style="width:480px;background:var(--white);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 64px rgba(24,25,31,.28);padding:22px 24px;">
+            <div style="display:flex;align-items:center;gap:6px;color:var(--body);margin-bottom:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <div style="font-size:10px;font-weight:800;letter-spacing:.14em;">AUDIO BIBLE</div>
+              <div style="flex:1;"></div>
+              <button data-action="close-audio-modal" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--surface);border:1px solid var(--line);border-radius:100px;color:var(--body);cursor:pointer;"><span data-icon="cross" data-size="13"></span></button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+              <div style="flex:1;font-size:20px;font-weight:800;">收听 约翰福音 3</div>
+              <div style="display:flex;align-items:center;gap:6px;height:34px;padding:0 14px;background:var(--purple);border-radius:100px;color:#fff;font-size:13px;font-weight:700;box-shadow:var(--shadow-card);cursor:pointer;"><span data-icon="share" data-size="13"></span> 分享</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+              <div style="flex:1;position:relative;height:4px;background:var(--surface-2);border-radius:100px;">
+                <div style="position:absolute;left:0;top:0;bottom:0;width:24%;background:var(--purple);border-radius:100px;"></div>
+                <div style="position:absolute;left:24%;top:50%;transform:translateY(-50%);width:16px;height:16px;background:var(--white);border:3px solid var(--purple);border-radius:50%;box-sizing:border-box;"></div>
+              </div>
+              <div style="flex:none;font-size:12px;font-weight:700;padding:4px 10px;background:var(--white);border:1px solid var(--line);border-radius:8px;">1x</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--body);margin-bottom:16px;"><div>1:42</div><div>6:57</div></div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:18px;">
+              <span data-icon="chevron-left" data-size="20" style="cursor:pointer;"></span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+              <div style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:var(--ink);border-radius:50%;color:#fff;box-shadow:0 4px 10px rgba(48,49,51,.25);cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+              <span data-icon="chevron-right" data-size="20" style="cursor:pointer;"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;border-top:1px solid var(--surface-2);padding-top:14px;">
+              <div style="display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;background:var(--surface);border:1px solid var(--line);border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                中文男声 <span data-icon="chevron-down" data-size="12"></span>
+              </div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--purple);">
+                <div style="width:4px;height:4px;background:var(--purple);border-radius:50%;animation:ob-dot 1.2s infinite;"></div>
+                <div style="width:4px;height:4px;background:var(--purple);border-radius:50%;animation:ob-dot 1.2s infinite .15s;"></div>
+                <div style="width:4px;height:4px;background:var(--purple);border-radius:50%;animation:ob-dot 1.2s infinite .3s;"></div>
+                正在朗读 3:3
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 6b 社群三栏工作台 ============ -->
+      <div class="panel" data-panel="6b" style="flex-direction:column;background:var(--surface);">
+        <div style="flex:none;display:flex;align-items:center;gap:28px;height:60px;padding:0 28px;background:var(--white);border-bottom:1px solid var(--line);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--yellow);border-radius:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+            <div style="font-size:16px;font-weight:800;">OpenBible</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;font-size:14px;">
+            <div class="web-nav-item" data-web-nav="6a">圣经</div>
+            <div class="web-nav-item">注释</div>
+            <div class="web-nav-item">慧读</div>
+            <div class="web-nav-item active" data-web-nav="6b">社群</div>
+            <div class="web-nav-item">我的</div>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--yellow);border-radius:100px;font-size:14px;font-weight:800;">王</div>
+        </div>
+
+        <div style="flex:1;display:flex;min-height:0;">
+          <div style="flex:none;width:250px;display:flex;flex-direction:column;background:var(--white);border-right:1px solid var(--line);padding:16px 12px;">
+            <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--body);padding:0 8px 10px;">我的群组</div>
+            <div style="display:flex;flex-direction:column;gap:4px;" id="web-group-list"></div>
+            <div style="flex:1;"></div>
+            <div data-action="web-create-group" style="display:flex;align-items:center;justify-content:center;gap:6px;height:42px;background:var(--yellow);border:1px solid var(--line);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;">创建群组</div>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+            <div style="flex:none;display:flex;align-items:center;gap:12px;padding:14px 24px 0;">
+              <div style="font-size:17px;font-weight:800;">青年查经小组</div>
+              <div style="font-size:12px;font-weight:600;color:var(--body);">32 成员</div>
+              <div style="flex:1;"></div>
+              <div style="display:flex;gap:24px;font-size:13px;" id="web-group-subtabs"></div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:14px 24px 24px;display:flex;flex-direction:column;gap:12px;" id="web-group-feed"></div>
+          </div>
+
+          <div style="flex:none;width:300px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border-left:1px solid var(--line);padding:16px;overflow:auto;">
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px;font-weight:800;margin-bottom:8px;">成员 · 32</div>
+              <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--yellow);border-radius:100px;font-size:12px;font-weight:800;">王</div>
+                <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(233,130,100,.3);border-radius:100px;font-size:12px;font-weight:800;">陈</div>
+                <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(191,120,246,.3);border-radius:100px;font-size:12px;font-weight:800;">李</div>
+                <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--surface-2);border-radius:100px;font-size:12px;font-weight:800;">张</div>
+                <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--surface-2);border-radius:100px;font-size:11px;font-weight:700;color:var(--body);">+28</div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:var(--body);">群主 1 · 管理员 2 · 成员 29</div>
+            </div>
+
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px;font-weight:800;margin-bottom:10px;">本周活跃</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="font-size:12px;font-weight:800;color:var(--purple);width:14px;">1</div><div style="flex:1;font-size:12px;font-weight:700;">陈姊妹</div><div style="font-size:11px;font-weight:600;color:var(--body);">12 帖</div></div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="font-size:12px;font-weight:800;color:var(--purple);width:14px;">2</div><div style="flex:1;font-size:12px;font-weight:700;">李弟兄</div><div style="font-size:11px;font-weight:600;color:var(--body);">9 帖</div></div>
+              <div style="display:flex;align-items:center;gap:8px;"><div style="font-size:12px;font-weight:800;color:var(--purple);width:14px;">3</div><div style="flex:1;font-size:12px;font-weight:700;">张姊妹</div><div style="font-size:11px;font-weight:600;color:var(--body);">7 帖</div></div>
+            </div>
+
+            <div class="card" style="padding:14px 16px;">
+              <div style="font-size:12px;font-weight:800;margin-bottom:10px;">群主管理</div>
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;font-weight:700;cursor:pointer;">审批申请<div style="margin-left:auto;display:flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--pink);color:#fff;border-radius:100px;font-size:10px;font-weight:800;">2</div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;font-weight:700;cursor:pointer;">置顶管理<div style="margin-left:auto;color:var(--body);"><span data-icon="chevron-right" data-size="13"></span></div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;font-weight:700;cursor:pointer;">AI 助理配置<div style="margin-left:auto;color:var(--body);"><span data-icon="chevron-right" data-size="13"></span></div></div>
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;font-size:12px;font-weight:700;cursor:pointer;">生成邀请链接 / 二维码<div style="margin-left:auto;color:var(--body);"><span data-icon="chevron-right" data-size="13"></span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 6c 活动月历视图 ============ -->
+      <div class="panel" data-panel="6c" style="flex-direction:column;background:var(--surface);">
+        <div style="flex:none;display:flex;align-items:center;gap:28px;height:60px;padding:0 28px;background:var(--white);border-bottom:1px solid var(--line);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--yellow);border-radius:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+            <div style="font-size:16px;font-weight:800;">OpenBible</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:22px;font-size:14px;">
+            <div class="web-nav-item" data-web-nav="6a">圣经</div>
+            <div class="web-nav-item">注释</div>
+            <div class="web-nav-item">慧读</div>
+            <div class="web-nav-item active" data-web-nav="6b">社群</div>
+            <div class="web-nav-item">我的</div>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--yellow);border-radius:100px;font-size:14px;font-weight:800;">王</div>
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;padding:18px 28px 0;min-height:0;">
+          <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <div style="font-size:17px;font-weight:800;">青年查经小组 · 活动</div>
+            <div style="flex:1;"></div>
+            <div style="display:flex;background:var(--surface-2);border-radius:100px;padding:3px;">
+              <div style="display:flex;align-items:center;height:30px;padding:0 14px;font-size:12px;font-weight:600;color:var(--body);cursor:pointer;">卡片</div>
+              <div style="display:flex;align-items:center;height:30px;padding:0 14px;background:var(--white);border-radius:100px;box-shadow:var(--shadow-card);font-size:12px;font-weight:700;cursor:pointer;">月历</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;height:36px;padding:0 16px;background:var(--yellow);border:1px solid var(--line);border-radius:100px;font-size:13px;font-weight:700;cursor:pointer;">新建活动</div>
+          </div>
+
+          <div style="flex:none;display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+            <div style="font-size:15px;font-weight:800;">2026 年 7 月</div>
+            <div style="display:flex;gap:6px;">
+              <div class="icon-btn" style="width:28px;height:28px;"><span data-icon="chevron-left" data-size="13"></span></div>
+              <div class="icon-btn" style="width:28px;height:28px;"><span data-icon="chevron-right" data-size="13"></span></div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--body);">本月 4 场活动 · 已报名 2 场</div>
+          </div>
+
+          <div style="flex:1;background:var(--white);border:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:var(--shadow-card);overflow:hidden;display:flex;flex-direction:column;">
+            <div style="flex:none;display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--surface-2);">
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">一</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">二</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">三</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">四</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">五</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">六</div>
+              <div style="padding:10px;text-align:center;font-size:11px;font-weight:800;color:var(--body);">日</div>
+            </div>
+            <div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;overflow:auto;" id="web-calendar-grid"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/mock-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
