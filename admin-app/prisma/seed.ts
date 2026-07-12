@@ -19,14 +19,41 @@ async function main() {
     },
   });
 
+  const moderatorPasswordHash = await bcrypt.hash("moderator123", 10);
+  await db.operator.upsert({
+    where: { username: "moderator" },
+    update: {},
+    create: {
+      username: "moderator",
+      passwordHash: moderatorPasswordHash,
+      name: "内容审核员",
+      role: "MODERATOR",
+    },
+  });
+
   const alreadySeeded = (await db.user.count()) > 0;
   if (!alreadySeeded) {
     await seedUsersCommunitiesAndMemberships();
   }
 
   await seedAiAndDashboard();
+  await seedContentModerationEventsAudit();
 
   console.log("Seed complete.");
+}
+
+async function ensureUser(name: string, data: Parameters<typeof db.user.create>[0]["data"]) {
+  const existing = await db.user.findFirst({ where: { name } });
+  if (existing) return existing;
+  return db.user.create({ data });
+}
+
+async function ensureMembership(userId: string, communityId: string) {
+  await db.membership.upsert({
+    where: { userId_communityId: { userId, communityId } },
+    update: {},
+    create: { userId, communityId, role: "MEMBER" },
+  });
 }
 
 async function seedUsersCommunitiesAndMemberships() {
@@ -308,6 +335,148 @@ async function seedAiAndDashboard() {
       { date: today, label: "希腊文原意", rank: 3 },
     ],
   });
+}
+
+async function seedContentModerationEventsAudit() {
+  const chen = await db.user.findFirstOrThrow({ where: { name: "陈姊妹" } });
+  const li = await db.user.findFirstOrThrow({ where: { name: "李弟兄" } });
+  const zhao = await db.user.findFirstOrThrow({ where: { name: "赵某" } });
+  const sun = await ensureUser("孙弟兄", {
+    name: "孙弟兄",
+    avatarColor: "#8FB8E8",
+    authAccounts: { create: [{ provider: "EMAIL" }] },
+  });
+
+  const youth = await db.community.findFirstOrThrow({ where: { name: "青年查经小组" } });
+  const grace = await db.community.findFirstOrThrow({ where: { name: "恩典读经群" } });
+  const prayer = await db.community.findFirstOrThrow({ where: { name: "姊妹祷告会" } });
+  const workplace = await db.community.findFirstOrThrow({ where: { name: "职场灵修站" } });
+
+  await ensureMembership(sun.id, youth.id);
+  await ensureMembership(zhao.id, grace.id);
+
+  // ---------- Posts ----------
+  const postsAlreadySeeded = (await db.post.count()) > 0;
+  let postZhao: Awaited<ReturnType<typeof db.post.create>>;
+  let postSun: Awaited<ReturnType<typeof db.post.create>>;
+
+  if (!postsAlreadySeeded) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: chen.id,
+        content: "今天重读这节，被「甚至」两个字击中——神的爱不是抽象的，是舍己的行动。",
+        verseRef: "约翰福音 3:16 · 和合本",
+        likeCount: 24,
+        commentCount: 8,
+      },
+    });
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: li.id,
+        content: "周五查经前建议大家先读完 3 章，把不明白的地方先问问慧读，带着问题来。",
+        likeCount: 11,
+        commentCount: 3,
+      },
+    });
+    postZhao = await db.post.create({
+      data: {
+        communityId: grace.id,
+        authorId: zhao.id,
+        content: "加我微信购买特效保健品，包治百病，仅限今日！",
+        likeCount: 0,
+        commentCount: 0,
+      },
+    });
+    postSun = await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: sun.id,
+        content: "你们这群人懂什么，全都是异端，我看不下去了。",
+        likeCount: 0,
+        commentCount: 2,
+      },
+    });
+  } else {
+    postZhao = await db.post.findFirstOrThrow({ where: { authorId: zhao.id, communityId: grace.id } });
+    postSun = await db.post.findFirstOrThrow({ where: { authorId: sun.id } });
+  }
+
+  // ---------- Sensitive word tiers ----------
+  const wordTiers: [string, "BLOCK" | "REVIEW" | "LOG"][] = [
+    ["加我微信", "BLOCK"], ["微商代理", "BLOCK"], ["刷单兼职", "BLOCK"],
+    ["投资理财骗局", "BLOCK"], ["代购渠道", "BLOCK"], ["私自转账", "BLOCK"],
+    ["免费领取活动", "BLOCK"], ["扫码领取奖品", "BLOCK"], ["贷款办理", "BLOCK"],
+    ["彩票内幕", "BLOCK"], ["保健品推销", "BLOCK"], ["传销话术", "BLOCK"],
+    ["异端指控", "REVIEW"], ["极端言论", "REVIEW"], ["挑衅性用语", "REVIEW"],
+    ["煽动性内容", "REVIEW"], ["人身攻击用语", "REVIEW"], ["仇恨言论", "REVIEW"],
+    ["轻微粗口", "LOG"], ["敏感政治词", "LOG"], ["待观察用语", "LOG"], ["争议性话题", "LOG"],
+  ];
+  for (const [word, level] of wordTiers) {
+    await db.sensitiveWord.upsert({ where: { word }, update: {}, create: { word, level } });
+  }
+
+  // ---------- Reports ----------
+  const reportsAlreadySeeded = (await db.report.count()) > 0;
+  if (!reportsAlreadySeeded) {
+    await db.report.create({
+      data: {
+        postId: postZhao.id,
+        communityId: grace.id,
+        contentSnapshot: postZhao.content,
+        reason: "垃圾广告",
+        hitLevel: "BLOCK",
+      },
+    });
+    await db.report.create({
+      data: {
+        postId: postSun.id,
+        communityId: youth.id,
+        contentSnapshot: postSun.content,
+        reason: "人身攻击",
+        hitLevel: "REVIEW",
+      },
+    });
+    await db.report.create({
+      data: {
+        postId: null,
+        communityId: workplace.id,
+        contentSnapshot: "活动「免费圣地旅游，先交定金」",
+        reason: "虚假活动",
+        hitLevel: "BLOCK",
+      },
+    });
+  }
+
+  // ---------- Events ----------
+  const eventsAlreadySeeded = (await db.event.count()) > 0;
+  if (!eventsAlreadySeeded) {
+    const now = new Date();
+    const inDays = (d: number) => new Date(now.getTime() + d * 86_400_000);
+
+    await db.event.createMany({
+      data: [
+        { communityId: youth.id, title: "约翰福音 3 章共读", startAt: inDays(2), endAt: inDays(2.06), signupCount: 12 },
+        { communityId: youth.id, title: "四福音 40 天通读", startAt: inDays(-18), endAt: inDays(22), signupCount: 20 },
+        { communityId: grace.id, title: "一年读经计划 · 7 月主题分享", startAt: inDays(5), signupCount: 34 },
+        { communityId: prayer.id, title: "晨祷接力", startAt: inDays(-1), endAt: inDays(-1), signupCount: 21 },
+        { communityId: workplace.id, title: "职场伦理专题分享", startAt: inDays(-10), endAt: inDays(-10), signupCount: 9 },
+      ],
+    });
+  }
+
+  // ---------- Sample audit log history ----------
+  const auditAlreadySeeded = (await db.auditLog.count()) > 0;
+  if (!auditAlreadySeeded) {
+    const admin = await db.operator.findUniqueOrThrow({ where: { username: "admin" } });
+    await db.auditLog.createMany({
+      data: [
+        { operatorId: admin.id, action: "封禁用户", targetType: "User", targetId: zhao.id, detail: "赵某 · 原因：垃圾广告" },
+        { operatorId: admin.id, action: "警告社群", targetType: "Community", targetId: prayer.id, detail: "姊妹祷告会 · 累计警告 1 次" },
+      ],
+    });
+  }
 }
 
 main()

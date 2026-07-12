@@ -1,50 +1,69 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
-async function requireOperator() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session;
-}
+import { logAudit } from "@/lib/audit";
+import { requireRole } from "@/lib/authz";
 
 export async function muteUser(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const userId = String(formData.get("userId"));
   const mutedUntil = new Date();
   mutedUntil.setDate(mutedUntil.getDate() + 7);
 
-  await db.user.update({
+  const user = await db.user.update({
     where: { id: userId },
     data: { status: "MUTED", mutedUntil },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "禁言用户",
+    targetType: "User",
+    targetId: user.id,
+    detail: `${user.name} · 禁言至 ${mutedUntil.toISOString().slice(0, 10)}`,
   });
 
   revalidatePath("/users");
 }
 
 export async function banUser(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const userId = String(formData.get("userId"));
   const reason = String(formData.get("reason") ?? "").trim();
   if (!reason) throw new Error("封禁需要填写原因");
 
-  await db.user.update({
+  const user = await db.user.update({
     where: { id: userId },
     data: { status: "BANNED", banReason: reason },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "封禁用户",
+    targetType: "User",
+    targetId: user.id,
+    detail: `${user.name} · 原因：${reason}`,
   });
 
   revalidatePath("/users");
 }
 
 export async function unbanUser(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const userId = String(formData.get("userId"));
 
-  await db.user.update({
+  const user = await db.user.update({
     where: { id: userId },
     data: { status: "ACTIVE", banReason: null, mutedUntil: null },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "解封用户",
+    targetType: "User",
+    targetId: user.id,
+    detail: user.name,
   });
 
   revalidatePath("/users");

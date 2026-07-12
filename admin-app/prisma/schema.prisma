@@ -14,6 +14,7 @@ datasource db {
 
 enum OperatorRole {
   SUPER_ADMIN
+  MODERATOR
 }
 
 model Operator {
@@ -23,6 +24,8 @@ model Operator {
   name         String
   role         OperatorRole @default(SUPER_ADMIN)
   createdAt    DateTime     @default(now())
+
+  auditLogs AuditLog[]
 }
 
 // ---------- End-users of the OpenBible app ----------
@@ -52,6 +55,7 @@ model User {
   authAccounts     AuthAccount[]
   memberships      Membership[]
   ownedCommunities Community[]   @relation("CommunityOwner")
+  posts            Post[]
 }
 
 model AuthAccount {
@@ -97,6 +101,9 @@ model Community {
 
   owner       User?        @relation("CommunityOwner", fields: [ownerId], references: [id])
   memberships Membership[]
+  posts       Post[]
+  reports     Report[]
+  events      Event[]
 }
 
 enum MembershipRole {
@@ -200,4 +207,96 @@ model PromptVersion {
   likeRatePct    Float?
   dislikeRatePct Float?
   createdAt      DateTime            @default(now())
+}
+
+// ---------- Content management & moderation ----------
+
+enum PostStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+}
+
+model Post {
+  id           String     @id @default(cuid())
+  communityId  String
+  authorId     String
+  content      String
+  verseRef     String?
+  likeCount    Int        @default(0)
+  commentCount Int        @default(0)
+  status       PostStatus @default(VISIBLE)
+  createdAt    DateTime   @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+  reports   Report[]
+}
+
+enum SensitiveWordLevel {
+  BLOCK
+  REVIEW
+  LOG
+}
+
+model SensitiveWord {
+  id        String             @id @default(cuid())
+  word      String             @unique
+  level     SensitiveWordLevel
+  createdAt DateTime           @default(now())
+}
+
+enum ReportHitLevel {
+  BLOCK
+  REVIEW
+  LOG
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+}
+
+model Report {
+  id              String         @id @default(cuid())
+  postId          String?
+  communityId     String
+  contentSnapshot String
+  reason          String
+  hitLevel        ReportHitLevel
+  status          ReportStatus   @default(PENDING)
+  resolution      String?
+  createdAt       DateTime       @default(now())
+  resolvedAt      DateTime?
+
+  post      Post?     @relation(fields: [postId], references: [id])
+  community Community @relation(fields: [communityId], references: [id])
+}
+
+// ---------- Event supervision (活动监管) ----------
+
+model Event {
+  id          String    @id @default(cuid())
+  communityId String
+  title       String
+  startAt     DateTime
+  endAt       DateTime?
+  signupCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Permissions & audit ----------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  operatorId String
+  action     String
+  targetType String
+  targetId   String
+  detail     String
+  createdAt  DateTime @default(now())
+
+  operator Operator @relation(fields: [operatorId], references: [id])
 }

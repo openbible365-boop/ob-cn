@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { formatCents, formatTokensPerDay } from "@/lib/format";
 import { toggleAutoFallback, toggleRateLimit, expandCanary, rollbackToVersion } from "@/lib/actions/ai";
@@ -26,6 +28,9 @@ function promptStatusLabel(status: string, rolloutPercent: number) {
 }
 
 export default async function AiManagementPage() {
+  const session = await auth();
+  if (session?.user?.role !== "SUPER_ADMIN") redirect("/dashboard");
+
   const [models, settings, versions, tokenTop] = await Promise.all([
     db.aiModel.findMany({ orderBy: { role: "asc" } }),
     db.aiSettings.findUniqueOrThrow({ where: { id: "singleton" } }),

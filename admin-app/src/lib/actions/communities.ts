@@ -1,58 +1,85 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
-async function requireOperator() {
-  const session = await auth();
-  if (!session?.user) throw new Error("Unauthorized");
-  return session;
-}
+import { logAudit } from "@/lib/audit";
+import { requireRole } from "@/lib/authz";
 
 export async function warnCommunity(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const communityId = String(formData.get("communityId"));
 
-  await db.community.update({
+  const community = await db.community.update({
     where: { id: communityId },
     data: { warningCount: { increment: 1 } },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "警告社群",
+    targetType: "Community",
+    targetId: community.id,
+    detail: `${community.name} · 累计警告 ${community.warningCount} 次`,
   });
 
   revalidatePath("/communities");
 }
 
 export async function banCommunity(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const communityId = String(formData.get("communityId"));
 
-  await db.community.update({
+  const community = await db.community.update({
     where: { id: communityId },
     data: { status: "BANNED" },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "封禁社群",
+    targetType: "Community",
+    targetId: community.id,
+    detail: community.name,
   });
 
   revalidatePath("/communities");
 }
 
 export async function unbanCommunity(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const communityId = String(formData.get("communityId"));
 
-  await db.community.update({
+  const community = await db.community.update({
     where: { id: communityId },
     data: { status: "ACTIVE" },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "解封社群",
+    targetType: "Community",
+    targetId: community.id,
+    detail: community.name,
   });
 
   revalidatePath("/communities");
 }
 
 export async function dissolveCommunity(formData: FormData) {
-  await requireOperator();
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const communityId = String(formData.get("communityId"));
 
-  await db.community.update({
+  const community = await db.community.update({
     where: { id: communityId },
     data: { status: "DISSOLVED" },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "解散社群",
+    targetType: "Community",
+    targetId: community.id,
+    detail: community.name,
   });
 
   revalidatePath("/communities");

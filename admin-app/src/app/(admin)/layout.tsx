@@ -10,7 +10,7 @@ export default async function AdminLayout({
 
   return (
     <div className="admin-shell">
-      <AdminSidebar operatorName={session?.user?.name ?? "运营"} />
+      <AdminSidebar operatorName={session?.user?.name ?? "运营"} role={session?.user?.role} />
       <main className="admin-main">{children}</main>
     </div>
   );

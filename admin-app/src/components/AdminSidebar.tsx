@@ -3,19 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "数据看板" },
-  { href: "/content", label: "内容管理", disabled: true },
-  { href: "/ai", label: "AI 模型与提示词" },
-  { href: "/communities", label: "社群管理" },
-  { href: "/users", label: "用户管理" },
-  { href: "/moderation", label: "内容审核", disabled: true },
-  { href: "/events", label: "活动监管", disabled: true },
-  { href: "/audit", label: "权限与审计", disabled: true },
+type Role = "SUPER_ADMIN" | "MODERATOR";
+
+const NAV_ITEMS: { href: string; label: string; roles: Role[] }[] = [
+  { href: "/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"] },
+  { href: "/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/audit", label: "权限与审计", roles: ["SUPER_ADMIN"] },
 ];
 
-export function AdminSidebar({ operatorName }: { operatorName: string }) {
+export function AdminSidebar({ operatorName, role }: { operatorName: string; role?: string }) {
   const pathname = usePathname();
+  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role as Role));
 
   return (
     <div className="admin-sidebar">
@@ -30,21 +33,15 @@ export function AdminSidebar({ operatorName }: { operatorName: string }) {
       </div>
 
       <nav className="admin-nav">
-        {NAV_ITEMS.map((item) =>
-          item.disabled ? (
-            <div key={item.href} className="admin-nav-item disabled">
-              {item.label}
-            </div>
-          ) : (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item${pathname === item.href ? " active" : ""}`}
-            >
-              {item.label}
-            </Link>
-          )
-        )}
+        {visibleItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`admin-nav-item${pathname === item.href ? " active" : ""}`}
+          >
+            {item.label}
+          </Link>
+        ))}
       </nav>
 
       <div style={{ flex: 1 }} />
