@@ -35,15 +35,25 @@ export function bookName(book: Book, version: Version): string {
 
 // ---------- reading position ----------
 
-type Reading = { version: string; book: string };
+type Reading = { version: string; book: string; chapter: number };
 const READING_KEY = "ob.reading";
 
 export function getReading(): Reading {
-  return load<Reading>(READING_KEY, { version: "cuv", book: "jhn" });
+  const r = load<Partial<Reading>>(READING_KEY, {});
+  return {
+    version: r.version ?? "cuv",
+    book: r.book ?? "jhn",
+    chapter: r.chapter ?? defaultChapterFor(r.book ?? "jhn"),
+  };
 }
 
 export function setReading(reading: Reading) {
   save(READING_KEY, reading);
+}
+
+// The demo design opens on John 3; every other book starts at chapter 1.
+export function defaultChapterFor(bookCode: string): number {
+  return bookCode === "jhn" ? 3 : 1;
 }
 
 // ---------- book text ----------

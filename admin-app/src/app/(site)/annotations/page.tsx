@@ -5,14 +5,23 @@ import { OT_BOOKS, NT_BOOKS, DEFAULT_BOOK_ORDER, getBook } from "@/lib/bible-boo
 export default async function AnnotationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ b?: string; c?: string }>;
+  searchParams: Promise<{ t?: string; b?: string; c?: string }>;
 }) {
-  const { b, c } = await searchParams;
+  const { t, b, c } = await searchParams;
 
   const book = getBook(Number(b) || DEFAULT_BOOK_ORDER);
   const maxChapter = book.chapters;
   const defaultChapter = book.order === DEFAULT_BOOK_ORDER ? 3 : 1;
   const chapter = Math.min(Math.max(Number(c) || defaultChapter, 1), maxChapter);
+
+  // Threads the translation through so 圣经 ↔ 注释 round-trips keep it.
+  const hrefFor = (path: string, bookOrder: number, ch: number) => {
+    const params = new URLSearchParams();
+    if (t) params.set("t", t);
+    params.set("b", String(bookOrder));
+    params.set("c", String(ch));
+    return `${path}?${params.toString()}`;
+  };
 
   const commentary = await db.commentary.findMany({ where: { book: book.zh, chapter }, orderBy: { rangeStart: "asc" } });
 
@@ -30,7 +39,7 @@ export default async function AnnotationsPage({
                 <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", margin: "4px 2px 6px" }}>{group.label}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
                   {group.books.map((bk) => (
-                    <Link key={bk.order} href={`/annotations?b=${bk.order}&c=1`} style={{
+                    <Link key={bk.order} href={hrefFor("/annotations", bk.order, 1)} style={{
                       padding: "6px 8px", borderRadius: 8, fontSize: 12, textAlign: "center", textDecoration: "none",
                       fontWeight: bk.order === book.order ? 800 : 600,
                       background: bk.order === book.order ? "var(--ink)" : "var(--surface)",
@@ -45,11 +54,11 @@ export default async function AnnotationsPage({
           </div>
         </details>
         <div style={{ display: "flex", gap: 6, marginLeft: 6 }}>
-          {chapter > 1 && <Link href={`/annotations?b=${book.order}&c=${chapter - 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>‹</Link>}
-          {chapter < maxChapter && <Link href={`/annotations?b=${book.order}&c=${chapter + 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>›</Link>}
+          {chapter > 1 && <Link href={hrefFor("/annotations", book.order, chapter - 1)} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>‹</Link>}
+          {chapter < maxChapter && <Link href={hrefFor("/annotations", book.order, chapter + 1)} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>›</Link>}
         </div>
         <div style={{ flex: 1 }} />
-        <Link href={`/bible?b=${book.order}&c=${chapter}`} style={{ fontSize: 13, fontWeight: 700, color: "var(--body)" }}>去读经 →</Link>
+        <Link href={hrefFor("/bible", book.order, chapter)} style={{ fontSize: 13, fontWeight: 700, color: "var(--body)" }}>去读经 →</Link>
       </div>
 
       <div style={{ flex: 1, overflow: "auto", padding: "32px 40px" }}>

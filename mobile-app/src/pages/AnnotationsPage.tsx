@@ -5,6 +5,8 @@ import {
   getVersion,
   getBookByCode,
   getReading,
+  setReading,
+  defaultChapterFor,
   bookName,
   loadCommentary,
   type CommentarySection,
@@ -18,8 +20,11 @@ export function AnnotationsPage() {
   const book = getBookByCode(params.get("bk") ?? reading.book);
   const displayBook = bookName(book, version);
   const maxChapter = book.chapters;
-  const defaultChapter = book.code === "jhn" ? 3 : 1;
-  const chapter = Math.min(Math.max(Number(params.get("c")) || defaultChapter, 1), maxChapter);
+  // Follow the reading position so the 注释 tab opens on the chapter the
+  // reader is currently in.
+  const chapterFallback =
+    book.code === reading.book ? reading.chapter : defaultChapterFor(book.code);
+  const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
 
   const [commentary, setCommentary] = useState<CommentarySection[] | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -34,7 +39,12 @@ export function AnnotationsPage() {
     return () => { cancelled = true; };
   }, [book.order, chapter]);
 
-  const gotoChapter = (c: number) => setParams({ bk: book.code, c: String(c) });
+  // Keep the reading position in sync so 圣经 tab follows chapter changes
+  // made from this page.
+  const gotoChapter = (c: number) => {
+    setParams({ bk: book.code, c: String(c) });
+    setReading({ version: version.code, book: book.code, chapter: c });
+  };
 
   return (
     <div className="screen">

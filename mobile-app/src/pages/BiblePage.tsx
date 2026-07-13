@@ -9,6 +9,7 @@ import {
   getBookByCode,
   getReading,
   setReading,
+  defaultChapterFor,
   bookName,
   loadBook,
   stripHtml,
@@ -42,8 +43,11 @@ export function BiblePage() {
   const [loadError, setLoadError] = useState(false);
 
   const maxChapter = data?.maxChapter ?? book.chapters;
-  const defaultChapter = book.code === "jhn" ? 3 : 1;
-  const chapter = Math.min(Math.max(Number(params.get("c")) || defaultChapter, 1), maxChapter);
+  // Without ?c=, resume where the reader left off (only meaningful when we
+  // are still in that same book).
+  const chapterFallback =
+    book.code === reading.book ? reading.chapter : defaultChapterFor(book.code);
+  const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
 
   const [selected, setSelected] = useState<number | null>(null);
   const [picker, setPicker] = useState<null | "version" | "chapter" | "search" | "audio">(null);
@@ -54,7 +58,10 @@ export function BiblePage() {
   const [storeVersion, setStoreVersion] = useState(0); // bump to re-read stores
 
   useEffect(() => {
-    setReading({ version: version.code, book: book.code });
+    setReading({ version: version.code, book: book.code, chapter });
+  }, [version.code, book.code, chapter]);
+
+  useEffect(() => {
     setData(null);
     setLoadError(false);
     let cancelled = false;
