@@ -29,7 +29,7 @@ function promptStatusLabel(status: string, rolloutPercent: number) {
 
 export default async function AiManagementPage() {
   const session = await auth();
-  if (session?.user?.role !== "SUPER_ADMIN") redirect("/dashboard");
+  if (session?.user?.role !== "SUPER_ADMIN") redirect("/admin/dashboard");
 
   const [models, settings, versions, tokenTop] = await Promise.all([
     db.aiModel.findMany({ orderBy: { role: "asc" } }),

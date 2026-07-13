@@ -26,7 +26,7 @@ export async function approveReport(formData: FormData) {
     detail: "内容未违规，已通过",
   });
 
-  revalidatePath("/moderation");
+  revalidatePath("/admin/moderation");
 }
 
 export async function removeReportedContent(formData: FormData) {
@@ -47,8 +47,8 @@ export async function removeReportedContent(formData: FormData) {
     detail: report.contentSnapshot.slice(0, 30),
   });
 
-  revalidatePath("/moderation");
-  revalidatePath("/content");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/content");
 }
 
 export async function hideReportedContent(formData: FormData) {
@@ -69,8 +69,8 @@ export async function hideReportedContent(formData: FormData) {
     detail: report.contentSnapshot.slice(0, 30),
   });
 
-  revalidatePath("/moderation");
-  revalidatePath("/content");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/content");
 }
 
 export async function banReportedUser(formData: FormData) {
@@ -96,8 +96,8 @@ export async function banReportedUser(formData: FormData) {
     detail: `${report.post.author.name} · 原因：${report.reason}`,
   });
 
-  revalidatePath("/moderation");
-  revalidatePath("/users");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/users");
 }
 
 export async function muteReportedUser(formData: FormData) {
@@ -125,6 +125,6 @@ export async function muteReportedUser(formData: FormData) {
     detail: `${report.post.author.name} · 禁言至 ${mutedUntil.toISOString().slice(0, 10)}`,
   });
 
-  revalidatePath("/moderation");
-  revalidatePath("/users");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/users");
 }

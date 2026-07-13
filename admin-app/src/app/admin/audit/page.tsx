@@ -8,7 +8,7 @@ const ROLE_LABEL: Record<string, string> = { SUPER_ADMIN: "超级管理员", MOD
 
 export default async function AuditPage() {
   const session = await auth();
-  if (session?.user?.role !== "SUPER_ADMIN") redirect("/dashboard");
+  if (session?.user?.role !== "SUPER_ADMIN") redirect("/admin/dashboard");
 
   const [operators, logs] = await Promise.all([
     db.operator.findMany({ orderBy: { createdAt: "asc" } }),

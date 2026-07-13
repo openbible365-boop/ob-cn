@@ -29,7 +29,7 @@ export async function createOperator(formData: FormData) {
     detail: `${username}（${name}）· ${role}`,
   });
 
-  revalidatePath("/audit");
+  revalidatePath("/admin/audit");
 }
 
 export async function resetOperatorPassword(formData: FormData) {
@@ -52,5 +52,5 @@ export async function resetOperatorPassword(formData: FormData) {
     detail: operator.username,
   });
 
-  revalidatePath("/audit");
+  revalidatePath("/admin/audit");
 }

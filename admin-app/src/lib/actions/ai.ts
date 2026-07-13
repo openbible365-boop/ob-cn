@@ -22,7 +22,7 @@ export async function toggleAutoFallback() {
     detail: `主模型异常自动降级：${next ? "开启" : "关闭"}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function toggleRateLimit() {
@@ -42,7 +42,7 @@ export async function toggleRateLimit() {
     detail: `全局限流：${next ? "开启" : "解除"}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function updateApiKey(formData: FormData) {
@@ -64,7 +64,7 @@ export async function updateApiKey(formData: FormData) {
     detail: `${model.modelName} · 末四位 ${model.apiKeyLast4}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function createPromptVersion(formData: FormData) {
@@ -85,7 +85,7 @@ export async function createPromptVersion(formData: FormData) {
     detail: `${version} · ${description}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function expandCanary(formData: FormData) {
@@ -121,7 +121,7 @@ export async function expandCanary(formData: FormData) {
       : `${current.version} 灰度扩大至 ${nextRollout}%`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function editPromptVersion(formData: FormData) {
@@ -147,7 +147,7 @@ export async function editPromptVersion(formData: FormData) {
     detail: `${updated.version} · ${description}（灰度 ${rolloutPercent}%）`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function rollbackToVersion(formData: FormData) {
@@ -172,7 +172,7 @@ export async function rollbackToVersion(formData: FormData) {
     detail: `回滚至 ${target.version}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }
 
 export async function updateCommunityTokenLimit(formData: FormData) {
@@ -197,5 +197,5 @@ export async function updateCommunityTokenLimit(formData: FormData) {
     detail: `${community.name} · ${limit != null ? `${limit / 1000}K/日` : "不限"}`,
   });
 
-  revalidatePath("/ai");
+  revalidatePath("/admin/ai");
 }

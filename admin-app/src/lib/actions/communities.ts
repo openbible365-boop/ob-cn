@@ -22,7 +22,7 @@ export async function warnCommunity(formData: FormData) {
     detail: `${community.name} · 累计警告 ${community.warningCount} 次`,
   });
 
-  revalidatePath("/communities");
+  revalidatePath("/admin/communities");
 }
 
 export async function banCommunity(formData: FormData) {
@@ -42,7 +42,7 @@ export async function banCommunity(formData: FormData) {
     detail: community.name,
   });
 
-  revalidatePath("/communities");
+  revalidatePath("/admin/communities");
 }
 
 export async function unbanCommunity(formData: FormData) {
@@ -62,7 +62,7 @@ export async function unbanCommunity(formData: FormData) {
     detail: community.name,
   });
 
-  revalidatePath("/communities");
+  revalidatePath("/admin/communities");
 }
 
 export async function dissolveCommunity(formData: FormData) {
@@ -82,5 +82,5 @@ export async function dissolveCommunity(formData: FormData) {
     detail: community.name,
   });
 
-  revalidatePath("/communities");
+  revalidatePath("/admin/communities");
 }

@@ -24,7 +24,7 @@ export async function muteUser(formData: FormData) {
     detail: `${user.name} · 禁言至 ${mutedUntil.toISOString().slice(0, 10)}`,
   });
 
-  revalidatePath("/users");
+  revalidatePath("/admin/users");
 }
 
 export async function banUser(formData: FormData) {
@@ -46,7 +46,7 @@ export async function banUser(formData: FormData) {
     detail: `${user.name} · 原因：${reason}`,
   });
 
-  revalidatePath("/users");
+  revalidatePath("/admin/users");
 }
 
 export async function unbanUser(formData: FormData) {
@@ -66,5 +66,5 @@ export async function unbanUser(formData: FormData) {
     detail: user.name,
   });
 
-  revalidatePath("/users");
+  revalidatePath("/admin/users");
 }

@@ -3,18 +3,21 @@ import { auth } from "@/auth";
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLoginPage = req.nextUrl.pathname === "/login";
+  const isLoginPage = req.nextUrl.pathname === "/admin/login";
 
   if (!isLoggedIn && !isLoginPage) {
-    const loginUrl = new URL("/login", req.nextUrl);
+    const loginUrl = new URL("/admin/login", req.nextUrl);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isLoggedIn && isLoginPage) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    return NextResponse.redirect(new URL("/admin", req.nextUrl));
   }
 });
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Only the admin backend requires operator login. The public site (/,
+  // /community, /bible, ...) is open — it has its own end-user identity
+  // model, not yet wired up (see /lib/current-user.ts).
+  matcher: ["/admin/:path*"],
 };

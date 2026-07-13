@@ -56,6 +56,8 @@ model User {
   memberships      Membership[]
   ownedCommunities Community[]   @relation("CommunityOwner")
   posts            Post[]
+  postLikes        PostLike[]
+  eventSignups     EventSignup[]
 }
 
 model AuthAccount {
@@ -228,9 +230,22 @@ model Post {
   status       PostStatus @default(VISIBLE)
   createdAt    DateTime   @default(now())
 
-  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  author    User      @relation(fields: [authorId], references: [id])
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorId], references: [id])
   reports   Report[]
+  likes     PostLike[]
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
 }
 
 enum SensitiveWordLevel {
@@ -284,7 +299,20 @@ model Event {
   signupCount Int       @default(0)
   createdAt   DateTime  @default(now())
 
-  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  signups   EventSignup[]
+}
+
+model EventSignup {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }
 
 // ---------- Permissions & audit ----------

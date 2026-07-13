@@ -379,3 +379,86 @@ input {
   border-radius: var(--radius-control);
   padding: 10px 12px;
 }
+
+/* ---------- Public site shell ---------- */
+
+.site-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 60px;
+  padding: 0 28px;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+
+.site-topbar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-topbar .brand .mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--yellow);
+  border-radius: 8px;
+}
+
+.site-topbar .brand .name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 14px;
+  height: 100%;
+}
+
+.site-nav-item {
+  font-weight: 600;
+  color: var(--body);
+}
+
+.site-nav-item.active {
+  font-weight: 800;
+  color: var(--ink);
+  border-bottom: 3px solid var(--purple);
+  padding: 18px 2px;
+}
+
+.site-nav-item.disabled {
+  color: var(--line);
+  cursor: default;
+}
+
+.site-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--yellow);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.site-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}

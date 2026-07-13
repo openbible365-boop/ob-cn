@@ -15,11 +15,11 @@ export default async function LoginPage({
       await signIn("credentials", {
         username: formData.get("username"),
         password: formData.get("password"),
-        redirectTo: "/",
+        redirectTo: "/admin",
       });
     } catch (err) {
       if (err instanceof AuthError) {
-        redirect("/login?error=1");
+        redirect("/admin/login?error=1");
       }
       throw err;
     }

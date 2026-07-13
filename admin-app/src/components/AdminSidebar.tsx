@@ -6,14 +6,14 @@ import { usePathname } from "next/navigation";
 type Role = "SUPER_ADMIN" | "MODERATOR";
 
 const NAV_ITEMS: { href: string; label: string; roles: Role[] }[] = [
-  { href: "/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"] },
-  { href: "/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"] },
-  { href: "/audit", label: "权限与审计", roles: ["SUPER_ADMIN"] },
+  { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"] },
+  { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"] },
 ];
 
 export function AdminSidebar({ operatorName, role }: { operatorName: string; role?: string }) {

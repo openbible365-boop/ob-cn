@@ -23,8 +23,8 @@ export async function deletePost(formData: FormData) {
     detail: `作者 ${post.author.name} · ${post.content.slice(0, 30)}`,
   });
 
-  revalidatePath("/content");
-  revalidatePath("/moderation");
+  revalidatePath("/admin/content");
+  revalidatePath("/admin/moderation");
 }
 
 export async function hidePost(formData: FormData) {
@@ -45,8 +45,8 @@ export async function hidePost(formData: FormData) {
     detail: `作者 ${post.author.name} · ${post.content.slice(0, 30)}`,
   });
 
-  revalidatePath("/content");
-  revalidatePath("/moderation");
+  revalidatePath("/admin/content");
+  revalidatePath("/admin/moderation");
 }
 
 export async function restorePost(formData: FormData) {
@@ -67,8 +67,8 @@ export async function restorePost(formData: FormData) {
     detail: `作者 ${post.author.name} · ${post.content.slice(0, 30)}`,
   });
 
-  revalidatePath("/content");
-  revalidatePath("/moderation");
+  revalidatePath("/admin/content");
+  revalidatePath("/admin/moderation");
 }
 
 export async function createSensitiveWord(formData: FormData) {
@@ -90,8 +90,8 @@ export async function createSensitiveWord(formData: FormData) {
     detail: `${word}（${level}）`,
   });
 
-  revalidatePath("/content");
-  revalidatePath("/moderation");
+  revalidatePath("/admin/content");
+  revalidatePath("/admin/moderation");
 }
 
 export async function deleteSensitiveWord(formData: FormData) {
@@ -108,6 +108,6 @@ export async function deleteSensitiveWord(formData: FormData) {
     detail: word.word,
   });
 
-  revalidatePath("/content");
-  revalidatePath("/moderation");
+  revalidatePath("/admin/content");
+  revalidatePath("/admin/moderation");
 }
