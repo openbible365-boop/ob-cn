@@ -1,0 +1,53 @@
+name: ob-cn
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: openbible
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ob_cn
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openbible -d ob_cn"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  admin:
+    build: ./admin-app
+    container_name: ob-cn-admin
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://openbible:${DB_PASSWORD}@db:5432/ob_cn?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
+      APP_URL: https://admin.openbible.live
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+      - caddy
+
+  app:
+    image: nginx:alpine
+    container_name: ob-cn-app
+    restart: unless-stopped
+    volumes:
+      - ./app-dist:/usr/share/nginx/html:ro
+      - ./data:/usr/share/nginx/html/data:ro
+      - ./app-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - caddy
+
+networks:
+  default:
+  caddy:
+    name: ko-tts_ko-tts-net
+    external: true
+
+volumes:
+  db_data:

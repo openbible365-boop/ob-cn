@@ -3,37 +3,49 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/current-user";
 import { setHighlight, clearHighlight } from "@/lib/actions/site/reading";
 import { HIGHLIGHT_COLORS } from "@/lib/reading-constants";
+import { DEFAULT_BOOK_ORDER, getBook, getVersion } from "@/lib/bible-books";
 import { startConversation } from "@/lib/actions/site/huidu";
 import { NoteComposer } from "@/components/site/NoteComposer";
-
-const BOOK = "约翰福音";
-const TRANSLATION = "和合本";
 
 export default async function BiblePage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; v?: string }>;
+  searchParams: Promise<{ t?: string; b?: string; c?: string; v?: string }>;
 }) {
-  const { c, v } = await searchParams;
+  const { t, b, c, v } = await searchParams;
   // Scripture itself is public; highlights/notes/慧读 need a login.
   const user = await getSessionUser();
 
-  const chapterCount = await db.verse.aggregate({ where: { translation: TRANSLATION, book: BOOK }, _max: { chapter: true } });
-  const maxChapter = chapterCount._max.chapter ?? 1;
-  const chapter = Math.min(Math.max(Number(c) || 3, 1), maxChapter);
+  const version = getVersion(t);
+  const book = getBook(Number(b) || DEFAULT_BOOK_ORDER);
+  // Canonical key for user data (highlights/notes/commentary) — always the
+  // zh book name, so annotations survive switching translations.
+  const bookKey = book.zh;
+  const bookLabel = book[version.lang];
+
+  const chapterCount = await db.verse.aggregate({
+    where: { translation: version.code, bookOrder: book.order },
+    _max: { chapter: true },
+  });
+  const maxChapter = chapterCount._max.chapter ?? book.chapters;
+  const defaultChapter = book.order === DEFAULT_BOOK_ORDER ? 3 : 1;
+  const chapter = Math.min(Math.max(Number(c) || defaultChapter, 1), maxChapter);
   const selectedVerse = v ? Number(v) : null;
 
   const [verses, commentary] = await Promise.all([
-    db.verse.findMany({ where: { translation: TRANSLATION, book: BOOK, chapter }, orderBy: { verse: "asc" } }),
-    db.commentary.findMany({ where: { book: BOOK, chapter }, orderBy: { rangeStart: "asc" } }),
+    db.verse.findMany({
+      where: { translation: version.code, bookOrder: book.order, chapter },
+      orderBy: { verse: "asc" },
+    }),
+    db.commentary.findMany({ where: { book: bookKey, chapter }, orderBy: { rangeStart: "asc" } }),
   ]);
 
   const [highlights, notes, recentConversations] = user
     ? await Promise.all([
-        db.highlight.findMany({ where: { userId: user.id, book: BOOK, chapter } }),
-        db.note.findMany({ where: { userId: user.id, book: BOOK, chapter }, orderBy: { createdAt: "desc" } }),
+        db.highlight.findMany({ where: { userId: user.id, book: bookKey, chapter } }),
+        db.note.findMany({ where: { userId: user.id, book: bookKey, chapter }, orderBy: { createdAt: "desc" } }),
         db.conversation.findMany({
-          where: { userId: user.id, book: BOOK, chapter },
+          where: { userId: user.id, book: bookKey, chapter },
           orderBy: { createdAt: "desc" },
           take: 3,
         }),
@@ -44,8 +56,14 @@ export default async function BiblePage({
   const selectedVerseData = selectedVerse ? verses.find((x) => x.verse === selectedVerse) : null;
   const selectedNotes = selectedVerse ? notes.filter((n) => n.verse === selectedVerse) : [];
 
-  const hrefFor = (ch: number, verse?: number) =>
-    `/bible?c=${ch}${verse ? `&v=${verse}` : ""}`;
+  const hrefFor = (opts: { t?: string; b?: number; c?: number; v?: number }) => {
+    const params = new URLSearchParams();
+    params.set("t", opts.t ?? version.code);
+    params.set("b", String(opts.b ?? book.order));
+    if (opts.c) params.set("c", String(opts.c));
+    if (opts.v) params.set("v", String(opts.v));
+    return `/bible?${params.toString()}`;
+  };
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -53,8 +71,8 @@ export default async function BiblePage({
         {/* verses */}
         <div style={{ flex: 1, padding: "32px 40px", overflow: "auto", borderRight: "1px solid var(--line)" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}>
-            <div style={{ fontSize: 26, fontWeight: 800 }}>{BOOK} 第 {chapter} 章</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.08em" }}>和合本</div>
+            <div style={{ fontSize: 26, fontWeight: 800 }}>{bookLabel} 第 {chapter} 章</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.08em" }}>{version.label}</div>
           </div>
 
           <p style={{ margin: 0, fontSize: 18, fontWeight: 400, lineHeight: 2, textWrap: "pretty" }}>
@@ -64,7 +82,7 @@ export default async function BiblePage({
               return (
                 <Link
                   key={verse.id}
-                  href={isSelected ? hrefFor(chapter) : hrefFor(chapter, verse.verse)}
+                  href={isSelected ? hrefFor({ c: chapter }) : hrefFor({ c: chapter, v: verse.verse })}
                   scroll={false}
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
@@ -78,19 +96,33 @@ export default async function BiblePage({
                       borderRadius: isSelected ? 2 : undefined,
                       cursor: "pointer",
                     }}
-                  >
-                    {verse.text}
-                  </span>
+                    {...(version.code === "pinyin"
+                      ? { dangerouslySetInnerHTML: { __html: verse.text } }
+                      : { children: verse.text })}
+                  />
                 </Link>
               );
             })}
           </p>
+          {verses.length === 0 && (
+            <div style={{ fontSize: 13, color: "var(--body)" }}>本章暂无经文数据。</div>
+          )}
+
+          {/* chapter nav */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28 }}>
+            {chapter > 1 ? (
+              <Link href={hrefFor({ c: chapter - 1 })} style={{ display: "flex", alignItems: "center", height: 36, padding: "0 16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 100, fontSize: 13, fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>‹ 上一章</Link>
+            ) : <div />}
+            {chapter < maxChapter ? (
+              <Link href={hrefFor({ c: chapter + 1 })} style={{ display: "flex", alignItems: "center", height: 36, padding: "0 16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 100, fontSize: 13, fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>下一章 ›</Link>
+            ) : <div />}
+          </div>
 
           {/* selection toolbar */}
           {selectedVerseData && !user && (
             <div className="card" style={{ marginTop: 24, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--body)" }}>
-                登录后可对 {BOOK} {chapter}:{selectedVerseData.verse} 高亮、写笔记，并向慧读提问。
+                登录后可对 {bookKey} {chapter}:{selectedVerseData.verse} 高亮、写笔记，并向慧读提问。
               </div>
               <Link href="/me" style={{ display: "flex", alignItems: "center", height: 32, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 12, fontWeight: 800 }}>去登录</Link>
             </div>
@@ -98,7 +130,7 @@ export default async function BiblePage({
           {selectedVerseData && user && (
             <div className="card" style={{ marginTop: 24, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-                <div style={{ fontSize: 15, fontWeight: 800 }}>{BOOK} {chapter}:{selectedVerseData.verse}</div>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>{bookKey} {chapter}:{selectedVerseData.verse}</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 1 节</div>
               </div>
 
@@ -106,7 +138,7 @@ export default async function BiblePage({
                 <div style={{ fontSize: 12, fontWeight: 800 }}>高亮</div>
                 {HIGHLIGHT_COLORS.map((color) => (
                   <form key={color} action={setHighlight}>
-                    <input type="hidden" name="book" value={BOOK} />
+                    <input type="hidden" name="book" value={bookKey} />
                     <input type="hidden" name="chapter" value={chapter} />
                     <input type="hidden" name="verse" value={selectedVerseData.verse} />
                     <input type="hidden" name="color" value={color} />
@@ -119,7 +151,7 @@ export default async function BiblePage({
                 ))}
                 <div style={{ flex: 1 }} />
                 <form action={clearHighlight}>
-                  <input type="hidden" name="book" value={BOOK} />
+                  <input type="hidden" name="book" value={bookKey} />
                   <input type="hidden" name="chapter" value={chapter} />
                   <input type="hidden" name="verse" value={selectedVerseData.verse} />
                   <button type="submit" title="取消高亮" style={{
@@ -130,12 +162,12 @@ export default async function BiblePage({
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <NoteComposer book={BOOK} chapter={chapter} verse={selectedVerseData.verse} />
+                <NoteComposer book={bookKey} chapter={chapter} verse={selectedVerseData.verse} />
                 <form action={startConversation}>
-                  <input type="hidden" name="book" value={BOOK} />
+                  <input type="hidden" name="book" value={bookKey} />
                   <input type="hidden" name="chapter" value={chapter} />
                   <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
-                  <input type="hidden" name="translation" value={TRANSLATION} />
+                  <input type="hidden" name="translation" value={version.label} />
                   <button type="submit" style={{ display: "flex", alignItems: "center", gap: 5, height: 30, padding: "0 14px", background: "var(--purple)", border: "none", borderRadius: 100, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>问慧读</button>
                 </form>
               </div>
@@ -157,6 +189,7 @@ export default async function BiblePage({
           <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 10, padding: "16px 20px 12px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, background: "var(--yellow)", borderRadius: 8, fontSize: 12, fontWeight: 800 }}>精</div>
             <div style={{ fontSize: 14, fontWeight: 800 }}>精读本注释</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>{bookKey} {chapter} 章</div>
           </div>
           <div style={{ flex: 1, overflow: "auto", padding: "0 16px 16px" }}>
             {commentary.map((cmt) => (
@@ -184,15 +217,19 @@ export default async function BiblePage({
               <>
                 <div style={{ background: "var(--yellow)", borderRadius: 12, padding: "10px 12px" }}>
                   <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", background: "var(--ink)", color: "#fff", padding: "3px 6px", borderRadius: 6, display: "inline-block", marginBottom: 6 }}>经文引用</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{BOOK} {chapter}:{selectedVerseData.verse} · 和合本</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.7, color: "var(--body)" }}>{selectedVerseData.text}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{bookKey} {chapter}:{selectedVerseData.verse} · {version.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.7, color: "var(--body)" }}
+                    {...(version.code === "pinyin"
+                      ? { dangerouslySetInnerHTML: { __html: selectedVerseData.text } }
+                      : { children: selectedVerseData.text })}
+                  />
                 </div>
                 {user ? (
                   <form action={startConversation}>
-                    <input type="hidden" name="book" value={BOOK} />
+                    <input type="hidden" name="book" value={bookKey} />
                     <input type="hidden" name="chapter" value={chapter} />
                     <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
-                    <input type="hidden" name="translation" value={TRANSLATION} />
+                    <input type="hidden" name="translation" value={version.label} />
                     <button type="submit" style={{ width: "100%", height: 40, background: "var(--purple)", border: "none", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>请为我解释这节经文</button>
                   </form>
                 ) : (

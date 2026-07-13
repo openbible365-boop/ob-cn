@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "mobile-app", "--", "--port", "5199", "--strictPort"],
       "port": 5199
+    },
+    {
+      "name": "admin-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "admin-app"],
+      "port": 3000
     }
   ]
 }

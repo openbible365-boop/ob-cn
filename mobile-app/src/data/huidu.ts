@@ -3,7 +3,6 @@
 // UI keeps the standing disclaimer). Swapping in a real model later only
 // replaces the two generate* functions.
 import { load, save, uid } from "./store";
-import { BOOK } from "./scripture";
 
 export type HuiduBlock = { tag: string; color: string; dark: boolean; text: string };
 export type Message =
@@ -65,8 +64,8 @@ export function getConversation(id: string) {
   return getConversations().find((c) => c.id === id) ?? null;
 }
 
-export function startConversation(chapter: number, verse: number, verseText: string): Conversation {
-  const refLabel = `${BOOK} ${chapter}:${verse}`;
+export function startConversation(bookName: string, chapter: number, verse: number, verseText: string): Conversation {
+  const refLabel = `${bookName} ${chapter}:${verse}`;
   const conv: Conversation = {
     id: uid(),
     chapter,

@@ -1,38 +1,60 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-
-const BOOK = "约翰福音";
-const TRANSLATION = "和合本";
+import { OT_BOOKS, NT_BOOKS, DEFAULT_BOOK_ORDER, getBook } from "@/lib/bible-books";
 
 export default async function AnnotationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string }>;
+  searchParams: Promise<{ b?: string; c?: string }>;
 }) {
-  const { c } = await searchParams;
+  const { b, c } = await searchParams;
 
-  const chapterAgg = await db.verse.aggregate({ where: { translation: TRANSLATION, book: BOOK }, _max: { chapter: true } });
-  const maxChapter = chapterAgg._max.chapter ?? 1;
-  const chapter = Math.min(Math.max(Number(c) || 3, 1), maxChapter);
+  const book = getBook(Number(b) || DEFAULT_BOOK_ORDER);
+  const maxChapter = book.chapters;
+  const defaultChapter = book.order === DEFAULT_BOOK_ORDER ? 3 : 1;
+  const chapter = Math.min(Math.max(Number(c) || defaultChapter, 1), maxChapter);
 
-  const commentary = await db.commentary.findMany({ where: { book: BOOK, chapter }, orderBy: { rangeStart: "asc" } });
+  const commentary = await db.commentary.findMany({ where: { book: book.zh, chapter }, orderBy: { rangeStart: "asc" } });
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
       <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 8, padding: "10px 28px", borderBottom: "1px solid var(--line)", background: "var(--white)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>和合本</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>{BOOK} {chapter}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>精读本</div>
+        <details style={{ position: "relative" }}>
+          <summary style={{ listStyle: "none", display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", userSelect: "none" }}>
+            {book.zh} {chapter} ▾
+          </summary>
+          <div style={{ position: "absolute", top: 42, left: 0, zIndex: 40, width: 560, maxHeight: 420, overflow: "auto", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12 }}>
+            {[{ label: "旧约", books: OT_BOOKS }, { label: "新约", books: NT_BOOKS }].map((group) => (
+              <div key={group.label} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", margin: "4px 2px 6px" }}>{group.label}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+                  {group.books.map((bk) => (
+                    <Link key={bk.order} href={`/annotations?b=${bk.order}&c=1`} style={{
+                      padding: "6px 8px", borderRadius: 8, fontSize: 12, textAlign: "center", textDecoration: "none",
+                      fontWeight: bk.order === book.order ? 800 : 600,
+                      background: bk.order === book.order ? "var(--ink)" : "var(--surface)",
+                      color: bk.order === book.order ? "var(--yellow)" : "var(--ink)",
+                    }}>
+                      {bk.zh}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
         <div style={{ display: "flex", gap: 6, marginLeft: 6 }}>
-          {chapter > 1 && <Link href={`/annotations?c=${chapter - 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>‹</Link>}
-          {chapter < maxChapter && <Link href={`/annotations?c=${chapter + 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>›</Link>}
+          {chapter > 1 && <Link href={`/annotations?b=${book.order}&c=${chapter - 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>‹</Link>}
+          {chapter < maxChapter && <Link href={`/annotations?b=${book.order}&c=${chapter + 1}`} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>›</Link>}
         </div>
         <div style={{ flex: 1 }} />
-        <Link href={`/bible?c=${chapter}`} style={{ fontSize: 13, fontWeight: 700, color: "var(--body)" }}>去读经 →</Link>
+        <Link href={`/bible?b=${book.order}&c=${chapter}`} style={{ fontSize: 13, fontWeight: 700, color: "var(--body)" }}>去读经 →</Link>
       </div>
 
       <div style={{ flex: 1, overflow: "auto", padding: "32px 40px" }}>
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>{BOOK} 第 {chapter} 章</div>
+          <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 4 }}>{book.zh} 第 {chapter} 章</div>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.08em", marginBottom: 20 }}>精读本注释 · 逐段释义</div>
 
           {commentary.map((cmt) => (

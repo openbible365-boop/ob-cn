@@ -255,3 +255,19 @@ a {
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
   40% { transform: translateY(-3px); opacity: 1; }
 }
+
+/* scripture markup from the source data: proper-noun marks + pinyin ruby */
+.verse-text mark {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--body);
+}
+
+.verse-text ruby rt {
+  font-size: 0.55em;
+  color: var(--body);
+  font-weight: 400;
+}

@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-
-// John has 21 chapters (this site only carries 约翰福音 for now).
-const CHAPTERS = Array.from({ length: 21 }, (_, i) => i + 1);
-const BOOK = "约翰福音";
+import {
+  VERSIONS,
+  OT_BOOKS,
+  NT_BOOKS,
+  DEFAULT_BOOK_ORDER,
+  getBook,
+  getVersion,
+} from "@/lib/bible-books";
 
 function Chevron() {
   return (
@@ -26,9 +30,23 @@ export function ReadingControls() {
   // Reading-only controls — hidden on other tabs.
   if (pathname !== "/bible") return null;
 
-  const chapter = Math.min(Math.max(Number(searchParams.get("c")) || 3, 1), 21);
+  const version = getVersion(searchParams.get("t") ?? undefined);
+  const book = getBook(Number(searchParams.get("b")) || DEFAULT_BOOK_ORDER);
+  const defaultChapter = book.order === DEFAULT_BOOK_ORDER ? 3 : 1;
+  const chapter = Math.min(Math.max(Number(searchParams.get("c")) || defaultChapter, 1), book.chapters);
+  const bookLabel = book[version.lang];
 
   const close = () => setOpen(null);
+
+  const goto = (opts: { t?: string; b?: number; c?: number; v?: number }) => {
+    const params = new URLSearchParams();
+    params.set("t", opts.t ?? version.code);
+    params.set("b", String(opts.b ?? book.order));
+    if (opts.c) params.set("c", String(opts.c));
+    if (opts.v) params.set("v", String(opts.v));
+    router.push(`/bible?${params.toString()}`);
+    close();
+  };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +54,9 @@ export function ReadingControls() {
     const cv = q.match(/^(\d+)\s*[:：]\s*(\d+)$/);
     const vOnly = q.match(/^(\d+)$/);
     if (cv) {
-      router.push(`/bible?c=${Math.min(Math.max(Number(cv[1]), 1), 21)}&v=${Number(cv[2])}`);
+      goto({ c: Math.min(Math.max(Number(cv[1]), 1), book.chapters), v: Number(cv[2]) });
     } else if (vOnly) {
-      router.push(`/bible?c=${chapter}&v=${Number(vOnly[1])}`);
+      goto({ c: chapter, v: Number(vOnly[1]) });
     }
     setQuery("");
     close();
@@ -57,15 +75,28 @@ export function ReadingControls() {
           onClick={() => setOpen(open === "translation" ? null : "translation")}
           style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: "var(--ink)", cursor: "pointer" }}
         >
-          和合本 <Chevron />
+          {version.label} <Chevron />
         </button>
         {open === "translation" && (
-          <div style={{ position: "absolute", top: 42, left: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-float)", padding: 6, minWidth: 140 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--surface)", borderRadius: 8, fontSize: 13, fontWeight: 700 }}>
-              和合本
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "auto" }}><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
-            <div style={{ fontSize: 11, color: "var(--body)", padding: "6px 10px 2px" }}>更多译本即将上线</div>
+          <div style={{ position: "absolute", top: 42, left: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-float)", padding: 6, minWidth: 170 }}>
+            {VERSIONS.map((ver) => (
+              <button
+                key={ver.code}
+                type="button"
+                onClick={() => goto({ t: ver.code, c: chapter })}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 10px",
+                  background: ver.code === version.code ? "var(--surface)" : "transparent",
+                  border: "none", borderRadius: 8, fontSize: 13, cursor: "pointer",
+                  fontWeight: ver.code === version.code ? 800 : 600, color: "var(--ink)", textAlign: "left",
+                }}
+              >
+                {ver.label}
+                {ver.code === version.code && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "auto" }}><polyline points="20 6 9 17 4 12" /></svg>
+                )}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -77,17 +108,40 @@ export function ReadingControls() {
           onClick={() => setOpen(open === "chapter" ? null : "chapter")}
           style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: "var(--ink)", cursor: "pointer" }}
         >
-          {BOOK} {chapter} <Chevron />
+          {bookLabel} {chapter} <Chevron />
         </button>
         {open === "chapter" && (
-          <div style={{ position: "absolute", top: 42, left: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-float)", padding: 8, width: 240 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", padding: "2px 4px 8px" }}>{BOOK} · 选择章</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
-              {CHAPTERS.map((n) => (
+          <div style={{ position: "absolute", top: 42, left: 0, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-float)", padding: 12, width: 620, maxHeight: 440, overflow: "auto" }}>
+            {[{ label: "旧约", books: OT_BOOKS }, { label: "新约", books: NT_BOOKS }].map((group) => (
+              <div key={group.label} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", margin: "2px 2px 6px" }}>{group.label}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
+                  {group.books.map((bk) => (
+                    <button
+                      key={bk.order}
+                      type="button"
+                      onClick={() => goto({ b: bk.order, c: bk.order === book.order ? chapter : 1 })}
+                      style={{
+                        padding: "6px 4px", borderRadius: 8, fontSize: 12, cursor: "pointer",
+                        border: "1px solid var(--line)",
+                        fontWeight: bk.order === book.order ? 800 : 600,
+                        background: bk.order === book.order ? "var(--ink)" : "var(--white)",
+                        color: bk.order === book.order ? "var(--yellow)" : "var(--ink)",
+                      }}
+                    >
+                      {bk[version.lang]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", margin: "8px 2px 6px" }}>{bookLabel} · 选择章</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 4 }}>
+              {Array.from({ length: book.chapters }, (_, i) => i + 1).map((n) => (
                 <button
                   key={n}
                   type="button"
-                  onClick={() => { router.push(`/bible?c=${n}`); close(); }}
+                  onClick={() => goto({ c: n })}
                   style={{
                     height: 28, borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: "1px solid var(--line)",
@@ -149,7 +203,7 @@ export function ReadingControls() {
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               </button>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 18 }}>收听 {BOOK} {chapter}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 18 }}>收听 {bookLabel} {chapter}</div>
             <div style={{ height: 4, background: "var(--surface-2)", borderRadius: 100, marginBottom: 6 }}>
               <div style={{ width: "0%", height: "100%", background: "var(--purple)", borderRadius: 100 }} />
             </div>

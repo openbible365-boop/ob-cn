@@ -348,6 +348,7 @@ model Verse {
 
   @@unique([translation, book, chapter, verse])
   @@index([translation, book, chapter])
+  @@index([translation, bookOrder, chapter])
 }
 
 model Commentary {
