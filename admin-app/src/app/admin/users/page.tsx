@@ -13,7 +13,12 @@ export default async function UsersPage({
   const [users, total] = await Promise.all([
     db.user.findMany({
       where: q
-        ? { name: { contains: q, mode: "insensitive" } }
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+            ],
+          }
         : undefined,
       include: {
         authAccounts: true,
@@ -23,6 +28,9 @@ export default async function UsersPage({
     }),
     db.user.count(),
   ]);
+
+  const fmtLogin = (d: Date | null) =>
+    d ? d.toISOString().slice(0, 16).replace("T", " ") : "从未登录";
 
   return (
     <>
@@ -35,13 +43,13 @@ export default async function UsersPage({
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input name="q" placeholder="搜索用户名" defaultValue={q ?? ""} />
+          <input name="q" placeholder="搜索用户名 / email" defaultValue={q ?? ""} />
         </form>
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.2fr 150px 120px 110px 110px 220px" }}>
-          <div>用户</div><div>登录方式</div><div>所属群组</div><div>群用户级别</div><div>状态</div><div>操作</div>
+        <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
+          <div>用户</div><div>登录方式</div><div>最近登录</div><div>所属群组</div><div>群用户级别</div><div>状态</div><div>操作</div>
         </div>
 
         {users.map((u) => {
@@ -51,7 +59,7 @@ export default async function UsersPage({
             u.status === "BANNED" ? "封禁中" : u.status === "MUTED" ? "禁言中" : "正常";
 
           return (
-            <div key={u.id} className="admin-table-row" style={{ gridTemplateColumns: "1.2fr 150px 120px 110px 110px 220px" }}>
+            <div key={u.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -60,11 +68,15 @@ export default async function UsersPage({
                 }}>
                   {u.name.slice(0, 1)}
                 </div>
-                <div style={{ fontWeight: 700 }}>
-                  {u.name} <span style={{ fontWeight: 600, color: "var(--body)" }}>· UID {u.uid}</span>
+                <div>
+                  <div style={{ fontWeight: 700 }}>
+                    {u.name} <span style={{ fontWeight: 600, color: "var(--body)" }}>· UID {u.uid}</span>
+                  </div>
+                  {u.email && <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{u.email}</div>}
                 </div>
               </div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>{login}</div>
+              <div style={{ fontWeight: 600, color: "var(--body)" }}>{fmtLogin(u.lastLoginAt)}</div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>{u.memberships.length} 个</div>
               <div><span className="pill pill-purple">{level}</span></div>
               <div>

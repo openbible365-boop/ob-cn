@@ -46,10 +46,12 @@ model User {
   id          String     @id @default(cuid())
   uid         Int        @unique @default(autoincrement())
   name        String
+  email       String?    @unique
   avatarColor String     @default("#FFD465")
   status      UserStatus @default(ACTIVE)
   mutedUntil  DateTime?
   banReason   String?
+  lastLoginAt DateTime?
   createdAt   DateTime   @default(now())
 
   authAccounts         AuthAccount[]
@@ -437,4 +439,20 @@ model NotificationSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, key])
+}
+
+// ---------- Email verification codes (登录/注册) ----------
+// Codes are stored hashed; a code is valid for 10 minutes, allows 5 attempts,
+// and is consumed on successful login.
+
+model VerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
 }

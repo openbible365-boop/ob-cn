@@ -1,67 +1,12 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/current-user";
-import { loginAsTestUser, logout } from "@/lib/actions/site/me";
-
-function LoginScreen() {
-  // Mirrors the mobile 5d 注册登录 design. Real registration doesn't exist
-  // yet, so the primary button signs in as the seeded test account — the
-  // note below the form says so explicitly.
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "56px 24px" }}>
-      <div className="card" style={{ width: 400, padding: "32px 28px", display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--yellow)", borderRadius: 16 }}>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#18191F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-          </svg>
-        </div>
-        <div>
-          <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>OpenBible</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)" }}>登录后，高亮、笔记与慧读历史将全端同步</div>
-        </div>
-
-        <form action={loginAsTestUser} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <input
-            name="email"
-            type="email"
-            placeholder="输入 email 地址"
-            style={{ height: 48, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500 }}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              name="code"
-              placeholder="输入验证码"
-              style={{ flex: 1, height: 48, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500 }}
-            />
-            <button type="button" title="即将上线" style={{ height: 48, padding: "0 14px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "default", opacity: 0.7 }}>获取验证码</button>
-          </div>
-          <button type="submit" className="btn-primary">登录 / 注册</button>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>
-            演示环境：暂未开放真实注册，将以测试账号「王弟兄」登录
-          </div>
-        </form>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ flex: 1, height: 1, background: "var(--surface-2)" }} />
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>或使用以下方式登录</div>
-          <div style={{ flex: 1, height: 1, background: "var(--surface-2)" }} />
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button type="button" title="即将上线" style={{ height: 46, background: "var(--ink)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "default", opacity: 0.6 }}>Sign in with Apple</button>
-          <button type="button" title="即将上线" style={{ height: 46, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "default", opacity: 0.6 }}>使用 Google 登录</button>
-        </div>
-
-        <div style={{ fontSize: 10, fontWeight: 600, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>登录即代表同意《用户协议》与《隐私政策》</div>
-      </div>
-    </div>
-  );
-}
+import { logout } from "@/lib/actions/site/me";
+import { LoginCard } from "@/components/site/LoginCard";
 
 export default async function MePage() {
   const user = await getSessionUser();
-  if (!user) return <LoginScreen />;
+  if (!user) return <LoginCard />;
 
   const [highlightCount, noteCount, conversationCount, postCount] = await Promise.all([
     db.highlight.count({ where: { userId: user.id } }),

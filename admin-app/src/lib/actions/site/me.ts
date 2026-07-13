@@ -12,6 +12,7 @@ import { defaultFor, NOTIFICATION_PREFS } from "@/lib/notification-prefs";
 // removes it and the whole site reflects the logged-out state.
 export async function loginAsTestUser() {
   const user = await db.user.findFirstOrThrow({ where: { name: TEST_USER_NAME } });
+  await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   const store = await cookies();
   store.set(SESSION_COOKIE, user.id, { httpOnly: true, path: "/", sameSite: "lax" });
   redirect("/me");
