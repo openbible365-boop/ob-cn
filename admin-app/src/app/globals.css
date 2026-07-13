@@ -389,6 +389,11 @@ input {
 }
 
 .site-topbar {
+  /* Pin to the viewport top on pages where the body scrolls (community,
+     annotations, …); reading pages with internal scroll are unaffected. */
+  position: sticky;
+  top: 0;
+  z-index: 50;
   flex: none;
   display: flex;
   align-items: center;
