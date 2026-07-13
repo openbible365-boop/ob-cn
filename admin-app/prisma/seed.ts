@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -38,6 +40,7 @@ async function main() {
 
   await seedAiAndDashboard();
   await seedContentModerationEventsAudit();
+  await seedBibleAndCommentary();
 
   console.log("Seed complete.");
 }
@@ -474,6 +477,75 @@ async function seedContentModerationEventsAudit() {
       data: [
         { operatorId: admin.id, action: "封禁用户", targetType: "User", targetId: zhao.id, detail: "赵某 · 原因：垃圾广告" },
         { operatorId: admin.id, action: "警告社群", targetType: "Community", targetId: prayer.id, detail: "姊妹祷告会 · 累计警告 1 次" },
+      ],
+    });
+  }
+}
+
+async function seedBibleAndCommentary() {
+  // Verse text is authentic public-domain 和合本 (新标点和合本，简体) sourced
+  // from bolls.life and committed at prisma/data/john-cuv.json — not hand-typed.
+  const versesAlreadySeeded = (await db.verse.count()) > 0;
+  if (!versesAlreadySeeded) {
+    const raw = readFileSync(join(__dirname, "data", "john-cuv.json"), "utf-8");
+    const parsed = JSON.parse(raw) as {
+      translation: string;
+      book: string;
+      bookOrder: number;
+      verses: { chapter: number; verse: number; text: string }[];
+    };
+
+    await db.verse.createMany({
+      data: parsed.verses.map((v) => ({
+        translation: parsed.translation,
+        book: parsed.book,
+        bookOrder: parsed.bookOrder,
+        chapter: v.chapter,
+        verse: v.verse,
+        text: v.text,
+      })),
+    });
+  }
+
+  // Study-Bible commentary is our own editorial content (matches the design's
+  // 精读本注释), keyed to verse ranges within John 3.
+  const commentaryAlreadySeeded = (await db.commentary.count()) > 0;
+  if (!commentaryAlreadySeeded) {
+    await db.commentary.createMany({
+      data: [
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 1,
+          rangeEnd: 8,
+          title: "3:1–8 · 重生的对话",
+          body: "尼哥底母是法利赛人、犹太公会的成员，夜里来见耶稣，既出于谨慎，也暗示他尚在黑暗中摸索。「重生」原文亦作「从上头生」：不是道德修补，而是圣灵所赐的全新生命。「风随着意思吹」以风喻灵，指明重生是神主权的工作。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 9,
+          rangeEnd: 15,
+          title: "3:9–15 · 举蛇的预表",
+          body: "耶稣引用民数记 21 章旷野举铜蛇的事件：百姓仰望铜蛇便得医治，预表人子将被举起在十字架上——凡仰望信靠他的，就得永生。「举起」在约翰福音中兼指被钉与得荣耀。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 16,
+          rangeEnd: 17,
+          title: "3:16–17 · 福音中的福音",
+          highlight: true,
+          body: "本段是整卷约翰福音信息的浓缩。「爱」（agapaō）指神主动、舍己的爱；「世人」表明这爱临到普世众人。「独生子」（monogenēs）强调基督与父独一无二的关系；「赐给」呼应 3:14 被举起的人子——爱在十字架上成为具体行动。定罪不是神差子的目的（3:17），信而得生才是。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 18,
+          rangeEnd: 21,
+          title: "3:18–21 · 光与黑暗的分野",
+          body: "信与不信在此刻已分出结局：不信者「罪已经定了」。光来到世间成为试金石——人对光的态度显明其行为的本相；行真理的必来就光。",
+        },
       ],
     });
   }

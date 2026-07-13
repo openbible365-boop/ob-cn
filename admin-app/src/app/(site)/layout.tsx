@@ -1,12 +1,5 @@
 import { getCurrentUser } from "@/lib/current-user";
-
-const NAV_ITEMS = [
-  { href: "/bible", label: "圣经", disabled: true },
-  { href: "/annotations", label: "注释", disabled: true },
-  { href: "/huidu", label: "慧读", disabled: true },
-  { href: "/community", label: "社群" },
-  { href: "/me", label: "我的", disabled: true },
-];
+import { SiteNav } from "@/components/site/SiteNav";
 
 export default async function SiteLayout({
   children,
@@ -28,19 +21,7 @@ export default async function SiteLayout({
           <div className="name">OpenBible</div>
         </div>
 
-        <nav className="site-nav">
-          {NAV_ITEMS.map((item) =>
-            item.disabled ? (
-              <span key={item.href} className="site-nav-item disabled" title="即将上线">
-                {item.label}
-              </span>
-            ) : (
-              <a key={item.href} href={item.href} className="site-nav-item active">
-                {item.label}
-              </a>
-            )
-          )}
-        </nav>
+        <SiteNav />
 
         <div style={{ flex: 1 }} />
 

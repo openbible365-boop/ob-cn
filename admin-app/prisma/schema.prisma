@@ -54,10 +54,13 @@ model User {
 
   authAccounts     AuthAccount[]
   memberships      Membership[]
-  ownedCommunities Community[]   @relation("CommunityOwner")
+  ownedCommunities Community[]    @relation("CommunityOwner")
   posts            Post[]
   postLikes        PostLike[]
   eventSignups     EventSignup[]
+  highlights       Highlight[]
+  notes            Note[]
+  conversations    Conversation[]
 }
 
 model AuthAccount {
@@ -327,4 +330,97 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   operator Operator @relation(fields: [operatorId], references: [id])
+}
+
+// ---------- Bible reading, commentary, highlights & notes ----------
+
+model Verse {
+  id          String @id @default(cuid())
+  translation String
+  book        String
+  bookOrder   Int
+  chapter     Int
+  verse       Int
+  text        String
+
+  @@unique([translation, book, chapter, verse])
+  @@index([translation, book, chapter])
+}
+
+model Commentary {
+  id         String  @id @default(cuid())
+  book       String
+  chapter    Int
+  rangeStart Int
+  rangeEnd   Int
+  title      String
+  body       String
+  highlight  Boolean @default(false)
+
+  @@index([book, chapter])
+}
+
+model Highlight {
+  id        String   @id @default(cuid())
+  userId    String
+  book      String
+  chapter   Int
+  verse     Int
+  color     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, book, chapter, verse])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  book      String
+  chapter   Int
+  verse     Int
+  content   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- 慧读 (AI reading assistant) conversations ----------
+
+model Conversation {
+  id            String   @id @default(cuid())
+  userId        String
+  translation   String
+  book          String
+  chapter       Int
+  verseStart    Int
+  verseEnd      Int
+  verseRefLabel String
+  verseText     String
+  title         String
+  createdAt     DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  blocks         Json?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
 }
