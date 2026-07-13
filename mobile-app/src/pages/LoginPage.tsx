@@ -1,38 +1,61 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { setLoggedIn } from "../data/profile";
+import { sendLoginCode, verifyLoginCode } from "../data/profile";
 
-// 注册登录（design 5d）— UI matches the design; this build keeps a
-// device-local session. Real email-code / Apple login arrives with the
-// backend API integration.
+// 注册登录（design 5d）— real email verification-code login against the
+// OpenBible backend; first login auto-registers the account.
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [cooldown, setCooldown] = useState(0);
 
-  const sendCode = () => {
+  const startCooldown = (seconds: number) => {
+    setCooldown(seconds);
+    const timer = setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) clearInterval(timer);
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const sendCode = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("请输入有效的邮箱地址");
       return;
     }
     setError("");
-    setSent(true);
+    setNotice("");
+    setBusy(true);
+    const result = await sendLoginCode(email);
+    setBusy(false);
+    if (result.ok) {
+      setNotice(result.message);
+      startCooldown(60);
+    } else {
+      setError(result.message);
+    }
   };
 
-  const submit = () => {
-    if (!sent) {
-      setError("请先获取验证码");
+  const submit = async () => {
+    if (!/^\d{6}$/.test(code.trim())) {
+      setError("请输入 6 位数字验证码");
       return;
     }
-    if (code.trim().length < 4) {
-      setError("请输入验证码（演示版任意 4 位以上）");
-      return;
+    setError("");
+    setBusy(true);
+    const result = await verifyLoginCode(email, code.trim());
+    setBusy(false);
+    if (result.ok) {
+      navigate("/me", { replace: true });
+    } else {
+      setError(result.message);
     }
-    setLoggedIn(true);
-    navigate("/me", { replace: true });
   };
 
   return (
@@ -68,26 +91,28 @@ export function LoginPage() {
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="验证码"
+                placeholder="6 位验证码"
                 inputMode="numeric"
+                maxLength={6}
                 style={{ flex: 1, height: "100%", fontSize: 14, fontWeight: 600, border: "none", outline: "none", background: "transparent", minWidth: 0 }}
               />
             </div>
             <button
               onClick={sendCode}
-              disabled={sent}
-              style={{ flex: "none", height: 48, padding: "0 14px", background: sent ? "var(--surface-2)" : "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: sent ? "var(--body)" : "var(--ink)" }}
+              disabled={busy || cooldown > 0}
+              style={{ flex: "none", height: 48, padding: "0 14px", background: cooldown > 0 ? "var(--surface-2)" : "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: cooldown > 0 ? "var(--body)" : "var(--ink)" }}
             >
-              {sent ? "已发送" : "获取验证码"}
+              {cooldown > 0 ? `${cooldown}s` : "获取验证码"}
             </button>
           </div>
           {error && <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pink)" }}>{error}</div>}
-          {sent && !error && (
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>
-              演示版未真实发信：输入任意 4 位以上验证码即可登录。
-            </div>
+          {notice && !error && (
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>{notice}</div>
           )}
-          <button className="btn-primary" onClick={submit}>登录 / 注册</button>
+          <button className="btn-primary" onClick={submit} disabled={busy}>
+            {busy ? "请稍候…" : "登录 / 注册"}
+          </button>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>首次使用同一邮箱登录将自动注册</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -97,19 +122,12 @@ export function LoginPage() {
         </div>
 
         <button
-          onClick={() => { setError("Apple 登录将在接入账号服务后开放"); }}
+          onClick={() => { setError("移动端 Apple 登录即将开放，网页版已支持"); }}
           className="card"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700 }}
         >
            通过 Apple 登录
         </button>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,212,101,.35)", border: "1px solid var(--line)", borderRadius: 12, padding: "12px 14px" }}>
-          <Icon name="cloud" size={15} />
-          <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            此版本登录状态仅保存在本机。接入 OpenBible 账号服务（邮箱验证码 / Apple）后自动升级为真实账号。
-          </div>
-        </div>
 
         <div className="disclaimer">登录即表示同意《用户协议》与《隐私政策》</div>
       </div>

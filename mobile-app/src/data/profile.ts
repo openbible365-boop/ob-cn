@@ -1,20 +1,56 @@
-// Local session + notification preferences. Real email-code / Apple login
-// arrives when the app is wired to the backend API; until then login state
-// is device-local and the login screen says so.
+// Real account session backed by the OpenBible backend. The static site
+// serves /api/* by proxying to the admin app (nginx in production, the vite
+// dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
 
-const SESSION_KEY = "ob.loggedIn";
+export type SessionUser = {
+  id: string;
+  name: string;
+  email: string | null;
+  avatarColor: string;
+};
+
+type ApiResult = { ok: boolean; message: string; user?: SessionUser };
+
+async function post(path: string, body?: unknown): Promise<ApiResult> {
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    return (await res.json()) as ApiResult;
+  } catch {
+    return { ok: false, message: "网络错误，请稍后重试" };
+  }
+}
+
+export function sendLoginCode(email: string) {
+  return post("/api/mobile/auth/send-code", { email });
+}
+
+export function verifyLoginCode(email: string, code: string) {
+  return post("/api/mobile/auth/verify", { email, code });
+}
+
+export async function logout() {
+  await post("/api/mobile/auth/logout");
+}
+
+export async function fetchMe(): Promise<SessionUser | null> {
+  try {
+    const res = await fetch("/api/mobile/me");
+    if (!res.ok) return null;
+    const data = (await res.json()) as ApiResult;
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ---------- notification preferences (still device-local) ----------
+
 const PREFS_KEY = "ob.notificationPrefs";
-
-export const USER = { name: "王弟兄", avatarColor: "#FFD465", uid: 2 };
-
-export function isLoggedIn(): boolean {
-  return load<boolean>(SESSION_KEY, true);
-}
-
-export function setLoggedIn(v: boolean) {
-  save(SESSION_KEY, v);
-}
 
 export const NOTIFICATION_PREFS = [
   { key: "daily_verse", title: "每日金句推送", desc: "每天早上 7:30 推送一节经文", defaultEnabled: false },

@@ -1,16 +1,37 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { getHighlights, getNotes } from "../data/annotations";
 import { getConversations } from "../data/huidu";
 import { getGroups, getMySignups } from "../data/community";
-import { isLoggedIn, setLoggedIn, USER } from "../data/profile";
+import { fetchMe, logout, type SessionUser } from "../data/profile";
 
-// 我的首页（design 5a）— stats computed from the real local stores.
+// 我的首页（design 5a）— real backend session; stats still from local stores.
 export function MePage() {
   const navigate = useNavigate();
-  const loggedIn = isLoggedIn();
+  // undefined = checking the session, null = logged out.
+  const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
 
-  if (!loggedIn) {
+  useEffect(() => {
+    let cancelled = false;
+    fetchMe().then((u) => { if (!cancelled) setUser(u); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (user === undefined) {
+    return (
+      <div className="screen" style={{ background: "var(--surface)" }}>
+        <div style={{ flex: "none", padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>我的</div>
+        </div>
+        <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", justifyContent: "center" }}>
+          <div style={{ fontSize: 13, color: "var(--body)" }}>加载中…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
         <div style={{ flex: "none", padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
@@ -57,12 +78,12 @@ export function MePage() {
       <div className="screen-scroll" style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
         {/* profile card */}
         <div className="card" style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}>
-          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: USER.avatarColor, border: "1px solid var(--line)", borderRadius: 100, fontSize: 20, fontWeight: 800 }}>
-            {USER.name.slice(0, 1)}
+          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, border: "1px solid var(--line)", borderRadius: 100, fontSize: 20, fontWeight: 800 }}>
+            {user.name.slice(0, 1)}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{USER.name}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>UID {USER.uid} · 群主 ×{myGroups}</div>
+            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{user.name}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{user.email ?? `群主 ×${myGroups}`}</div>
           </div>
           <button className="icon-btn" title="编辑资料"><Icon name="edit" size={16} /></button>
         </div>
@@ -107,14 +128,14 @@ export function MePage() {
 
         {/* logout */}
         <button
-          onClick={() => { setLoggedIn(false); navigate("/me", { replace: true }); }}
+          onClick={async () => { await logout(); setUser(null); }}
           className="card"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", color: "var(--pink)", fontSize: 14, fontWeight: 800 }}
         >
           <Icon name="log-out" size={16} /> 退出登录
         </button>
 
-        <div className="disclaimer">OpenBible · 本地演示版 v0.1</div>
+        <div className="disclaimer">OpenBible v0.1</div>
       </div>
     </div>
   );
