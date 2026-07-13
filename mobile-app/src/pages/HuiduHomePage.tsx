@@ -1,0 +1,91 @@
+import { Link, useNavigate } from "react-router-dom";
+import { Icon } from "../components/Icon";
+import { getConversations } from "../data/huidu";
+
+function fmtTime(iso: string) {
+  return iso.slice(11, 16);
+}
+
+function isToday(iso: string) {
+  return iso.slice(0, 10) === new Date().toISOString().slice(0, 10);
+}
+
+// 慧读首页（design 3a）
+export function HuiduHomePage() {
+  const navigate = useNavigate();
+  const conversations = getConversations();
+  const today = conversations.filter((c) => isToday(c.createdAt));
+  const earlier = conversations.filter((c) => !isToday(c.createdAt));
+
+  const item = (c: (typeof conversations)[number], highlight: boolean) => (
+    <Link key={c.id} to={`/huidu/${c.id}`} className="card" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, background: highlight ? "var(--yellow)" : "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
+            {c.refLabel}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
+            {Math.ceil(c.messages.length / 2)} 轮 · {fmtTime(c.createdAt)}
+          </div>
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{c.title}</div>
+      </div>
+      <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>
+    </Link>
+  );
+
+  return (
+    <div className="screen" style={{ background: "var(--surface)" }}>
+      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
+        <div style={{ fontSize: 20, fontWeight: 800 }}>慧读</div>
+        <div style={{ flex: 1 }} />
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>今日剩余 12/20 次</div>
+      </div>
+
+      <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <button
+          onClick={() => navigate("/bible")}
+          style={{ display: "flex", alignItems: "center", gap: 14, background: "var(--purple)", borderRadius: 16, boxShadow: "var(--shadow-card)", padding: "18px 16px", textAlign: "left" }}
+        >
+          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: "rgba(255,255,255,.25)", borderRadius: 100, color: "#fff" }}>
+            <Icon name="star" size={20} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 2 }}>开始新对话</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.85)" }}>也可在阅读页划线经文，直达慧读</div>
+          </div>
+          <div style={{ color: "#fff" }}><Icon name="chevron-right" size={18} /></div>
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>历史存档</div>
+          <div style={{ flex: 1 }} />
+          <div className="seg">
+            <div className="seg-item active">按时间</div>
+            <div className="seg-item">按卷章</div>
+          </div>
+        </div>
+
+        {today.length > 0 && (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>今天</div>
+            {today.map((c, i) => item(c, i === 0))}
+          </>
+        )}
+        {earlier.length > 0 && (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>更早</div>
+            {earlier.map((c) => item(c, false))}
+          </>
+        )}
+        {conversations.length === 0 && (
+          <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>
+            还没有慧读记录。在阅读页点选一节经文，选择「慧读」试试。
+          </div>
+        )}
+
+        <div className="disclaimer">AI 解释仅供参考，不替代教会教导与权威释经</div>
+      </div>
+    </div>
+  );
+}
