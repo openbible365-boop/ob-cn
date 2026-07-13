@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { getSessionUser } from "@/lib/current-user";
 import { setHighlight, clearHighlight } from "@/lib/actions/site/reading";
 import { HIGHLIGHT_COLORS } from "@/lib/reading-constants";
 import { startConversation } from "@/lib/actions/site/huidu";
@@ -15,29 +15,34 @@ export default async function BiblePage({
   searchParams: Promise<{ c?: string; v?: string }>;
 }) {
   const { c, v } = await searchParams;
-  const user = await getCurrentUser();
+  // Scripture itself is public; highlights/notes/慧读 need a login.
+  const user = await getSessionUser();
 
   const chapterCount = await db.verse.aggregate({ where: { translation: TRANSLATION, book: BOOK }, _max: { chapter: true } });
   const maxChapter = chapterCount._max.chapter ?? 1;
   const chapter = Math.min(Math.max(Number(c) || 3, 1), maxChapter);
   const selectedVerse = v ? Number(v) : null;
 
-  const [verses, commentary, highlights, notes] = await Promise.all([
+  const [verses, commentary] = await Promise.all([
     db.verse.findMany({ where: { translation: TRANSLATION, book: BOOK, chapter }, orderBy: { verse: "asc" } }),
     db.commentary.findMany({ where: { book: BOOK, chapter }, orderBy: { rangeStart: "asc" } }),
-    db.highlight.findMany({ where: { userId: user.id, book: BOOK, chapter } }),
-    db.note.findMany({ where: { userId: user.id, book: BOOK, chapter }, orderBy: { createdAt: "desc" } }),
   ]);
+
+  const [highlights, notes, recentConversations] = user
+    ? await Promise.all([
+        db.highlight.findMany({ where: { userId: user.id, book: BOOK, chapter } }),
+        db.note.findMany({ where: { userId: user.id, book: BOOK, chapter }, orderBy: { createdAt: "desc" } }),
+        db.conversation.findMany({
+          where: { userId: user.id, book: BOOK, chapter },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+        }),
+      ])
+    : [[], [], []];
 
   const highlightMap = new Map(highlights.map((h) => [h.verse, h.color]));
   const selectedVerseData = selectedVerse ? verses.find((x) => x.verse === selectedVerse) : null;
   const selectedNotes = selectedVerse ? notes.filter((n) => n.verse === selectedVerse) : [];
-
-  const recentConversations = await db.conversation.findMany({
-    where: { userId: user.id, book: BOOK, chapter },
-    orderBy: { createdAt: "desc" },
-    take: 3,
-  });
 
   const hrefFor = (ch: number, verse?: number) =>
     `/bible?c=${ch}${verse ? `&v=${verse}` : ""}`;
@@ -82,7 +87,15 @@ export default async function BiblePage({
           </p>
 
           {/* selection toolbar */}
-          {selectedVerseData && (
+          {selectedVerseData && !user && (
+            <div className="card" style={{ marginTop: 24, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--body)" }}>
+                登录后可对 {BOOK} {chapter}:{selectedVerseData.verse} 高亮、写笔记，并向慧读提问。
+              </div>
+              <Link href="/me" style={{ display: "flex", alignItems: "center", height: 32, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 12, fontWeight: 800 }}>去登录</Link>
+            </div>
+          )}
+          {selectedVerseData && user && (
             <div className="card" style={{ marginTop: 24, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
                 <div style={{ fontSize: 15, fontWeight: 800 }}>{BOOK} {chapter}:{selectedVerseData.verse}</div>
@@ -174,13 +187,17 @@ export default async function BiblePage({
                   <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{BOOK} {chapter}:{selectedVerseData.verse} · 和合本</div>
                   <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.7, color: "var(--body)" }}>{selectedVerseData.text}</div>
                 </div>
-                <form action={startConversation}>
-                  <input type="hidden" name="book" value={BOOK} />
-                  <input type="hidden" name="chapter" value={chapter} />
-                  <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
-                  <input type="hidden" name="translation" value={TRANSLATION} />
-                  <button type="submit" style={{ width: "100%", height: 40, background: "var(--purple)", border: "none", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>请为我解释这节经文</button>
-                </form>
+                {user ? (
+                  <form action={startConversation}>
+                    <input type="hidden" name="book" value={BOOK} />
+                    <input type="hidden" name="chapter" value={chapter} />
+                    <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
+                    <input type="hidden" name="translation" value={TRANSLATION} />
+                    <button type="submit" style={{ width: "100%", height: 40, background: "var(--purple)", border: "none", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>请为我解释这节经文</button>
+                  </form>
+                ) : (
+                  <Link href="/me" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: 40, background: "var(--purple)", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, boxShadow: "var(--shadow-card)" }}>登录后开始慧读</Link>
+                )}
               </>
             ) : (
               <div style={{ fontSize: 12, fontWeight: 500, color: "var(--body)", lineHeight: 1.7, padding: "4px 2px" }}>在左侧点选一节经文，即可开始慧读，或高亮 / 加笔记。</div>

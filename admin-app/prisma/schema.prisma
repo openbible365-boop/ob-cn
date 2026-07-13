@@ -52,15 +52,16 @@ model User {
   banReason   String?
   createdAt   DateTime   @default(now())
 
-  authAccounts     AuthAccount[]
-  memberships      Membership[]
-  ownedCommunities Community[]    @relation("CommunityOwner")
-  posts            Post[]
-  postLikes        PostLike[]
-  eventSignups     EventSignup[]
-  highlights       Highlight[]
-  notes            Note[]
-  conversations    Conversation[]
+  authAccounts         AuthAccount[]
+  memberships          Membership[]
+  ownedCommunities     Community[]           @relation("CommunityOwner")
+  posts                Post[]
+  postLikes            PostLike[]
+  eventSignups         EventSignup[]
+  highlights           Highlight[]
+  notes                Note[]
+  conversations        Conversation[]
+  notificationSettings NotificationSetting[]
 }
 
 model AuthAccount {
@@ -423,4 +424,17 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
+}
+
+// ---------- Per-user notification preferences (网站「通知管理」) ----------
+
+model NotificationSetting {
+  id      String  @id @default(cuid())
+  userId  String
+  key     String
+  enabled Boolean
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
 }

@@ -41,8 +41,34 @@ async function main() {
   await seedAiAndDashboard();
   await seedContentModerationEventsAudit();
   await seedBibleAndCommentary();
+  await seedPersonalSamples();
 
   console.log("Seed complete.");
+}
+
+// Sample highlights/notes for the test account so /me and /me/content have
+// realistic rows on first run (copy matches the mobile 5b design).
+async function seedPersonalSamples() {
+  const wang = await db.user.findFirstOrThrow({ where: { name: "王弟兄" } });
+
+  if ((await db.highlight.count({ where: { userId: wang.id } })) === 0) {
+    await db.highlight.createMany({
+      data: [
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 16, color: "#FFD465" },
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 19, color: "#FFD465" },
+      ],
+    });
+  }
+
+  if ((await db.note.count({ where: { userId: wang.id } })) === 0) {
+    await db.note.createMany({
+      data: [
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 16, content: "「甚至」二字提醒我：爱是有代价的行动。为周五分享准备一个见证。" },
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 8, content: "风的比喻：看不见风，却能看见被风吹动的树。生命的改变就是圣灵工作的痕迹。" },
+        { userId: wang.id, book: "约翰福音", chapter: 2, verse: 5, content: "马利亚的嘱咐：「他告诉你们什么，你们就做什么。」顺服先于明白。" },
+      ],
+    });
+  }
 }
 
 async function ensureUser(name: string, data: Parameters<typeof db.user.create>[0]["data"]) {

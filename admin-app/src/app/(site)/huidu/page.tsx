@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 
 function isSameDay(a: Date, b: Date) {
   return a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
 }
 
 export default async function HuiduHomePage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const conversations = await db.conversation.findMany({
     where: { userId: user.id },
     include: { _count: { select: { messages: true } } },

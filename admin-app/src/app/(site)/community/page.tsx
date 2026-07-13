@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 
 export default async function CommunityIndexPage() {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const firstMembership = await db.membership.findFirst({
     where: { userId: user.id },
     orderBy: { joinedAt: "asc" },

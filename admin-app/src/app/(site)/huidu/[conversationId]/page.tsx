@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 import type { HuiduBlock } from "@/lib/huidu";
 import { FollowupComposer } from "@/components/site/FollowupComposer";
 
@@ -11,7 +11,7 @@ export default async function HuiduThreadPage({
   params: Promise<{ conversationId: string }>;
 }) {
   const { conversationId } = await params;
-  const user = await getCurrentUser();
+  const user = await requireUser();
 
   const conversation = await db.conversation.findUnique({
     where: { id: conversationId },

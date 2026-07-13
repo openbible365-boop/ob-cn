@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 
 export async function createEvent(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const communityId = String(formData.get("communityId"));
   const title = String(formData.get("title") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "");
@@ -33,7 +33,7 @@ export async function createEvent(formData: FormData) {
 }
 
 export async function toggleSignup(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const eventId = String(formData.get("eventId"));
   const communityId = String(formData.get("communityId"));
 

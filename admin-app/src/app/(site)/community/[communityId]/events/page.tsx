@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 import { CreateEventControl } from "@/components/site/CreateEventControl";
 import { toggleSignup } from "@/lib/actions/site/events";
 
@@ -41,7 +41,7 @@ export default async function CommunityEventsPage({
 }) {
   const { communityId } = await params;
   const { month: monthParam, event: eventParam } = await searchParams;
-  const user = await getCurrentUser();
+  const user = await requireUser();
 
   const community = await db.community.findUnique({ where: { id: communityId } });
   if (!community) notFound();

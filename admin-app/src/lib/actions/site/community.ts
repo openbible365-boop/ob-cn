@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 
 export async function createPost(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const communityId = String(formData.get("communityId"));
   const content = String(formData.get("content") ?? "").trim();
   const verseRef = String(formData.get("verseRef") ?? "").trim();
@@ -29,7 +29,7 @@ export async function createPost(formData: FormData) {
 }
 
 export async function toggleLike(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const postId = String(formData.get("postId"));
   const communityId = String(formData.get("communityId"));
 

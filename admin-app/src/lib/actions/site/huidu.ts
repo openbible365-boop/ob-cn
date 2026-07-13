@@ -3,14 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 import { generateHuiduBlocks, generateFollowupText } from "@/lib/huidu";
 
 // Starts a 慧读 conversation anchored to a verse (or verse range), persists the
 // opening user question + a templated three-part assistant answer, and lands
 // the user in the thread view.
 export async function startConversation(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
   const verseStart = Number(formData.get("verseStart"));
@@ -54,7 +54,7 @@ export async function startConversation(formData: FormData) {
 }
 
 export async function askFollowup(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const conversationId = String(formData.get("conversationId"));
   const question = String(formData.get("question") ?? "").trim();
   if (!question) throw new Error("问题不能为空");

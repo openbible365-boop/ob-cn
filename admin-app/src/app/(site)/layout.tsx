@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/current-user";
+import { getSessionUser } from "@/lib/current-user";
 import { SiteNav } from "@/components/site/SiteNav";
 import { ReadingControls } from "@/components/site/ReadingControls";
 
@@ -8,7 +9,7 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  const user = await getSessionUser();
 
   return (
     <div className="site-shell">
@@ -31,7 +32,22 @@ export default async function SiteLayout({
           <ReadingControls />
         </Suspense>
 
-        <div className="site-avatar" title={user.name}>{user.name.slice(0, 1)}</div>
+        {user ? (
+          <Link href="/me" className="site-avatar" title={user.name} style={{ textDecoration: "none" }}>
+            {user.name.slice(0, 1)}
+          </Link>
+        ) : (
+          <Link
+            href="/me"
+            style={{
+              display: "flex", alignItems: "center", height: 36, padding: "0 16px",
+              background: "var(--purple)", borderRadius: 100, color: "#fff",
+              fontSize: 13, fontWeight: 800, boxShadow: "var(--shadow-card)",
+            }}
+          >
+            登录
+          </Link>
+        )}
       </div>
 
       <div className="site-main">{children}</div>

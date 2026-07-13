@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: "/annotations", label: "注释" },
   { href: "/huidu", label: "慧读" },
   { href: "/community", label: "社群" },
-  { href: "/me", label: "我的", disabled: true },
+  { href: "/me", label: "我的" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -21,21 +21,15 @@ export function SiteNav() {
 
   return (
     <nav className="site-nav">
-      {NAV_ITEMS.map((item) =>
-        item.disabled ? (
-          <span key={item.href} className="site-nav-item disabled" title="即将上线">
-            {item.label}
-          </span>
-        ) : (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`site-nav-item${isActive(pathname, item.href) ? " active" : ""}`}
-          >
-            {item.label}
-          </Link>
-        )
-      )}
+      {NAV_ITEMS.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`site-nav-item${isActive(pathname, item.href) ? " active" : ""}`}
+        >
+          {item.label}
+        </Link>
+      ))}
     </nav>
   );
 }

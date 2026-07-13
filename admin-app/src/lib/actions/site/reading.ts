@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/current-user";
+import { requireUser } from "@/lib/current-user";
 import { HIGHLIGHT_COLORS } from "@/lib/reading-constants";
 
 export async function setHighlight(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
   const verse = Number(formData.get("verse"));
@@ -23,7 +23,7 @@ export async function setHighlight(formData: FormData) {
 }
 
 export async function clearHighlight(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
   const verse = Number(formData.get("verse"));
@@ -34,7 +34,7 @@ export async function clearHighlight(formData: FormData) {
 }
 
 export async function addNote(formData: FormData) {
-  const user = await getCurrentUser();
+  const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
   const verse = Number(formData.get("verse"));
