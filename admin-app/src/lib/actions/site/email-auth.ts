@@ -36,15 +36,24 @@ export async function sendLoginCode(_prev: AuthFormState, formData: FormData): P
   }
 
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  await db.verificationCode.create({
+  const record = await db.verificationCode.create({
     data: { email, codeHash: hashCode(code), expiresAt: new Date(Date.now() + CODE_TTL_MS) },
   });
 
-  const { delivered } = await sendVerificationEmail(email, code);
+  let delivered: boolean;
+  try {
+    ({ delivered } = await sendVerificationEmail(email, code));
+  } catch (err) {
+    // Don't leave an unusable code blocking the resend cooldown.
+    await db.verificationCode.delete({ where: { id: record.id } }).catch(() => {});
+    console.error("[email] 发送验证码失败：", err);
+    return { ok: false, message: "邮件发送失败，请稍后重试（服务器日志有详细错误，请检查 SMTP 配置与发件人验证状态）" };
+  }
+
   return {
     ok: true,
     message: delivered
-      ? "验证码已发送到你的邮箱，10 分钟内有效"
+      ? "验证码已发送到你的邮箱，10 分钟内有效（如未收到请查看垃圾邮件）"
       : "本地开发环境未配置 SMTP：验证码已输出到服务器日志（配置 SMTP_HOST 等环境变量即可真实发信）",
   };
 }
