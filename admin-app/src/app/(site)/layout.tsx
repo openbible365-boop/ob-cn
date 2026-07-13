@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/current-user";
 import { SiteNav } from "@/components/site/SiteNav";
+import { ReadingControls } from "@/components/site/ReadingControls";
 
 export default async function SiteLayout({
   children,
@@ -24,6 +26,10 @@ export default async function SiteLayout({
         <SiteNav />
 
         <div style={{ flex: 1 }} />
+
+        <Suspense fallback={null}>
+          <ReadingControls />
+        </Suspense>
 
         <div className="site-avatar" title={user.name}>{user.name.slice(0, 1)}</div>
       </div>

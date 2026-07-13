@@ -44,17 +44,6 @@ export default async function BiblePage({
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-      {/* chapter / translation nav */}
-      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 8, padding: "10px 28px", borderBottom: "1px solid var(--line)", background: "var(--white)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>和合本</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, height: 36, padding: "0 12px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13, fontWeight: 700 }}>{BOOK} {chapter}</div>
-        <div style={{ display: "flex", gap: 6, marginLeft: 6 }}>
-          {chapter > 1 && <Link href={hrefFor(chapter - 1)} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>‹</Link>}
-          {chapter < maxChapter && <Link href={hrefFor(chapter + 1)} className="icon-btn" style={{ width: 36, height: 36, textDecoration: "none" }}>›</Link>}
-        </div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", marginLeft: 4 }}>共 {maxChapter} 章</div>
-      </div>
-
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {/* verses */}
         <div style={{ flex: 1, padding: "32px 40px", overflow: "auto", borderRight: "1px solid var(--line)" }}>
