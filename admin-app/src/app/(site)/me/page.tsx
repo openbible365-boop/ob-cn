@@ -2,11 +2,32 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/current-user";
 import { logout } from "@/lib/actions/site/me";
+import { appleConfigured } from "@/lib/apple";
 import { LoginCard } from "@/components/site/LoginCard";
 
-export default async function MePage() {
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  apple_not_configured: "Apple 登录尚未配置（需要 Apple 开发者账号，详见 .env.example）",
+  apple_denied: "已取消 Apple 登录",
+  apple_state: "登录状态校验失败，请重新尝试",
+  apple_verify: "Apple 登录验证失败，请稍后重试（服务器日志有详细错误）",
+  apple_banned: "该账号已被封禁，如有疑问请联系运营",
+};
+
+export default async function MePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const user = await getSessionUser();
-  if (!user) return <LoginCard />;
+  if (!user) {
+    return (
+      <LoginCard
+        appleEnabled={appleConfigured()}
+        initialError={error ? OAUTH_ERROR_MESSAGES[error] : undefined}
+      />
+    );
+  }
 
   const [highlightCount, noteCount, conversationCount, postCount] = await Promise.all([
     db.highlight.count({ where: { userId: user.id } }),

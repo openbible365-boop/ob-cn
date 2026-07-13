@@ -8,13 +8,19 @@ import { loginAsTestUser } from "@/lib/actions/site/me";
 // design). 获取验证码 and 登录/注册 are two server actions sharing one form:
 // the send button uses formAction so the typed email is reused. Inputs are
 // controlled so React's post-action form reset doesn't wipe them.
-export function LoginCard() {
+export function LoginCard({
+  appleEnabled = false,
+  initialError,
+}: {
+  appleEnabled?: boolean;
+  initialError?: string;
+}) {
   const [sendState, sendAction, sendPending] = useActionState<AuthFormState, FormData>(sendLoginCode, null);
   const [verifyState, verifyAction, verifyPending] = useActionState<AuthFormState, FormData>(verifyLoginCode, null);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
 
-  const notice = verifyState ?? sendState;
+  const notice = verifyState ?? sendState ?? (initialError ? { ok: false, message: initialError } : null);
 
   return (
     <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "56px 24px" }}>
@@ -89,7 +95,21 @@ export function LoginCard() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button type="button" title="即将上线" style={{ height: 46, background: "var(--ink)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "default", opacity: 0.6 }}>Sign in with Apple</button>
+          {appleEnabled ? (
+            // OAuth 必须整页跳转到 API 路由（Link 预取会误发起授权流程）
+            // eslint-disable-next-line @next/next/no-html-link-for-pages
+            <a
+              href="/api/auth/apple/start"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, background: "var(--ink)", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M16.36 12.76c.03 3.26 2.86 4.35 2.89 4.36-.02.08-.45 1.55-1.49 3.07-.9 1.31-1.83 2.62-3.3 2.65-1.44.03-1.91-.86-3.56-.86-1.65 0-2.17.83-3.53.89-1.42.05-2.5-1.42-3.4-2.73-1.86-2.68-3.28-7.56-1.37-10.86.95-1.64 2.64-2.68 4.48-2.7 1.39-.03 2.71.94 3.56 .94.85 0 2.45-1.17 4.13-1 .7.03 2.68.28 3.94 2.14-.1.06-2.35 1.38-2.35 4.1zM13.6 4.34c.75-.91 1.26-2.18 1.12-3.44-1.08.04-2.39.72-3.17 1.63-.7.81-1.31 2.1-1.14 3.34 1.2.09 2.44-.62 3.19-1.53z" />
+              </svg>
+              Sign in with Apple
+            </a>
+          ) : (
+            <button type="button" title="未配置 Apple 登录（需 Apple 开发者账号，见 .env.example）" style={{ height: 46, background: "var(--ink)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "default", opacity: 0.6 }}>Sign in with Apple</button>
+          )}
           <button type="button" title="即将上线" style={{ height: 46, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "default", opacity: 0.6 }}>使用 Google 登录</button>
         </div>
 
