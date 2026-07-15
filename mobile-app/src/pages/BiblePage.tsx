@@ -50,11 +50,15 @@ export function BiblePage() {
   const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
 
   const [selected, setSelected] = useState<number | null>(null);
-  const [picker, setPicker] = useState<null | "version" | "chapter" | "search" | "audio">(null);
+  const [picker, setPicker] = useState<null | "version" | "chapter" | "search" | "audio" | "font">(null);
   const [pickerBook, setPickerBook] = useState<string | null>(null); // book focused inside the picker
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = Number(localStorage.getItem("ob.bible.fontSize"));
+    return [17, 19, 21, 23].includes(saved) ? saved : 19;
+  });
   const [storeVersion, setStoreVersion] = useState(0); // bump to re-read stores
 
   useEffect(() => {
@@ -70,6 +74,10 @@ export function BiblePage() {
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
   }, [version.code, book.code]);
+
+  useEffect(() => {
+    localStorage.setItem("ob.bible.fontSize", String(fontSize));
+  }, [fontSize]);
 
   const verses: Verse[] = useMemo(
     () => data?.chapters.get(chapter) ?? [],
@@ -149,40 +157,67 @@ export function BiblePage() {
 
   return (
     <div className="screen">
-      {/* top bar (design 1a) */}
-      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 8, padding: "10px 16px 14px", borderBottom: "1px solid var(--line)", position: "relative" }}>
-        <button
-          onClick={() => setPicker(picker === "version" ? null : "version")}
-          style={{ display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 14, fontWeight: 700, color: "var(--ink)" }}
-        >
-          {version.label} <Icon name="chevron-down" size={16} />
-        </button>
-        <button
-          onClick={() => { setPicker(picker === "chapter" ? null : "chapter"); setPickerBook(null); }}
-          style={{ display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 12px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 14, fontWeight: 700, color: "var(--ink)" }}
-        >
-          {displayBook} {chapter} <Icon name="chevron-down" size={16} />
-        </button>
-        <div style={{ flex: 1 }} />
-        <button className="icon-btn" style={{ background: "rgba(191,120,246,.16)", color: "var(--purple)" }} title="有声圣经" onClick={() => setPicker("audio")}>
-          <Icon name="play" size={18} />
-        </button>
-        <button className="icon-btn" onClick={() => setPicker(picker === "search" ? null : "search")}>
-          <Icon name="search" size={18} />
-        </button>
+      {/* reading toolbar */}
+      <div className="bible-toolbar">
+        <div className="bible-reader-selectors" aria-label="经卷章节及译本选择">
+          <button
+            className={`bible-reader-selector chapter${picker === "chapter" ? " is-open" : ""}`}
+            onClick={() => { setPicker(picker === "chapter" ? null : "chapter"); setPickerBook(null); }}
+            aria-label={`选择经卷和章节，当前为${displayBook}第${chapter}章`}
+          >
+            {displayBook} {chapter}
+          </button>
+          <button
+            className={`bible-reader-selector version${picker === "version" ? " is-open" : ""}`}
+            onClick={() => setPicker(picker === "version" ? null : "version")}
+            aria-label={`选择译本，当前为${version.label}`}
+          >
+            {version.label}
+          </button>
+        </div>
+
+        <div className="bible-toolbar-actions" aria-label="阅读工具">
+          <button
+            className="bible-toolbar-action"
+            title="有声圣经"
+            aria-label="有声圣经"
+            onClick={() => setPicker("audio")}
+          >
+            <Icon name="volume-2" size={25} />
+          </button>
+          <button
+            className="bible-toolbar-action"
+            title="搜索"
+            aria-label="搜索经文"
+            onClick={() => setPicker(picker === "search" ? null : "search")}
+          >
+            <Icon name="search" size={24} />
+          </button>
+          <button
+            className="bible-toolbar-action"
+            title="字体设置"
+            aria-label="字体设置"
+            onClick={() => setPicker(picker === "font" ? null : "font")}
+          >
+            <span className="bible-font-mark" aria-hidden="true">
+              <span className="small-a">A</span><span className="large-a">A</span>
+            </span>
+          </button>
+        </div>
 
         {picker === "version" && (
-          <div style={{ position: "absolute", top: 58, left: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 8, zIndex: 30 }}>
+          <div className="bible-version-picker" style={{ position: "absolute", top: 46, left: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 8, zIndex: 30 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", padding: "4px 6px 8px" }}>选择译本</div>
             {VERSIONS.map((ver) => (
               <button
                 key={ver.code}
+                className={`bible-version-option${ver.code === version.code ? " active" : ""}`}
                 onClick={() => gotoVersion(ver.code)}
                 style={{
                   display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 10px",
                   borderRadius: 10, fontSize: 14, textAlign: "left",
                   fontWeight: ver.code === version.code ? 800 : 600,
-                  background: ver.code === version.code ? "var(--surface)" : "transparent",
+                  background: ver.code === version.code ? "#ffedbd" : "transparent",
                   color: "var(--ink)",
                 }}
               >
@@ -194,7 +229,7 @@ export function BiblePage() {
         )}
 
         {picker === "chapter" && (
-          <div style={{ position: "absolute", top: 58, left: 16, right: 16, maxHeight: 420, overflow: "auto", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
+          <div className={`bible-chapter-picker ${pickerBookData ? "chapter-list" : "book-list"}`}>
             {pickerBookData ? (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
@@ -223,19 +258,14 @@ export function BiblePage() {
             ) : (
               <>
                 {[{ label: "旧约", books: OT_BOOKS }, { label: "新约", books: NT_BOOKS }].map((group) => (
-                  <div key={group.label} style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", marginBottom: 6 }}>{group.label}</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                  <div key={group.label} className="bible-book-group">
+                    <div className="bible-book-group-title">{group.label}</div>
+                    <div className="bible-book-grid">
                       {group.books.map((bk) => (
                         <button
                           key={bk.code}
                           onClick={() => setPickerBook(bk.code)}
-                          style={{
-                            padding: "8px 4px", borderRadius: 8, fontSize: 12, fontWeight: bk.code === book.code ? 800 : 600,
-                            border: "1px solid var(--line)",
-                            background: bk.code === book.code ? "var(--ink)" : "var(--white)",
-                            color: bk.code === book.code ? "var(--yellow)" : "var(--ink)",
-                          }}
+                          className={`bible-book-option${bk.code === book.code ? " active" : ""}`}
                         >
                           {bookName(bk, version)}
                         </button>
@@ -249,7 +279,7 @@ export function BiblePage() {
         )}
 
         {picker === "search" && (
-          <div style={{ position: "absolute", top: 58, right: 16, width: 240, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 10, zIndex: 30 }}>
+          <div style={{ position: "absolute", top: 46, right: 16, width: 240, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 10, zIndex: 30 }}>
             <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
               <input
                 autoFocus
@@ -260,6 +290,33 @@ export function BiblePage() {
               />
             </form>
             <div style={{ fontSize: 11, color: "var(--body)", paddingTop: 8 }}>回车跳转到对应经文</div>
+          </div>
+        )}
+
+        {picker === "font" && (
+          <div style={{ position: "absolute", top: 46, right: 16, width: 176, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", marginBottom: 10 }}>字体大小</div>
+            <div className="bible-font-size-control">
+              <button
+                type="button"
+                aria-label="缩小字体"
+                disabled={fontSize === 17}
+                onClick={() => setFontSize((size) => Math.max(17, size - 2))}
+                style={{ opacity: fontSize === 17 ? 0.35 : 1 }}
+              >
+                −
+              </button>
+              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 800 }}>{fontSize}px</div>
+              <button
+                type="button"
+                aria-label="放大字体"
+                disabled={fontSize === 23}
+                onClick={() => setFontSize((size) => Math.min(23, size + 2))}
+                style={{ opacity: fontSize === 23 ? 0.35 : 1 }}
+              >
+                +
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -276,7 +333,7 @@ export function BiblePage() {
         {loadError && (
           <div style={{ fontSize: 13, color: "var(--body)" }}>经文加载失败，请检查网络后重试。</div>
         )}
-        <div style={{ fontSize: 19, fontWeight: 400, lineHeight: 1.95, color: "var(--ink)", textWrap: "pretty" }}>
+        <div className="bible-verse-content" style={{ fontSize, fontWeight: 400, lineHeight: 1.95, color: "var(--ink)", textWrap: "pretty" }}>
           {verses.map((v) => {
             const color = highlightMap.get(v.verse);
             const isSelected = v.verse === selected;
@@ -330,7 +387,13 @@ export function BiblePage() {
               <Icon name="play" size={14} />
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em" }}>AUDIO BIBLE</div>
               <div style={{ flex: 1 }} />
-              <button className="icon-btn" style={{ width: 30, height: 30, borderRadius: 100 }} onClick={() => setPicker(null)}>
+              <button
+                type="button"
+                className="icon-btn"
+                style={{ width: 30, height: 30, borderRadius: 100 }}
+                aria-label="关闭有声圣经"
+                onClick={() => setPicker(null)}
+              >
                 <Icon name="x" size={13} />
               </button>
             </div>
