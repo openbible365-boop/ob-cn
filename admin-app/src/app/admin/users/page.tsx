@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { deriveUserLevel, formatLoginMethods } from "@/lib/format";
 import { muteUser, unbanUser } from "@/lib/actions/users";
 import { BanUserControl } from "@/components/BanUserControl";
+import type { Prisma } from "@/generated/prisma/client";
 
 export default async function UsersPage({
   searchParams,
@@ -10,23 +11,36 @@ export default async function UsersPage({
 }) {
   const { q } = await searchParams;
 
-  const [users, total] = await Promise.all([
-    db.user.findMany({
-      where: q
-        ? {
+  // Seed users have AuthAccount rows without a provider account id. Real
+  // email/Apple registrations always persist the provider identity, so the
+  // admin list only exposes accounts created by an actual login flow.
+  const registeredUserWhere: Prisma.UserWhereInput = {
+    authAccounts: { some: { providerAccountId: { not: null } } },
+  };
+  const where: Prisma.UserWhereInput = q
+    ? {
+        AND: [
+          registeredUserWhere,
+          {
             OR: [
               { name: { contains: q, mode: "insensitive" } },
               { email: { contains: q, mode: "insensitive" } },
             ],
-          }
-        : undefined,
+          },
+        ],
+      }
+    : registeredUserWhere;
+
+  const [users, total] = await Promise.all([
+    db.user.findMany({
+      where,
       include: {
         authAccounts: true,
         memberships: { include: { community: true } },
       },
       orderBy: { uid: "asc" },
     }),
-    db.user.count(),
+    db.user.count({ where: registeredUserWhere }),
   ]);
 
   const fmtLogin = (d: Date | null) =>
@@ -38,7 +52,7 @@ export default async function UsersPage({
         <div className="title">用户管理</div>
         <div className="meta">共 {total} 名注册用户</div>
         <div style={{ flex: 1 }} />
-        <form className="search-box" action="/users">
+        <form className="search-box" action="/admin/users">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -106,6 +120,12 @@ export default async function UsersPage({
             </div>
           );
         })}
+
+        {users.length === 0 && (
+          <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--body)", fontWeight: 600 }}>
+            {q ? "没有找到匹配的真实注册用户" : "暂无真实注册用户；用户完成邮箱或 Apple 登录后会自动出现在这里"}
+          </div>
+        )}
       </div>
     </>
   );
