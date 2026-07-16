@@ -25,9 +25,23 @@ async function requestAudio(upstreamUrl: URL, voice: string) {
 }
 
 async function existingCdnAudio(version: string, book: string, chapter: number, voice: string) {
-  const url = `${AUDIO_CDN_BASE}/${version}/${voice}/${book}/${chapter}.mp3`;
-  const response = await fetch(url, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8_000) });
-  return response.ok ? url : null;
+  const baseUrl = `${AUDIO_CDN_BASE}/${version}/${voice}/${book}/${chapter}`;
+  const [audioResponse, timestampResponse] = await Promise.all([
+    fetch(`${baseUrl}.mp3`, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8_000) }),
+    fetch(`${baseUrl}.json`, { cache: "no-store", signal: AbortSignal.timeout(8_000) }),
+  ]);
+  if (!audioResponse.ok) return null;
+
+  let timestamps: UpstreamTimestamp[] = [];
+  if (timestampResponse.ok) {
+    try {
+      const data = await timestampResponse.json();
+      if (Array.isArray(data)) timestamps = data;
+    } catch {
+      // Playback remains available if an older CDN object has no timeline.
+    }
+  }
+  return { audio_url: `${baseUrl}.mp3`, voice, timestamps } satisfies UpstreamAudio;
 }
 
 function reportedVoice(data: UpstreamAudio | null): AudioVoice | null {
@@ -51,10 +65,8 @@ async function resolveAudio(
 
   // The public API can return another row's audio while switching voices. Prefer
   // the exact CDN object whenever the response does not confirm the requested voice.
-  const requestedCdnUrl = await existingCdnAudio(version, book, chapter, requestedVoice);
-  if (requestedCdnUrl) {
-    return { audio_url: requestedCdnUrl, voice: requestedVoice, timestamps: [] };
-  }
+  const requestedCdnAudio = await existingCdnAudio(version, book, chapter, requestedVoice);
+  if (requestedCdnAudio) return requestedCdnAudio;
   if (requestedData?.audio_url && !upstreamVoice) return requestedData;
 
   const fallbackVoice: AudioVoice = requestedVoice === "female" ? "male" : "female";
@@ -63,10 +75,7 @@ async function resolveAudio(
     return { ...fallbackData, voice: reportedVoice(fallbackData) ?? fallbackVoice };
   }
 
-  const fallbackCdnUrl = await existingCdnAudio(version, book, chapter, fallbackVoice);
-  return fallbackCdnUrl
-    ? { audio_url: fallbackCdnUrl, voice: fallbackVoice, timestamps: [] }
-    : null;
+  return existingCdnAudio(version, book, chapter, fallbackVoice);
 }
 
 export async function GET(request: Request) {
