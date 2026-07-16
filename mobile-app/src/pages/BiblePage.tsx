@@ -69,6 +69,7 @@ export function BiblePage() {
   const [audioSpeed, setAudioSpeed] = useState(1);
   const [audioVoice, setAudioVoice] = useState("female");
   const [resolvedAudioVoice, setResolvedAudioVoice] = useState("");
+  const [audioRequestVersion, setAudioRequestVersion] = useState(0);
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   const [audioTimestamps, setAudioTimestamps] = useState<AudioTimestamp[]>([]);
@@ -136,7 +137,15 @@ export function BiblePage() {
       })
       .finally(() => { if (!cancelled) setAudioLoading(false); });
     return () => { cancelled = true; };
-  }, [picker, version.code, book.code, chapter, audioVoice]);
+  }, [picker, version.code, book.code, chapter, audioVoice, audioRequestVersion]);
+
+  const displayedAudioVoice = resolvedAudioVoice || audioVoice;
+  const chooseAudioVoice = (voice: string) => {
+    setVoiceMenuOpen(false);
+    setResolvedAudioVoice("");
+    if (voice === audioVoice) setAudioRequestVersion((value) => value + 1);
+    else setAudioVoice(voice);
+  };
 
   const verses: Verse[] = useMemo(
     () => data?.chapters.get(chapter) ?? [],
@@ -622,10 +631,10 @@ export function BiblePage() {
                   onClick={() => setVoiceMenuOpen((open) => !open)}
                 >
                   <span className="audio-voice-avatar" aria-hidden="true">
-                    {audioVoice === "female" ? "女" : "男"}
+                    {displayedAudioVoice === "female" ? "女" : "男"}
                   </span>
                   <span className="audio-voice-selected">
-                    {audioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
+                    {displayedAudioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
                   </span>
                   <span className="audio-voice-chevron" aria-hidden="true"><Icon name="chevron-down" size={18} /></span>
                 </button>
@@ -638,14 +647,14 @@ export function BiblePage() {
                       <button
                         type="button"
                         role="option"
-                        aria-selected={audioVoice === voice.id}
-                        className={audioVoice === voice.id ? "active" : ""}
+                        aria-selected={displayedAudioVoice === voice.id}
+                        className={displayedAudioVoice === voice.id ? "active" : ""}
                         key={voice.id}
-                        onClick={() => { setAudioVoice(voice.id); setVoiceMenuOpen(false); }}
+                        onClick={() => chooseAudioVoice(voice.id)}
                       >
                         <span className="audio-voice-avatar">{voice.mark}</span>
                         <span><b>{voice.name}</b><small>{voice.detail}</small></span>
-                        <span className="audio-voice-menu-check">{audioVoice === voice.id && <Icon name="check" size={16} />}</span>
+                        <span className="audio-voice-menu-check">{displayedAudioVoice === voice.id && <Icon name="check" size={16} />}</span>
                       </button>
                     ))}
                   </div>
