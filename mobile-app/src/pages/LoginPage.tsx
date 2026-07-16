@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { sendLoginCode, verifyLoginCode } from "../data/profile";
+import { syncHighlights } from "../data/annotations";
 
 // 注册登录（design 5d）— real email verification-code login against the
 // OpenBible backend; first login auto-registers the account.
@@ -50,10 +51,12 @@ export function LoginPage() {
     setError("");
     setBusy(true);
     const result = await verifyLoginCode(email, code.trim());
-    setBusy(false);
     if (result.ok) {
+      await syncHighlights();
+      setBusy(false);
       navigate("/me", { replace: true });
     } else {
+      setBusy(false);
       setError(result.message);
     }
   };

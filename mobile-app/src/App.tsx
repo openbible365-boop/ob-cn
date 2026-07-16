@@ -13,6 +13,7 @@ import { MePage } from "./pages/MePage";
 import { MyContentPage } from "./pages/MyContentPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { syncHighlights } from "./data/annotations";
 
 // The five top-level tabs keep the tab bar; drill-in pages go full screen.
 const TAB_PATHS = ["/bible", "/annotations", "/huidu", "/community", "/me"];
@@ -22,6 +23,8 @@ export default function App() {
   const { pathname } = useLocation();
   const showTabBar = TAB_PATHS.includes(pathname);
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
+
+  useEffect(() => { void syncHighlights(); }, []);
 
   useEffect(() => {
     setIsTabBarVisible(true);

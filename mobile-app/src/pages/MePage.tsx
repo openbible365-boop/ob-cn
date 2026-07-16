@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { getHighlights, getNotes } from "../data/annotations";
+import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
 import { getGroups, getMySignups } from "../data/community";
 import { fetchMe, logout, type SessionUser } from "../data/profile";
@@ -11,11 +11,18 @@ export function MePage() {
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
+  const [, refreshHighlights] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     fetchMe().then((u) => { if (!cancelled) setUser(u); });
     return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => refreshHighlights((value) => value + 1);
+    window.addEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
   }, []);
 
   if (user === undefined) {
@@ -43,7 +50,7 @@ export function MePage() {
           </div>
           <div style={{ fontSize: 16, fontWeight: 800 }}>尚未登录</div>
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>
-            登录后即可同步高亮、笔记与慧读记录，<br />并加入社群参与共读。
+            无需登录也能在本机保存高亮；<br />登录后可跨设备同步高亮。
           </div>
           <button className="btn-primary" style={{ width: "100%" }} onClick={() => navigate("/me/login")}>
             登录 / 注册
@@ -92,7 +99,7 @@ export function MePage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(191,120,246,.14)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 14px" }}>
           <div style={{ flex: "none", color: "var(--purple)" }}><Icon name="cloud" size={18} /></div>
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            数据保存在本机。接入账号服务后将自动云端同步。
+            高亮已与当前账号同步，换设备登录后也可继续使用。
           </div>
         </div>
 

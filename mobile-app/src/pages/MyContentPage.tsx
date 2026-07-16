@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { getHighlights, getNotes } from "../data/annotations";
+import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import {
   getVersion,
   getBookByCode,
@@ -27,6 +27,13 @@ export function MyContentPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = TABS.some((t) => t.id === params.get("t")) ? (params.get("t") as string) : "highlights";
+  const [, refreshHighlights] = useState(0);
+
+  useEffect(() => {
+    const refresh = () => refreshHighlights((value) => value + 1);
+    window.addEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
+  }, []);
 
   const version = getVersion(getReading().version);
   const highlights = [...getHighlights()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));

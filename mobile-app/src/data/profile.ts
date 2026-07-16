@@ -2,6 +2,7 @@
 // serves /api/* by proxying to the admin app (nginx in production, the vite
 // dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
+import { clearHighlightsForLogout } from "./annotations";
 
 export type SessionUser = {
   id: string;
@@ -34,7 +35,9 @@ export function verifyLoginCode(email: string, code: string) {
 }
 
 export async function logout() {
-  await post("/api/mobile/auth/logout");
+  const result = await post("/api/mobile/auth/logout");
+  if (result.ok) clearHighlightsForLogout();
+  return result;
 }
 
 export async function fetchMe(): Promise<SessionUser | null> {
