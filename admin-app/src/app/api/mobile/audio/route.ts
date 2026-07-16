@@ -12,6 +12,8 @@ type UpstreamAudio = {
   voice?: string;
 };
 
+type AudioVoice = "female" | "male";
+
 async function requestAudio(upstreamUrl: URL, voice: string) {
   upstreamUrl.searchParams.set("voice", voice);
   const response = await fetch(upstreamUrl, {
@@ -26,6 +28,45 @@ async function existingCdnAudio(version: string, book: string, chapter: number, 
   const url = `${AUDIO_CDN_BASE}/${version}/${voice}/${book}/${chapter}.mp3`;
   const response = await fetch(url, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8_000) });
   return response.ok ? url : null;
+}
+
+function reportedVoice(data: UpstreamAudio | null): AudioVoice | null {
+  const voice = data?.voice?.toLowerCase();
+  if (voice === "female" || voice === "male") return voice;
+
+  const pathVoice = data?.audio_url?.match(/\/(female|male)\//i)?.[1]?.toLowerCase();
+  return pathVoice === "female" || pathVoice === "male" ? pathVoice : null;
+}
+
+async function resolveAudio(
+  upstreamUrl: URL,
+  version: string,
+  book: string,
+  chapter: number,
+  requestedVoice: AudioVoice,
+) {
+  const requestedData = await requestAudio(upstreamUrl, requestedVoice);
+  const upstreamVoice = reportedVoice(requestedData);
+  if (requestedData?.audio_url && upstreamVoice === requestedVoice) return requestedData;
+
+  // The public API can return another row's audio while switching voices. Prefer
+  // the exact CDN object whenever the response does not confirm the requested voice.
+  const requestedCdnUrl = await existingCdnAudio(version, book, chapter, requestedVoice);
+  if (requestedCdnUrl) {
+    return { audio_url: requestedCdnUrl, voice: requestedVoice, timestamps: [] };
+  }
+  if (requestedData?.audio_url && !upstreamVoice) return requestedData;
+
+  const fallbackVoice: AudioVoice = requestedVoice === "female" ? "male" : "female";
+  const fallbackData = await requestAudio(upstreamUrl, fallbackVoice);
+  if (fallbackData?.audio_url && reportedVoice(fallbackData) !== requestedVoice) {
+    return { ...fallbackData, voice: reportedVoice(fallbackData) ?? fallbackVoice };
+  }
+
+  const fallbackCdnUrl = await existingCdnAudio(version, book, chapter, fallbackVoice);
+  return fallbackCdnUrl
+    ? { audio_url: fallbackCdnUrl, voice: fallbackVoice, timestamps: [] }
+    : null;
 }
 
 export async function GET(request: Request) {
@@ -43,16 +84,7 @@ export async function GET(request: Request) {
   upstreamUrl.search = new URLSearchParams({ version, book, chapter: String(chapter), voice }).toString();
 
   try {
-    let resolvedVoice = voice;
-    let data = await requestAudio(upstreamUrl, voice);
-    if (!data?.audio_url) {
-      resolvedVoice = voice === "female" ? "male" : "female";
-      data = await requestAudio(upstreamUrl, resolvedVoice);
-    }
-    if (!data?.audio_url) {
-      const audioUrl = await existingCdnAudio(version, book, chapter, resolvedVoice);
-      if (audioUrl) data = { audio_url: audioUrl, voice: resolvedVoice, timestamps: [] };
-    }
+    const data = await resolveAudio(upstreamUrl, version, book, chapter, voice as AudioVoice);
     if (!data?.audio_url) {
       return NextResponse.json({ ok: false, message: "当前章节暂无音频" }, { status: 404 });
     }
@@ -73,7 +105,7 @@ export async function GET(request: Request) {
       ok: true,
       audioUrl: data.audio_url,
       timestamps,
-      voice: data.voice ?? resolvedVoice,
+      voice: reportedVoice(data) ?? voice,
     });
   } catch {
     return NextResponse.json({ ok: false, message: "获取音频超时，请稍后重试" }, { status: 504 });
