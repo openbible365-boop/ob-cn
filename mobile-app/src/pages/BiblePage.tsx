@@ -68,6 +68,7 @@ export function BiblePage() {
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioSpeed, setAudioSpeed] = useState(1);
   const [audioVoice, setAudioVoice] = useState("female");
+  const [resolvedAudioVoice, setResolvedAudioVoice] = useState("");
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   const [audioTimestamps, setAudioTimestamps] = useState<AudioTimestamp[]>([]);
@@ -113,6 +114,7 @@ export function BiblePage() {
     setAudioDuration(0);
     setAudioUrl("");
     setAudioTimestamps([]);
+    setResolvedAudioVoice("");
     setAudioError("");
 
     if (version.code !== "cuv") {
@@ -127,7 +129,7 @@ export function BiblePage() {
         if (cancelled) return;
         setAudioUrl(result.audioUrl);
         setAudioTimestamps(result.timestamps);
-        setAudioVoice(result.voice);
+        setResolvedAudioVoice(result.voice);
       })
       .catch((error: unknown) => {
         if (!cancelled) setAudioError(error instanceof Error ? error.message : "当前章节暂无音频");
@@ -605,7 +607,11 @@ export function BiblePage() {
             <div className="audio-voice-section">
               <div className="audio-voice-heading">
                 <span>选择音色</span>
-                <small>可在播放时切换</small>
+                <small>
+                  {resolvedAudioVoice && resolvedAudioVoice !== audioVoice
+                    ? `当前章节已自动使用${resolvedAudioVoice === "female" ? "女声" : "男声"}`
+                    : "可在播放时切换"}
+                </small>
               </div>
               <div className="audio-voice-picker">
                 <button
