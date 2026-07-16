@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 const AUDIO_API_URL =
   process.env.OPENBIBLE_AUDIO_API_URL ?? "https://www.openbible.live/api/audio/public";
+const AUDIO_CDN_BASE =
+  process.env.OPENBIBLE_AUDIO_CDN_BASE ?? "https://cdsaws.s3.amazonaws.com/audio/tts/doubao";
 
 type UpstreamTimestamp = { verse: number; start: number; end: number };
 type UpstreamAudio = {
@@ -18,6 +20,12 @@ async function requestAudio(upstreamUrl: URL, voice: string) {
   });
   if (!response.ok) return null;
   return (await response.json()) as UpstreamAudio | null;
+}
+
+async function existingCdnAudio(version: string, book: string, chapter: number, voice: string) {
+  const url = `${AUDIO_CDN_BASE}/${version}/${voice}/${book}/${chapter}.mp3`;
+  const response = await fetch(url, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8_000) });
+  return response.ok ? url : null;
 }
 
 export async function GET(request: Request) {
@@ -40,6 +48,10 @@ export async function GET(request: Request) {
     if (!data?.audio_url) {
       resolvedVoice = voice === "female" ? "male" : "female";
       data = await requestAudio(upstreamUrl, resolvedVoice);
+    }
+    if (!data?.audio_url) {
+      const audioUrl = await existingCdnAudio(version, book, chapter, resolvedVoice);
+      if (audioUrl) data = { audio_url: audioUrl, voice: resolvedVoice, timestamps: [] };
     }
     if (!data?.audio_url) {
       return NextResponse.json({ ok: false, message: "当前章节暂无音频" }, { status: 404 });
