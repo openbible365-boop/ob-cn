@@ -127,6 +127,7 @@ export function BiblePage() {
         if (cancelled) return;
         setAudioUrl(result.audioUrl);
         setAudioTimestamps(result.timestamps);
+        setAudioVoice(result.voice);
       })
       .catch((error: unknown) => {
         if (!cancelled) setAudioError(error instanceof Error ? error.message : "当前章节暂无音频");

@@ -10,6 +10,16 @@ type UpstreamAudio = {
   voice?: string;
 };
 
+async function requestAudio(upstreamUrl: URL, voice: string) {
+  upstreamUrl.searchParams.set("voice", voice);
+  const response = await fetch(upstreamUrl, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!response.ok) return null;
+  return (await response.json()) as UpstreamAudio | null;
+}
+
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const version = params.get("version")?.toLowerCase() ?? "";
@@ -25,17 +35,14 @@ export async function GET(request: Request) {
   upstreamUrl.search = new URLSearchParams({ version, book, chapter: String(chapter), voice }).toString();
 
   try {
-    const response = await fetch(upstreamUrl, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!response.ok) {
-      return NextResponse.json({ ok: false, message: "音频服务暂时不可用" }, { status: 502 });
-    }
-
-    const data = (await response.json()) as UpstreamAudio | null;
+    let resolvedVoice = voice;
+    let data = await requestAudio(upstreamUrl, voice);
     if (!data?.audio_url) {
-      return NextResponse.json({ ok: false, message: "当前章节暂无该音色" }, { status: 404 });
+      resolvedVoice = voice === "female" ? "male" : "female";
+      data = await requestAudio(upstreamUrl, resolvedVoice);
+    }
+    if (!data?.audio_url) {
+      return NextResponse.json({ ok: false, message: "当前章节暂无音频" }, { status: 404 });
     }
 
     let timestamps: UpstreamTimestamp[] = [];
@@ -54,7 +61,7 @@ export async function GET(request: Request) {
       ok: true,
       audioUrl: data.audio_url,
       timestamps,
-      voice: data.voice ?? voice,
+      voice: data.voice ?? resolvedVoice,
     });
   } catch {
     return NextResponse.json({ ok: false, message: "获取音频超时，请稍后重试" }, { status: 504 });
