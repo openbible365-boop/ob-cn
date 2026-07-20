@@ -9,15 +9,21 @@ export async function setHighlight(formData: FormData) {
   const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
-  const verse = Number(formData.get("verse"));
+  const verseStr = String(formData.get("verse"));
   const color = String(formData.get("color"));
   if (!HIGHLIGHT_COLORS.includes(color)) throw new Error("颜色不合法");
 
-  await db.highlight.upsert({
-    where: { userId_book_chapter_verse: { userId: user.id, book, chapter, verse } },
-    update: { color },
-    create: { userId: user.id, book, chapter, verse, color },
-  });
+  const verses = verseStr.split(",").map(Number).filter(n => !isNaN(n) && n > 0);
+
+  await Promise.all(
+    verses.map(async (verse) => {
+      await db.highlight.upsert({
+        where: { userId_book_chapter_verse: { userId: user.id, book, chapter, verse } },
+        update: { color },
+        create: { userId: user.id, book, chapter, verse, color },
+      });
+    })
+  );
 
   revalidatePath("/bible");
 }
@@ -26,9 +32,18 @@ export async function clearHighlight(formData: FormData) {
   const user = await requireUser();
   const book = String(formData.get("book"));
   const chapter = Number(formData.get("chapter"));
-  const verse = Number(formData.get("verse"));
+  const verseStr = String(formData.get("verse"));
 
-  await db.highlight.deleteMany({ where: { userId: user.id, book, chapter, verse } });
+  const verses = verseStr.split(",").map(Number).filter(n => !isNaN(n) && n > 0);
+
+  await db.highlight.deleteMany({
+    where: {
+      userId: user.id,
+      book,
+      chapter,
+      verse: { in: verses },
+    },
+  });
 
   revalidatePath("/bible");
 }

@@ -10,7 +10,7 @@ export function NoteComposer({
 }: {
   book: string;
   chapter: number;
-  verse: number;
+  verse: number | string;
 }) {
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);

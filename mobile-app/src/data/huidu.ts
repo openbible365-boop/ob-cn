@@ -64,8 +64,8 @@ export function getConversation(id: string) {
   return getConversations().find((c) => c.id === id) ?? null;
 }
 
-export function startConversation(bookName: string, chapter: number, verse: number, verseText: string): Conversation {
-  const refLabel = `${bookName} ${chapter}:${verse}`;
+export function startConversation(bookName: string, chapter: number, verse: number, verseText: string, customRefLabel?: string): Conversation {
+  const refLabel = customRefLabel ?? `${bookName} ${chapter}:${verse}`;
   const conv: Conversation = {
     id: uid(),
     chapter,

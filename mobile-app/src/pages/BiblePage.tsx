@@ -221,8 +221,10 @@ export function BiblePage() {
   };
 
   const askHuidu = () => {
-    if (!selectedVerse || selectedVerses.length !== 1) return;
-    const conv = startConversation(displayBook, chapter, selectedVerse.verse, stripHtml(selectedVerse.text));
+    if (selectedVerses.length === 0 || !selectedVerse) return;
+    const fullVerseText = selectedVerses.map(v => stripHtml(v.text)).join("");
+    const customRef = `${displayBook} ${chapter}:${selectedRangeLabel}`;
+    const conv = startConversation(displayBook, chapter, selectedVerse.verse, fullVerseText, customRef);
     navigate(`/huidu/${conv.id}`, { state: { justCreated: true } });
   };
 
@@ -734,7 +736,7 @@ export function BiblePage() {
                   { label: "笔记", icon: "edit", onClick: () => setNoteOpen(true), disabled: selectedVerses.length !== 1 },
                   { label: "复制", icon: "align-justify", onClick: copyVerse },
                   { label: "分享", icon: "share", onClick: shareVerse },
-                  { label: "慧读", icon: "star", onClick: askHuidu, primary: true, disabled: selectedVerses.length !== 1 },
+                  { label: "慧读", icon: "star", onClick: askHuidu, primary: true, disabled: selectedVerses.length === 0 },
                   { label: "注释", icon: "message-square", onClick: () => navigate(`/annotations?bk=${book.code}&c=${chapter}`) },
                 ].map((a) => (
                   <button key={a.label} disabled={a.disabled} onClick={a.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, opacity: a.disabled ? 0.35 : 1 }}>

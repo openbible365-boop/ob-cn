@@ -30,7 +30,9 @@ export default async function BiblePage({
   const maxChapter = chapterCount._max.chapter ?? book.chapters;
   const defaultChapter = book.order === DEFAULT_BOOK_ORDER ? 3 : 1;
   const chapter = Math.min(Math.max(Number(c) || defaultChapter, 1), maxChapter);
-  const selectedVerse = v ? Number(v) : null;
+  const selectedVerseList = v ? v.split(",").map(Number).filter(n => !isNaN(n) && n > 0) : [];
+  const selectedSet = new Set(selectedVerseList);
+  const selectedVerseNumbers = Array.from(selectedSet).sort((a, b) => a - b);
 
   const [verses, commentary] = await Promise.all([
     db.verse.findMany({
@@ -53,8 +55,28 @@ export default async function BiblePage({
     : [[], [], []];
 
   const highlightMap = new Map(highlights.map((h) => [h.verse, h.color]));
-  const selectedVerseData = selectedVerse ? verses.find((x) => x.verse === selectedVerse) : null;
-  const selectedNotes = selectedVerse ? notes.filter((n) => n.verse === selectedVerse) : [];
+  const selectedVersesData = selectedVerseNumbers
+    .map(vn => verses.find((x) => x.verse === vn))
+    .filter((x): x is NonNullable<typeof x> => Boolean(x));
+  const selectedVerseData = selectedVersesData[0] ?? null;
+  const selectedNotes = notes.filter((n) => selectedSet.has(n.verse));
+
+  const selectedRangeLabel = (() => {
+    if (selectedVerseNumbers.length === 0) return "";
+    const ranges: string[] = [];
+    let index = 0;
+    while (index < selectedVerseNumbers.length) {
+      const start = selectedVerseNumbers[index];
+      let end = start;
+      while (index + 1 < selectedVerseNumbers.length && selectedVerseNumbers[index + 1] === end + 1) {
+        end = selectedVerseNumbers[index + 1];
+        index += 1;
+      }
+      ranges.push(start === end ? String(start) : `${start}-${end}`);
+      index += 1;
+    }
+    return ranges.join("、");
+  })();
 
   const hrefFor = (opts: { t?: string; b?: number; c?: number; v?: number }) => {
     const params = new URLSearchParams();
@@ -62,6 +84,25 @@ export default async function BiblePage({
     params.set("b", String(opts.b ?? book.order));
     if (opts.c) params.set("c", String(opts.c));
     if (opts.v) params.set("v", String(opts.v));
+    return `/bible?${params.toString()}`;
+  };
+
+  const getToggleHref = (verseNumber: number) => {
+    const nextSet = new Set(selectedSet);
+    if (nextSet.has(verseNumber)) {
+      nextSet.delete(verseNumber);
+    } else {
+      nextSet.add(verseNumber);
+    }
+    const nextV = Array.from(nextSet).sort((a, b) => a - b).join(",");
+    
+    const params = new URLSearchParams();
+    params.set("t", version.code);
+    params.set("b", String(book.order));
+    params.set("c", String(chapter));
+    if (nextV) {
+      params.set("v", nextV);
+    }
     return `/bible?${params.toString()}`;
   };
 
@@ -78,11 +119,11 @@ export default async function BiblePage({
           <p style={{ margin: 0, fontSize: 18, fontWeight: 400, lineHeight: 2, textWrap: "pretty" }}>
             {verses.map((verse) => {
               const color = highlightMap.get(verse.verse);
-              const isSelected = verse.verse === selectedVerse;
+              const isSelected = selectedSet.has(verse.verse);
               return (
                 <Link
                   key={verse.id}
-                  href={isSelected ? hrefFor({ c: chapter }) : hrefFor({ c: chapter, v: verse.verse })}
+                  href={getToggleHref(verse.verse)}
                   scroll={false}
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
@@ -91,9 +132,10 @@ export default async function BiblePage({
                     style={{
                       background: color ?? "transparent",
                       padding: color ? "1px 2px" : undefined,
-                      outline: isSelected ? "2px dashed var(--ink)" : undefined,
-                      outlineOffset: 2,
-                      borderRadius: isSelected ? 2 : undefined,
+                      textDecoration: isSelected ? "underline" : undefined,
+                      textDecorationColor: isSelected ? "rgba(217, 154, 37, 0.52)" : undefined,
+                      textDecorationThickness: isSelected ? "1px" : undefined,
+                      textUnderlineOffset: isSelected ? "5px" : undefined,
                       cursor: "pointer",
                     }}
                     {...(version.code === "pinyin"
@@ -122,7 +164,7 @@ export default async function BiblePage({
           {selectedVerseData && !user && (
             <div className="card" style={{ marginTop: 24, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--body)" }}>
-                登录后可对 {bookKey} {chapter}:{selectedVerseData.verse} 高亮、写笔记，并向慧读提问。
+                登录后可对 {bookKey} {chapter}:{selectedRangeLabel} 高亮、写笔记，并向慧读提问。
               </div>
               <Link href="/me" style={{ display: "flex", alignItems: "center", height: 32, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 12, fontWeight: 800 }}>去登录</Link>
             </div>
@@ -130,8 +172,8 @@ export default async function BiblePage({
           {selectedVerseData && user && (
             <div className="card" style={{ marginTop: 24, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-                <div style={{ fontSize: 15, fontWeight: 800 }}>{bookKey} {chapter}:{selectedVerseData.verse}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 1 节</div>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>{bookKey} {chapter}:{selectedRangeLabel}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerseNumbers.length} 节</div>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, marginBottom: 12 }}>
@@ -140,11 +182,11 @@ export default async function BiblePage({
                   <form key={color} action={setHighlight}>
                     <input type="hidden" name="book" value={bookKey} />
                     <input type="hidden" name="chapter" value={chapter} />
-                    <input type="hidden" name="verse" value={selectedVerseData.verse} />
+                    <input type="hidden" name="verse" value={selectedVerseNumbers.join(",")} />
                     <input type="hidden" name="color" value={color} />
                     <button type="submit" title="设为高亮" style={{
                       display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28,
-                      background: color, border: highlightMap.get(selectedVerseData.verse) === color ? "2px solid var(--ink)" : "1px solid var(--line)",
+                      background: color, border: selectedVerseNumbers.every((vn) => highlightMap.get(vn) === color) ? "2px solid var(--ink)" : "1px solid var(--line)",
                       borderRadius: "50%", cursor: "pointer",
                     }} />
                   </form>
@@ -153,7 +195,7 @@ export default async function BiblePage({
                 <form action={clearHighlight}>
                   <input type="hidden" name="book" value={bookKey} />
                   <input type="hidden" name="chapter" value={chapter} />
-                  <input type="hidden" name="verse" value={selectedVerseData.verse} />
+                  <input type="hidden" name="verse" value={selectedVerseNumbers.join(",")} />
                   <button type="submit" title="取消高亮" style={{
                     width: 28, height: 28, borderRadius: "50%", cursor: "pointer",
                     background: "linear-gradient(135deg,#FFFFFF 44%,#18191F 44%,#18191F 56%,#FFFFFF 56%)", border: "1px solid var(--line)",
@@ -162,11 +204,12 @@ export default async function BiblePage({
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <NoteComposer book={bookKey} chapter={chapter} verse={selectedVerseData.verse} />
+                <NoteComposer book={bookKey} chapter={chapter} verse={selectedVerseNumbers[0]} />
                 <form action={startConversation}>
                   <input type="hidden" name="book" value={bookKey} />
                   <input type="hidden" name="chapter" value={chapter} />
-                  <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
+                  <input type="hidden" name="verseStart" value={selectedVerseNumbers[0]} />
+                  <input type="hidden" name="verseEnd" value={selectedVerseNumbers[selectedVerseNumbers.length - 1]} />
                   <input type="hidden" name="translation" value={version.label} />
                   <button type="submit" style={{ display: "flex", alignItems: "center", gap: 5, height: 30, padding: "0 14px", background: "var(--purple)", border: "none", borderRadius: 100, color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>问慧读</button>
                 </form>
@@ -217,18 +260,26 @@ export default async function BiblePage({
               <>
                 <div style={{ background: "var(--yellow)", borderRadius: 12, padding: "10px 12px" }}>
                   <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", background: "var(--ink)", color: "#fff", padding: "3px 6px", borderRadius: 6, display: "inline-block", marginBottom: 6 }}>经文引用</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>{bookKey} {chapter}:{selectedVerseData.verse} · {version.label}</div>
-                  <div style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.7, color: "var(--body)" }}
-                    {...(version.code === "pinyin"
-                      ? { dangerouslySetInnerHTML: { __html: selectedVerseData.text } }
-                      : { children: selectedVerseData.text })}
-                  />
+                  <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>{bookKey} {chapter}:{selectedRangeLabel} · {version.label}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {selectedVersesData.map((v) => (
+                      <div key={v.id} style={{ fontSize: 12, fontWeight: 500, lineHeight: 1.7, color: "var(--body)" }}>
+                        <sup style={{ marginRight: 4, color: "var(--body)", fontSize: 10 }}>{v.verse}</sup>
+                        <span
+                          {...(version.code === "pinyin"
+                            ? { dangerouslySetInnerHTML: { __html: v.text } }
+                            : { children: v.text })}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 {user ? (
                   <form action={startConversation}>
                     <input type="hidden" name="book" value={bookKey} />
                     <input type="hidden" name="chapter" value={chapter} />
-                    <input type="hidden" name="verseStart" value={selectedVerseData.verse} />
+                    <input type="hidden" name="verseStart" value={selectedVerseNumbers[0]} />
+                    <input type="hidden" name="verseEnd" value={selectedVerseNumbers[selectedVerseNumbers.length - 1]} />
                     <input type="hidden" name="translation" value={version.label} />
                     <button type="submit" style={{ width: "100%", height: 40, background: "var(--purple)", border: "none", borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>请为我解释这节经文</button>
                   </form>
