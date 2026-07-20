@@ -141,13 +141,6 @@ export function HuiduChatPage() {
 
       {/* composer */}
       <div style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))" }}>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 10 }}>
-          {["agapē 与 phileō 的经文例子", "约 21 章彼得的对话"].map((s) => (
-            <button key={s} onClick={() => submit(s)} style={{ flex: "none", fontSize: 12, fontWeight: 700, padding: "7px 12px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", whiteSpace: "nowrap" }}>
-              {s}
-            </button>
-          ))}
-        </div>
         <form onSubmit={(e) => { e.preventDefault(); submit(question); }} style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input
             value={question}

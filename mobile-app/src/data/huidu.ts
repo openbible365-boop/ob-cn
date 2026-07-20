@@ -21,10 +21,6 @@ export type Conversation = {
 
 const KEY = "ob.conversations";
 
-const TAGS = [
-  { tag: "经文释义", color: "#BF78F6", dark: true },
-] as const;
-
 const JOHN_3_16_SUMMARY = "这段经文是福音的核心宣示：救恩源于神对世人主动的爱，祂差遣独生子耶稣基督钉十字架完成救赎。我们得救的途径完全是因着信靠祂而得享永生的全新生命，而非依赖行为的积累；这宝贵的应许带给我们面对今天一切忧虑的真实确据，呼召我们以感恩和信心去生活。";
 
 export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[] {
