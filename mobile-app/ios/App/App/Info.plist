@@ -14,6 +14,8 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>GIDClientID</key>
 	<string>1036636088293-kc6trmoe7dds3n3sedatnr36vrl7km8h.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
