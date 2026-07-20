@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { deriveUserLevel, formatLoginMethods } from "@/lib/format";
 import { muteUser, unbanUser } from "@/lib/actions/users";
 import { BanUserControl } from "@/components/BanUserControl";
+import { UserAvatar } from "@/components/UserAvatar";
 import type { Prisma } from "@/generated/prisma/client";
 
 export default async function UsersPage({
@@ -75,13 +76,11 @@ export default async function UsersPage({
           return (
             <div key={u.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 26, height: 26, background: u.avatarColor, borderRadius: "100%",
-                  fontSize: 11, fontWeight: 800,
-                }}>
-                  {u.name.slice(0, 1)}
-                </div>
+                <UserAvatar
+                  name={u.name}
+                  avatarColor={u.avatarColor}
+                  avatarUrl={u.avatarUrl}
+                />
                 <div>
                   <div style={{ fontWeight: 700 }}>
                     {u.name} <span style={{ fontWeight: 600, color: "var(--body)" }}>· UID {u.uid}</span>
