@@ -12,6 +12,7 @@ export type GoogleLoginUser = {
   name: string;
   email: string | null;
   avatarColor: string;
+  avatarUrl: string | null;
 };
 
 export type GoogleLoginResult =
@@ -30,6 +31,16 @@ function isGoogleAuthoritativeForEmail(payload: TokenPayload) {
 function avatarColorFor(subject: string) {
   const index = [...subject].reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
+
+function googleAvatarUrl(value: string | undefined) {
+  if (!value || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<GoogleLoginResult> {
@@ -52,6 +63,7 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
 
   const subject = payload?.sub;
   const email = payload?.email?.trim().toLowerCase() || null;
+  const avatarUrl = googleAvatarUrl(payload?.picture);
   if (!subject || !email || payload?.email_verified !== true) {
     return { ok: false, message: "Google 账号没有提供已验证的邮箱地址", status: 400 };
   }
@@ -107,6 +119,7 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
         name: displayName,
         email,
         avatarColor: avatarColorFor(subject),
+        avatarUrl,
         authAccounts: {
           create: [{ provider: "GOOGLE", providerAccountId: subject }],
         },
@@ -122,9 +135,12 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
     };
   }
 
-  await db.user.update({
+  user = await db.user.update({
     where: { id: user.id },
-    data: { lastLoginAt: new Date() },
+    data: {
+      lastLoginAt: new Date(),
+      ...(avatarUrl ? { avatarUrl } : {}),
+    },
   });
 
   return {
@@ -135,6 +151,7 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
       name: user.name,
       email: user.email,
       avatarColor: user.avatarColor,
+      avatarUrl: user.avatarUrl,
     },
   };
 }

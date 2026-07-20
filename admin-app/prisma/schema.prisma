@@ -48,6 +48,7 @@ model User {
   name        String
   email       String?    @unique
   avatarColor String     @default("#FFD465")
+  avatarUrl   String?
   status      UserStatus @default(ACTIVE)
   mutedUntil  DateTime?
   banReason   String?

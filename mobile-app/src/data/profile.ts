@@ -11,6 +11,7 @@ export type SessionUser = {
   name: string;
   email: string | null;
   avatarColor: string;
+  avatarUrl: string | null;
 };
 
 type ApiResult = { ok: boolean; message: string; user?: SessionUser };

@@ -85,8 +85,17 @@ export function MePage() {
       <div className="screen-scroll" style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
         {/* profile card */}
         <div className="card" style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}>
-          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, border: "1px solid var(--line)", borderRadius: 100, fontSize: 20, fontWeight: 800 }}>
+          <div style={{ position: "relative", overflow: "hidden", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, border: "1px solid var(--line)", borderRadius: 100, fontSize: 20, fontWeight: 800 }}>
             {user.name.slice(0, 1)}
+            {user.avatarUrl && (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                onError={(event) => { event.currentTarget.style.display = "none"; }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{user.name}</div>

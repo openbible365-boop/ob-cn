@@ -34,7 +34,11 @@ export default async function SiteLayout({
 
         {user ? (
           <Link href="/me" className="site-avatar" title={user.name} style={{ textDecoration: "none" }}>
-            {user.name.slice(0, 1)}
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" />
+            ) : (
+              user.name.slice(0, 1)
+            )}
           </Link>
         ) : (
           <Link

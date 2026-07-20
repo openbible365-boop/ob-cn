@@ -9,6 +9,12 @@ export async function GET() {
   }
   return NextResponse.json({
     ok: true,
-    user: { id: user.id, name: user.name, email: user.email, avatarColor: user.avatarColor },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarColor: user.avatarColor,
+      avatarUrl: user.avatarUrl,
+    },
   });
 }

@@ -102,8 +102,16 @@ export default async function MePage({
       <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
         {/* profile header */}
         <div className="card" style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, borderRadius: 100, fontSize: 22, fontWeight: 800 }}>
+          <div style={{ position: "relative", overflow: "hidden", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, borderRadius: 100, fontSize: 22, fontWeight: 800 }}>
             {user.name.slice(0, 1)}
+            {user.avatarUrl && (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 2 }}>{user.name}</div>
