@@ -2,7 +2,7 @@ import { OAuth2Client, type TokenPayload } from "google-auth-library";
 import { db } from "@/lib/db";
 
 const DEFAULT_GOOGLE_WEB_CLIENT_ID =
-  "1036636088293-gihld5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com";
+  "1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com";
 
 const googleClient = new OAuth2Client();
 const AVATAR_COLORS = ["#FFD465", "#D9C2F0", "#F0C7B7", "#8FB8E8", "#7FD1AE"];

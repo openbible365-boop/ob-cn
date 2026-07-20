@@ -25,6 +25,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
       APP_URL: https://admin.openbible.live
+      GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com}
     depends_on:
       db:
         condition: service_healthy

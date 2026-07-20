@@ -6,7 +6,7 @@ import {
 import { Capacitor } from "@capacitor/core";
 
 const DEFAULT_GOOGLE_WEB_CLIENT_ID =
-  "1036636088293-gihld5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com";
+  "1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com";
 
 let initializePromise: Promise<void> | null = null;
 
