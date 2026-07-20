@@ -16,33 +16,34 @@ export type HuiduBlock = {
 };
 
 const TAGS = [
-  { tag: "历史背景", color: "#FFD465", dark: false },
-  { tag: "核心含义", color: "#BF78F6", dark: true },
-  { tag: "生活应用", color: "#E98264", dark: true },
+  { tag: "经文释义", color: "#BF78F6", dark: true },
 ] as const;
 
-const JOHN_3_16: Record<string, string> = {
-  历史背景:
-    "这句话出自耶稣与法利赛人尼哥底母的夜间对话。「举蛇」呼应民数记 21 章：旷野中仰望铜蛇得医治，预表人子将在十字架上被举起。",
-  核心含义:
-    "「神爱世人」宣告救恩源于神主动的爱；「独生子」强调基督身份的独一。领受永生的途径是信靠，而非行为的积累。",
-  生活应用:
-    "永生不是遥远的奖赏，而是从相信那一刻开始的新生命。试着把「不至灭亡」的确据，带进你今天正在担忧的事情里，以感恩回应这份主动的爱。",
-};
+const JOHN_3_16_SUMMARY = "这段经文是福音的核心宣示：救恩源于神对世人主动的爱，祂差遣独生子耶稣基督钉十字架完成救赎。我们得救的途径完全是因着信靠祂而得享永生的全新生命，而非依赖行为的积累；这宝贵的应许带给我们面对今天一切忧虑的真实确据，呼召我们以感恩和信心去生活。";
 
 export function generateHuiduBlocks(refLabel: string, verseText: string): HuiduBlock[] {
   // Exact design copy for the flagship verse.
   if (refLabel.includes("3:16")) {
-    return TAGS.map((t) => ({ ...t, text: JOHN_3_16[t.tag] }));
+    return [
+      {
+        tag: "经文释义",
+        color: "#BF78F6",
+        dark: true,
+        text: JOHN_3_16_SUMMARY,
+      },
+    ];
   }
 
   const snippet = verseText.replace(/[「」“”]/g, "").slice(0, 18);
-  const templates: Record<string, string> = {
-    历史背景: `${refLabel} 需放回其上下文来读：留意作者写作的处境、说话的对象，以及与前后经文的呼应，能帮助我们避免断章取义。`,
-    核心含义: `这节经文的重心在于「${snippet}…」所指向的真理。默想其中的关键词，思考它如何见证神的性情与救赎的心意。`,
-    生活应用: `把这节经文带进祷告：求神让「${snippet}…」的信息，具体地更新你今天的态度、选择与人际关系。`,
-  };
-  return TAGS.map((t) => ({ ...t, text: templates[t.tag] }));
+  const text = `《${refLabel}》的真理聚焦在「${snippet}…」。理解这节经文需要回到作者写作时的处境、说话对象与上下文脉络中，默想其中所指向的真理，体验神的性情与救赎心意；建议求神将这宝贵的真理切实带进今天的祷告与生活中，具体更新我们的选择、人际关系与面对担忧时的态度。`;
+  return [
+    {
+      tag: "经文释义",
+      color: "#BF78F6",
+      dark: true,
+      text,
+    },
+  ];
 }
 
 export function generateFollowupText(question: string, refLabel: string): string {
