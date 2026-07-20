@@ -1,6 +1,7 @@
 // Highlights are local-first: guests stay entirely on this device, while a
 // signed-in user's changes are merged with PostgreSQL through the mobile API.
 import { load, save, uid } from "./store";
+import { apiRequest } from "./api";
 
 export const HIGHLIGHT_COLORS = ["#FBE59A", "#BFE6CF", "#C7DCF4", "#F3CAD8", "#DDCCF1"];
 export const HIGHLIGHTS_CHANGED_EVENT = "ob:highlights-changed";
@@ -69,22 +70,23 @@ export function syncHighlights(): Promise<boolean> {
     const sentIds = new Set(operations.map((op) => op.id));
     const local = getHighlights();
     try {
-      const response = await fetch("/api/mobile/highlights", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          highlights: local,
-          deletions: operations.filter((op) => op.type === "delete").map(({ book, chapter, verse }) => ({ book, chapter, verse })),
-        }),
-      });
+      const response = await apiRequest<{ highlights?: Highlight[] }>(
+        "/api/mobile/highlights",
+        {
+          method: "POST",
+          body: {
+            highlights: local,
+            deletions: operations.filter((op) => op.type === "delete").map(({ book, chapter, verse }) => ({ book, chapter, verse })),
+          },
+        },
+      );
       if (response.status === 401) return false;
       if (!response.ok) return false;
-      const data = await response.json() as { highlights?: Highlight[] };
-      if (!Array.isArray(data.highlights)) return false;
+      if (!Array.isArray(response.data?.highlights)) return false;
 
       const remaining = load<PendingOperation[]>(PENDING_KEY, []).filter((op) => !sentIds.has(op.id));
       save(PENDING_KEY, remaining);
-      let merged = data.highlights.map((item) => ({ ...item, createdAt: String(item.createdAt) }));
+      let merged = response.data.highlights.map((item) => ({ ...item, createdAt: String(item.createdAt) }));
       for (const op of remaining) {
         if (op.type === "delete") merged = merged.filter((h) => !(h.book === op.book && h.chapter === op.chapter && h.verse === op.verse));
         else {

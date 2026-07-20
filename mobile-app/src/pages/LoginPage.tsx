@@ -1,19 +1,24 @@
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { sendLoginCode, verifyLoginCode } from "../data/profile";
+import { sendLoginCode, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
+import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
 
 // 注册登录（design 5d）— real email verification-code login against the
 // OpenBible backend; first login auto-registers the account.
 export function LoginPage() {
   const navigate = useNavigate();
+  const isAndroid = Capacitor.getPlatform() === "android" || /Android/i.test(navigator.userAgent);
+  const showAppleLogin = !isAndroid;
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const startCooldown = (seconds: number) => {
     setCooldown(seconds);
@@ -61,6 +66,29 @@ export function LoginPage() {
     }
   };
 
+  const signInWithGoogleAccount = async () => {
+    setError("");
+    setNotice("");
+    setGoogleBusy(true);
+    try {
+      const googleResult = await signInWithGoogle();
+      const result = await verifyGoogleLogin(googleResult.idToken);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      await syncHighlights();
+      navigate("/me", { replace: true });
+    } catch (error) {
+      if (!isGoogleSignInCanceled(error)) {
+        const message = error instanceof Error ? error.message : "Google 登录失败，请稍后重试";
+        setError(message);
+      }
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
       <div className="page-header">
@@ -85,11 +113,11 @@ export function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="邮箱地址"
               type="email"
-              style={{ flex: 1, height: "100%", fontSize: 14, fontWeight: 600, border: "none", outline: "none", background: "transparent" }}
+              style={{ flex: 1, minWidth: 0, height: "100%", fontSize: 14, fontWeight: 600, border: "none", outline: "none", background: "transparent" }}
             />
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--line)", borderRadius: 12, padding: "0 14px", height: 48 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 10 }}>
+            <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 10, border: "1px solid var(--line)", borderRadius: 12, padding: "0 14px", height: 48 }}>
               <Icon name="lock" size={16} />
               <input
                 value={code}
@@ -103,7 +131,7 @@ export function LoginPage() {
             <button
               onClick={sendCode}
               disabled={busy || cooldown > 0}
-              style={{ flex: "none", height: 48, padding: "0 14px", background: cooldown > 0 ? "var(--surface-2)" : "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: cooldown > 0 ? "var(--body)" : "var(--ink)" }}
+              style={{ height: 48, padding: "0 14px", whiteSpace: "nowrap", background: cooldown > 0 ? "var(--surface-2)" : "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700, color: cooldown > 0 ? "var(--body)" : "var(--ink)" }}
             >
               {cooldown > 0 ? `${cooldown}s` : "获取验证码"}
             </button>
@@ -124,13 +152,26 @@ export function LoginPage() {
           <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
         </div>
 
-        <button
-          onClick={() => { setError("移动端 Apple 登录即将开放，网页版已支持"); }}
-          className="card"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700 }}
-        >
-           通过 Apple 登录
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {showAppleLogin && (
+            <button
+              onClick={() => { setError("移动端 Apple 登录即将开放，网页版已支持"); }}
+              className="card"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700 }}
+            >
+              通过 Apple 登录
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={signInWithGoogleAccount}
+            disabled={busy || googleBusy}
+            className="card"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 50, fontSize: 14, fontWeight: 700, color: "var(--body)", opacity: busy || googleBusy ? 0.65 : 1 }}
+          >
+            {googleBusy ? "正在连接 Google…" : "使用 Google 登录"}
+          </button>
+        </div>
 
         <div className="disclaimer">登录即表示同意《用户协议》与《隐私政策》</div>
       </div>

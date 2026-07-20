@@ -75,6 +75,7 @@ model AuthAccount {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider])
+  @@unique([provider, providerAccountId])
 }
 
 // ---------- Communities (分社群) ----------

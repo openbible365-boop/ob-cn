@@ -3,6 +3,8 @@
 // dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
 import { clearHighlightsForLogout } from "./annotations";
+import { apiRequest } from "./api";
+import { clearGoogleCredentialState } from "./google-auth";
 
 export type SessionUser = {
   id: string;
@@ -15,12 +17,16 @@ type ApiResult = { ok: boolean; message: string; user?: SessionUser };
 
 async function post(path: string, body?: unknown): Promise<ApiResult> {
   try {
-    const res = await fetch(path, {
+    const response = await apiRequest<ApiResult>(path, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body,
     });
-    return (await res.json()) as ApiResult;
+    return (
+      response.data ?? {
+        ok: false,
+        message: `服务器返回异常（${response.status}）`,
+      }
+    );
   } catch {
     return { ok: false, message: "网络错误，请稍后重试" };
   }
@@ -34,18 +40,24 @@ export function verifyLoginCode(email: string, code: string) {
   return post("/api/mobile/auth/verify", { email, code });
 }
 
+export function verifyGoogleLogin(idToken: string) {
+  return post("/api/mobile/auth/google", { idToken });
+}
+
 export async function logout() {
   const result = await post("/api/mobile/auth/logout");
-  if (result.ok) clearHighlightsForLogout();
+  if (result.ok) {
+    clearHighlightsForLogout();
+    await clearGoogleCredentialState().catch(() => {});
+  }
   return result;
 }
 
 export async function fetchMe(): Promise<SessionUser | null> {
   try {
-    const res = await fetch("/api/mobile/me");
-    if (!res.ok) return null;
-    const data = (await res.json()) as ApiResult;
-    return data.user ?? null;
+    const response = await apiRequest<ApiResult>("/api/mobile/me");
+    if (!response.ok) return null;
+    return response.data?.user ?? null;
   } catch {
     return null;
   }
