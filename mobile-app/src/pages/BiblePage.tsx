@@ -28,6 +28,33 @@ import {
 import { startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
 
+const PlayingAudioIcon = () => (
+  <div style={{ display: "flex", alignItems: "flex-end", gap: 2, width: 22, height: 22, paddingBottom: 2, justifyContent: "center" }}>
+    <style>{`
+      @keyframes bounce-bar-1 {
+        0%, 100% { height: 4px; }
+        50% { height: 16px; }
+      }
+      @keyframes bounce-bar-2 {
+        0%, 100% { height: 8px; }
+        50% { height: 14px; }
+      }
+      @keyframes bounce-bar-3 {
+        0%, 100% { height: 6px; }
+        50% { height: 18px; }
+      }
+      .audio-bounce-bar {
+        width: 3px;
+        background-color: var(--purple);
+        border-radius: 3px;
+      }
+    `}</style>
+    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-1 0.8s ease-in-out infinite" }} />
+    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-2 0.5s ease-in-out infinite" }} />
+    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-3 0.7s ease-in-out infinite" }} />
+  </div>
+);
+
 export function BiblePage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -76,6 +103,7 @@ export function BiblePage() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
+  const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
 
   useEffect(() => {
     const refresh = () => setStoreVersion((value) => value + 1);
@@ -108,6 +136,11 @@ export function BiblePage() {
 
   useEffect(() => {
     if (picker !== "audio") return;
+    const currentKey = `${version.code}-${book.code}-${chapter}-${audioVoice}`;
+    if (loadedAudioKey === currentKey) {
+      return;
+    }
+
     const audio = audioRef.current;
     audio?.pause();
     setAudioPlaying(false);
@@ -131,13 +164,17 @@ export function BiblePage() {
         setAudioUrl(result.audioUrl);
         setAudioTimestamps(result.timestamps);
         setResolvedAudioVoice(result.voice);
+        setLoadedAudioKey(currentKey);
       })
       .catch((error: unknown) => {
-        if (!cancelled) setAudioError(error instanceof Error ? error.message : "当前章节暂无音频");
+        if (!cancelled) {
+          setAudioError(error instanceof Error ? error.message : "当前章节暂无音频");
+          setLoadedAudioKey(null);
+        }
       })
       .finally(() => { if (!cancelled) setAudioLoading(false); });
     return () => { cancelled = true; };
-  }, [picker, version.code, book.code, chapter, audioVoice, audioRequestVersion]);
+  }, [picker, version.code, book.code, chapter, audioVoice, audioRequestVersion, loadedAudioKey]);
 
   const displayedAudioVoice = resolvedAudioVoice || audioVoice;
   const chooseAudioVoice = (voice: string) => {
@@ -291,7 +328,6 @@ export function BiblePage() {
     }
   };
   const closeAudio = () => {
-    audioRef.current?.pause();
     setVoiceMenuOpen(false);
     setPicker(null);
   };
@@ -313,6 +349,20 @@ export function BiblePage() {
 
   return (
     <div className="screen">
+      <audio
+        ref={audioRef}
+        src={audioUrl || undefined}
+        preload="metadata"
+        onLoadedMetadata={(event) => {
+          setAudioDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
+          event.currentTarget.playbackRate = audioSpeed;
+        }}
+        onTimeUpdate={(event) => setAudioCurrentTime(event.currentTarget.currentTime)}
+        onPlay={() => setAudioPlaying(true)}
+        onPause={() => setAudioPlaying(false)}
+        onEnded={() => setAudioPlaying(false)}
+        onError={() => audioUrl && setAudioError("音频文件加载失败，请稍后重试")}
+      />
       {/* reading toolbar */}
       <div className="bible-toolbar">
         <div className="bible-reader-selectors" aria-label="经卷章节及译本选择">
@@ -338,8 +388,9 @@ export function BiblePage() {
             title="有声圣经"
             aria-label="有声圣经"
             onClick={() => setPicker("audio")}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <Icon name="volume-2" size={25} />
+            {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={25} />}
           </button>
           <button
             className="bible-toolbar-action"
@@ -540,20 +591,6 @@ export function BiblePage() {
         <>
           <div className="audio-player-scrim" onClick={closeAudio} />
           <section className="audio-player-sheet" role="dialog" aria-modal="true" aria-label={`${displayBook}第${chapter}章语音圣经`}>
-            <audio
-              ref={audioRef}
-              src={audioUrl || undefined}
-              preload="metadata"
-              onLoadedMetadata={(event) => {
-                setAudioDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
-                event.currentTarget.playbackRate = audioSpeed;
-              }}
-              onTimeUpdate={(event) => setAudioCurrentTime(event.currentTarget.currentTime)}
-              onPlay={() => setAudioPlaying(true)}
-              onPause={() => setAudioPlaying(false)}
-              onEnded={() => setAudioPlaying(false)}
-              onError={() => audioUrl && setAudioError("音频文件加载失败，请稍后重试")}
-            />
             <div className="audio-player-handle" />
             <div className="audio-player-kicker">
               <Icon name="volume-2" size={18} />
