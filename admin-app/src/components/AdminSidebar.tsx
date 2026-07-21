@@ -11,6 +11,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[] }[] = [
   { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"] },
   { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/annotations", label: "用户标注", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"] },

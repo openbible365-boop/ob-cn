@@ -111,3 +111,43 @@ export async function deleteSensitiveWord(formData: FormData) {
   revalidatePath("/admin/content");
   revalidatePath("/admin/moderation");
 }
+
+export async function deleteNote(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const noteId = String(formData.get("noteId"));
+
+  const note = await db.note.delete({
+    where: { id: noteId },
+    include: { user: true },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "删除笔记",
+    targetType: "Note",
+    targetId: note.id,
+    detail: `作者 ${note.user.name} · ${note.book} ${note.chapter}:${note.verse} · ${note.content.slice(0, 30)}`,
+  });
+
+  revalidatePath("/admin/annotations");
+}
+
+export async function deleteHighlight(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const highlightId = String(formData.get("highlightId"));
+
+  const highlight = await db.highlight.delete({
+    where: { id: highlightId },
+    include: { user: true },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "删除高亮",
+    targetType: "Highlight",
+    targetId: highlight.id,
+    detail: `作者 ${highlight.user.name} · ${highlight.book} ${highlight.chapter}:${highlight.verse}`,
+  });
+
+  revalidatePath("/admin/annotations");
+}

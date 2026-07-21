@@ -38,6 +38,12 @@ export default async function UsersPage({
       include: {
         authAccounts: true,
         memberships: { include: { community: true } },
+        _count: {
+          select: {
+            highlights: true,
+            notes: true,
+          },
+        },
       },
       orderBy: { uid: "asc" },
     }),
@@ -85,7 +91,12 @@ export default async function UsersPage({
                   <div style={{ fontWeight: 700 }}>
                     {u.name} <span style={{ fontWeight: 600, color: "var(--body)" }}>· UID {u.uid}</span>
                   </div>
-                  {u.email && <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{u.email}</div>}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2, fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
+                    {u.email && <div>{u.email}</div>}
+                    <div style={{ color: "var(--purple)" }}>
+                      高亮 {u._count.highlights} · 笔记 {u._count.notes}
+                    </div>
+                  </div>
                 </div>
               </div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>{login}</div>
