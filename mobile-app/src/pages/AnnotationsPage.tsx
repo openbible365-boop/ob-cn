@@ -82,18 +82,8 @@ export function AnnotationsPage() {
           </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
-          <div style={{ display: "flex", gap: 6 }}>
-            {chapter > 1 && (
-              <button className="icon-btn" onClick={() => gotoChapter(chapter - 1)} style={{ width: 32, height: 32 }}><Icon name="chevron-left" size={14} /></button>
-            )}
-            {chapter < maxChapter && (
-              <button className="icon-btn" onClick={() => gotoChapter(chapter + 1)} style={{ width: 32, height: 32 }}><Icon name="chevron-right" size={14} /></button>
-            )}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 32, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 10, boxShadow: "var(--shadow-card)", fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>
-            精读本
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 32, padding: "0 12px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 10, boxShadow: "var(--shadow-card)", fontSize: 12, fontWeight: 800, color: "var(--ink)", marginLeft: "auto" }}>
+          精读本
         </div>
 
         {picker === "version" && (
