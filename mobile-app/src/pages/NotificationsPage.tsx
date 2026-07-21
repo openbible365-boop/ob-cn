@@ -25,24 +25,30 @@ export function NotificationsPage() {
           {NOTIFICATION_PREFS.map((p, i) => {
             const on = prefs[p.key];
             return (
-              <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderTop: i > 0 ? "1px solid var(--surface-2)" : "none" }}>
+              <button
+                key={p.key}
+                type="button"
+                role="switch"
+                aria-checked={on}
+                aria-label={`${p.title}，${on ? "已开启" : "已关闭"}`}
+                onClick={() => toggle(p.key)}
+                style={{ display: "flex", width: "100%", alignItems: "center", gap: 12, padding: "14px 16px", borderTop: i > 0 ? "1px solid var(--surface-2)" : "none", textAlign: "left" }}
+              >
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{p.title}</div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{p.desc}</div>
                 </div>
-                <button
-                  onClick={() => toggle(p.key)}
-                  role="switch"
-                  aria-checked={on}
+                <span
+                  aria-hidden="true"
                   style={{
-                    flex: "none", width: 48, height: 28, borderRadius: 100, padding: 2,
+                    display: "block", flex: "none", width: 48, height: 28, borderRadius: 100, padding: 2,
                     background: on ? "var(--purple)" : "var(--surface-2)",
                     border: "1px solid var(--line)", transition: "background .15s ease",
                   }}
                 >
                   <div style={{ width: 22, height: 22, background: "#fff", borderRadius: 100, boxShadow: "var(--shadow-card)", transform: on ? "translateX(20px)" : "translateX(0)", transition: "transform .15s ease" }} />
-                </button>
-              </div>
+                </span>
+              </button>
             );
           })}
         </div>

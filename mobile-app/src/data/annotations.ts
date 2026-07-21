@@ -11,8 +11,8 @@ const LEGACY_HIGHLIGHT_COLORS: Record<string, string> = {
   "#7FD1AE": "#BFE6CF", "#8FB8E8": "#C7DCF4",
 };
 
-export type Highlight = { book: string; chapter: number; verse: number; color: string; createdAt: string };
-export type Note = { id: string; book: string; chapter: number; verse: number; content: string; createdAt: string };
+export type Highlight = { book: string; chapter: number; verse: number; version?: string; color: string; createdAt: string };
+export type Note = { id: string; book: string; chapter: number; verse: number; version?: string; content: string; createdAt: string };
 type PendingOperation = { id: string; type: "upsert" | "delete"; book: string; chapter: number; verse: number };
 
 const HL_KEY = "ob.highlights";
@@ -50,9 +50,9 @@ export function getHighlights(): Highlight[] {
   }));
 }
 
-export function setHighlight(book: string, chapter: number, verse: number, color: string) {
+export function setHighlight(book: string, chapter: number, verse: number, color: string, version?: string) {
   const rest = getHighlights().filter((h) => !(h.book === book && h.chapter === chapter && h.verse === verse));
-  saveHighlights([...rest, { book, chapter, verse, color, createdAt: new Date().toISOString() }]);
+  saveHighlights([...rest, { book, chapter, verse, version, color, createdAt: new Date().toISOString() }]);
   queueOperation("upsert", book, chapter, verse);
   scheduleSync();
 }
@@ -114,8 +114,24 @@ export function getNotes(): Note[] {
   return load<Note[]>(NOTE_KEY, []).map((n) => ({ ...n, book: n.book ?? LEGACY_BOOK }));
 }
 
-export function addNote(book: string, chapter: number, verse: number, content: string) {
-  const note: Note = { id: uid(), book, chapter, verse, content, createdAt: new Date().toISOString() };
+export function addNote(book: string, chapter: number, verse: number, content: string, version?: string) {
+  const note: Note = { id: uid(), book, chapter, verse, version, content, createdAt: new Date().toISOString() };
   save(NOTE_KEY, [note, ...getNotes()]);
+  notify();
   return note;
+}
+
+export function updateNote(id: string, content: string) {
+  const notes = getNotes();
+  const current = notes.find((note) => note.id === id);
+  if (!current) return null;
+  const updated = { ...current, content };
+  save(NOTE_KEY, notes.map((note) => note.id === id ? updated : note));
+  notify();
+  return updated;
+}
+
+export function deleteNote(id: string) {
+  save(NOTE_KEY, getNotes().filter((note) => note.id !== id));
+  notify();
 }

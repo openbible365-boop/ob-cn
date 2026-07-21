@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
@@ -28,9 +29,7 @@ export function MePage() {
   if (user === undefined) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <div style={{ flex: "none", padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>我的</div>
-        </div>
+        <CompactToolbar ariaLabel="个人中心" primary="我的" secondary="个人" />
         <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", justifyContent: "center" }}>
           <div style={{ fontSize: 13, color: "var(--body)" }}>加载中…</div>
         </div>
@@ -41,9 +40,22 @@ export function MePage() {
   if (!user) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <div style={{ flex: "none", padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>我的</div>
-        </div>
+        <CompactToolbar
+          ariaLabel="个人中心"
+          primary="我的"
+          secondary="个人"
+          actions={(
+            <button
+              className="bible-toolbar-action"
+              type="button"
+              aria-label="登录或注册"
+              title="登录或注册"
+              onClick={() => navigate("/me/login")}
+            >
+              <Icon name="user" size={18} />
+            </button>
+          )}
+        />
         <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 72, height: 72, background: "var(--surface-2)", borderRadius: 100 }}>
             <Icon name="user" size={30} />
@@ -72,15 +84,39 @@ export function MePage() {
   const settingsRows = [
     { icon: "align-justify" as const, label: "我的内容", desc: "高亮 · 笔记 · 帖子", to: "/me/content" },
     { icon: "bell" as const, label: "通知管理", desc: "推送与提醒偏好", to: "/me/notifications" },
-    { icon: "sun" as const, label: "阅读偏好", desc: "字号 · 夜间模式（开发中）", to: null },
-    { icon: "lock" as const, label: "隐私与安全", desc: "账号与数据（开发中）", to: null },
+    { icon: "sun" as const, label: "阅读偏好", desc: "即将开放", to: null },
+    { icon: "lock" as const, label: "隐私与安全", desc: "即将开放", to: null },
   ];
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div style={{ flex: "none", padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 20, fontWeight: 800 }}>我的</div>
-      </div>
+      <CompactToolbar
+        ariaLabel="个人中心"
+        primary="我的"
+        secondary="个人"
+        actions={(
+          <>
+            <button
+              className="bible-toolbar-action"
+              type="button"
+              aria-label="我的内容"
+              title="我的内容"
+              onClick={() => navigate("/me/content")}
+            >
+              <Icon name="align-justify" size={18} />
+            </button>
+            <button
+              className="bible-toolbar-action"
+              type="button"
+              aria-label="通知管理"
+              title="通知管理"
+              onClick={() => navigate("/me/notifications")}
+            >
+              <Icon name="bell" size={18} />
+            </button>
+          </>
+        )}
+      />
 
       <div className="screen-scroll" style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
         {/* profile card */}
@@ -101,14 +137,14 @@ export function MePage() {
             <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{user.name}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{user.email ?? `群主 ×${myGroups}`}</div>
           </div>
-          <button className="icon-btn" title="编辑资料"><Icon name="edit" size={16} /></button>
+          <button className="icon-btn" type="button" disabled aria-label="编辑资料即将开放" title="编辑资料即将开放" style={{ opacity: .48, cursor: "not-allowed" }}><Icon name="edit" size={16} /></button>
         </div>
 
         {/* sync card */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(191,120,246,.14)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 14px" }}>
           <div style={{ flex: "none", color: "var(--purple)" }}><Icon name="cloud" size={18} /></div>
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            高亮已与当前账号同步，换设备登录后也可继续使用。
+            高亮已与当前账号同步；笔记和慧读记录目前仅保存在本机。
           </div>
         </div>
 
@@ -127,8 +163,11 @@ export function MePage() {
           {settingsRows.map((r, i) => (
             <button
               key={r.label}
+              type="button"
+              disabled={!r.to}
+              aria-label={!r.to ? `${r.label}即将开放` : r.label}
               onClick={() => r.to && navigate(r.to)}
-              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "13px 16px", textAlign: "left", borderTop: i > 0 ? "1px solid var(--surface-2)" : "none", opacity: r.to ? 1 : 0.55 }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "13px 16px", textAlign: "left", borderTop: i > 0 ? "1px solid var(--surface-2)" : "none", opacity: r.to ? 1 : 0.55, cursor: r.to ? "pointer" : "not-allowed" }}
             >
               <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "var(--surface-2)", borderRadius: 10 }}>
                 <Icon name={r.icon} size={16} />
@@ -137,7 +176,7 @@ export function MePage() {
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 1 }}>{r.label}</div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{r.desc}</div>
               </div>
-              <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>
+              {r.to && <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>}
             </button>
           ))}
         </div>

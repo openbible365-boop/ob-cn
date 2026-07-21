@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { getGroup, updateGroup } from "../data/community";
@@ -18,6 +18,12 @@ export function GroupSettingsPage() {
   const [tier, setTier] = useState(group?.tier ?? "初阶");
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    if (!saved || !group) return;
+    const timer = window.setTimeout(() => navigate(`/community/${group.id}`), 600);
+    return () => window.clearTimeout(timer);
+  }, [saved, group, navigate]);
+
   if (!group) {
     return (
       <div className="screen">
@@ -30,10 +36,21 @@ export function GroupSettingsPage() {
     );
   }
 
+  if (group.badgeStyle !== "owner") {
+    return (
+      <div className="screen" style={{ background: "var(--surface)" }}>
+        <div className="page-header">
+          <button className="icon-btn" aria-label="返回群组" onClick={() => navigate(`/community/${group.id}`)}><Icon name="chevron-left" size={18} /></button>
+          <div className="title">群组设置</div>
+        </div>
+        <div className="route-status"><Icon name="lock" size={20} /><b>仅群主可以管理此群组</b><span>你可以继续浏览群内公开内容。</span></div>
+      </div>
+    );
+  }
+
   const save = () => {
-    updateGroup(group.id, { name: name.trim() || group.name, tier });
+    updateGroup(group.id, { name: name.trim() || group.name, tier: group.tier ?? "初阶" });
     setSaved(true);
-    setTimeout(() => navigate(`/community/${group.id}`), 600);
   };
 
   return (
@@ -52,7 +69,7 @@ export function GroupSettingsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, background: group.color, border: "1px solid var(--line)", borderRadius: 18, boxShadow: "var(--shadow-card)", fontSize: 24, fontWeight: 800 }}>
               {group.letter}
             </div>
-            <div style={{ position: "absolute", right: -5, bottom: -5, display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, background: "var(--ink)", borderRadius: 100, color: "#fff" }}>
+            <div aria-label="头像编辑即将开放" title="头像编辑即将开放" style={{ position: "absolute", right: -5, bottom: -5, display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, background: "var(--body)", borderRadius: 100, color: "#fff" }}>
               <Icon name="camera" size={12} />
             </div>
           </div>
@@ -72,12 +89,15 @@ export function GroupSettingsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {TIERS.map((t) => {
               const active = tier === t.id;
+              const available = t.id === "初阶";
               return (
                 <button
                   key={t.id}
-                  onClick={() => setTier(t.id)}
+                  disabled={!available}
+                  aria-describedby={!available ? `tier-${t.id}-status` : undefined}
+                  onClick={() => available && setTier(t.id)}
                   className="card"
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", textAlign: "left", border: active ? "2px solid var(--purple)" : "1px solid var(--line)" }}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", textAlign: "left", border: active ? "2px solid var(--purple)" : "1px solid var(--line)", opacity: available ? 1 : 0.62, cursor: available ? "pointer" : "not-allowed" }}
                 >
                   <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: 100, border: active ? "7px solid var(--purple)" : "2px solid var(--line)" }} />
                   <div style={{ flex: 1 }}>
@@ -89,7 +109,7 @@ export function GroupSettingsPage() {
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{t.members} · {t.ai}</div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: active ? "var(--purple)" : "var(--body)" }}>{t.price}</div>
+                  <div id={`tier-${t.id}-status`} style={{ fontSize: 12, fontWeight: 800, color: active ? "var(--purple)" : "var(--body)", textAlign: "right" }}>{available ? t.price : <>{t.price}<br /><small>即将开放</small></>}</div>
                 </button>
               );
             })}
@@ -100,7 +120,7 @@ export function GroupSettingsPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", borderRadius: 12, padding: "12px 14px" }}>
           <Icon name="lock" size={15} />
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            成员管理、AI 助手人设、解散群组等操作在网页版群主工作台提供。
+            付费升级、成员管理和 AI 助手人设将在服务端会员系统接入后开放，不会在本机直接扣费。
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { TabBar } from "./components/TabBar";
 import { BiblePage } from "./pages/BiblePage";
@@ -13,7 +13,24 @@ import { MePage } from "./pages/MePage";
 import { MyContentPage } from "./pages/MyContentPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { LegalPage } from "./pages/LegalPage";
 import { syncHighlights } from "./data/annotations";
+import { fetchMe } from "./data/profile";
+
+function RequireLogin({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchMe().then((user) => { if (!cancelled) setAllowed(Boolean(user)); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (allowed === null) return <div className="route-status">正在确认账号…</div>;
+  if (!allowed) return <Navigate to="/me/login" replace state={{ from: location.pathname }} />;
+  return <>{children}</>;
+}
 
 // The five top-level tabs keep the tab bar; drill-in pages go full screen.
 const TAB_PATHS = ["/bible", "/annotations", "/huidu", "/community", "/me"];
@@ -34,8 +51,13 @@ export default function App() {
     const scrollContainer = document.querySelector<HTMLElement>(".screen-scroll");
     if (!scrollContainer) return;
 
+    let previousScrollTop = scrollContainer.scrollTop;
     const updateTabBarVisibility = () => {
-      setIsTabBarVisible(scrollContainer.scrollTop <= 4);
+      const nextScrollTop = scrollContainer.scrollTop;
+      const delta = nextScrollTop - previousScrollTop;
+      if (nextScrollTop <= 12 || delta < -4) setIsTabBarVisible(true);
+      else if (delta > 4 && nextScrollTop > 64) setIsTabBarVisible(false);
+      previousScrollTop = nextScrollTop;
     };
 
     updateTabBarVisibility();
@@ -53,11 +75,12 @@ export default function App() {
         <Route path="/huidu" element={<HuiduHomePage />} />
         <Route path="/huidu/:conversationId" element={<HuiduChatPage />} />
         <Route path="/community" element={<CommunityPage />} />
-        <Route path="/community/new" element={<CreateGroupPage />} />
+        <Route path="/community/new" element={<RequireLogin><CreateGroupPage /></RequireLogin>} />
         <Route path="/community/:groupId" element={<GroupPage />} />
-        <Route path="/community/:groupId/settings" element={<GroupSettingsPage />} />
+        <Route path="/community/:groupId/settings" element={<RequireLogin><GroupSettingsPage /></RequireLogin>} />
         <Route path="/me" element={<MePage />} />
         <Route path="/me/login" element={<LoginPage />} />
+        <Route path="/legal/:type" element={<LegalPage />} />
         <Route path="/me/content" element={<MyContentPage />} />
         <Route path="/me/notifications" element={<NotificationsPage />} />
         <Route path="*" element={<Navigate to="/bible" replace />} />

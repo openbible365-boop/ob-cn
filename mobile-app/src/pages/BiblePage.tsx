@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { VerseShareSheet } from "../components/VerseShareSheet";
 import {
   VERSIONS,
   OT_BOOKS,
@@ -24,35 +25,16 @@ import {
   HIGHLIGHTS_CHANGED_EVENT,
   getNotes,
   addNote,
+  updateNote,
+  deleteNote,
 } from "../data/annotations";
 import { startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
 
 const PlayingAudioIcon = () => (
-  <div style={{ display: "flex", alignItems: "flex-end", gap: 2, width: 22, height: 22, paddingBottom: 2, justifyContent: "center" }}>
-    <style>{`
-      @keyframes bounce-bar-1 {
-        0%, 100% { height: 4px; }
-        50% { height: 16px; }
-      }
-      @keyframes bounce-bar-2 {
-        0%, 100% { height: 8px; }
-        50% { height: 14px; }
-      }
-      @keyframes bounce-bar-3 {
-        0%, 100% { height: 6px; }
-        50% { height: 18px; }
-      }
-      .audio-bounce-bar {
-        width: 3px;
-        background-color: var(--purple);
-        border-radius: 3px;
-      }
-    `}</style>
-    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-1 0.8s ease-in-out infinite" }} />
-    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-2 0.5s ease-in-out infinite" }} />
-    <div className="audio-bounce-bar" style={{ animation: "bounce-bar-3 0.7s ease-in-out infinite" }} />
-  </div>
+  <span className="playing-audio-icon" aria-hidden="true">
+    <i /><i /><i />
+  </span>
 );
 
 export function BiblePage() {
@@ -83,6 +65,8 @@ export function BiblePage() {
   const [pickerBook, setPickerBook] = useState<string | null>(null); // book focused inside the picker
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [expandedNoteVerse, setExpandedNoteVerse] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [fontSize, setFontSize] = useState(() => {
     const saved = Number(localStorage.getItem("ob.bible.fontSize"));
@@ -103,6 +87,7 @@ export function BiblePage() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -136,10 +121,8 @@ export function BiblePage() {
 
   useEffect(() => {
     if (picker !== "audio") return;
-    const currentKey = `${version.code}-${book.code}-${chapter}-${audioVoice}`;
-    if (loadedAudioKey === currentKey) {
-      return;
-    }
+    const currentKey = `${version.code}-${book.code}-${chapter}-${audioVoice}-${audioRequestVersion}`;
+    if (loadedAudioKey === currentKey) return;
 
     const audio = audioRef.current;
     audio?.pause();
@@ -152,6 +135,7 @@ export function BiblePage() {
     setAudioError("");
 
     if (version.code !== "cuv") {
+      setLoadedAudioKey(null);
       setAudioError("当前仅和合本提供语音圣经，请先切换到和合本");
       return;
     }
@@ -176,6 +160,20 @@ export function BiblePage() {
     return () => { cancelled = true; };
   }, [picker, version.code, book.code, chapter, audioVoice, audioRequestVersion, loadedAudioKey]);
 
+  useEffect(() => {
+    const linkedVerse = Number(params.get("v"));
+    if (!data || !linkedVerse) return;
+    setLocatedVerse(linkedVerse);
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`bible-verse-${linkedVerse}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    const timeout = window.setTimeout(() => setLocatedVerse((value) => value === linkedVerse ? null : value), 2200);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [data, params]);
+
   const displayedAudioVoice = resolvedAudioVoice || audioVoice;
   const chooseAudioVoice = (voice: string) => {
     setVoiceMenuOpen(false);
@@ -197,6 +195,7 @@ export function BiblePage() {
     void storeVersion;
     return getNotes().filter((n) => n.book === book.code && n.chapter === chapter);
   }, [book.code, chapter, storeVersion]);
+  const noteVerseNumbers = new Set(notes.map((note) => note.verse));
 
   const selectedNumbers = [...selected].sort((a, b) => a - b);
   const selectedRangeLabel = (() => {
@@ -217,6 +216,12 @@ export function BiblePage() {
     .filter((verse): verse is Verse => Boolean(verse));
   const selectedVerse = selectedVerses[0] ?? null;
   const selectedNotes = notes.filter((note) => selected.has(note.verse));
+  const openNoteEditor = (verseNumber: number, existing?: (typeof notes)[number]) => {
+    setSelected(new Set([verseNumber]));
+    setNoteText(existing?.content ?? "");
+    setEditingNoteId(existing?.id ?? null);
+    setNoteOpen(true);
+  };
   const toggleVerseSelection = (verseNumber: number) => {
     setSelected((current) => {
       const next = new Set(current);
@@ -226,6 +231,7 @@ export function BiblePage() {
     });
     setNoteOpen(false);
     setNoteText("");
+    setEditingNoteId(null);
   };
 
   const gotoChapter = (c: number, bk?: string) => {
@@ -244,6 +250,7 @@ export function BiblePage() {
     setSelected(new Set());
     setNoteOpen(false);
     setNoteText("");
+    setEditingNoteId(null);
   };
 
   const submitSearch = () => {
@@ -274,20 +281,6 @@ export function BiblePage() {
       await navigator.clipboard.writeText(text);
     } catch {
       /* clipboard unavailable */
-    }
-    closeSheet();
-  };
-
-  const shareVerse = async () => {
-    if (selectedVerses.length === 0) return;
-    const text = selectedVerses
-      .map((verse) => `${displayBook} ${chapter}:${verse.label} ${stripHtml(verse.text)}`)
-      .join("\n");
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else await navigator.clipboard.writeText(text);
-    } catch {
-      /* user cancelled */
     }
     closeSheet();
   };
@@ -388,9 +381,8 @@ export function BiblePage() {
             title="有声圣经"
             aria-label="有声圣经"
             onClick={() => setPicker("audio")}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={25} />}
+            {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={23} />}
           </button>
           <button
             className="bible-toolbar-action"
@@ -398,7 +390,7 @@ export function BiblePage() {
             aria-label="搜索经文"
             onClick={() => setPicker(picker === "search" ? null : "search")}
           >
-            <Icon name="search" size={24} />
+            <Icon name="search" size={22} />
           </button>
           <button
             className="bible-toolbar-action"
@@ -451,7 +443,7 @@ export function BiblePage() {
                       key={n}
                       onClick={() => gotoChapter(n, pickerBookData.code)}
                       style={{
-                        height: 34, borderRadius: 8, fontSize: 13, fontWeight: 700,
+                        height: 40, borderRadius: 8, fontSize: 13, fontWeight: 700,
                         border: "1px solid var(--line)",
                         background: pickerBookData.code === book.code && n === chapter ? "var(--ink)" : "var(--white)",
                         color: pickerBookData.code === book.code && n === chapter ? "var(--yellow)" : "var(--ink)",
@@ -486,14 +478,14 @@ export function BiblePage() {
         )}
 
         {picker === "search" && (
-          <div style={{ position: "absolute", top: 46, right: 16, width: 240, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 10, zIndex: 30 }}>
+          <div style={{ position: "absolute", top: 50, right: 16, width: 240, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 10, zIndex: 30 }}>
             <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
               <input
                 autoFocus
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="输入章:节，如 3:16"
-                style={{ width: "100%", height: 36, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14 }}
+                style={{ width: "100%", height: 44, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14 }}
               />
             </form>
             <div style={{ fontSize: 11, color: "var(--body)", paddingTop: 8 }}>回车跳转到对应经文</div>
@@ -501,7 +493,7 @@ export function BiblePage() {
         )}
 
         {picker === "font" && (
-          <div style={{ position: "absolute", top: 46, right: 16, width: 176, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
+          <div style={{ position: "absolute", top: 50, right: 16, width: 176, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", marginBottom: 10 }}>字体大小</div>
             <div className="bible-font-size-control">
               <button
@@ -529,28 +521,51 @@ export function BiblePage() {
       </div>
 
       {/* verses */}
-      <div className="screen-scroll" style={{ padding: "22px 24px 24px" }} onClick={() => picker && setPicker(null)}>
-        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{displayBook}</div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.08em", marginBottom: 16 }}>
-          第 {chapter} 章 · {version.label}
-        </div>
+      <div
+        className={`screen-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}`}
+        style={{ padding: version.code === "pinyin" ? "12px 22px 24px" : version.lang === "ko" ? "14px 22px 24px" : "8px 24px 24px" }}
+        onClick={() => picker && setPicker(null)}
+      >
         {!data && !loadError && (
           <div style={{ fontSize: 13, color: "var(--body)" }}>加载经文中…</div>
         )}
         {loadError && (
           <div style={{ fontSize: 13, color: "var(--body)" }}>经文加载失败，请检查网络后重试。</div>
         )}
-        <div className="bible-verse-content" style={{ fontSize, fontWeight: 400, lineHeight: 1.95, color: "var(--ink)", textWrap: "pretty" }}>
+        <div
+          className={`bible-verse-content${version.code === "pinyin" ? " is-pinyin" : ""}${version.lang === "ko" ? " is-korean" : ""}`}
+          style={{
+            fontSize: version.lang === "ko" ? Math.max(17, fontSize - 1) : fontSize,
+            fontWeight: 400,
+            lineHeight: version.code === "pinyin" ? 2.18 : version.lang === "ko" ? 1.82 : 1.95,
+            color: "var(--ink)",
+            textWrap: "pretty",
+          }}
+        >
           {verses.map((v) => {
             const color = highlightMap.get(v.verse);
             const isSelected = selected.has(v.verse);
+            const verseNotes = notes.filter((note) => note.verse === v.verse);
+            const noteExpanded = expandedNoteVerse === v.verse;
             return (
-              <span key={v.label}>
+              <span key={v.label} className="bible-verse">
                 {v.heading && (
                   <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{v.heading}</span>
                 )}
-                <span id={`bible-verse-${v.verse}`} onClick={() => toggleVerseSelection(v.verse)}>
-                  <sup style={{ fontSize: 12, color: "var(--body)", margin: "0 4px" }}>{v.label}</sup>
+                <span
+                  id={`bible-verse-${v.verse}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`选择${displayBook}第${chapter}章${v.label}节`}
+                  onClick={() => toggleVerseSelection(v.verse)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleVerseSelection(v.verse);
+                    }
+                  }}
+                >
+                  <sup className="bible-verse-number" style={{ fontSize: 12, color: "var(--body)", margin: "0 4px" }}>{v.label}</sup>
                   <span
                     className="verse-text"
                     style={{
@@ -564,26 +579,47 @@ export function BiblePage() {
                     dangerouslySetInnerHTML={{ __html: v.text }}
                   />
                 </span>
+                {noteVerseNumbers.has(v.verse) && (
+                  <button
+                    type="button"
+                    className={`bible-verse-note-indicator${noteExpanded ? " is-open" : ""}`}
+                    aria-label={noteExpanded ? "收起本节笔记" : "展开本节笔记"}
+                    aria-expanded={noteExpanded}
+                    onClick={() => setExpandedNoteVerse(noteExpanded ? null : v.verse)}
+                  >
+                    <Icon name="edit" size={11} />
+                  </button>
+                )}
+                {noteExpanded && (
+                  <span className="bible-inline-note" role="note" aria-label={`${displayBook}${chapter}章${v.label}节的笔记`}>
+                    <span className="bible-inline-note-label">笔记</span>
+                    <span className="bible-inline-note-list">
+                      {verseNotes.map((note) => (
+                        <span className="bible-inline-note-row" key={note.id}>
+                          <span className="bible-inline-note-copy">{note.content}</span>
+                          <span className="bible-inline-note-actions">
+                            <button type="button" onClick={() => openNoteEditor(v.verse, note)}>编辑</button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteNote(note.id);
+                                setStoreVersion((value) => value + 1);
+                                if (verseNotes.length === 1) setExpandedNoteVerse(null);
+                              }}
+                            >
+                              删除
+                            </button>
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                )}
               </span>
             );
           })}
         </div>
 
-        {/* chapter nav */}
-        {data && (
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 26 }}>
-            {chapter > 1 ? (
-              <button onClick={() => gotoChapter(chapter - 1)} style={{ display: "flex", alignItems: "center", gap: 4, height: 38, padding: "0 16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 100, fontSize: 13, fontWeight: 700 }}>
-                <Icon name="chevron-left" size={14} /> 上一章
-              </button>
-            ) : <div />}
-            {chapter < maxChapter ? (
-              <button onClick={() => gotoChapter(chapter + 1)} style={{ display: "flex", alignItems: "center", gap: 4, height: 38, padding: "0 16px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 100, fontSize: 13, fontWeight: 700 }}>
-                下一章 <Icon name="chevron-right" size={14} />
-              </button>
-            ) : <div />}
-          </div>
-        )}
       </div>
 
       {/* audio modal */}
@@ -713,20 +749,20 @@ export function BiblePage() {
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerses.length} 节</div>
               <div style={{ flex: 1 }} />
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
-              <button type="button" aria-label="关闭经文选择" onClick={closeSheet} style={{ display: "flex", marginLeft: 2, color: "var(--body)" }}><Icon name="x" size={17} /></button>
+              <button type="button" aria-label="关闭经文选择" onClick={closeSheet} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, margin: "-12px -12px -12px 2px", color: "var(--body)" }}><Icon name="x" size={17} /></button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, marginBottom: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 800 }}>高亮</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, marginBottom: 10 }}>
+              <div style={{ flex: "none", whiteSpace: "nowrap", fontSize: 11, fontWeight: 800 }}>高亮</div>
               {HIGHLIGHT_COLORS.map((color) => (
                 <button
                   key={color}
                   onClick={() => {
-                    selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color));
+                    selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color, version.code));
                     setStoreVersion((v) => v + 1);
                   }}
                   style={{
-                    display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30,
+                    display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
                     background: color, borderRadius: "50%",
                     border: selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) ? "2px solid var(--ink)" : "1px solid var(--line)",
                   }}
@@ -741,7 +777,8 @@ export function BiblePage() {
                   selectedVerses.forEach((verse) => clearHighlight(book.code, chapter, verse.verse));
                   setStoreVersion((v) => v + 1);
                 }}
-                style={{ width: 30, height: 30, borderRadius: "50%", border: "1px solid var(--line)", background: "linear-gradient(135deg,#FFFFFF 44%,#18191F 44%,#18191F 56%,#FFFFFF 56%)" }}
+                aria-label="取消高亮"
+                style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid var(--line)", background: "linear-gradient(135deg,#FFFFFF 44%,#18191F 44%,#18191F 56%,#FFFFFF 56%)" }}
               />
             </div>
 
@@ -750,10 +787,14 @@ export function BiblePage() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (noteText.trim()) {
-                    addNote(book.code, chapter, selectedVerse.verse, noteText.trim());
+                    if (editingNoteId) updateNote(editingNoteId, noteText.trim());
+                    else addNote(book.code, chapter, selectedVerse.verse, noteText.trim(), version.code);
                     setStoreVersion((v) => v + 1);
+                    setExpandedNoteVerse(selectedVerse.verse);
+                    setSelected(new Set());
                     setNoteText("");
                     setNoteOpen(false);
+                    setEditingNoteId(null);
                   }
                 }}
                 style={{ display: "flex", gap: 8, marginBottom: 8 }}
@@ -763,18 +804,28 @@ export function BiblePage() {
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="写下你的笔记…"
-                  style={{ flex: 1, height: 40, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14 }}
+                  style={{ flex: 1, height: 44, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14 }}
                 />
-                <button type="submit" style={{ height: 40, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 13, fontWeight: 800 }}>保存</button>
+                <button type="submit" style={{ height: 44, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 13, fontWeight: 800 }}>{editingNoteId ? "更新" : "保存"}</button>
               </form>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
                 {[
-                  { label: "笔记", icon: "edit", onClick: () => setNoteOpen(true), disabled: selectedVerses.length !== 1 },
+                  {
+                    label: selectedNotes.length ? "编辑笔记" : "笔记",
+                    icon: "edit",
+                    onClick: () => openNoteEditor(selectedVerse.verse, selectedNotes[0]),
+                    disabled: selectedVerses.length !== 1,
+                  },
                   { label: "复制", icon: "align-justify", onClick: copyVerse },
-                  { label: "分享", icon: "share", onClick: shareVerse },
+                  { label: "分享", icon: "share", onClick: () => setShareOpen(true) },
                   { label: "慧读", icon: "star", onClick: askHuidu, primary: true, disabled: selectedVerses.length === 0 },
-                  { label: "注释", icon: "message-square", onClick: () => navigate(`/annotations?bk=${book.code}&c=${chapter}`) },
+                  {
+                    label: "注释",
+                    icon: "message-square",
+                    onClick: () => navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`),
+                    disabled: selectedVerses.length !== 1,
+                  },
                 ].map((a) => (
                   <button key={a.label} disabled={a.disabled} onClick={a.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, opacity: a.disabled ? 0.35 : 1 }}>
                     <div style={{
@@ -791,16 +842,20 @@ export function BiblePage() {
               </div>
             )}
 
-            {selectedNotes.length > 0 && (
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--surface-2)" }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", marginBottom: 6 }}>我的笔记</div>
-                {selectedNotes.map((n) => (
-                  <div key={n.id} style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.7, marginBottom: 4 }}>· {n.content}</div>
-                ))}
-              </div>
-            )}
           </div>
         </>
+      )}
+
+      {shareOpen && selectedVerses.length > 0 && (
+        <VerseShareSheet
+          data={{
+            verseText: selectedVerses.map((verse) => stripHtml(verse.text)).join(" "),
+            reference: `${displayBook} ${chapter}:${selectedRangeLabel}`,
+            versionLabel: version.label,
+            shareUrl: `https://app.openbible.live/#/bible?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse?.verse ?? selectedVerses[0].verse}`,
+          }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
     </div>
   );

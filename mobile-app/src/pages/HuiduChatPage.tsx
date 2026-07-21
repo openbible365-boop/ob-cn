@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { CompactToolbar } from "../components/CompactToolbar";
 import { getConversation, askFollowup, type Conversation, type HuiduBlock } from "../data/huidu";
 
 function TypingDots() {
@@ -40,6 +41,11 @@ export function HuiduChatPage() {
   const [pendingAnswer, setPendingAnswer] = useState(false);
   const [question, setQuestion] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const answerTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (answerTimerRef.current !== null) window.clearTimeout(answerTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!justCreated) return;
@@ -73,7 +79,7 @@ export function HuiduChatPage() {
     // Persist immediately; reveal the answer after a short simulated delay.
     const updated = askFollowup(conv.id, text);
     setConv(updated ? { ...updated, messages: updated.messages.slice(0, -1) } : conv);
-    setTimeout(() => {
+    answerTimerRef.current = window.setTimeout(() => {
       setConv(getConversation(conv.id));
       setPendingAnswer(false);
     }, 700);
@@ -81,12 +87,21 @@ export function HuiduChatPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">慧读</div>
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>第 {rounds} 轮 · 上下文已保留</div>
-      </div>
+      <CompactToolbar
+        ariaLabel="慧读对话状态"
+        primary="慧读"
+        secondary={`第 ${rounds} 轮`}
+        actions={(
+          <>
+            <button className="bible-toolbar-action" aria-label="返回慧读列表" onClick={() => navigate(-1)}>
+              <Icon name="chevron-left" size={22} />
+            </button>
+            <button className="bible-toolbar-action" aria-label="返回圣经阅读" onClick={() => navigate("/bible")}>
+              <Icon name="book" size={23} />
+            </button>
+          </>
+        )}
+      />
 
       {/* pinned quote */}
       <div style={{ flex: "none", padding: "14px 16px 0" }}>
@@ -136,7 +151,7 @@ export function HuiduChatPage() {
           </div>
         )}
 
-        <div className="disclaimer">AI 解释仅供参考，不替代教会教导与权威释经</div>
+        <div className="disclaimer">当前回答由本机阅读模板生成，仅供参考，不替代教会教导与权威释经</div>
       </div>
 
       {/* composer */}

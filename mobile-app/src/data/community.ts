@@ -12,6 +12,7 @@ export type Group = {
   badgeStyle?: "official" | "owner" | "muted";
   desc: string;
   tier?: string;
+  memberCount: number;
 };
 
 export type Post = {
@@ -24,6 +25,10 @@ export type Post = {
   text: string;
   verseRef?: string;
   verseText?: string;
+  verseBook?: string;
+  verseChapter?: number;
+  verseNumber?: number;
+  verseVersion?: string;
   likes: number;
   comments: number;
 };
@@ -44,10 +49,10 @@ export type GroupEvent = {
 };
 
 const SEED_GROUPS: Group[] = [
-  { id: "official", letter: "慧", color: "rgba(191,120,246,.3)", name: "慧读总群", badge: "官方", badgeStyle: "official", desc: "全体用户 · 官方公告与慧读答疑" },
-  { id: "youth", letter: "青", color: "#FFD465", name: "青年查经小组", badge: "群主", badgeStyle: "owner", desc: "32 成员 · 周五线上查经报名中", tier: "初阶" },
-  { id: "grace", letter: "恩", color: "rgba(191,120,246,.3)", name: "恩典读经群", badge: "3 条新消息", badgeStyle: "muted", desc: "118 成员 · 一年读经计划进行中" },
-  { id: "prayer", letter: "祷", color: "rgba(233,130,100,.3)", name: "姊妹祷告会", desc: "21 成员 · 今晨祷告接力已完成" },
+  { id: "official", letter: "慧", color: "rgba(191,120,246,.3)", name: "慧读总群", badge: "官方", badgeStyle: "official", desc: "全体用户 · 官方公告与慧读答疑", memberCount: 3280 },
+  { id: "youth", letter: "青", color: "#FFD465", name: "青年查经小组", badge: "群主", badgeStyle: "owner", desc: "周五线上查经报名中", tier: "初阶", memberCount: 32 },
+  { id: "grace", letter: "恩", color: "rgba(191,120,246,.3)", name: "恩典读经群", badge: "3 条新消息", badgeStyle: "muted", desc: "一年读经计划进行中", memberCount: 118 },
+  { id: "prayer", letter: "祷", color: "rgba(233,130,100,.3)", name: "姊妹祷告会", desc: "今晨祷告接力已完成", memberCount: 21 },
 ];
 
 const SEED_POSTS: Post[] = [
@@ -55,6 +60,7 @@ const SEED_POSTS: Post[] = [
     id: "p1", groupId: "youth", avatar: "陈", avatarColor: "rgba(233,130,100,.3)", author: "陈姊妹", time: "今天 14:05",
     text: "今天重读这节，被「甚至」两个字击中——神的爱不是抽象的，是舍己的行动。",
     verseRef: "约翰福音 3:16 · 和合本", verseText: "「神爱世人，甚至将他的独生子赐给他们……」",
+    verseBook: "jhn", verseChapter: 3, verseNumber: 16, verseVersion: "cuv",
     likes: 24, comments: 8,
   },
   {
@@ -80,9 +86,13 @@ const SEED_EVENTS: GroupEvent[] = [
 const GROUPS_KEY = "ob.groups";
 const LIKES_KEY = "ob.postLikes";
 const SIGNUP_KEY = "ob.eventSignups";
+const POSTS_KEY = "ob.communityPosts";
 
 export function getGroups(): Group[] {
-  return load<Group[]>(GROUPS_KEY, SEED_GROUPS);
+  return load<Group[]>(GROUPS_KEY, SEED_GROUPS).map((group) => ({
+    ...group,
+    memberCount: (group.memberCount ?? SEED_GROUPS.find((seed) => seed.id === group.id)?.memberCount ?? Number(group.desc.match(/(\d+)\s*成员/)?.[1])) || 1,
+  }));
 }
 
 export function getGroup(id: string) {
@@ -99,6 +109,7 @@ export function createGroup(name: string, desc?: string, color?: string): Group 
     badgeStyle: "owner",
     desc: desc || "1 成员 · 刚刚创建",
     tier: "初阶",
+    memberCount: 1,
   };
   save(GROUPS_KEY, [...getGroups(), group]);
   return group;
@@ -112,7 +123,16 @@ export function updateGroup(id: string, patch: Partial<Pick<Group, "name" | "tie
 }
 
 export function getPosts(groupId: string): Post[] {
-  return SEED_POSTS.filter((p) => p.groupId === groupId);
+  return [...load<Post[]>(POSTS_KEY, []), ...SEED_POSTS].filter((p) => p.groupId === groupId);
+}
+
+export function createPost(groupId: string, text: string): Post {
+  const post: Post = {
+    id: uid(), groupId, avatar: "我", avatarColor: "rgba(191,120,246,.18)",
+    author: "我", time: "刚刚", text, likes: 0, comments: 0,
+  };
+  save(POSTS_KEY, [post, ...load<Post[]>(POSTS_KEY, [])]);
+  return post;
 }
 
 export function getMyLikes(): string[] {

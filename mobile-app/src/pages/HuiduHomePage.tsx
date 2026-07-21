@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { CompactToolbar } from "../components/CompactToolbar";
 import { getConversations } from "../data/huidu";
 
 function fmtTime(iso: string) {
@@ -14,6 +16,7 @@ function isToday(iso: string) {
 export function HuiduHomePage() {
   const navigate = useNavigate();
   const conversations = getConversations();
+  const [grouping, setGrouping] = useState<"time" | "book">("time");
   const today = conversations.filter((c) => isToday(c.createdAt));
   const earlier = conversations.filter((c) => !isToday(c.createdAt));
 
@@ -36,11 +39,21 @@ export function HuiduHomePage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 20, fontWeight: 800 }}>慧读</div>
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>今日剩余 12/20 次</div>
-      </div>
+      <CompactToolbar
+        ariaLabel="慧读与今日额度"
+        primary="慧读"
+        secondary={`本机 ${conversations.length}`}
+        actions={(
+          <>
+            <button className="bible-toolbar-action" aria-label="返回圣经阅读" onClick={() => navigate("/bible")}>
+              <Icon name="book" size={20} />
+            </button>
+            <button className="bible-toolbar-action" aria-label="开始新的慧读对话" onClick={() => navigate("/bible")}>
+              <Icon name="sparkle" size={20} />
+            </button>
+          </>
+        )}
+      />
 
       <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
         <button
@@ -60,31 +73,34 @@ export function HuiduHomePage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>历史存档</div>
           <div style={{ flex: 1 }} />
-          <div className="seg">
-            <div className="seg-item active">按时间</div>
-            <div className="seg-item">按卷章</div>
+          <div className="seg" role="group" aria-label="慧读历史排序">
+            <button type="button" className={`seg-item${grouping === "time" ? " active" : ""}`} aria-pressed={grouping === "time"} onClick={() => setGrouping("time")}>按时间</button>
+            <button type="button" className={`seg-item${grouping === "book" ? " active" : ""}`} aria-pressed={grouping === "book"} onClick={() => setGrouping("book")}>按卷章</button>
           </div>
         </div>
 
-        {today.length > 0 && (
+        {grouping === "time" && today.length > 0 && (
           <>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>今天</div>
             {today.map((c, i) => item(c, i === 0))}
           </>
         )}
-        {earlier.length > 0 && (
+        {grouping === "time" && earlier.length > 0 && (
           <>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>更早</div>
             {earlier.map((c) => item(c, false))}
           </>
         )}
+        {grouping === "book" && [...conversations]
+          .sort((a, b) => a.refLabel.localeCompare(b.refLabel, "zh-CN", { numeric: true }))
+          .map((conversation) => item(conversation, false))}
         {conversations.length === 0 && (
           <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>
             还没有慧读记录。在阅读页点选一节经文，选择「慧读」试试。
           </div>
         )}
 
-        <div className="disclaimer">AI 解释仅供参考，不替代教会教导与权威释经</div>
+        <div className="disclaimer">当前回答由本机阅读模板生成，仅供参考，不替代教会教导与权威释经</div>
       </div>
     </div>
   );

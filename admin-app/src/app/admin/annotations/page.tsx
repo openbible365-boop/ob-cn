@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { UserAvatar } from "@/components/UserAvatar";
 import { deleteNote, deleteHighlight } from "@/lib/actions/content";
 import Link from "next/link";
+import type { Prisma } from "@/generated/prisma/client";
 
 export default async function AnnotationsPage({
   searchParams,
@@ -28,8 +29,8 @@ export default async function AnnotationsPage({
     d ? d.toISOString().slice(0, 16).replace("T", " ") : "";
 
   // Query records depending on tab
-  let highlights: any[] = [];
-  let notes: any[] = [];
+  let highlights: Prisma.HighlightGetPayload<{ include: { user: true } }>[] = [];
+  let notes: Prisma.NoteGetPayload<{ include: { user: true } }>[] = [];
 
   if (tab === "highlights") {
     highlights = await db.highlight.findMany({

@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon";
 import { createGroup } from "../data/community";
 
 const COLORS = ["var(--yellow)", "var(--purple)", "var(--orange)", "var(--pink)"];
+const COLOR_NAMES = ["暖黄色", "慧读紫", "珊瑚橙", "玫红色"];
 
 // 创建群组（design 4e）
 export function CreateGroupPage() {
@@ -34,7 +35,7 @@ export function CreateGroupPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 84, height: 84, background: COLORS[colorIdx], border: "1px solid var(--line)", borderRadius: 22, boxShadow: "var(--shadow-card)", fontSize: 32, fontWeight: 800 }}>
               {name.trim() ? name.trim().slice(0, 1) : "群"}
             </div>
-            <div style={{ position: "absolute", right: -6, bottom: -6, display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, background: "var(--ink)", borderRadius: 100, color: "#fff" }}>
+            <div title="使用下方颜色更换头像底色" style={{ position: "absolute", right: -6, bottom: -6, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, background: "var(--ink)", borderRadius: 100, color: "#fff" }}>
               <Icon name="camera" size={14} />
             </div>
           </div>
@@ -43,9 +44,15 @@ export function CreateGroupPage() {
             {COLORS.map((c, i) => (
               <button
                 key={c}
+                type="button"
                 onClick={() => setColorIdx(i)}
-                style={{ width: 26, height: 26, background: c, border: i === colorIdx ? "2px solid var(--ink)" : "1px solid var(--line)", borderRadius: 100 }}
-              />
+                aria-label={`选择${COLOR_NAMES[i]}头像底色`}
+                aria-pressed={i === colorIdx}
+                title={COLOR_NAMES[i]}
+                style={{ width: 44, height: 44, padding: 7, background: "transparent", borderRadius: 100 }}
+              >
+                <span aria-hidden="true" style={{ display: "block", width: 28, height: 28, background: c, border: i === colorIdx ? "2px solid var(--ink)" : "1px solid var(--line)", borderRadius: 100 }} />
+              </button>
             ))}
           </div>
         </div>
@@ -67,7 +74,11 @@ export function CreateGroupPage() {
 
         {/* desc */}
         <div className="card" style={{ padding: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8 }}>群组简介（可选）</div>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 800 }}>群组简介（可选）</div>
+            <div style={{ flex: 1 }} />
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{desc.length}/60</div>
+          </div>
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value.slice(0, 60))}
@@ -93,7 +104,7 @@ export function CreateGroupPage() {
         >
           创建群组
         </button>
-        <div className="disclaimer">创建即表示同意《社群公约》与平台内容规范</div>
+        <div className="disclaimer">创建即表示同意平台《社群公约》与内容规范；付费升级当前尚未开放。</div>
       </div>
     </div>
   );

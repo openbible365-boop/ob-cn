@@ -1,6 +1,6 @@
 // 慧读 conversations — persisted locally. Answers are the same templated
 // three-part structure used by the web backend (no external LLM yet; the
-// UI keeps the standing disclaimer). Swapping in a real model later only
+// UI explicitly labels these as local reading templates. Swapping in a real model later only
 // replaces the two generate* functions.
 import { load, save, uid } from "./store";
 
@@ -28,7 +28,7 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
     return [
       {
         tag: "经文释义",
-        color: "#BF78F6",
+        color: "#8750B6",
         dark: true,
         text: JOHN_3_16_SUMMARY,
       },
@@ -39,7 +39,7 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   return [
     {
       tag: "经文释义",
-      color: "#BF78F6",
+      color: "#8750B6",
       dark: true,
       text,
     },

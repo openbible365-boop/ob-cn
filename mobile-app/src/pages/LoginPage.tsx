@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { sendLoginCode, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
@@ -10,8 +10,11 @@ import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
 // OpenBible backend; first login auto-registers the account.
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isAndroid = Capacitor.getPlatform() === "android" || /Android/i.test(navigator.userAgent);
+  const isNative = Capacitor.isNativePlatform();
   const showAppleLogin = !isAndroid;
+  const returnTo = ((location.state as { from?: string } | null)?.from) || "/me";
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,7 +62,7 @@ export function LoginPage() {
     if (result.ok) {
       await syncHighlights();
       setBusy(false);
-      navigate("/me", { replace: true });
+      navigate(returnTo, { replace: true });
     } else {
       setBusy(false);
       setError(result.message);
@@ -78,7 +81,7 @@ export function LoginPage() {
         return;
       }
       await syncHighlights();
-      navigate("/me", { replace: true });
+      navigate(returnTo, { replace: true });
     } catch (error) {
       if (!isGoogleSignInCanceled(error)) {
         const message = error instanceof Error ? error.message : "Google 登录失败，请稍后重试";
@@ -155,25 +158,32 @@ export function LoginPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {showAppleLogin && (
             <button
-              onClick={() => { setError("移动端 Apple 登录即将开放，网页版已支持"); }}
+              type="button"
+              disabled
+              aria-disabled="true"
               className="card"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700 }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700, opacity: .58, cursor: "not-allowed" }}
             >
-              通过 Apple 登录
+              Apple 登录 · 即将开放
             </button>
           )}
           <button
             type="button"
             onClick={signInWithGoogleAccount}
-            disabled={busy || googleBusy}
+            disabled={!isNative || busy || googleBusy}
             className="card"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 50, fontSize: 14, fontWeight: 700, color: "var(--body)", opacity: busy || googleBusy ? 0.65 : 1 }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 50, fontSize: 14, fontWeight: 700, color: "var(--body)", opacity: !isNative || busy || googleBusy ? 0.58 : 1, cursor: !isNative ? "not-allowed" : "pointer" }}
           >
-            {googleBusy ? "正在连接 Google…" : "使用 Google 登录"}
+            {googleBusy ? "正在连接 Google…" : isNative ? "使用 Google 登录" : "Google 登录 · 请在 App 使用"}
           </button>
         </div>
 
-        <div className="disclaimer">登录即表示同意《用户协议》与《隐私政策》</div>
+        <div className="disclaimer">
+          登录即表示同意
+          <button type="button" className="text-link" onClick={() => navigate("/legal/terms")}>《用户协议》</button>
+          与
+          <button type="button" className="text-link" onClick={() => navigate("/legal/privacy")}>《隐私政策》</button>
+        </div>
       </div>
     </div>
   );
