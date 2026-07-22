@@ -6,10 +6,46 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#FFFFFF" />
-    <title>OpenBible</title>
+    <meta name="theme-color" content="#F4F5F7" />
+    <title>慧读圣经</title>
+    <style>
+      html, body, #root { width: 100%; height: 100%; margin: 0; }
+      body { background: #f4f5f7; }
+      .boot-splash {
+        position: fixed; inset: 0; z-index: 2147483647;
+        width: 100%; height: 100%;
+        background: #f4f5f7;
+        color: #18191f; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      }
+      .boot-brand {
+        position: absolute; top: calc(50% - 150px); left: 50%;
+        display: flex; flex-direction: column; align-items: center;
+        transform: translateX(-50%); white-space: nowrap;
+      }
+      .boot-splash svg { width: 100px; height: 100px; }
+      .boot-title { margin-top: 50px; font-size: 44px; line-height: 1.2; font-weight: 800; }
+      .boot-title span { color: #e89a2c; }
+      .boot-tagline {
+        margin-top: 16px; color: #474a57;
+        font-size: 24px; line-height: 1.2; font-weight: 600;
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" class="boot-splash" aria-label="慧读圣经正在启动">
+      <div class="boot-brand">
+        <svg viewBox="16 8 88 88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C"/>
+          <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="#18191F"/>
+          <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="#18191F"/>
+          <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="#18191F" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="#18191F" stroke-width="5" stroke-linejoin="round"/>
+          <line x1="60" y1="53" x2="60" y2="88" stroke="#18191F" stroke-width="4"/>
+        </svg>
+        <div class="boot-title"><span>慧读</span>圣经</div>
+        <div class="boot-tagline">智慧 · 读经 · 社群 · 共勉</div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

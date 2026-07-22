@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   let email: string | null;
   try {
     const tokens = await exchangeAppleCode(code, `${base}/api/auth/apple/callback`);
-    const claims = await verifyAppleIdToken(tokens.id_token, cookieNonce);
+    const claims = await verifyAppleIdToken(tokens.id_token, { expectedNonce: cookieNonce });
     sub = claims.sub as string;
     email = typeof claims.email === "string" ? claims.email.toLowerCase() : null;
   } catch (err) {

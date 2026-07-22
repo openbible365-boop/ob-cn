@@ -1,2 +1,6 @@
 .DS_Store
 .claude/settings.local.json
+*.p8
+deploy/secrets/
+mobile-app/build/
+mobile-app/releases/

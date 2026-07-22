@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { deriveUserLevel, formatLoginMethods } from "@/lib/format";
+import { formatLoginMethods, formatUserTier } from "@/lib/format";
 import { muteUser, unbanUser } from "@/lib/actions/users";
 import { BanUserControl } from "@/components/BanUserControl";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -37,7 +37,7 @@ export default async function UsersPage({
       where,
       include: {
         authAccounts: true,
-        memberships: { include: { community: true } },
+        memberships: true,
       },
       orderBy: { uid: "asc" },
     }),
@@ -64,11 +64,11 @@ export default async function UsersPage({
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
         <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
-          <div>用户</div><div>登录方式</div><div>最近登录</div><div>所属群组</div><div>群用户级别</div><div>状态</div><div>操作</div>
+          <div>用户</div><div>登录方式</div><div>最近登录</div><div>所属群组</div><div>用户等级</div><div>状态</div><div>操作</div>
         </div>
 
         {users.map((u) => {
-          const level = deriveUserLevel(u.memberships.map((m) => m.community.tier));
+          const level = formatUserTier(u.tier, u.tierPriceCents);
           const login = formatLoginMethods(u.authAccounts.map((a) => a.provider));
           const statusLabel =
             u.status === "BANNED" ? "封禁中" : u.status === "MUTED" ? "禁言中" : "正常";

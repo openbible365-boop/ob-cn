@@ -16,6 +16,8 @@ export type LoginUser = {
   name: string;
   email: string | null;
   avatarColor: string;
+  tier: "BASIC_FREE" | "MID" | "HIGH";
+  tierPriceCents: number;
 };
 
 export type CodeRequestResult = { ok: boolean; message: string };
@@ -120,6 +122,13 @@ export async function verifyLoginCodeFor(rawEmail: string, rawCode: string): Pro
   return {
     ok: true,
     message: "登录成功",
-    user: { id: user.id, name: user.name, email: user.email, avatarColor: user.avatarColor },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarColor: user.avatarColor,
+      tier: user.tier,
+      tierPriceCents: user.tierPriceCents,
+    },
   };
 }

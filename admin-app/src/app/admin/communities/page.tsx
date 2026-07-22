@@ -16,13 +16,15 @@ export default async function CommunitiesPage({
         ? {
             OR: [
               { name: { contains: q, mode: "insensitive" } },
+              { abbreviation: { contains: q, mode: "insensitive" } },
               { owner: { name: { contains: q, mode: "insensitive" } } },
             ],
           }
         : undefined,
       include: {
         owner: true,
-        _count: { select: { memberships: true } },
+        parent: { select: { id: true, name: true } },
+        _count: { select: { memberships: true, groups: true } },
       },
       orderBy: { createdAt: "asc" },
     }),
@@ -39,7 +41,7 @@ export default async function CommunitiesPage({
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input name="q" placeholder="搜索社群 / 群主" defaultValue={q ?? ""} />
+          <input name="q" placeholder="搜索社群 / 简称 / 群主" defaultValue={q ?? ""} />
         </form>
       </div>
 
@@ -70,6 +72,12 @@ export default async function CommunitiesPage({
                   {c.name.slice(0, 1)}
                 </div>
                 <div style={{ fontWeight: 700 }}>{c.name}</div>
+                <span className="pill pill-muted">简称 · {c.abbreviation}</span>
+                {c.parent ? (
+                  <span className="pill pill-muted">群组 · {c.parent.name}</span>
+                ) : c._count.groups > 0 ? (
+                  <span className="pill pill-purple">{c._count.groups} 个群组</span>
+                ) : null}
                 {c.isOfficial ? <span className="pill pill-yellow">官方</span> : null}
                 {c.warningCount > 0 ? (
                   <span className="pill pill-orange">已警告 {c.warningCount} 次</span>

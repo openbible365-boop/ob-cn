@@ -5,10 +5,15 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Same-origin /api in dev, mirroring the production nginx proxy to the
-    // admin app (session cookie stays first-party).
+    // Local browser development and packaged mobile apps always use the
+    // production API. Do not point mobile clients at a local admin server.
     proxy: {
-      '/api': 'http://localhost:3000',
+      '/api': {
+        target: 'https://app.openbible.live',
+        changeOrigin: true,
+        secure: true,
+        cookieDomainRewrite: '',
+      },
     },
   },
 })

@@ -1,8 +1,8 @@
-// 慧读 conversations — persisted locally. Answers are the same templated
-// three-part structure used by the web backend (no external LLM yet; the
-// UI keeps the standing disclaimer). Swapping in a real model later only
-// replaces the two generate* functions.
+// 慧读 conversations are persisted locally. Opening explanations keep the
+// existing three-part presentation; follow-up questions are answered by the
+// authenticated Qwen API and then stored in the same local thread.
 import { load, save, uid } from "./store";
+import { apiRequest } from "./api";
 
 export type HuiduBlock = { tag: string; color: string; dark: boolean; text: string };
 export type Message =
@@ -49,13 +49,6 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   return TAGS.map((t) => ({ ...t, text: templates[t.tag] }));
 }
 
-export function generateFollowup(question: string, refLabel: string): string {
-  return [
-    `关于「${question.trim()}」——回到 ${refLabel} 的语境，可以从经文用词、上下文脉络与相关经文互证三方面来思想。`,
-    "建议对照可靠的注释与原文词义进一步查考；若涉及教义判断，也宜与所在教会的教导核对。以上回答仅供参考，不替代权威释经。",
-  ].join("\n\n");
-}
-
 export function getConversations(): Conversation[] {
   return load<Conversation[]>(KEY, []);
 }
@@ -83,14 +76,72 @@ export function startConversation(bookName: string, chapter: number, verse: numb
   return conv;
 }
 
-export function askFollowup(id: string, question: string): Conversation | null {
+export type HuiduAssistantResult =
+  | { ok: true; answer: string }
+  | { ok: false; message: string; status?: number };
+
+function messageContent(message: Message) {
+  if (message.role === "user") return message.content;
+  if (message.content) return message.content;
+  return (message.blocks ?? [])
+    .map((block) => `${block.tag}：${block.text}`)
+    .join("\n");
+}
+
+export async function requestHuiduFollowup(
+  conversation: Conversation,
+  question: string,
+): Promise<HuiduAssistantResult> {
+  try {
+    const response = await apiRequest<
+      { ok: true; answer: string } | { ok: false; message?: string }
+    >("/api/mobile/huidu/assistant", {
+      method: "POST",
+      body: {
+        conversationId: conversation.id,
+        refLabel: conversation.refLabel,
+        verseText: conversation.verseText,
+        question,
+        history: conversation.messages.map((message) => ({
+          role: message.role,
+          content: messageContent(message),
+        })),
+      },
+    });
+    const result = response.data;
+
+    if (!response.ok || !result?.ok) {
+      return {
+        ok: false,
+        message:
+          result && "message" in result && result.message
+            ? result.message
+            : "慧读模型暂时不可用，请稍后再试",
+        status: response.status,
+      };
+    }
+
+    return { ok: true, answer: result.answer };
+  } catch {
+    return {
+      ok: false,
+      message: "网络连接失败，请检查网络后重试",
+    };
+  }
+}
+
+export function appendFollowup(
+  id: string,
+  question: string,
+  answer: string,
+): Conversation | null {
   const all = getConversations();
   const conv = all.find((c) => c.id === id);
   if (!conv) return null;
   conv.messages = [
     ...conv.messages,
     { role: "user", content: question },
-    { role: "assistant", content: generateFollowup(question, conv.refLabel) },
+    { role: "assistant", content: answer },
   ];
   save(KEY, all);
   return conv;

@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+QWEN_SERVICE="openbible-llm.service"
+DEFAULT_TTS_SERVICE="yuyin-qwen3-engine.service"
+MODE_FILE="/etc/openbible-gpu-mode"
+CONFIG_FILE="/etc/openbible-gpu-mode.conf"
+LOCK_FILE="/run/openbible-gpu-mode.lock"
+STOP_TIMEOUT_SECONDS=120
+START_TIMEOUT_SECONDS=360
+
+TTS_SERVICES=(
+  "yuyin-cosyvoice.service"
+  "yuyin-cosyvoice3.service"
+  "yuyin-cosyvoice3-sft-engine.service"
+  "yuyin-sovits.service"
+  "yuyin-f5.service"
+  "yuyin-f5-sft-engine.service"
+  "yuyin-qwen3-engine.service"
+)
+
+log() {
+  printf '[gpu-mode] %s\n' "$*"
+}
+
+fail() {
+  printf '[gpu-mode] 错误：%s\n' "$*" >&2
+  exit 1
+}
+
+if (( EUID != 0 )); then
+  exec sudo -- "$0" "$@"
+fi
+
+TTS_SERVICE="$DEFAULT_TTS_SERVICE"
+if [[ -r "$CONFIG_FILE" ]]; then
+  # This file is root-owned and only contains administrator configuration.
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+fi
+
+is_known_tts_service() {
+  local candidate="$1"
+  local service
+  for service in "${TTS_SERVICES[@]}"; do
+    [[ "$candidate" == "$service" ]] && return 0
+  done
+  return 1
+}
+
+is_known_tts_service "$TTS_SERVICE" ||
+  fail "配置中的 TTS_SERVICE 不受支持：$TTS_SERVICE"
+
+write_mode() {
+  local mode="$1"
+  local temporary
+  temporary="$(mktemp)"
+  printf '%s\n' "$mode" >"$temporary"
+  install -o root -g root -m 0644 "$temporary" "$MODE_FILE"
+  rm -f "$temporary"
+}
+
+current_mode() {
+  if [[ -r "$MODE_FILE" ]]; then
+    tr -d '[:space:]' <"$MODE_FILE"
+  else
+    printf 'qwen'
+  fi
+}
+
+gpu_compute_processes() {
+  nvidia-smi \
+    --query-compute-apps=pid,process_name,used_memory \
+    --format=csv,noheader,nounits 2>/dev/null || true
+}
+
+wait_for_gpu_release() {
+  local deadline=$((SECONDS + STOP_TIMEOUT_SECONDS))
+  local processes
+  while (( SECONDS < deadline )); do
+    processes="$(gpu_compute_processes)"
+    if [[ -z "${processes//[[:space:]]/}" ]]; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  log "显存未在 ${STOP_TIMEOUT_SECONDS} 秒内释放，仍有以下计算进程："
+  gpu_compute_processes >&2
+  return 1
+}
+
+wait_for_http() {
+  local service="$1"
+  local url="$2"
+  local deadline=$((SECONDS + START_TIMEOUT_SECONDS))
+  while (( SECONDS < deadline )); do
+    if ! systemctl is-active --quiet "$service"; then
+      sleep 2
+      continue
+    fi
+    if curl --fail --silent --show-error --max-time 3 "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+show_status() {
+  local mode
+  mode="$(current_mode)"
+  printf '当前模式：%s\n' "$mode"
+  printf 'Qwen LLM：'
+  systemctl is-active "$QWEN_SERVICE" || true
+  printf '语音引擎（%s）：' "$TTS_SERVICE"
+  systemctl is-active "$TTS_SERVICE" || true
+  printf 'GPU 显存：'
+  nvidia-smi \
+    --query-gpu=memory.used,memory.total,memory.free \
+    --format=csv,noheader 2>/dev/null || printf '不可用\n'
+  local processes
+  processes="$(gpu_compute_processes)"
+  if [[ -n "${processes//[[:space:]]/}" ]]; then
+    printf 'GPU 计算进程：\n%s\n' "$processes"
+  else
+    printf 'GPU 计算进程：无\n'
+  fi
+}
+
+stop_gpu_services() {
+  systemctl stop "$QWEN_SERVICE" "${TTS_SERVICES[@]}"
+  wait_for_gpu_release
+}
+
+rollback_to_qwen() {
+  log "语音引擎启动失败，正在恢复 Qwen LLM。"
+  systemctl stop "${TTS_SERVICES[@]}" || true
+  wait_for_gpu_release || true
+  write_mode qwen
+  systemctl start "$QWEN_SERVICE" || true
+}
+
+rollback_to_tts() {
+  log "Qwen LLM 启动失败，正在恢复语音引擎。"
+  systemctl stop "$QWEN_SERVICE" || true
+  wait_for_gpu_release || true
+  write_mode tts
+  systemctl start "$TTS_SERVICE" || true
+}
+
+switch_to_tts() {
+  log "正在停止 Qwen LLM 和其他 GPU 语音引擎。"
+  stop_gpu_services ||
+    fail "GPU 仍被占用；为避免显存冲突，本次切换已中止。"
+
+  write_mode tts
+  log "正在启动语音引擎：$TTS_SERVICE"
+  if ! systemctl start "$TTS_SERVICE"; then
+    rollback_to_qwen
+    fail "语音引擎未能启动，已尝试恢复 Qwen LLM。"
+  fi
+
+  if ! wait_for_http "$TTS_SERVICE" "http://127.0.0.1:9886/health"; then
+    journalctl -u "$TTS_SERVICE" -n 30 --no-pager >&2 || true
+    rollback_to_qwen
+    fail "语音引擎健康检查失败，已尝试恢复 Qwen LLM。"
+  fi
+
+  log "切换完成：Qwen LLM 已关闭，语音引擎已就绪。"
+  show_status
+}
+
+switch_to_qwen() {
+  log "正在停止所有 GPU 语音引擎和旧的 Qwen LLM 进程。"
+  stop_gpu_services ||
+    fail "GPU 仍被占用；为避免显存冲突，本次切换已中止。"
+
+  write_mode qwen
+  log "正在启动 Qwen LLM。首次加载可能需要几分钟。"
+  if ! systemctl start "$QWEN_SERVICE"; then
+    rollback_to_tts
+    fail "Qwen LLM 未能启动，已尝试恢复语音引擎。"
+  fi
+
+  if ! wait_for_http "$QWEN_SERVICE" "http://127.0.0.1:8010/health"; then
+    journalctl -u "$QWEN_SERVICE" -n 30 --no-pager >&2 || true
+    rollback_to_tts
+    fail "Qwen LLM 健康检查失败，已尝试恢复语音引擎。"
+  fi
+
+  log "切换完成：语音引擎已关闭，Qwen LLM 已就绪。"
+  show_status
+}
+
+command_name="$(basename "$0")"
+case "$command_name" in
+  gpu-tts)
+    requested_mode="tts"
+    ;;
+  gpu-qwen)
+    requested_mode="qwen"
+    ;;
+  *)
+    requested_mode="${1:-status}"
+    ;;
+esac
+
+exec 9>"$LOCK_FILE"
+flock -n 9 || fail "另一个 GPU 模式切换正在执行，请稍后再试。"
+
+case "$requested_mode" in
+  tts)
+    switch_to_tts
+    ;;
+  qwen)
+    switch_to_qwen
+    ;;
+  status)
+    show_status
+    ;;
+  *)
+    fail "用法：gpu-tts | gpu-qwen | gpu-mode status"
+    ;;
+esac

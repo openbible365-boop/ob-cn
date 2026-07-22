@@ -36,6 +36,12 @@ enum UserStatus {
   BANNED
 }
 
+enum UserTier {
+  BASIC_FREE
+  MID
+  HIGH
+}
+
 enum AuthProvider {
   EMAIL
   APPLE
@@ -43,28 +49,32 @@ enum AuthProvider {
 }
 
 model User {
-  id          String     @id @default(cuid())
-  uid         Int        @unique @default(autoincrement())
-  name        String
-  email       String?    @unique
-  avatarColor String     @default("#FFD465")
-  avatarUrl   String?
-  status      UserStatus @default(ACTIVE)
-  mutedUntil  DateTime?
-  banReason   String?
-  lastLoginAt DateTime?
-  createdAt   DateTime   @default(now())
+  id             String     @id @default(cuid())
+  uid            Int        @unique @default(autoincrement())
+  name           String
+  email          String?    @unique
+  avatarColor    String     @default("#FFD465")
+  avatarUrl      String?
+  tier           UserTier   @default(BASIC_FREE)
+  tierPriceCents Int        @default(0)
+  status         UserStatus @default(ACTIVE)
+  mutedUntil     DateTime?
+  banReason      String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime   @default(now())
 
-  authAccounts         AuthAccount[]
-  memberships          Membership[]
-  ownedCommunities     Community[]           @relation("CommunityOwner")
-  posts                Post[]
-  postLikes            PostLike[]
-  eventSignups         EventSignup[]
-  highlights           Highlight[]
-  notes                Note[]
-  conversations        Conversation[]
-  notificationSettings NotificationSetting[]
+  authAccounts          AuthAccount[]
+  memberships           Membership[]
+  ownedCommunities      Community[]            @relation("CommunityOwner")
+  posts                 Post[]
+  postLikes             PostLike[]
+  eventSignups          EventSignup[]
+  highlights            Highlight[]
+  notes                 Note[]
+  conversations         Conversation[]
+  notificationSettings  NotificationSetting[]
+  communityJoinRequests CommunityJoinRequest[] @relation("CommunityJoinRequester")
+  reviewedJoinRequests  CommunityJoinRequest[] @relation("CommunityJoinReviewer")
 }
 
 model AuthAccount {
@@ -94,26 +104,41 @@ enum CommunityStatus {
   DISSOLVED
 }
 
-model Community {
-  id                String          @id @default(cuid())
-  name              String
-  avatarColor       String          @default("#FFD465")
-  isOfficial        Boolean         @default(false)
-  tier              CommunityTier   @default(BASIC_FREE)
-  tierPriceCents    Int             @default(0)
-  ownerId           String?
-  warningCount      Int             @default(0)
-  status            CommunityStatus @default(ACTIVE)
-  dailyActivity     Int             @default(0)
-  aiTokensToday     Int             @default(0)
-  aiTokenDailyLimit Int?
-  createdAt         DateTime        @default(now())
+enum CommunityJoinPolicy {
+  OPEN
+  APPROVAL
+  INVITE_ONLY
+}
 
-  owner       User?        @relation("CommunityOwner", fields: [ownerId], references: [id])
-  memberships Membership[]
-  posts       Post[]
-  reports     Report[]
-  events      Event[]
+model Community {
+  id                String              @id @default(cuid())
+  parentId          String?             @map("parent_id")
+  name              String
+  abbreviation      String              @unique
+  description       String?
+  avatarColor       String              @default("#FFD465")
+  isOfficial        Boolean             @default(false)
+  joinPolicy        CommunityJoinPolicy @default(APPROVAL)
+  tier              CommunityTier       @default(BASIC_FREE)
+  tierPriceCents    Int                 @default(0)
+  ownerId           String?             @unique
+  warningCount      Int                 @default(0)
+  status            CommunityStatus     @default(ACTIVE)
+  dailyActivity     Int                 @default(0)
+  aiTokensToday     Int                 @default(0)
+  aiTokenDailyLimit Int?
+  createdAt         DateTime            @default(now())
+
+  parent       Community?             @relation("CommunityGroups", fields: [parentId], references: [id], onDelete: Cascade)
+  groups       Community[]            @relation("CommunityGroups")
+  owner        User?                  @relation("CommunityOwner", fields: [ownerId], references: [id])
+  memberships  Membership[]
+  posts        Post[]
+  reports      Report[]
+  events       Event[]
+  joinRequests CommunityJoinRequest[]
+
+  @@index([parentId])
 }
 
 enum MembershipRole {
@@ -133,6 +158,33 @@ model Membership {
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, communityId])
+}
+
+enum CommunityJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model CommunityJoinRequest {
+  id          String                     @id @default(cuid())
+  userId      String
+  communityId String
+  status      CommunityJoinRequestStatus @default(PENDING)
+  message     String?
+  reviewerId  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+
+  user      User      @relation("CommunityJoinRequester", fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  reviewer  User?     @relation("CommunityJoinReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, communityId])
+  @@index([communityId, status])
+  @@index([userId, status])
 }
 
 // ---------- Dashboard: daily snapshots ----------

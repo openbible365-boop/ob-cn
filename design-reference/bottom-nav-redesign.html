@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenBible · 底部导航设计提案</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #25272d;
+        --ink-soft: #626873;
+        --ink-faint: #9499a2;
+        --paper: #ffffff;
+        --canvas: #f3f0e9;
+        --line: #e6e0d5;
+        --amber: #d99a1e;
+        --amber-deep: #68480b;
+        --amber-soft: #fff0c9;
+        --amber-softer: #fff8e7;
+        --purple: #9f56e8;
+        --nav-height: 82px;
+        --safe-area: 12px;
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        font-family:
+          Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.92), transparent 30%),
+          linear-gradient(135deg, #f6f3ed 0%, #ece8df 100%);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .page {
+        display: grid;
+        min-height: 100vh;
+        grid-template-columns: minmax(320px, 428px) minmax(280px, 420px);
+        align-items: center;
+        justify-content: center;
+        gap: clamp(36px, 7vw, 96px);
+        padding: 48px 28px;
+      }
+
+      .phone-wrap {
+        position: relative;
+        width: 100%;
+      }
+
+      .phone-shadow {
+        position: absolute;
+        inset: 7% -8% -3%;
+        z-index: -1;
+        border-radius: 50%;
+        background: rgba(69, 56, 33, 0.22);
+        filter: blur(40px);
+      }
+
+      .phone {
+        position: relative;
+        width: 100%;
+        height: min(844px, calc(100vh - 72px));
+        min-height: 650px;
+        overflow: hidden;
+        border: 1px solid rgba(65, 58, 48, 0.28);
+        border-radius: 34px;
+        background: var(--paper);
+        box-shadow:
+          0 30px 70px rgba(54, 47, 35, 0.18),
+          0 4px 12px rgba(54, 47, 35, 0.09),
+          inset 0 0 0 5px rgba(255, 255, 255, 0.74);
+      }
+
+      .reader {
+        position: absolute;
+        inset: 0 0 calc(var(--nav-height) + var(--safe-area) + 14px);
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 66px;
+        padding: 10px 16px;
+        border-bottom: 1px solid #d9d9d9;
+      }
+
+      .select-pill,
+      .icon-button {
+        display: inline-flex;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #d1d1d1;
+        border-radius: 12px;
+        background: #fff;
+        color: #191b20;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+      }
+
+      .select-pill {
+        gap: 9px;
+        padding: 0 13px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .select-pill:first-child {
+        border-color: #ebbd57;
+        background: #ffcf63;
+      }
+
+      .toolbar-spacer {
+        flex: 1;
+      }
+
+      .icon-button {
+        width: 40px;
+        padding: 0;
+      }
+
+      .icon-button.play {
+        border-color: #dbc6ed;
+        color: var(--purple);
+        background: #f7effe;
+      }
+
+      .toolbar svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .chevron {
+        width: 8px;
+        height: 8px;
+        border-right: 1.8px solid currentColor;
+        border-bottom: 1.8px solid currentColor;
+        transform: rotate(45deg) translateY(-2px);
+      }
+
+      .scripture {
+        position: relative;
+        height: calc(100% - 66px);
+        overflow: hidden;
+        padding: 0 22px 100px;
+        font-family: "Songti SC", "Noto Serif SC", STSong, serif;
+        font-size: clamp(18px, 4.8vw, 22px);
+        line-height: 1.72;
+        letter-spacing: 0.01em;
+      }
+
+      .scripture p {
+        margin: 0;
+      }
+
+      .scripture sup {
+        position: relative;
+        top: -0.2em;
+        margin: 0 3px;
+        color: #555c65;
+        font-family: Inter, sans-serif;
+        font-size: 0.48em;
+      }
+
+      .link-word {
+        text-decoration-line: underline;
+        text-decoration-style: dotted;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .reader-fade {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 92px;
+        pointer-events: none;
+        background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.98));
+      }
+
+      .bottom-nav {
+        position: absolute;
+        right: 12px;
+        bottom: var(--safe-area);
+        left: 12px;
+        z-index: 5;
+        height: var(--nav-height);
+        border: 1px solid rgba(198, 184, 160, 0.72);
+        border-radius: 25px;
+        background: rgba(255, 254, 251, 0.98);
+        box-shadow:
+          0 -1px 1px rgba(255, 255, 255, 0.86),
+          0 10px 24px rgba(63, 52, 35, 0.14);
+      }
+
+      .nav-items {
+        position: relative;
+        display: grid;
+        height: 100%;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: center;
+        padding: 7px 6px;
+      }
+
+      .active-pill {
+        position: absolute;
+        top: 7px;
+        bottom: 7px;
+        left: 6px;
+        width: calc((100% - 12px) / 5);
+        border: 1px solid rgba(232, 184, 83, 0.2);
+        border-radius: 19px;
+        background: linear-gradient(145deg, #fff7df, var(--amber-soft));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.82),
+          0 4px 10px rgba(179, 122, 20, 0.1);
+        transform: translateX(calc(var(--active-index, 0) * 100%));
+        transition: transform 420ms var(--ease-out);
+      }
+
+      .tab {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        min-width: 0;
+        height: 68px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        color: #626873;
+        background: transparent;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 240ms ease;
+      }
+
+      .tab:focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: -3px;
+      }
+
+      .tab-icon {
+        position: relative;
+        display: grid;
+        width: 29px;
+        height: 29px;
+        place-items: center;
+        transform-origin: 50% 78%;
+        transition: transform 360ms var(--ease-out);
+      }
+
+      .tab-icon svg {
+        width: 26px;
+        height: 26px;
+        overflow: visible;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.75;
+      }
+
+      .tab-label {
+        font-size: 11px;
+        font-weight: 560;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        transition:
+          font-weight 200ms ease,
+          transform 360ms var(--ease-out);
+      }
+
+      .tab[aria-selected="true"] {
+        color: var(--amber-deep);
+      }
+
+      .tab[aria-selected="true"] .tab-icon {
+        transform: translateY(-1px) scale(1.06);
+        animation: icon-arrive 440ms var(--ease-out);
+      }
+
+      .tab[aria-selected="true"] .tab-label {
+        font-weight: 720;
+        transform: translateY(-1px);
+      }
+
+      .tab[aria-selected="true"] .accent-detail {
+        fill: #efb638;
+        stroke: #efb638;
+      }
+
+      @keyframes icon-arrive {
+        0% { transform: translateY(2px) scale(0.9); }
+        58% { transform: translateY(-2px) scale(1.09); }
+        100% { transform: translateY(-1px) scale(1.06); }
+      }
+
+      .spec {
+        width: 100%;
+        max-width: 420px;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 16px;
+        color: #91681b;
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        width: 22px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--amber);
+        content: "";
+      }
+
+      h1 {
+        max-width: 390px;
+        margin: 0;
+        font-family: "Songti SC", "Noto Serif SC", serif;
+        font-size: clamp(34px, 4vw, 52px);
+        font-weight: 650;
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .intro {
+        max-width: 390px;
+        margin: 22px 0 30px;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1.75;
+      }
+
+      .state-card {
+        padding: 18px;
+        border: 1px solid rgba(205, 195, 176, 0.82);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.62);
+        box-shadow: 0 8px 26px rgba(84, 70, 44, 0.06);
+        backdrop-filter: blur(16px);
+      }
+
+      .state-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 13px;
+        color: #565b64;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .live-state {
+        color: var(--amber-deep);
+      }
+
+      .state-buttons {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .state-button {
+        min-width: 0;
+        padding: 9px 2px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        color: #70757e;
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 200ms ease;
+      }
+
+      .state-button:hover {
+        border-color: #dec68f;
+        color: var(--amber-deep);
+      }
+
+      .state-button.is-active {
+        border-color: #e7c77e;
+        color: var(--amber-deep);
+        background: var(--amber-soft);
+        font-weight: 700;
+      }
+
+      .details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .detail {
+        padding: 15px 16px;
+        border: 1px solid rgba(210, 201, 184, 0.7);
+        border-radius: 17px;
+        background: rgba(255, 255, 255, 0.46);
+      }
+
+      .detail strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+
+      .detail span {
+        color: #747983;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .hint {
+        margin: 17px 2px 0;
+        color: #858a92;
+        font-size: 11px;
+      }
+
+      @media (max-width: 840px) {
+        .page {
+          grid-template-columns: minmax(0, 428px);
+          gap: 36px;
+          padding: 28px 16px 54px;
+        }
+
+        .spec {
+          order: -1;
+        }
+
+        h1 {
+          font-size: 36px;
+        }
+
+        .intro {
+          margin-bottom: 20px;
+        }
+
+        .details {
+          display: none;
+        }
+
+        .phone {
+          height: min(812px, calc(100vh - 36px));
+        }
+      }
+
+      @media (max-width: 430px) {
+        .page {
+          display: block;
+          padding: 0;
+        }
+
+        .spec {
+          display: none;
+        }
+
+        .phone {
+          height: 100dvh;
+          min-height: 580px;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .bottom-nav {
+          bottom: max(8px, env(safe-area-inset-bottom));
+        }
+
+        .scripture {
+          font-size: 19px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+      <symbol id="icon-bible" viewBox="0 0 28 28">
+        <path d="M3.5 5.5c3.9-1.1 7.2-.4 10.5 2v16c-3.3-2.4-6.6-3.1-10.5-2V5.5Z" />
+        <path d="M24.5 5.5c-3.9-1.1-7.2-.4-10.5 2v16c3.3-2.4 6.6-3.1 10.5-2V5.5Z" />
+        <path d="M19.7 5.15v6.1l-1.65-1.05-1.65 1.05V6" class="accent-detail" />
+      </symbol>
+      <symbol id="icon-notes" viewBox="0 0 28 28">
+        <path d="M5 4.5h18a2.5 2.5 0 0 1 2.5 2.5v12a2.5 2.5 0 0 1-2.5 2.5H12l-6.5 4v-4H5A2.5 2.5 0 0 1 2.5 19V7A2.5 2.5 0 0 1 5 4.5Z" />
+        <path d="M8 10h12M8 15h8" />
+        <circle cx="20.8" cy="15" r="1" class="accent-detail" />
+      </symbol>
+      <symbol id="icon-wisdom" viewBox="0 0 28 28">
+        <path d="M4.5 7.4c3.6-1 6.5-.35 9.5 1.8v14.3c-3-2.15-5.9-2.8-9.5-1.8V7.4Z" />
+        <path d="M23.5 10.5v11.2c-3.6-1-6.5-.35-9.5 1.8V9.2c1.4-1 2.8-1.65 4.25-1.95" />
+        <path d="m22 2 .75 2.25L25 5l-2.25.75L22 8l-.75-2.25L19 5l2.25-.75L22 2Z" class="accent-detail" />
+      </symbol>
+      <symbol id="icon-community" viewBox="0 0 28 28">
+        <circle cx="10" cy="8.4" r="3.6" />
+        <circle cx="20.2" cy="10.1" r="2.8" />
+        <path d="M3.3 23.5c.4-5 3-7.6 6.7-7.6s6.3 2.6 6.7 7.6M17 17.5c.9-.8 2-1.2 3.3-1.2 2.9 0 4.8 2 5.2 5.8" />
+        <circle cx="14.7" cy="14.2" r="1" class="accent-detail" />
+      </symbol>
+      <symbol id="icon-me" viewBox="0 0 28 28">
+        <circle cx="14" cy="8" r="4.5" />
+        <path d="M5.2 24.2c.55-5.6 3.7-8.4 8.8-8.4s8.25 2.8 8.8 8.4" />
+        <path d="M19.3 18.2c.9.9 1.5 2 1.8 3.4" class="accent-detail" />
+      </symbol>
+    </svg>
+
+    <main class="page">
+      <section class="phone-wrap" aria-label="手机界面预览">
+        <div class="phone-shadow"></div>
+        <div class="phone">
+          <div class="reader">
+            <header class="toolbar">
+              <button class="select-pill" type="button">和合本 <span class="chevron"></span></button>
+              <button class="select-pill" type="button">约翰福音 4 <span class="chevron"></span></button>
+              <span class="toolbar-spacer"></span>
+              <button class="icon-button play" type="button" aria-label="播放">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="m8 5 10 7-10 7V5Z" />
+                </svg>
+              </button>
+              <button class="icon-button" type="button" aria-label="搜索">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="m16 16 4 4" />
+                </svg>
+              </button>
+            </header>
+
+            <article class="scripture" aria-label="约翰福音第四章">
+              <p>
+                <span class="link-word">亚</span>，<sup>5</sup>于是到了<span class="link-word">撒玛利亚</span>的一座城，名叫<span class="link-word">叙加</span>，靠近<span class="link-word">雅各</span>给他儿子<span class="link-word">约瑟</span>的那块地。<sup>6</sup>在那里有<span class="link-word">雅各</span>井；耶稣因走路困乏，就坐在井旁。那时约有午正。<sup>7</sup>有一个<span class="link-word">撒玛利亚</span>的妇人来打水。耶稣对她说：“请你给我水喝。”（<sup>8</sup>那时门徒进城买食物去了。）<sup>9</sup><span class="link-word">撒玛利亚</span>的妇人对他说：“你既是犹太人，怎么向我一个<span class="link-word">撒玛利亚</span>妇人要水喝呢？”原来犹太人和<span class="link-word">撒玛利亚</span>人没有来往。<sup>10</sup>耶稣回答说：“你若知道神的恩赐，和对你说‘给我水喝’的是谁，你必早求他，他也必早给了你活水。”<sup>11</sup>妇人说：“先生，没有打水的器具，井又深，你从哪里得活水呢？<sup>12</sup>我们的祖宗雅各将这井留给我们，他自己和儿子并牲畜也都喝这井里的水，难道你比他还大吗？”
+              </p>
+            </article>
+            <div class="reader-fade"></div>
+          </div>
+
+          <nav class="bottom-nav" aria-label="主导航">
+            <div class="nav-items" role="tablist" aria-label="五个主要页面">
+              <span class="active-pill" aria-hidden="true"></span>
+              <button class="tab" type="button" role="tab" aria-selected="true" data-index="0" data-label="圣经">
+                <span class="tab-icon"><svg><use href="#icon-bible"></use></svg></span>
+                <span class="tab-label">圣经</span>
+              </button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-index="1" data-label="注释" tabindex="-1">
+                <span class="tab-icon"><svg><use href="#icon-notes"></use></svg></span>
+                <span class="tab-label">注释</span>
+              </button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-index="2" data-label="慧读" tabindex="-1">
+                <span class="tab-icon"><svg><use href="#icon-wisdom"></use></svg></span>
+                <span class="tab-label">慧读</span>
+              </button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-index="3" data-label="社群" tabindex="-1">
+                <span class="tab-icon"><svg><use href="#icon-community"></use></svg></span>
+                <span class="tab-label">社群</span>
+              </button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-index="4" data-label="我的" tabindex="-1">
+                <span class="tab-icon"><svg><use href="#icon-me"></use></svg></span>
+                <span class="tab-label">我的</span>
+              </button>
+            </div>
+          </nav>
+        </div>
+      </section>
+
+      <aside class="spec">
+        <div class="eyebrow">Navigation concept 01</div>
+        <h1>让导航安静，<br />让阅读成为主角。</h1>
+        <p class="intro">
+          五个入口使用统一的圆角线性图标。选中项以暖金色整块胶囊承载图标与文字，既有明确反馈，也不会打断长时间阅读。
+        </p>
+
+        <section class="state-card" aria-label="选中状态控制器">
+          <div class="state-label">
+            <span>点击预览全部选中态</span>
+            <span class="live-state" aria-live="polite">当前：圣经</span>
+          </div>
+          <div class="state-buttons">
+            <button class="state-button is-active" type="button" data-index="0">圣经</button>
+            <button class="state-button" type="button" data-index="1">注释</button>
+            <button class="state-button" type="button" data-index="2">慧读</button>
+            <button class="state-button" type="button" data-index="3">社群</button>
+            <button class="state-button" type="button" data-index="4">我的</button>
+          </div>
+        </section>
+
+        <div class="details">
+          <div class="detail"><strong>统一图标语言</strong><span>26px 圆角线框，1.75px 描边，每个图标保留一个金色细节。</span></div>
+          <div class="detail"><strong>完整选中容器</strong><span>图标和文字同时进入 19px 圆角胶囊，状态不再零散。</span></div>
+          <div class="detail"><strong>阅读型配色</strong><span>暖白、墨灰、低饱和金色，呼应译本选择器但降低干扰。</span></div>
+          <div class="detail"><strong>自然切换反馈</strong><span>420ms 滑动指示器和轻量图标回弹，并支持减少动效设置。</span></div>
+        </div>
+        <p class="hint">也可以直接点击手机底部的任意 Tab；支持键盘方向键切换。</p>
+      </aside>
+    </main>
+
+    <script>
+      const navItems = [...document.querySelectorAll('.tab')];
+      const stateButtons = [...document.querySelectorAll('.state-button')];
+      const nav = document.querySelector('.nav-items');
+      const liveState = document.querySelector('.live-state');
+
+      function selectTab(index, focusTab = false) {
+        const nextIndex = Math.max(0, Math.min(index, navItems.length - 1));
+
+        nav.style.setProperty('--active-index', nextIndex);
+        navItems.forEach((item, itemIndex) => {
+          const isActive = itemIndex === nextIndex;
+          item.setAttribute('aria-selected', String(isActive));
+          item.tabIndex = isActive ? 0 : -1;
+        });
+        stateButtons.forEach((button, buttonIndex) => {
+          button.classList.toggle('is-active', buttonIndex === nextIndex);
+        });
+
+        liveState.textContent = `当前：${navItems[nextIndex].dataset.label}`;
+        if (focusTab) navItems[nextIndex].focus();
+      }
+
+      navItems.forEach((item) => {
+        item.addEventListener('click', () => selectTab(Number(item.dataset.index)));
+        item.addEventListener('keydown', (event) => {
+          const currentIndex = Number(item.dataset.index);
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            event.preventDefault();
+            selectTab((currentIndex + 1) % navItems.length, true);
+          }
+          if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            selectTab((currentIndex - 1 + navItems.length) % navItems.length, true);
+          }
+          if (event.key === 'Home') {
+            event.preventDefault();
+            selectTab(0, true);
+          }
+          if (event.key === 'End') {
+            event.preventDefault();
+            selectTab(navItems.length - 1, true);
+          }
+        });
+      });
+
+      stateButtons.forEach((button) => {
+        button.addEventListener('click', () => selectTab(Number(button.dataset.index)));
+      });
+    </script>
+  </body>
+</html>

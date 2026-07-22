@@ -13,6 +13,8 @@ export type GoogleLoginUser = {
   email: string | null;
   avatarColor: string;
   avatarUrl: string | null;
+  tier: "BASIC_FREE" | "MID" | "HIGH";
+  tierPriceCents: number;
 };
 
 export type GoogleLoginResult =
@@ -152,6 +154,8 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
       email: user.email,
       avatarColor: user.avatarColor,
       avatarUrl: user.avatarUrl,
+      tier: user.tier,
+      tierPriceCents: user.tierPriceCents,
     },
   };
 }

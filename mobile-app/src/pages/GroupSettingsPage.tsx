@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { getGroup, updateGroup } from "../data/community";
+import {
+  fetchCommunityJoinRequests,
+  getGroup,
+  reviewCommunityJoinRequest,
+  updateGroup,
+  type CommunityJoinRequest,
+} from "../data/community";
 
 const TIERS = [
   { id: "初阶", members: "50 成员", ai: "基础 AI 额度", price: "免费" },
@@ -9,7 +15,18 @@ const TIERS = [
   { id: "高阶", members: "1000 成员", ai: "高额 AI 额度 + 专属人设", price: "¥98/月" },
 ];
 
-// 群组设置（design 4f，仅群主可见）
+function requestTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "刚刚";
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+// 社群设置（仅群主或管理员可见）
 export function GroupSettingsPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
@@ -17,13 +34,37 @@ export function GroupSettingsPage() {
   const [name, setName] = useState(group?.name ?? "");
   const [tier, setTier] = useState(group?.tier ?? "初阶");
   const [saved, setSaved] = useState(false);
+  const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
+  const [requestsError, setRequestsError] = useState("");
+  const [reviewingId, setReviewingId] = useState("");
+  const [reviewMessage, setReviewMessage] = useState("");
+
+  useEffect(() => {
+    if (!groupId) return;
+    let active = true;
+    setRequestsLoading(true);
+    setRequestsError("");
+    fetchCommunityJoinRequests(groupId).then((result) => {
+      if (!active) return;
+      if (result.ok) {
+        setJoinRequests(result.requests);
+      } else {
+        setRequestsError(result.message);
+      }
+      setRequestsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [groupId]);
 
   if (!group) {
     return (
       <div className="screen">
         <div className="page-header">
           <button className="icon-btn" onClick={() => navigate("/community")}><Icon name="chevron-left" size={18} /></button>
-          <div className="title">群组设置</div>
+          <div className="title">社群设置</div>
         </div>
         <div style={{ padding: 24, fontSize: 13, color: "var(--body)" }}>群组不存在。</div>
       </div>
@@ -36,11 +77,35 @@ export function GroupSettingsPage() {
     setTimeout(() => navigate(`/community/${group.id}`), 600);
   };
 
+  async function reviewRequest(
+    joinRequest: CommunityJoinRequest,
+    decision: "APPROVE" | "REJECT",
+  ) {
+    if (!groupId || reviewingId) return;
+    setReviewingId(joinRequest.id);
+    setRequestsError("");
+    setReviewMessage("");
+    const result = await reviewCommunityJoinRequest(
+      groupId,
+      joinRequest.id,
+      decision,
+    );
+    if (result.ok) {
+      setJoinRequests((current) =>
+        current.filter((item) => item.id !== joinRequest.id),
+      );
+      setReviewMessage(result.message);
+    } else {
+      setRequestsError(result.message);
+    }
+    setReviewingId("");
+  }
+
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
       <div className="page-header">
         <button className="icon-btn" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">群组设置</div>
+        <div className="title">社群设置</div>
         <div style={{ flex: 1 }} />
         <div style={{ fontSize: 11, fontWeight: 700, background: "rgba(191,120,246,.16)", color: "var(--purple)", borderRadius: 6, padding: "3px 8px" }}>群主</div>
       </div>
@@ -65,6 +130,68 @@ export function GroupSettingsPage() {
             />
           </div>
         </div>
+
+        {/* join requests */}
+        <section>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>加入申请</div>
+            {!requestsLoading && (
+              <div style={{ minWidth: 20, height: 20, padding: "0 6px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 100, background: joinRequests.length ? "rgba(225,49,125,.11)" : "var(--surface-2)", color: joinRequests.length ? "var(--pink)" : "var(--body)", fontSize: 11, fontWeight: 800 }}>
+                {joinRequests.length}
+              </div>
+            )}
+          </div>
+
+          {requestsLoading && (
+            <div className="card" style={{ padding: "16px", fontSize: 12, color: "var(--body)" }}>正在读取加入申请…</div>
+          )}
+          {!requestsLoading && joinRequests.length === 0 && !requestsError && (
+            <div className="card" style={{ padding: "16px", fontSize: 12, color: "var(--body)" }}>目前没有待处理的加入申请</div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {joinRequests.map((joinRequest) => {
+              const busy = reviewingId === joinRequest.id;
+              return (
+                <div key={joinRequest.id} className="card" style={{ padding: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {joinRequest.user.avatarUrl ? (
+                      <img src={joinRequest.user.avatarUrl} alt="" style={{ width: 42, height: 42, flex: "none", borderRadius: 100, objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: 42, height: 42, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 100, background: joinRequest.user.avatarColor, fontSize: 16, fontWeight: 800 }}>
+                        {Array.from(joinRequest.user.name)[0] ?? "友"}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800 }}>{joinRequest.user.name}</div>
+                      <div style={{ marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11, color: "var(--body)" }}>
+                        {joinRequest.user.email ?? "已注册用户"} · {requestTime(joinRequest.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  {joinRequest.message && (
+                    <div style={{ marginTop: 10, padding: "9px 10px", borderRadius: 10, background: "var(--surface-2)", fontSize: 12, color: "var(--body)", lineHeight: 1.55 }}>
+                      {joinRequest.message}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+                    <button disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "REJECT")} style={{ height: 38, border: "1px solid var(--line)", borderRadius: 11, background: "var(--white)", color: "var(--body)", fontSize: 13, fontWeight: 800, opacity: reviewingId && !busy ? 0.5 : 1 }}>
+                      {busy ? "处理中…" : "拒绝"}
+                    </button>
+                    <button disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "APPROVE")} style={{ height: 38, border: "none", borderRadius: 11, background: "var(--yellow)", color: "var(--ink)", fontSize: 13, fontWeight: 800, opacity: reviewingId && !busy ? 0.5 : 1 }}>
+                      {busy ? "处理中…" : "批准加入"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {reviewMessage && (
+            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "#267A45" }}>{reviewMessage}</div>
+          )}
+          {requestsError && (
+            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "var(--pink)" }}>{requestsError}</div>
+          )}
+        </section>
 
         {/* tier cards */}
         <div>
@@ -100,7 +227,7 @@ export function GroupSettingsPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", borderRadius: 12, padding: "12px 14px" }}>
           <Icon name="lock" size={15} />
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            成员管理、AI 助手人设、解散群组等操作在网页版群主工作台提供。
+            AI 助手人设、解散社群等高级操作在网页版群主工作台提供。
           </div>
         </div>
 

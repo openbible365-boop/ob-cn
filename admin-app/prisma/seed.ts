@@ -143,6 +143,8 @@ async function seedUsersCommunitiesAndMemberships() {
   const huidu = await db.community.create({
     data: {
       name: "慧读总群",
+      abbreviation: "慧读",
+      description: "全体用户 · 官方公告与慧读答疑",
       avatarColor: "#D9C2F0",
       isOfficial: true,
       tier: "OFFICIAL_FREE",
@@ -155,6 +157,8 @@ async function seedUsersCommunitiesAndMemberships() {
   const youth = await db.community.create({
     data: {
       name: "青年查经小组",
+      abbreviation: "青年",
+      description: "周五线上查经报名中",
       avatarColor: "#FFD465",
       tier: "MID",
       tierPriceCents: 500,
@@ -167,6 +171,8 @@ async function seedUsersCommunitiesAndMemberships() {
   const grace = await db.community.create({
     data: {
       name: "恩典读经群",
+      abbreviation: "恩典",
+      description: "一年读经计划进行中",
       avatarColor: "#D9C2F0",
       tier: "HIGH",
       tierPriceCents: 1000,
@@ -179,6 +185,8 @@ async function seedUsersCommunitiesAndMemberships() {
   const prayer = await db.community.create({
     data: {
       name: "姊妹祷告会",
+      abbreviation: "姊妹",
+      description: "今晨祷告接力已完成",
       avatarColor: "#F0C7B7",
       tier: "BASIC_FREE",
       tierPriceCents: 0,
@@ -192,6 +200,8 @@ async function seedUsersCommunitiesAndMemberships() {
   const workplace = await db.community.create({
     data: {
       name: "职场灵修站",
+      abbreviation: "职场",
+      description: "在职场中同行灵修",
       avatarColor: "#F0C7B7",
       tier: "BASIC_FREE",
       tierPriceCents: 0,

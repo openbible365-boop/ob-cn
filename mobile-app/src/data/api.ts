@@ -1,10 +1,6 @@
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 
-const DEFAULT_NATIVE_API_ORIGIN = "https://app.openbible.live";
-
-const nativeApiOrigin = (
-  import.meta.env.VITE_NATIVE_API_ORIGIN ?? DEFAULT_NATIVE_API_ORIGIN
-).replace(/\/+$/, "");
+const NATIVE_API_ORIGIN = "https://app.openbible.live";
 
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -43,7 +39,7 @@ export async function apiRequest<T>(
 
   if (Capacitor.isNativePlatform()) {
     const response = await CapacitorHttp.request({
-      url: `${nativeApiOrigin}${path.startsWith("/") ? path : `/${path}`}`,
+      url: `${NATIVE_API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`,
       method,
       headers,
       data: options.body,
