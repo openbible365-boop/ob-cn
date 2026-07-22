@@ -50,7 +50,7 @@ export function GroupPage() {
   const navigate = useNavigate();
   const group = getGroup(groupId ?? "");
   const isOfficial = groupId === "official" || group?.badgeStyle === "official";
-  const tabs = group?.membershipRole === "OWNER" ? ALL_TABS : MEMBER_TABS;
+  const tabs = ALL_TABS;
   const [tab, setTab] = useState<TabId>(() =>
     groupId === "official" ? "chat" : "info",
   );
@@ -518,7 +518,7 @@ export function GroupPage() {
         </div>
       )}
 
-      {tab === "members" && group.membershipRole === "OWNER" && (
+      {tab === "members" && group && (
         <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="card" style={{ padding: "16px" }}>
             <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>成员管理</div>
@@ -527,7 +527,7 @@ export function GroupPage() {
         </div>
       )}
 
-      {tab === "groups" && group.membershipRole === "OWNER" && (
+      {tab === "groups" && group && (
         <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="card" style={{ padding: "16px" }}>
             <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>社群小组</div>
@@ -536,7 +536,7 @@ export function GroupPage() {
         </div>
       )}
 
-      {tab === "resources" && group.membershipRole === "OWNER" && (
+      {tab === "resources" && group && (
         <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="card" style={{ padding: "16px" }}>
             <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>社群资料</div>
