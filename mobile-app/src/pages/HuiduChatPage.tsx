@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
-import { getConversation, askFollowup, type Conversation, type HuiduBlock } from "../data/huidu";
+import {
+  appendFollowup,
+  getConversation,
+  requestHuiduFollowup,
+  type Conversation,
+  type HuiduBlock,
+} from "../data/huidu";
 
 function TypingDots() {
   return (
@@ -40,6 +46,7 @@ export function HuiduChatPage() {
   const [revealed, setRevealed] = useState(justCreated ? 0 : Infinity);
   const [pendingAnswer, setPendingAnswer] = useState(false);
   const [question, setQuestion] = useState("");
+  const [requestError, setRequestError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const answerTimerRef = useRef<number | null>(null);
 
@@ -71,18 +78,35 @@ export function HuiduChatPage() {
 
   const rounds = Math.ceil(conv.messages.length / 2);
 
-  const submit = (q: string) => {
+  const submit = async (q: string) => {
     const text = q.trim();
     if (!text || pendingAnswer) return;
+
+    const originalConversation = conv;
+    const optimisticConversation: Conversation = {
+      ...conv,
+      messages: [...conv.messages, { role: "user", content: text }],
+    };
+
     setQuestion("");
+    setRequestError("");
     setPendingAnswer(true);
-    // Persist immediately; reveal the answer after a short simulated delay.
-    const updated = askFollowup(conv.id, text);
-    setConv(updated ? { ...updated, messages: updated.messages.slice(0, -1) } : conv);
-    answerTimerRef.current = window.setTimeout(() => {
-      setConv(getConversation(conv.id));
-      setPendingAnswer(false);
-    }, 700);
+    setConv(optimisticConversation);
+
+    const result = await requestHuiduFollowup(originalConversation, text);
+    if (result.ok) {
+      const updated = appendFollowup(
+        originalConversation.id,
+        text,
+        result.answer,
+      );
+      setConv(updated ?? originalConversation);
+    } else {
+      setConv(originalConversation);
+      setQuestion(text);
+      setRequestError(result.message);
+    }
+    setPendingAnswer(false);
   };
 
   return (
@@ -156,14 +180,30 @@ export function HuiduChatPage() {
 
       {/* composer */}
       <div style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))" }}>
-        <form onSubmit={(e) => { e.preventDefault(); submit(question); }} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        {requestError && (
+          <div role="alert" style={{ margin: "-2px 0 8px", fontSize: 11, fontWeight: 700, color: "#c64040" }}>
+            {requestError}
+          </div>
+        )}
+        <form onSubmit={(e) => { e.preventDefault(); void submit(question); }} style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={(e) => {
+              setQuestion(e.target.value);
+              if (requestError) setRequestError("");
+            }}
+            disabled={pendingAnswer}
+            maxLength={1200}
+            aria-label="继续追问"
             placeholder="继续追问…"
-            style={{ flex: 1, height: 46, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500 }}
+            style={{ flex: 1, minWidth: 0, height: 46, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--white)", font: "inherit", fontSize: 14, fontWeight: 500, color: "var(--ink)", outline: "none" }}
           />
-          <button type="submit" style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, background: "var(--purple)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", color: "#fff" }}>
+          <button
+            type="submit"
+            aria-label="发送追问"
+            disabled={pendingAnswer || !question.trim()}
+            style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, background: "var(--purple)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", color: "#fff", opacity: pendingAnswer || !question.trim() ? 0.45 : 1 }}
+          >
             <Icon name="send" size={20} />
           </button>
         </form>

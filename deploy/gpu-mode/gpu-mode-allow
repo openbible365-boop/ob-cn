@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+MODE_FILE="/etc/openbible-gpu-mode"
+CONFIG_FILE="/etc/openbible-gpu-mode.conf"
+DEFAULT_TTS_SERVICE="yuyin-qwen3-engine.service"
+SERVICE="${1:-}"
+
+TTS_SERVICE="$DEFAULT_TTS_SERVICE"
+if [[ -r "$CONFIG_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+fi
+
+MODE="qwen"
+if [[ -r "$MODE_FILE" ]]; then
+  MODE="$(tr -d '[:space:]' <"$MODE_FILE")"
+fi
+
+case "$SERVICE" in
+  openbible-llm.service)
+    [[ "$MODE" == "qwen" ]]
+    ;;
+  yuyin-*.service)
+    [[ "$MODE" == "tts" && "$SERVICE" == "$TTS_SERVICE" ]]
+    ;;
+  *)
+    exit 1
+    ;;
+esac

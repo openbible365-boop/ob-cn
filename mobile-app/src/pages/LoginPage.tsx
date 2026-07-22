@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
-import { sendLoginCode, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
+import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
 import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
+import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
 
 // 注册登录（design 5d）— real email verification-code login against the
 // OpenBible backend; first login auto-registers the account.
@@ -22,6 +23,7 @@ export function LoginPage() {
   const [notice, setNotice] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [appleBusy, setAppleBusy] = useState(false);
 
   const startCooldown = (seconds: number) => {
     setCooldown(seconds);
@@ -92,6 +94,40 @@ export function LoginPage() {
     }
   };
 
+  const signInWithAppleAccount = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      window.location.assign("/api/auth/apple/start");
+      return;
+    }
+
+    setError("");
+    setNotice("");
+    setAppleBusy(true);
+    try {
+      const appleResult = await signInWithApple();
+      const result = await verifyAppleLogin({
+        identityToken: appleResult.identityToken,
+        authorizationCode: appleResult.authorizationCode,
+        nonce: appleResult.nonce,
+        givenName: appleResult.givenName,
+        familyName: appleResult.familyName,
+      });
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      await syncHighlights();
+      navigate("/me", { replace: true });
+    } catch (error) {
+      if (!isAppleSignInCanceled(error)) {
+        const message = error instanceof Error ? error.message : "Apple 登录失败，请稍后重试";
+        setError(message);
+      }
+    } finally {
+      setAppleBusy(false);
+    }
+  };
+
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
       <div className="page-header">
@@ -101,11 +137,39 @@ export function LoginPage() {
 
       <div className="screen-scroll" style={{ padding: "26px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 18, boxShadow: "var(--shadow-card)" }}>
-            <Icon name="book" size={28} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 78,
+              height: 78,
+              color: "var(--ink)",
+            }}
+            aria-label="OpenBible"
+          >
+            <svg
+              viewBox="16 8 88 88"
+              xmlns="http://www.w3.org/2000/svg"
+              width="78"
+              height="78"
+              role="img"
+              aria-hidden="true"
+              style={{ overflow: "visible" }}
+            >
+              <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C" />
+              <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor" />
+              <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor" />
+              <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
+              <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
+              <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" strokeWidth="4" />
+            </svg>
           </div>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>OpenBible</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>读经 · 慧读 · 社群共读</div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>
+            <span style={{ color: "#E89A2C" }}>慧读</span>
+            <span>圣经</span>
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>智慧 · 读经 · 社群 · 共勉</div>
         </div>
 
         <div className="card" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -143,7 +207,7 @@ export function LoginPage() {
           {notice && !error && (
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>{notice}</div>
           )}
-          <button className="btn-primary" onClick={submit} disabled={busy}>
+          <button className="btn-primary" style={{ background: "#E89A2C" }} onClick={submit} disabled={busy}>
             {busy ? "请稍候…" : "登录 / 注册"}
           </button>
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>首次使用同一邮箱登录将自动注册</div>
@@ -159,12 +223,12 @@ export function LoginPage() {
           {showAppleLogin && (
             <button
               type="button"
-              disabled
-              aria-disabled="true"
+              onClick={signInWithAppleAccount}
+              disabled={busy || appleBusy}
               className="card"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700, opacity: .58, cursor: "not-allowed" }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 50, fontSize: 14, fontWeight: 700, opacity: busy || appleBusy ? 0.65 : 1 }}
             >
-              Apple 登录 · 即将开放
+              {appleBusy ? "正在连接 Apple…" : "通过 Apple 登录"}
             </button>
           )}
           <button

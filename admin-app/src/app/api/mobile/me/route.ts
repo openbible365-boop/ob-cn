@@ -15,6 +15,8 @@ export async function GET() {
       email: user.email,
       avatarColor: user.avatarColor,
       avatarUrl: user.avatarUrl,
+      tier: user.tier,
+      tierPriceCents: user.tierPriceCents,
     },
   });
 }

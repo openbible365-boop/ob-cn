@@ -12,6 +12,8 @@ export type SessionUser = {
   email: string | null;
   avatarColor: string;
   avatarUrl: string | null;
+  tier: "BASIC_FREE" | "MID" | "HIGH";
+  tierPriceCents: number;
 };
 
 type ApiResult = { ok: boolean; message: string; user?: SessionUser };
@@ -43,6 +45,16 @@ export function verifyLoginCode(email: string, code: string) {
 
 export function verifyGoogleLogin(idToken: string) {
   return post("/api/mobile/auth/google", { idToken });
+}
+
+export function verifyAppleLogin(credential: {
+  identityToken: string;
+  authorizationCode: string;
+  nonce: string;
+  givenName?: string;
+  familyName?: string;
+}) {
+  return post("/api/mobile/auth/apple", credential);
 }
 
 export async function logout() {

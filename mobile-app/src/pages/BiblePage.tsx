@@ -30,6 +30,13 @@ import {
 } from "../data/annotations";
 import { startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
+import {
+  hasAndroidMediaControls,
+  listenForAndroidMediaControls,
+  requestAndroidMediaPermission,
+  stopAndroidMedia,
+  updateAndroidMedia,
+} from "../data/android-media";
 
 const PlayingAudioIcon = () => (
   <span className="playing-audio-icon" aria-hidden="true">
@@ -89,6 +96,7 @@ export function BiblePage() {
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
+  const androidMediaStartedRef = useRef(false);
 
   useEffect(() => {
     const refresh = () => setStoreVersion((value) => value + 1);
@@ -305,6 +313,139 @@ export function BiblePage() {
     ?? verses[fallbackAudioIndex]
     ?? verses[0]
     ?? null;
+  const audioCurrentVerseText = audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "";
+
+  useEffect(() => {
+    if (
+      picker !== "audio"
+      || !audioUrl
+      || !audioCurrentVerse
+      || !("mediaSession" in navigator)
+      || typeof MediaMetadata === "undefined"
+    ) {
+      return;
+    }
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: `${displayBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+      artist: audioCurrentVerseText,
+      album: "OpenBible · 语音圣经",
+      artwork: hasAndroidMediaControls() ? [] : [
+        {
+          src: new URL("/openbible-now-playing.png", window.location.href).href,
+          sizes: "1024x1024",
+          type: "image/png",
+        },
+      ],
+    });
+  }, [
+    picker,
+    audioUrl,
+    displayBook,
+    chapter,
+    version.label,
+    audioCurrentVerse?.verse,
+    audioCurrentVerse?.label,
+    audioCurrentVerseText,
+  ]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = audioPlaying ? "playing" : "paused";
+  }, [audioPlaying]);
+
+  useEffect(() => {
+    if (!hasAndroidMediaControls()) return;
+    let handle: Awaited<ReturnType<typeof listenForAndroidMediaControls>> | null = null;
+    let cancelled = false;
+    listenForAndroidMediaControls((event) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (event.action === "play") void audio.play();
+      else if (event.action === "pause") audio.pause();
+      else if (event.action === "stop") {
+        audio.pause();
+        void stopAndroidMedia();
+        androidMediaStartedRef.current = false;
+      } else if (event.action === "seekBackward") seekAudio(-30);
+      else if (event.action === "seekForward") seekAudio(30);
+      else if (event.action === "seekTo" && typeof event.positionMs === "number") {
+        audio.currentTime = Math.min(audio.duration || 0, Math.max(0, event.positionMs / 1000));
+      }
+    }).then((listenerHandle) => {
+      if (cancelled) void listenerHandle.remove();
+      else handle = listenerHandle;
+    });
+    return () => {
+      cancelled = true;
+      void handle?.remove();
+      if (androidMediaStartedRef.current) {
+        void stopAndroidMedia();
+        androidMediaStartedRef.current = false;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasAndroidMediaControls() || picker !== "audio" || !audioUrl || !audioCurrentVerse) return;
+    let cancelled = false;
+    const updateNativeMedia = async () => {
+      if (audioPlaying && !androidMediaStartedRef.current) {
+        await requestAndroidMediaPermission();
+        if (cancelled) return;
+        androidMediaStartedRef.current = true;
+      }
+      if (!androidMediaStartedRef.current) return;
+      try {
+        await updateAndroidMedia({
+          title: `${displayBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+          text: audioCurrentVerseText,
+          album: "OpenBible · 语音圣经",
+          playing: audioPlaying,
+          durationMs: Math.round(audioDuration * 1000),
+          positionMs: Math.round(audioCurrentTime * 1000),
+          speed: audioSpeed,
+        });
+      } catch {
+        // Android media controls must not interrupt in-app audio playback.
+      }
+    };
+    void updateNativeMedia();
+    return () => { cancelled = true; };
+  }, [
+    picker,
+    audioUrl,
+    audioPlaying,
+    audioDuration,
+    Math.floor(audioCurrentTime),
+    audioSpeed,
+    displayBook,
+    chapter,
+    version.label,
+    audioCurrentVerse?.verse,
+    audioCurrentVerse?.label,
+    audioCurrentVerseText,
+  ]);
+
+  useEffect(() => {
+    if (
+      !("mediaSession" in navigator)
+      || typeof navigator.mediaSession.setPositionState !== "function"
+      || audioDuration <= 0
+    ) {
+      return;
+    }
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: audioDuration,
+        playbackRate: audioSpeed,
+        position: Math.min(audioDuration, Math.max(0, audioCurrentTime)),
+      });
+    } catch {
+      // Some WebKit versions expose Media Session without position updates.
+    }
+  }, [audioCurrentTime, audioDuration, audioSpeed]);
+
   const seekAudio = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(audio.duration)) return;

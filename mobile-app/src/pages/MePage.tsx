@@ -57,14 +57,46 @@ export function MePage() {
           )}
         />
         <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 72, height: 72, background: "var(--surface-2)", borderRadius: 100 }}>
-            <Icon name="user" size={30} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 78,
+                height: 78,
+                color: "var(--ink)",
+              }}
+              aria-label="慧读圣经"
+            >
+              <svg
+                viewBox="16 8 88 88"
+                xmlns="http://www.w3.org/2000/svg"
+                width="78"
+                height="78"
+                role="img"
+                aria-hidden="true"
+                style={{ overflow: "visible" }}
+              >
+                <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C" />
+                <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor" />
+                <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor" />
+                <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
+                <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
+                <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" strokeWidth="4" />
+              </svg>
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800 }}>
+              <span style={{ color: "#E89A2C" }}>慧读</span>
+              <span>圣经</span>
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>智慧 · 读经 · 社群 · 共勉</div>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>尚未登录</div>
+          <div style={{ margin: "50px 0", fontSize: 20, fontWeight: 800, textAlign: "center" }}>尚未登录</div>
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>
             无需登录也能在本机保存高亮；<br />登录后可跨设备同步高亮。
           </div>
-          <button className="btn-primary" style={{ width: "100%" }} onClick={() => navigate("/me/login")}>
+          <button className="btn-primary" style={{ width: "100%", background: "#E89A2C" }} onClick={() => navigate("/me/login")}>
             登录 / 注册
           </button>
         </div>

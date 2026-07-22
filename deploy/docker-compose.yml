@@ -25,7 +25,26 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
       APP_URL: https://admin.openbible.live
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_IOS_CLIENT_ID: ${APPLE_IOS_CLIENT_ID:-live.openbible.app}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY_PATH: /run/secrets/apple_sign_in_key
+      APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      OPENBIBLE_LLM_BASE_URL: ${OPENBIBLE_LLM_BASE_URL:-http://host.docker.internal:8010/v1}
+      OPENBIBLE_LLM_MODEL: ${OPENBIBLE_LLM_MODEL:-Qwen3-14B-AWQ}
+      VLLM_API_KEY: ${VLLM_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:172.20.0.1"
+    volumes:
+      - ./secrets/apple_sign_in_key.p8:/run/secrets/apple_sign_in_key:ro
     depends_on:
       db:
         condition: service_healthy
