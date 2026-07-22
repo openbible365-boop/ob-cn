@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
 import { fetchCommunityGroups, type Group } from "../data/community";
 
@@ -70,7 +69,7 @@ export function CommunityPage() {
             </div>
           )}
         </div>
-        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--body)" }}>{g.memberCount.toLocaleString()} 成员 · {g.desc.replace(/^\d+\s*成员\s*·\s*/, "")}</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--body)" }}>{g.desc}</div>
       </div>
       <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={18} /></div>
     </Link>
@@ -78,22 +77,18 @@ export function CommunityPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <CompactToolbar
-        ariaLabel="社群概览"
-        primary="社群"
-        secondary={`已加入 ${joined.length}`}
-        actions={authenticated === true && canCreateCommunity ? (
+      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
+        <div style={{ fontSize: 20, fontWeight: 800 }}>社群</div>
+        <div style={{ flex: 1 }} />
+        {authenticated === true && canCreateCommunity && (
           <button
-            className="bible-toolbar-action"
-            type="button"
-            aria-label="创建群组"
-            title="创建群组"
             onClick={() => navigate("/community/new")}
+            style={{ display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700 }}
           >
-            <Icon name="edit" size={18} />
+            <Icon name="edit" size={14} /> 创建社群
           </button>
-        ) : undefined}
-      />
+        )}
+      </div>
 
       <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
         {official && row(official)}
