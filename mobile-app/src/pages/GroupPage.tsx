@@ -17,10 +17,8 @@ import {
   getEvents,
   getMySignups,
   toggleSignup,
-  createPost,
   upsertAssistantCommunity,
 } from "../data/community";
-import { fetchMe, type SessionUser } from "../data/profile";
 
 const MEMBER_TABS = [
   { id: "chat", label: "平台" },
@@ -57,22 +55,6 @@ export function GroupPage() {
     groupId === "official" ? "chat" : "info",
   );
   const [version, setVersion] = useState(0);
-  const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
-  const [postText, setPostText] = useState("");
-  const [eventFilter, setEventFilter] = useState<"active" | "upcoming" | "ended">("active");
-  const [notice, setNotice] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((result) => { if (!cancelled) setUser(result); });
-    return () => { cancelled = true; };
-  }, []);
-  useEffect(() => {
-    if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(""), 2600);
-    return () => window.clearTimeout(timer);
-  }, [notice]);
-=======
   const [memberCountLoading, setMemberCountLoading] = useState(
     group?.memberCount == null,
   );
@@ -218,7 +200,6 @@ export function GroupPage() {
       },
     ]);
   }
->>>>>>> origin/agent/sync-latest-mobile-community
 
   if (!group) {
     return (
@@ -236,33 +217,6 @@ export function GroupPage() {
   const myLikes = getMyLikes();
   const events = getEvents(group.id);
   const mySignups = getMySignups();
-  const isOwner = Boolean(user && group.badgeStyle === "owner");
-  const invite = async () => {
-    const url = `${window.location.origin}${window.location.pathname}#/community/${group.id}`;
-    try {
-      if (navigator.share) await navigator.share({ title: `加入${group.name}`, text: `邀请你加入${group.name}`, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        setNotice("邀请链接已复制");
-      }
-    } catch { /* user cancelled */ }
-  };
-
-  const submitPost = () => {
-    if (!user) { navigate("/me/login", { state: { from: `/community/${group.id}` } }); return; }
-    if (!postText.trim()) return;
-    createPost(group.id, postText.trim());
-    setPostText("");
-    setVersion((value) => value + 1);
-    setNotice("已发布到群组");
-  };
-
-  const submitChat = () => {
-    if (!user) { navigate("/me/login", { state: { from: `/community/${group.id}` } }); return; }
-    if (!chatText.trim()) return;
-    setChatMessages((messages) => [...messages, chatText.trim()]);
-    setChatText("");
-  };
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
@@ -286,10 +240,14 @@ export function GroupPage() {
               : `${group.memberCount ?? "—"} 成员`}
           </div>
         </div>
-        <button className="pill-btn" type="button" aria-label={`邀请朋友加入${group.name}`} onClick={invite}><Icon name="share" size={13} /> 邀请</button>
         {(group.membershipRole === "OWNER" || group.membershipRole === "ADMIN") && (
-          <button className="pill-btn" aria-label={`管理${group.name}`} onClick={() => navigate(`/community/${group.id}/settings`)}>
-            <Icon name="settings" size={13} /> 设置
+          <button
+            aria-label="社群设置"
+            title="仅群主或管理员可见"
+            onClick={() => navigate(`/community/${group.id}/settings`)}
+            style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 44, padding: 0, border: 0, background: "transparent", color: "var(--ink)" }}
+          >
+            <Icon name="settings" size={25} />
           </button>
         )}
       </div>
@@ -313,7 +271,7 @@ export function GroupPage() {
             <div style={{ background: "var(--yellow)", borderRadius: 16, boxShadow: "var(--shadow-card)", padding: "12px 14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
                 <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", background: "var(--ink)", color: "#fff", padding: "3px 6px", borderRadius: 6 }}>公告</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>{group.id === "official" ? "官方团队" : "群主 · 王弟兄"} · 置顶</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>群主 · 王弟兄 · 置顶</div>
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.7 }}>本周五 20:00 线上共读约翰福音 3 章，到「活动」页一键报名。</div>
             </div>
@@ -334,11 +292,8 @@ export function GroupPage() {
                   <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.75, marginBottom: 10 }}>{p.text}</div>
                   {p.verseRef && (
                     <div
-                      role="link"
-                      tabIndex={0}
-                      onClick={() => navigate(`/bible?t=${p.verseVersion ?? "cuv"}&bk=${p.verseBook ?? "jhn"}&c=${p.verseChapter ?? 3}&v=${p.verseNumber ?? 16}`)}
-                      onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.click(); }}
-                      style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(135,80,182,.10)", border: "1px solid var(--line)", borderRadius: 12, padding: "10px 12px", marginBottom: 10, cursor: "pointer" }}
+                      onClick={() => navigate("/bible?c=3")}
+                      style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(191,120,246,.10)", border: "1px solid var(--line)", borderRadius: 12, padding: "10px 12px", marginBottom: 10 }}
                     >
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 11, fontWeight: 800, color: "var(--purple)", marginBottom: 3 }}>{p.verseRef}</div>
@@ -350,24 +305,25 @@ export function GroupPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 16, color: "var(--body)" }}>
                     <button
                       onClick={() => { toggleLike(p.id); setVersion((v) => v + 1); }}
-                      aria-label={`${liked ? "取消点赞" : "点赞"}，当前${p.likes + (liked ? 1 : 0)}个赞`}
-                      style={{ display: "flex", minWidth: 44, minHeight: 44, alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: liked ? "var(--pink)" : "var(--body)" }}
+                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: liked ? "var(--pink)" : "var(--body)" }}
                     >
                       <Icon name="heart" size={14} /> {p.likes + (liked ? 1 : 0)}
                     </button>
-                    <button disabled title="评论功能将在账号服务接入后开放" aria-label={`${p.comments}条评论，功能即将开放`} style={{ display: "flex", minWidth: 44, minHeight: 44, alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: "var(--body)", opacity: .58 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700 }}>
                       <Icon name="message-square" size={14} /> {p.comments}
-                    </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
-          <form onSubmit={(event) => { event.preventDefault(); submitPost(); }} style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))", display: "flex", gap: 10, alignItems: "center" }}>
-            <button type="button" disabled className="icon-btn" style={{ opacity: .45 }} title="图片发布即将开放" aria-label="图片发布即将开放"><Icon name="image" size={18} /></button>
-            <input value={postText} onChange={(event) => setPostText(event.target.value.slice(0, 280))} aria-label="发布群组信息" placeholder={user ? "分享此刻的领受…" : "登录后参与分享"} style={{ flex: 1, minWidth: 0, height: 44, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500 }} />
-            <button type="submit" className="icon-btn primary-icon-btn" aria-label={user ? "发布信息" : "登录后发布"}><Icon name="send" size={18} /></button>
-          </form>
+          <div style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))", display: "flex", gap: 10, alignItems: "center" }}>
+            <button className="icon-btn" style={{ width: 42, height: 42 }} title="添加图片"><Icon name="image" size={18} /></button>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", height: 42, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500, color: "var(--body)" }}>
+              分享此刻的领受…
+            </div>
+            <button className="icon-btn" style={{ width: 42, height: 42, background: "var(--purple)", color: "#fff" }}><Icon name="send" size={18} /></button>
+          </div>
         </>
       )}
 
@@ -486,13 +442,13 @@ export function GroupPage() {
       {/* 活动 */}
       {tab === "events" && (
         <div className="screen-scroll" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="seg" role="group" aria-label="活动状态筛选" style={{ alignSelf: "flex-start" }}>
-            {([['active', '进行中'], ['upcoming', '未开始'], ['ended', '已结束']] as const).map(([id, label]) => (
-              <button type="button" key={id} className={`seg-item${eventFilter === id ? " active" : ""}`} aria-pressed={eventFilter === id} onClick={() => setEventFilter(id)}>{label}</button>
-            ))}
+          <div className="seg" style={{ alignSelf: "flex-start" }}>
+            <div className="seg-item active">进行中</div>
+            <div className="seg-item">未开始</div>
+            <div className="seg-item">已结束</div>
           </div>
 
-          {eventFilter === "active" && events.map((e) => {
+          {events.map((e) => {
             const signedUp = mySignups.includes(e.id);
             const total = e.signups + (signedUp ? 1 : 0);
             return (
@@ -535,7 +491,7 @@ export function GroupPage() {
                   <button
                     onClick={() => { toggleSignup(e.id); setVersion((v) => v + 1); }}
                     style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", height: 44, padding: "0 18px",
+                      display: "flex", alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px",
                       borderRadius: 100, fontSize: 13, fontWeight: 700, boxShadow: "var(--shadow-card)",
                       ...(e.capacity != null
                         ? signedUp
@@ -551,8 +507,6 @@ export function GroupPage() {
             );
           })}
 
-          {eventFilter !== "active" && <div className="empty-state-inline">当前没有{eventFilter === "upcoming" ? "未开始" : "已结束"}的活动。</div>}
-
           {mySignups.some((id) => events.some((e) => e.id === id && e.capacity != null)) && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(191,120,246,.14)", borderRadius: 12, padding: "10px 14px" }}>
               <div style={{ color: "var(--purple)" }}><Icon name="check" size={15} /></div>
@@ -563,6 +517,7 @@ export function GroupPage() {
           )}
         </div>
       )}
+
       {tab === "members" && group.membershipRole === "OWNER" && (
         <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="card" style={{ padding: "16px" }}>
@@ -589,8 +544,6 @@ export function GroupPage() {
           </div>
         </div>
       )}
-
-      {notice && <div className="toast" role="status">{notice}</div>}
     </div>
   );
 }
