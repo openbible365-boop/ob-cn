@@ -1,6 +1,6 @@
 // Community data returned by the production API. Posts and event prototypes
 // remain device-local until their backend endpoints are implemented.
-import { load, save } from "./store";
+import { load, save, uid } from "./store";
 import { apiRequest } from "./api";
 
 export type Group = {

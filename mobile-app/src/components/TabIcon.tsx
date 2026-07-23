@@ -5,7 +5,7 @@ type TabIconProps = {
   active: boolean;
 };
 
-export function TabIcon({ name, active }: TabIconProps) {
+export function TabIcon({ name }: TabIconProps) {
   const sharedProps = {
     width: 26,
     height: 26,
@@ -59,18 +59,21 @@ export function TabIcon({ name, active }: TabIconProps) {
   if (name === "community") {
     return (
       <svg {...sharedProps}>
-        <circle className="tab-icon-surface" cx="10" cy="8.4" r="3.6" />
-        <circle className="tab-icon-surface" cx="20.2" cy="10.1" r="2.8" />
-        <path d="M3.3 23.5c.4-5 3-7.6 6.7-7.6s6.3 2.6 6.7 7.6M17 17.5c.9-.8 2-1.2 3.3-1.2 2.9 0 4.8 2 5.2 5.8" />
+        <path
+          className="tab-icon-surface"
+          d="M14 3.5C7.65 3.5 3.5 7.85 3.5 14S7.65 24.5 14 24.5h10.5V14C24.5 7.85 20.35 3.5 14 3.5Z"
+        />
+        <circle className="tab-icon-detail" cx="10.2" cy="14" r="1.15" stroke="none" />
+        <circle className="tab-icon-detail" cx="14" cy="14" r="1.15" stroke="none" />
+        <circle className="tab-icon-detail" cx="17.8" cy="14" r="1.15" stroke="none" />
       </svg>
     );
   }
 
   return (
     <svg {...sharedProps}>
-      <circle className="tab-icon-surface" cx="14" cy="8" r="4.5" />
-      <path d="M5.2 24.2c.55-5.6 3.7-8.4 8.8-8.4s8.25 2.8 8.8 8.4" />
-      {active && <path className="tab-icon-active-detail" d="M19.3 18.2c.9.9 1.5 2 1.8 3.4" />}
+      <circle className="tab-icon-surface" cx="14" cy="7.7" r="5.1" />
+      <path d="M5.4 24.2c.8-5.9 3.9-8.85 8.6-8.85s7.8 2.95 8.6 8.85" />
     </svg>
   );
 }
