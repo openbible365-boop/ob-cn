@@ -16,7 +16,22 @@ export async function approveReport(formData: FormData) {
   const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
   const reportId = String(formData.get("reportId"));
 
-  await resolveReport(reportId, "已通过");
+  await db.$transaction(async (transaction) => {
+    const report = await transaction.report.findUniqueOrThrow({
+      where: { id: reportId },
+      select: { postId: true },
+    });
+    if (report.postId) {
+      await transaction.post.updateMany({
+        where: { id: report.postId, status: "HIDDEN" },
+        data: { status: "VISIBLE" },
+      });
+    }
+    await transaction.report.update({
+      where: { id: reportId },
+      data: { status: "RESOLVED", resolution: "已通过", resolvedAt: new Date() },
+    });
+  });
 
   await logAudit({
     operatorId: session.user.id,
@@ -27,6 +42,7 @@ export async function approveReport(formData: FormData) {
   });
 
   revalidatePath("/admin/moderation");
+  revalidatePath("/admin/content");
 }
 
 export async function removeReportedContent(formData: FormData) {
@@ -82,11 +98,17 @@ export async function banReportedUser(formData: FormData) {
   });
   if (!report.post) throw new Error("该举报未关联具体内容，无法封禁用户");
 
-  await db.user.update({
-    where: { id: report.post.authorId },
-    data: { status: "BANNED", banReason: report.reason },
-  });
-  await resolveReport(reportId, "已封禁用户");
+  await db.$transaction([
+    db.user.update({
+      where: { id: report.post.authorId },
+      data: { status: "BANNED", banReason: report.reason },
+    }),
+    db.post.update({ where: { id: report.post.id }, data: { status: "HIDDEN" } }),
+    db.report.update({
+      where: { id: reportId },
+      data: { status: "RESOLVED", resolution: "已封禁用户并屏蔽内容", resolvedAt: new Date() },
+    }),
+  ]);
 
   await logAudit({
     operatorId: session.user.id,
@@ -98,6 +120,7 @@ export async function banReportedUser(formData: FormData) {
 
   revalidatePath("/admin/moderation");
   revalidatePath("/admin/users");
+  revalidatePath("/admin/content");
 }
 
 export async function muteReportedUser(formData: FormData) {
@@ -111,11 +134,17 @@ export async function muteReportedUser(formData: FormData) {
 
   const mutedUntil = new Date();
   mutedUntil.setDate(mutedUntil.getDate() + 7);
-  await db.user.update({
-    where: { id: report.post.authorId },
-    data: { status: "MUTED", mutedUntil },
-  });
-  await resolveReport(reportId, "已禁言用户 7 天");
+  await db.$transaction([
+    db.user.update({
+      where: { id: report.post.authorId },
+      data: { status: "MUTED", mutedUntil },
+    }),
+    db.post.update({ where: { id: report.post.id }, data: { status: "HIDDEN" } }),
+    db.report.update({
+      where: { id: reportId },
+      data: { status: "RESOLVED", resolution: "已禁言用户 7 天并屏蔽内容", resolvedAt: new Date() },
+    }),
+  ]);
 
   await logAudit({
     operatorId: session.user.id,
@@ -127,4 +156,5 @@ export async function muteReportedUser(formData: FormData) {
 
   revalidatePath("/admin/moderation");
   revalidatePath("/admin/users");
+  revalidatePath("/admin/content");
 }

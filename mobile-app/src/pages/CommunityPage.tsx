@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import { fetchCommunityGroups, type Group } from "../data/community";
 
 const BADGE_STYLES: Record<string, React.CSSProperties> = {
@@ -77,18 +78,16 @@ export function CommunityPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "10px 16px 14px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-        <div style={{ fontSize: 20, fontWeight: 800 }}>社群</div>
-        <div style={{ flex: 1 }} />
-        {authenticated === true && canCreateCommunity && (
-          <button
-            onClick={() => navigate("/community/new")}
-            style={{ display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px", background: "var(--yellow)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", fontSize: 13, fontWeight: 700 }}
-          >
-            <Icon name="edit" size={14} /> 创建社群
+      <UnifiedHeader
+        title="社群"
+        subtitle={loading ? "读取中" : `${groups.length} 个`}
+        ariaLabel="社群概览"
+        actions={authenticated === true && canCreateCommunity ? (
+          <button className="bible-toolbar-action" aria-label="创建社群" onClick={() => navigate("/community/new")}>
+            <Icon name="edit" size={19} />
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
         {official && row(official)}

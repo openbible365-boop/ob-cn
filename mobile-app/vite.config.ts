@@ -1,19 +1,24 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // Local browser development and packaged mobile apps always use the
-    // production API. Do not point mobile clients at a local admin server.
-    proxy: {
-      '/api': {
-        target: 'https://app.openbible.live',
-        changeOrigin: true,
-        secure: true,
-        cookieDomainRewrite: '',
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiOrigin = env.VITE_API_ORIGIN || 'https://app.openbible.live'
+
+  return {
+    plugins: [react()],
+    server: {
+      // Use VITE_API_ORIGIN=http://127.0.0.1:3000 with a local test database.
+      // Production remains the default when no override is configured.
+      proxy: {
+        '/api': {
+          target: apiOrigin,
+          changeOrigin: true,
+          secure: apiOrigin.startsWith('https://'),
+          cookieDomainRewrite: '',
+        },
       },
     },
-  },
+  }
 })

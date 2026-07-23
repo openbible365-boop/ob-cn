@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
   appendFollowup,
   getConversation,
@@ -67,10 +68,7 @@ export function HuiduChatPage() {
   if (!conv) {
     return (
       <div className="screen">
-        <div className="page-header">
-          <button className="icon-btn" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-          <div className="title">慧读</div>
-        </div>
+        <UnifiedHeader title="慧读" subtitle="对话不存在" ariaLabel="慧读对话状态" onBack={() => navigate(-1)} backLabel="返回" />
         <div style={{ padding: 24, fontSize: 13, color: "var(--body)" }}>对话不存在。</div>
       </div>
     );
@@ -202,7 +200,7 @@ export function HuiduChatPage() {
             type="submit"
             aria-label="发送追问"
             disabled={pendingAnswer || !question.trim()}
-            style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 46, height: 46, background: "var(--purple)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)", color: "#fff", opacity: pendingAnswer || !question.trim() ? 0.45 : 1 }}
+            className="icon-btn icon-btn-primary composer-icon-btn"
           >
             <Icon name="send" size={20} />
           </button>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import {
   getVersion,
@@ -75,10 +76,7 @@ export function MyContentPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate("/me")}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">我的内容</div>
-      </div>
+      <UnifiedHeader title="我的内容" subtitle="个人资料" ariaLabel="我的内容" onBack={() => navigate("/me")} backLabel="返回我的" />
 
       <div style={{ flex: "none", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "0 16px" }}>
         {TABS.map((t) => (

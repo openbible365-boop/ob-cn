@@ -14,7 +14,7 @@ export function formatLoginMethods(providers: AuthProvider[]) {
 export function formatUserTier(tier: UserTier, priceCents: number) {
   if (tier === "BASIC_FREE") return "初阶 免费";
   const price = (priceCents / 100).toFixed(priceCents % 100 === 0 ? 0 : 2);
-  return `${tier === "MID" ? "中阶" : "高阶"} $${price}/月`;
+  return `${tier === "MID" ? "中阶" : "高阶"} ¥${price}/月`;
 }
 
 export function formatTier(tier: CommunityTier, priceCents: number) {
@@ -22,7 +22,7 @@ export function formatTier(tier: CommunityTier, priceCents: number) {
   if (tier === "BASIC_FREE") return "初阶 免费";
   const price = (priceCents / 100).toFixed(priceCents % 100 === 0 ? 0 : 2);
   const label = tier === "MID" ? "中阶" : "高阶";
-  return `${label} $${price}/月`;
+  return `${label} ¥${price}/月`;
 }
 
 export function formatCompactNumber(n: number) {
@@ -36,7 +36,7 @@ export function formatTokensPerDay(n: number) {
 }
 
 export function formatCents(cents: number) {
-  return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  return `¥${(cents / 100).toLocaleString("zh-CN", { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDate(d: Date) {

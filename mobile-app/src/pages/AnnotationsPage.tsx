@@ -27,6 +27,11 @@ function commentaryTitleCoversVerse(title: string, chapter: number, verse: numbe
   return target >= startChapter * 1000 + startVerse && target <= endChapter * 1000 + endVerse;
 }
 
+function commentaryReference(title: string) {
+  const rawReference = title.split(" · ")[0];
+  return rawReference.match(/^\d+(?::\d+(?:-\d+)?)?/)?.[0] ?? rawReference;
+}
+
 // 注释页（design 2b）— real 精读本 (jingdu) commentary for every book.
 export function AnnotationsPage() {
   const [params, setParams] = useSearchParams();
@@ -37,22 +42,20 @@ export function AnnotationsPage() {
   const isIntroduction = params.get("intro") === "1";
   const targetVerse = Number(params.get("v")) || null;
   const maxChapter = book.chapters;
-  // Follow the reading position so the 注释 tab opens on the chapter the
-  // reader is currently in.
   const chapterFallback =
     book.code === reading.book ? reading.chapter : defaultChapterFor(book.code);
   const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
 
   const [commentary, setCommentary] = useState<CommentarySection[] | null>(null);
   const [loadError, setLoadError] = useState(false);
-  const [fontSize, setFontSize] = useState(15);
+  const [fontSize, setFontSize] = useState(17);
   const [chapterPickerOpen, setChapterPickerOpen] = useState(false);
   const [pickerBook, setPickerBook] = useState<string | null>(null);
   const [locatedAnnotation, setLocatedAnnotation] = useState<string | null>(null);
   const pickerBookData = pickerBook ? getBookByCode(pickerBook) : null;
 
-  const overviewSections = commentary?.filter((section) => section.title.includes("段落综览")) ?? [];
-  const verseSections = commentary?.filter((section) => !section.title.includes("段落综览")) ?? [];
+  const overviewCount = commentary?.filter((section) => section.title.includes("段落综览")).length ?? 0;
+  const detailCount = commentary ? commentary.length - overviewCount : 0;
 
   useEffect(() => {
     setCommentary(null);
@@ -63,7 +66,7 @@ export function AnnotationsPage() {
     }
     let cancelled = false;
     loadCommentary(book.order, chapter)
-      .then((c) => { if (!cancelled) setCommentary(c); })
+      .then((sections) => { if (!cancelled) setCommentary(sections); })
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
   }, [book.order, chapter, isIntroduction]);
@@ -81,18 +84,18 @@ export function AnnotationsPage() {
     const frame = window.requestAnimationFrame(() => {
       document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
-    const timeout = window.setTimeout(() => setLocatedAnnotation((value) => value === targetId ? null : value), 2200);
+    const timeout = window.setTimeout(() => {
+      setLocatedAnnotation((value) => value === targetId ? null : value);
+    }, 2200);
     return () => {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(timeout);
     };
   }, [commentary, targetVerse, chapter, isIntroduction]);
 
-  // Keep the reading position in sync so 圣经 tab follows chapter changes
-  // made from this page.
-  const gotoChapter = (c: number, bookCode = book.code) => {
-    setParams({ t: version.code, bk: bookCode, c: String(c) });
-    setReading({ version: version.code, book: bookCode, chapter: c });
+  const gotoChapter = (nextChapter: number, bookCode = book.code) => {
+    setParams({ t: version.code, bk: bookCode, c: String(nextChapter) });
+    setReading({ version: version.code, book: bookCode, chapter: nextChapter });
     setChapterPickerOpen(false);
     setPickerBook(null);
   };
@@ -116,7 +119,7 @@ export function AnnotationsPage() {
   };
 
   return (
-    <div className="screen">
+    <div className="screen annotation-reader-screen">
       <CompactToolbar
         ariaLabel="当前注释卷章与版本"
         primary={`${displayBook} ${isIntroduction ? "绪论" : chapter}`}
@@ -128,8 +131,16 @@ export function AnnotationsPage() {
           setPickerBook(null);
         }}
         actions={(
-          <button className="bible-toolbar-action" aria-label="调整注释字体" onClick={() => setFontSize((size) => size >= 19 ? 15 : size + 2)}>
-            <span className="bible-font-mark" aria-hidden="true"><span className="small-a">A</span><span className="large-a">A</span></span>
+          <button
+            type="button"
+            className="bible-toolbar-action"
+            aria-label={`调整注释字体，当前 ${fontSize} 像素`}
+            onClick={() => setFontSize((size) => size >= 19 ? 15 : size + 2)}
+          >
+            <span className="bible-font-mark" aria-hidden="true">
+              <span className="small-a">A</span>
+              <span className="large-a">A</span>
+            </span>
           </button>
         )}
         overlay={chapterPickerOpen && (
@@ -189,7 +200,10 @@ export function AnnotationsPage() {
         )}
       />
 
-      <div className={`screen-scroll annotation-reader${isIntroduction ? " is-introduction" : ""}`} onClick={() => chapterPickerOpen && setChapterPickerOpen(false)}>
+      <div
+        className={`screen-scroll annotation-reader annotation-reader-scroll${isIntroduction ? " is-introduction" : ""}`}
+        onClick={() => chapterPickerOpen && setChapterPickerOpen(false)}
+      >
         {isIntroduction ? (
           <BookIntroduction
             book={book}
@@ -199,67 +213,51 @@ export function AnnotationsPage() {
           />
         ) : (
           <>
-        <div className="annotation-guide">
-          <div className="annotation-guide-title">本章导读</div>
-          <div className="annotation-guide-meta">
-            {commentary === null
-              ? "正在整理本章内容…"
-              : `${overviewSections.length} 个段落综览 · ${verseSections.length} 条逐节注释`}
-          </div>
-        </div>
-
-        <div className="annotation-content">
-          {commentary === null && !loadError && (
-            <div className="annotation-status">加载注释中…</div>
-          )}
-          {loadError && (
-            <div className="annotation-status">注释加载失败，请检查网络后重试。</div>
-          )}
-
-          {overviewSections.length > 0 && (
-            <section className="annotation-overviews" aria-label="段落综览">
-              {overviewSections.map((section, index) => {
-                const [verses] = section.title.split(" · ");
-                const sourceIndex = commentary?.indexOf(section) ?? index;
-                const sectionId = `annotation-section-${sourceIndex}`;
-                return (
-                  <article id={sectionId} className={`annotation-overview-card${locatedAnnotation === sectionId ? " is-located" : ""}`} key={`${section.title}-${index}`}>
-                    <div className="annotation-overview-heading">
-                      <span className="annotation-verse-pill">{verses}</span>
-                      <span>段落综览</span>
-                    </div>
-                    <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>{section.body}</p>
-                  </article>
-                );
-              })}
+            <section className="annotation-guide-card" aria-label="本章导读">
+              <h1>本章导读</h1>
+              <p>
+                {commentary
+                  ? `${overviewCount} 个段落综览 · ${detailCount} 条逐节注释`
+                  : "正在整理本章注释…"}
+              </p>
             </section>
-          )}
 
-          {verseSections.length > 0 && (
-            <section className="annotation-verses" aria-label="逐节注释">
-              <div className="annotation-section-heading">
-                <span>逐节注释</span>
-                <span>{verseSections.length} 条</span>
-              </div>
-              {verseSections.map((section, index) => {
-                const sourceIndex = commentary?.indexOf(section) ?? index;
-                const sectionId = `annotation-section-${sourceIndex}`;
+            <div className="annotation-section-list">
+              {commentary === null && !loadError && (
+                <div className="annotation-status-card">加载注释中…</div>
+              )}
+              {loadError && (
+                <div className="annotation-status-card" role="alert">注释加载失败，请检查网络后重试。</div>
+              )}
+              {commentary?.map((section, index) => {
+                const sectionId = `annotation-section-${index}`;
+                const sectionType = section.title.includes("段落综览") ? "段落综览" : "逐节注释";
                 return (
-                  <article id={sectionId} className={`annotation-verse-item${locatedAnnotation === sectionId ? " is-located" : ""}`} key={`${section.title}-${index}`}>
-                    <div className="annotation-verse-reference">{section.title}</div>
-                    <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>
+                  <article
+                    id={sectionId}
+                    className={`annotation-section-card${locatedAnnotation === sectionId ? " is-located" : ""}`}
+                    key={`${section.title}-${index}`}
+                  >
+                    <div className="annotation-section-meta">
+                      <span className="annotation-reference-chip">{commentaryReference(section.title)}</span>
+                      <span>{sectionType}</span>
+                    </div>
+                    <p
+                      className="annotation-section-body"
+                      style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}
+                    >
                       {commentaryBody(section.body)}
                     </p>
                   </article>
                 );
               })}
-            </section>
-          )}
-
-          {commentary?.length === 0 && (
-            <div className="annotation-status">本章暂无精读本注释。</div>
-          )}
-        </div>
+              {commentary?.length === 0 && (
+                <div className="annotation-status-card">
+                  <div className="annotation-empty-title">本章暂无精读本注释</div>
+                  <div>可以切换到其他章节继续阅读。</div>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

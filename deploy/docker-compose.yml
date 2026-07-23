@@ -17,7 +17,7 @@ services:
       retries: 20
 
   admin:
-    build: ./admin-app
+    build: ../admin-app
     container_name: ob-cn-admin
     restart: unless-stopped
     environment:
@@ -57,8 +57,8 @@ services:
     container_name: ob-cn-app
     restart: unless-stopped
     volumes:
-      - ./app-dist:/usr/share/nginx/html:ro
-      - ./data:/usr/share/nginx/html/data:ro
+      - ../mobile-app/dist:/usr/share/nginx/html:ro
+      - ../data:/usr/share/nginx/html/data:ro
       - ./app-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - caddy

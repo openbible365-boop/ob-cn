@@ -1,4 +1,5 @@
 .DS_Store
+.tools/
 .claude/settings.local.json
 *.p8
 deploy/secrets/

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
 import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
@@ -130,10 +131,7 @@ export function LoginPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate("/me")}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">登录 / 注册</div>
-      </div>
+      <UnifiedHeader title="登录 / 注册" subtitle="OpenBible" ariaLabel="账号登录" onBack={() => navigate("/me")} backLabel="返回我的" />
 
       <div className="screen-scroll" style={{ padding: "26px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 6 }}>
@@ -207,7 +205,7 @@ export function LoginPage() {
           {notice && !error && (
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>{notice}</div>
           )}
-          <button className="btn-primary" style={{ background: "#E89A2C" }} onClick={submit} disabled={busy}>
+          <button className="btn-primary" onClick={submit} disabled={busy}>
             {busy ? "请稍候…" : "登录 / 注册"}
           </button>
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>首次使用同一邮箱登录将自动注册</div>

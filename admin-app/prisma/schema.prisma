@@ -67,8 +67,13 @@ model User {
   memberships           Membership[]
   ownedCommunities      Community[]            @relation("CommunityOwner")
   posts                 Post[]
+  postComments          PostComment[]
   postLikes             PostLike[]
+  postBookmarks         PostBookmark[]
+  submittedReports      Report[]               @relation("ReportSubmitter")
   eventSignups          EventSignup[]
+  uploadedResources     CommunityResource[]
+  communityAuditLogs    CommunityAuditLog[]
   highlights            Highlight[]
   notes                 Note[]
   conversations         Conversation[]
@@ -126,6 +131,7 @@ model Community {
   status            CommunityStatus     @default(ACTIVE)
   dailyActivity     Int                 @default(0)
   aiTokensToday     Int                 @default(0)
+  aiTokenUsageDate  DateTime?           @db.Date
   aiTokenDailyLimit Int?
   createdAt         DateTime            @default(now())
 
@@ -136,6 +142,8 @@ model Community {
   posts        Post[]
   reports      Report[]
   events       Event[]
+  resources    CommunityResource[]
+  auditLogs    CommunityAuditLog[]
   joinRequests CommunityJoinRequest[]
 
   @@index([parentId])
@@ -188,11 +196,8 @@ model CommunityJoinRequest {
 }
 
 // ---------- Dashboard: daily snapshots ----------
-// Real end-user apps don't emit usage events yet (mobile/web clients are
-// still static prototypes). Until a real event pipeline exists, an
-// aggregation job (or this seed script) writes one row per day here, and
-// the dashboard reads it like any other real table. Swapping the seed for
-// a real nightly aggregation later requires no page changes.
+// Dashboard snapshots. Community CRUD now writes real operational data;
+// analytics aggregation remains a separate scheduled job/seed concern.
 
 model DailyMetric {
   id                  String   @id @default(cuid())
@@ -279,21 +284,58 @@ enum PostStatus {
   DELETED
 }
 
+enum CommunityPostType {
+  POST
+  ARTICLE
+  NOTICE
+  MEDIA
+}
+
+enum CommunityPostMediaType {
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
 model Post {
-  id           String     @id @default(cuid())
+  id           String                  @id @default(cuid())
   communityId  String
   authorId     String
+  postType     CommunityPostType       @default(POST)
+  title        String?
   content      String
   verseRef     String?
-  likeCount    Int        @default(0)
-  commentCount Int        @default(0)
-  status       PostStatus @default(VISIBLE)
-  createdAt    DateTime   @default(now())
+  mediaType    CommunityPostMediaType?
+  mediaUrl     String?
+  pinnedAt     DateTime?
+  likeCount    Int                     @default(0)
+  commentCount Int                     @default(0)
+  status       PostStatus              @default(VISIBLE)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
 
-  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  author    User       @relation(fields: [authorId], references: [id])
+  community Community      @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id])
   reports   Report[]
   likes     PostLike[]
+  bookmarks PostBookmark[]
+  comments  PostComment[]
+
+  @@index([communityId, status, pinnedAt, createdAt])
+  @@index([communityId, status, createdAt])
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
 }
 
 model PostLike {
@@ -306,6 +348,19 @@ model PostLike {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
+}
+
+model PostBookmark {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
 }
 
 enum SensitiveWordLevel {
@@ -335,6 +390,7 @@ enum ReportStatus {
 model Report {
   id              String         @id @default(cuid())
   postId          String?
+  reporterId      String?
   communityId     String
   contentSnapshot String
   reason          String
@@ -345,7 +401,11 @@ model Report {
   resolvedAt      DateTime?
 
   post      Post?     @relation(fields: [postId], references: [id])
+  reporter  User?     @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: SetNull)
   community Community @relation(fields: [communityId], references: [id])
+
+  @@index([reporterId, createdAt])
+  @@index([postId, status])
 }
 
 // ---------- Event supervision (活动监管) ----------
@@ -354,13 +414,71 @@ model Event {
   id          String    @id @default(cuid())
   communityId String
   title       String
+  description String?
+  location    String?
   startAt     DateTime
   endAt       DateTime?
+  capacity    Int?
   signupCount Int       @default(0)
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   community Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
   signups   EventSignup[]
+}
+
+enum CommunityResourceType {
+  LINK
+  DOCUMENT
+  AUDIO
+  VIDEO
+  IMAGE
+}
+
+enum CommunityResourceVisibility {
+  MEMBERS
+  ADMINS
+}
+
+enum CommunityResourceStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+model CommunityResource {
+  id          String                      @id @default(cuid())
+  communityId String
+  uploaderId  String
+  title       String
+  description String?
+  type        CommunityResourceType       @default(LINK)
+  url         String
+  visibility  CommunityResourceVisibility @default(MEMBERS)
+  status      CommunityResourceStatus     @default(ACTIVE)
+  createdAt   DateTime                    @default(now())
+  updatedAt   DateTime                    @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  uploader  User      @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, status, createdAt])
+}
+
+model CommunityAuditLog {
+  id          String   @id @default(cuid())
+  communityId String
+  actorId     String
+  action      String
+  targetType  String
+  targetId    String
+  detail      Json?
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, createdAt])
 }
 
 model EventSignup {

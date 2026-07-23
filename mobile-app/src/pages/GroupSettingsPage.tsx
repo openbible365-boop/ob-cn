@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
   fetchCommunityJoinRequests,
   getGroup,
@@ -8,6 +9,7 @@ import {
   updateGroup,
   type CommunityJoinRequest,
 } from "../data/community";
+import { performWorkspaceAction } from "../data/community-workspace";
 
 const TIERS = [
   { id: "初阶", members: "50 成员", ai: "基础 AI 额度", price: "免费" },
@@ -32,6 +34,9 @@ export function GroupSettingsPage() {
   const navigate = useNavigate();
   const group = getGroup(groupId ?? "");
   const [name, setName] = useState(group?.name ?? "");
+  const [description, setDescription] = useState(
+    (group?.desc ?? "").replace(/^\d+ 成员(?: · )?/, ""),
+  );
   const [tier, setTier] = useState(group?.tier ?? "初阶");
   const [saved, setSaved] = useState(false);
   const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
@@ -39,6 +44,8 @@ export function GroupSettingsPage() {
   const [requestsError, setRequestsError] = useState("");
   const [reviewingId, setReviewingId] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!groupId) return;
@@ -68,30 +75,41 @@ export function GroupSettingsPage() {
   if (!group) {
     return (
       <div className="screen">
-        <div className="page-header">
-          <button className="icon-btn" onClick={() => navigate("/community")}><Icon name="chevron-left" size={18} /></button>
-          <div className="title">社群设置</div>
-        </div>
+        <UnifiedHeader title="社群设置" subtitle="不存在" ariaLabel="社群设置状态" onBack={() => navigate("/community")} backLabel="返回社群" />
         <div style={{ padding: 24, fontSize: 13, color: "var(--body)" }}>群组不存在。</div>
       </div>
     );
   }
 
-  if (group.badgeStyle !== "owner") {
+  if (group.membershipRole !== "OWNER" && group.membershipRole !== "ADMIN") {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
         <div className="page-header">
           <button className="icon-btn" aria-label="返回群组" onClick={() => navigate(`/community/${group.id}`)}><Icon name="chevron-left" size={18} /></button>
           <div className="title">群组设置</div>
         </div>
-        <div className="route-status"><Icon name="lock" size={20} /><b>仅群主可以管理此群组</b><span>你可以继续浏览群内公开内容。</span></div>
+          <div className="route-status"><Icon name="lock" size={20} /><b>仅群主或管理员可以管理此群组</b><span>你可以继续浏览群内公开内容。</span></div>
       </div>
     );
   }
 
-  const save = () => {
-    updateGroup(group.id, { name: name.trim() || group.name, tier: group.tier ?? "初阶" });
-    setSaved(true);
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError("");
+    const nextName = name.trim() || group.name;
+    const result = await performWorkspaceAction(group.id, {
+      action: "UPDATE_COMMUNITY",
+      name: nextName,
+      description: description.trim() || undefined,
+    });
+    if (result.ok) {
+      updateGroup(group.id, { name: nextName, tier: group.tier ?? "初阶" });
+      setSaved(true);
+    } else {
+      setSaveError(result.message);
+    }
+    setSaving(false);
   };
 
   async function reviewRequest(
@@ -120,12 +138,7 @@ export function GroupSettingsPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">社群设置</div>
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 11, fontWeight: 700, background: "rgba(191,120,246,.16)", color: "var(--purple)", borderRadius: 6, padding: "3px 8px" }}>群主</div>
-      </div>
+      <UnifiedHeader title="社群设置" subtitle={group.membershipRole === "ADMIN" ? "管理员" : "群主"} ariaLabel="社群管理" onBack={() => navigate(-1)} backLabel="返回社群" />
 
       <div className="screen-scroll" style={{ padding: "18px 20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
         {/* avatar + name */}
@@ -147,6 +160,11 @@ export function GroupSettingsPage() {
             />
           </div>
         </div>
+
+        <label style={{ display: "flex", flexDirection: "column", gap: 6, color: "var(--body)", fontSize: 12, fontWeight: 700 }}>
+          社群简介
+          <textarea value={description} onChange={(event) => setDescription(event.target.value.slice(0, 200))} rows={3} style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--white)", color: "var(--ink)", font: "inherit", fontSize: 13, lineHeight: 1.6, resize: "vertical" }} />
+        </label>
 
         {/* join requests */}
         <section>
@@ -191,10 +209,10 @@ export function GroupSettingsPage() {
                     </div>
                   )}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
-                    <button disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "REJECT")} style={{ height: 38, border: "1px solid var(--line)", borderRadius: 11, background: "var(--white)", color: "var(--body)", fontSize: 13, fontWeight: 800, opacity: reviewingId && !busy ? 0.5 : 1 }}>
+                    <button className="compact-action-btn" disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "REJECT")}>
                       {busy ? "处理中…" : "拒绝"}
                     </button>
-                    <button disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "APPROVE")} style={{ height: 38, border: "none", borderRadius: 11, background: "var(--yellow)", color: "var(--ink)", fontSize: 13, fontWeight: 800, opacity: reviewingId && !busy ? 0.5 : 1 }}>
+                    <button className="compact-action-btn is-primary" disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "APPROVE")}>
                       {busy ? "处理中…" : "批准加入"}
                     </button>
                   </div>
@@ -236,7 +254,7 @@ export function GroupSettingsPage() {
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{t.members} · {t.ai}</div>
                   </div>
-                  <div id={`tier-${t.id}-status`} style={{ fontSize: 12, fontWeight: 800, color: active ? "var(--purple)" : "var(--body)", textAlign: "right" }}>{available ? t.price : <>{t.price}<br /><small>即将开放</small></>}</div>
+                  <div id={`tier-${t.id}-status`} style={{ fontSize: 12, fontWeight: 800, color: active ? "var(--purple)" : "var(--body)", textAlign: "right" }}>{available ? t.price : <>{t.price}<br /><small>联系平台开通</small></>}</div>
                 </button>
               );
             })}
@@ -251,8 +269,9 @@ export function GroupSettingsPage() {
           </div>
         </div>
 
-        <button className="btn-primary" onClick={save}>
-          {saved ? "已保存 ✓" : "保存修改"}
+        {saveError && <div role="alert" style={{ color: "var(--pink)", fontSize: 12, fontWeight: 700 }}>{saveError}</div>}
+        <button className="btn-primary" onClick={save} disabled={saving}>
+          {saved ? "已保存 ✓" : saving ? "保存中…" : "保存修改"}
         </button>
       </div>
     </div>

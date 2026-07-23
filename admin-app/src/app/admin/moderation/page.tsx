@@ -17,7 +17,7 @@ export default async function ModerationPage() {
     db.sensitiveWord.groupBy({ by: ["level"], _count: { level: true } }),
     db.report.findMany({
       where: { status: "PENDING" },
-      include: { post: true, community: true },
+      include: { post: true, community: true, reporter: true },
       orderBy: { createdAt: "asc" },
     }),
   ]);
@@ -66,7 +66,10 @@ export default async function ModerationPage() {
               {r.contentSnapshot}
             </div>
             <div style={{ fontWeight: 700 }}>{r.community.name}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{r.reason}</div>
+            <div style={{ fontWeight: 600, color: "var(--body)" }}>
+              {r.reason}
+              {r.reporter && <small style={{ display: "block", marginTop: 3, color: "var(--muted)" }}>举报人：{r.reporter.name}</small>}
+            </div>
             <div><span className={`pill ${LEVEL_PILL[r.hitLevel]}`}>{LEVEL_LABEL[r.hitLevel]}</span></div>
             <div className="row-actions">
               <form action={removeReportedContent}>

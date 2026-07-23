@@ -1,6 +1,7 @@
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 
-const NATIVE_API_ORIGIN = "https://app.openbible.live";
+const NATIVE_API_ORIGIN =
+  import.meta.env.VITE_API_ORIGIN || "https://app.openbible.live";
 
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -55,12 +56,23 @@ export async function apiRequest<T>(
     };
   }
 
-  const response = await fetch(path, {
-    method,
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    credentials: "same-origin",
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    options.readTimeout ?? 20_000,
+  );
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      credentials: "same-origin",
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
 
   return {
     ok: response.ok,

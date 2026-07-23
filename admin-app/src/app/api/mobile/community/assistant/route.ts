@@ -1,6 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
+import {
+  COMMUNITY_ENTITLEMENTS,
+  countCommunityPlanMembers,
+} from "@/lib/community-access";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 
@@ -76,13 +80,24 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 type CommunityAssistantContext = {
+  id: string;
+  quotaCommunityId: string;
   name: string;
   abbreviation: string;
   description: string | null;
   role: "OWNER" | "ADMIN" | "MEMBER";
+  planTier: "OFFICIAL_FREE" | "BASIC_FREE" | "MID" | "HIGH";
+  aiTokensToday: number;
+  aiTokenUsageDate: Date | null;
+  aiTokenDailyLimit: number | null;
 };
 
-function communitySystemPrompt(context: CommunityAssistantContext) {
+function communitySystemPrompt(
+  context: Pick<
+    CommunityAssistantContext,
+    "name" | "abbreviation" | "description" | "role"
+  >,
+) {
   const roleLabel = {
     OWNER: "群主",
     ADMIN: "管理员",
@@ -246,24 +261,59 @@ async function findOfficialCommunity(groupId: string) {
 }
 
 async function findCommunityAssistantContext(groupId: string, userId: string) {
-  return db.community.findFirst({
+  const community = await db.community.findFirst({
     where: {
       id: groupId,
       status: "ACTIVE",
       isOfficial: false,
-      memberships: { some: { userId } },
     },
     select: {
+      id: true,
       name: true,
       abbreviation: true,
       description: true,
+      tier: true,
+      aiTokensToday: true,
+      aiTokenUsageDate: true,
+      aiTokenDailyLimit: true,
       memberships: {
         where: { userId },
         select: { role: true },
         take: 1,
       },
+      parent: {
+        select: {
+          id: true,
+          tier: true,
+          aiTokensToday: true,
+          aiTokenUsageDate: true,
+          aiTokenDailyLimit: true,
+          memberships: {
+            where: { userId },
+            select: { role: true },
+            take: 1,
+          },
+        },
+      },
     },
   });
+  if (!community) return null;
+  const role = community.memberships[0]?.role ?? community.parent?.memberships[0]?.role;
+  if (!role) return null;
+  return {
+    id: community.id,
+    quotaCommunityId: community.parent?.id ?? community.id,
+    name: community.name,
+    abbreviation: community.abbreviation,
+    description: community.description,
+    role,
+    planTier: community.parent?.tier ?? community.tier,
+    aiTokensToday: community.parent?.aiTokensToday ?? community.aiTokensToday,
+    aiTokenUsageDate:
+      community.parent?.aiTokenUsageDate ?? community.aiTokenUsageDate,
+    aiTokenDailyLimit:
+      community.parent?.aiTokenDailyLimit ?? community.aiTokenDailyLimit,
+  };
 }
 
 function proposalResponse(userId: string, officialCommunityId: string, action: OfficialAction) {
@@ -376,7 +426,7 @@ async function executeConfirmedAction(payload: SignedAction) {
 
   const community = await db.community.findFirst({
     where: { id: action.communityId, status: "ACTIVE", isOfficial: false },
-    select: { id: true, name: true, joinPolicy: true },
+    select: { id: true, parentId: true, name: true, joinPolicy: true, tier: true },
   });
   if (!community) return jsonError("这个社群已不存在或暂时不可加入", 404);
   const membership = await db.membership.findUnique({
@@ -387,6 +437,13 @@ async function executeConfirmedAction(payload: SignedAction) {
   }
   if (community.joinPolicy === "INVITE_ONLY") {
     return jsonError("这个社群目前仅限受邀用户加入", 403);
+  }
+  const memberLimit = COMMUNITY_ENTITLEMENTS[community.tier].memberLimit;
+  if (memberLimit !== null) {
+    const memberCount = await countCommunityPlanMembers(community.parentId ?? community.id);
+    if (memberCount >= memberLimit) {
+      return jsonError(`「${community.name}」当前方案的成员名额已满`, 409);
+    }
   }
   if (community.joinPolicy === "OPEN") {
     await db.membership.create({ data: { userId: payload.userId, communityId: community.id } });
@@ -552,7 +609,7 @@ export async function POST(request: Request) {
   const communityContext = officialCommunity
     ? null
     : await findCommunityAssistantContext(groupId, user.id);
-  if (!officialCommunity && !communityContext?.memberships[0]) {
+  if (!officialCommunity && !communityContext) {
     return jsonError("只有本社群成员可以使用平台小助手", 403);
   }
 
@@ -588,6 +645,27 @@ export async function POST(request: Request) {
     if (commandResponse) return commandResponse;
   }
 
+  if (communityContext) {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const usageDate = communityContext.aiTokenUsageDate;
+    const isToday = usageDate?.getTime() === today.getTime();
+    if (!isToday) {
+      await db.community.update({
+        where: { id: communityContext.quotaCommunityId },
+        data: { aiTokensToday: 0, aiTokenUsageDate: today },
+      });
+      communityContext.aiTokensToday = 0;
+      communityContext.aiTokenUsageDate = today;
+    }
+    const dailyLimit =
+      communityContext.aiTokenDailyLimit ??
+      COMMUNITY_ENTITLEMENTS[communityContext.planTier].aiDailyTokenLimit;
+    if (dailyLimit !== null && communityContext.aiTokensToday >= dailyLimit) {
+      return jsonError("本社群今天的慧读额度已用完，请明天再试或由群主调整方案", 429);
+    }
+  }
+
   const apiKey = process.env.OPENBIBLE_LLM_API_KEY ?? process.env.VLLM_API_KEY;
   if (!apiKey) return jsonError("助手尚未完成服务配置", 503);
   const baseUrl = (process.env.OPENBIBLE_LLM_BASE_URL ?? "http://127.0.0.1:8010/v1").replace(/\/+$/, "");
@@ -611,7 +689,7 @@ export async function POST(request: Request) {
                   name: communityContext!.name,
                   abbreviation: communityContext!.abbreviation,
                   description: communityContext!.description,
-                  role: communityContext!.memberships[0].role,
+                  role: communityContext!.role,
                 }),
           },
           ...history,
@@ -632,6 +710,13 @@ export async function POST(request: Request) {
     }
     const answer = removeThinkingBlocks(result?.choices?.[0]?.message?.content ?? "");
     if (!answer) return jsonError("助手没有返回有效回答，请重新提问", 502);
+    const totalTokens = Math.max(0, result?.usage?.total_tokens ?? 0);
+    if (communityContext && totalTokens > 0) {
+      await db.community.update({
+        where: { id: communityContext.quotaCommunityId },
+        data: { aiTokensToday: { increment: totalTokens } },
+      });
+    }
     return NextResponse.json({
       ok: true,
       answer,

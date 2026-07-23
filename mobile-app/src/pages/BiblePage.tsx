@@ -39,7 +39,6 @@ import {
 } from "../data/android-media";
 import { translateToTraditional } from "../utils/cc";
 
-
 const PlayingAudioIcon = () => (
   <span className="playing-audio-icon" aria-hidden="true">
     <i /><i /><i />
@@ -48,17 +47,19 @@ const PlayingAudioIcon = () => (
 
 function highlightKeyword(text: string, keyword: string) {
   if (!keyword) return text;
-  const index = text.toLowerCase().indexOf(keyword.toLowerCase());
+  const lowerText = text.toLocaleLowerCase();
+  const lowerKeyword = keyword.toLocaleLowerCase();
+  const index = lowerText.indexOf(lowerKeyword);
   if (index === -1) return text;
-  
+
   const start = Math.max(0, index - 15);
   const end = Math.min(text.length, index + keyword.length + 20);
-  let snippet = text.slice(start, end);
-  if (start > 0) snippet = "..." + snippet;
-  if (end < text.length) snippet = snippet + "...";
-
-  const highlightRegex = new RegExp(`(${keyword})`, 'gi');
-  return snippet.replace(highlightRegex, `<mark style="background:var(--yellow);color:var(--ink);padding:0 2px;border-radius:2px;font-weight:700;">$1</mark>`);
+  const snippet = `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;
+  const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return snippet.replace(
+    new RegExp(`(${escapedKeyword})`, "gi"),
+    '<mark class="bible-search-highlight">$1</mark>',
+  );
 }
 
 export function BiblePage() {
@@ -72,28 +73,19 @@ export function BiblePage() {
   const bookCode = params.get("bk") ?? reading.book;
   const version = getVersion(versionCode);
   const book = getBookByCode(bookCode);
-
-  const [isTraditional, setIsTraditional] = useState(() => {
-    return localStorage.getItem("ob.bible.isTraditional") === "true";
-  });
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem("ob.bible.isDarkMode") === "true";
-  });
+  const [isTraditional, setIsTraditional] = useState(
+    () => localStorage.getItem("ob.bible.isTraditional") === "true",
+  );
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => localStorage.getItem("ob.bible.isDarkMode") === "true",
+  );
   const [showHeadings, setShowHeadings] = useState(() => {
     const saved = localStorage.getItem("ob.bible.showHeadings");
     return saved === null ? true : saved === "true";
   });
-
-  const t = (text: string) => {
-    if (isTraditional && text) {
-      return translateToTraditional(text);
-    }
-    return text;
-  };
-
+  const translate = (text: string) => isTraditional && text ? translateToTraditional(text) : text;
   const displayBook = bookName(book, version);
-  const displayedBook = t(displayBook);
-
+  const displayedBook = translate(displayBook);
 
   const [data, setData] = useState<BookData | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -113,21 +105,13 @@ export function BiblePage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [expandedNoteVerse, setExpandedNoteVerse] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<{
+  const [searchResults, setSearchResults] = useState<Array<{
     chapter: number;
     verse: number;
     label: string;
     text: string;
-  }[]>([]);
+  }>>([]);
   const [hasSearched, setHasSearched] = useState(false);
-
-  useEffect(() => {
-    if (picker !== "search") {
-      setSearchResults([]);
-      setHasSearched(false);
-      setSearchText("");
-    }
-  }, [picker]);
   const [fontSize, setFontSize] = useState(() => {
     const saved = Number(localStorage.getItem("ob.bible.fontSize"));
     return [17, 19, 21, 23].includes(saved) ? saved : 19;
@@ -150,6 +134,13 @@ export function BiblePage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
   const androidMediaStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (picker === "search") return;
+    setSearchResults([]);
+    setHasSearched(false);
+    setSearchText("");
+  }, [picker]);
 
   useEffect(() => {
     const refresh = () => setStoreVersion((value) => value + 1);
@@ -186,17 +177,13 @@ export function BiblePage() {
 
   useEffect(() => {
     localStorage.setItem("ob.bible.isDarkMode", String(isDarkMode));
-    if (isDarkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
+    document.body.classList.toggle("dark", isDarkMode);
+    return () => document.body.classList.remove("dark");
   }, [isDarkMode]);
 
   useEffect(() => {
     localStorage.setItem("ob.bible.showHeadings", String(showHeadings));
   }, [showHeadings]);
-
 
   useEffect(() => {
     if (picker !== "audio") return;
@@ -336,54 +323,50 @@ export function BiblePage() {
     const query = searchText.trim();
     if (!query) return;
 
-    // 1. 检查是否为 "章:节" 快速跳转格式
     const m = query.match(/^(\d+)\s*[:：]\s*(\d+)$/);
     if (m) {
       const c = Math.min(Math.max(Number(m[1]), 1), maxChapter);
-      setParams({ t: version.code, bk: book.code, c: String(c) });
-      setSelected(new Set([Number(m[2])]));
-      setLocatedVerse(Number(m[2]));
-      window.requestAnimationFrame(() => {
-        document.getElementById(`bible-verse-${m[2]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
+      const verse = Math.max(Number(m[2]), 1);
+      setParams({ t: version.code, bk: book.code, c: String(c), v: String(verse) });
+      setSelected(new Set([verse]));
       setSearchText("");
-      setPicker(null);
       setSearchResults([]);
       setHasSearched(false);
+      setPicker(null);
       return;
     }
 
-    // 2. 在当前书卷中进行全文搜索
     if (!data) return;
-    const results: { chapter: number; verse: number; label: string; text: string }[] = [];
-    for (const [chNum, versesList] of data.chapters.entries()) {
-      for (const v of versesList) {
-        const plainText = stripHtml(v.text);
-        if (plainText.toLowerCase().includes(query.toLowerCase())) {
-          results.push({
-            chapter: chNum,
-            verse: v.verse,
-            label: v.label,
-            text: plainText,
-          });
-        }
+    const normalizedQuery = query.toLocaleLowerCase();
+    const results: Array<{ chapter: number; verse: number; label: string; text: string }> = [];
+    for (const [chapterNumber, chapterVerses] of data.chapters.entries()) {
+      for (const verse of chapterVerses) {
+        const plainText = stripHtml(verse.text);
+        if (!plainText.toLocaleLowerCase().includes(normalizedQuery)) continue;
+        results.push({
+          chapter: chapterNumber,
+          verse: verse.verse,
+          label: verse.label,
+          text: plainText,
+        });
       }
     }
     setSearchResults(results);
     setHasSearched(true);
   };
 
-  const handleResultClick = (res: { chapter: number; verse: number; label: string; text: string }) => {
-    setParams({ t: version.code, bk: book.code, c: String(res.chapter) });
-    setSelected(new Set([res.verse]));
-    setLocatedVerse(res.verse);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`bible-verse-${res.verse}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const openSearchResult = (result: { chapter: number; verse: number }) => {
+    setParams({
+      t: version.code,
+      bk: book.code,
+      c: String(result.chapter),
+      v: String(result.verse),
     });
+    setSelected(new Set([result.verse]));
     setSearchText("");
-    setPicker(null);
     setSearchResults([]);
     setHasSearched(false);
+    setPicker(null);
   };
 
   const askHuidu = () => {
@@ -397,7 +380,7 @@ export function BiblePage() {
   const copyVerse = async () => {
     if (selectedVerses.length === 0) return;
     const text = selectedVerses
-      .map((verse) => `${displayedBook} ${chapter}:${verse.label} ${stripHtml(verse.text)}`)
+      .map((verse) => `${displayedBook} ${chapter}:${verse.label} ${stripHtml(translate(verse.text))}`)
       .join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -649,13 +632,16 @@ export function BiblePage() {
           </button>
           <button
             className="bible-toolbar-action"
-            title="设置"
-            aria-label="阅读设置"
+            title="字体设置"
+            aria-label="字体设置"
             onClick={() => setPicker(picker === "font" ? null : "font")}
           >
-            <Icon name="settings" size={22} />
+            <span className="bible-font-mark" aria-hidden="true">
+              <span className="small-a">A</span><span className="large-a">A</span>
+            </span>
           </button>
         </div>
+
         {picker === "version" && (
           <div className="bible-version-picker" style={{ position: "absolute", top: 46, left: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 8, zIndex: 30 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", padding: "4px 6px 8px" }}>选择译本</div>
@@ -730,149 +716,90 @@ export function BiblePage() {
         )}
 
         {picker === "search" && (
-          <div style={{ position: "absolute", top: 50, right: 16, width: 280, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
+          <div className="bible-search-panel">
             <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
               <input
                 autoFocus
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="输入章:节或搜索关键字，如 3:16"
-                style={{ width: "100%", height: 44, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, background: "var(--white)", color: "var(--ink)" }}
               />
+              <button type="submit" aria-label="执行经文搜索">搜索</button>
             </form>
-            <div style={{ fontSize: 11, color: "var(--body)", paddingTop: 8 }}>回车执行搜索/跳转</div>
+            <small>回车执行搜索或跳转</small>
             {hasSearched && (
-              <div style={{ marginTop: 10, borderTop: "1px solid var(--line)", paddingTop: 10, maxHeight: 200, overflowY: "auto" }}>
-                <div style={{ fontSize: 11, color: "var(--body)", fontWeight: 800, marginBottom: 8 }}>
-                  搜索结果 ({searchResults.length})
-                </div>
+              <div className="bible-search-results" aria-live="polite">
+                <div className="bible-search-results-heading">搜索结果（{searchResults.length}）</div>
                 {searchResults.length === 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--body)", textAlign: "center", padding: "10px 0" }}>没有找到匹配经文</div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {searchResults.map((res, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleResultClick(res)}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 3,
-                          width: "100%",
-                          padding: 6,
-                          borderRadius: 8,
-                          border: "1px solid transparent",
-                          textAlign: "left",
-                          background: "transparent",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface)"}
-                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                      >
-                        <div style={{ fontSize: 11, fontWeight: 800, color: "var(--purple)" }}>
-                          {displayedBook} {res.chapter}章{res.label}节
-                        </div>
-                        <div
-                          style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}
-                          dangerouslySetInnerHTML={{ __html: highlightKeyword(res.text, searchText.trim()) }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  <div className="bible-search-empty">没有找到匹配经文</div>
+                ) : searchResults.map((result) => (
+                  <button
+                    type="button"
+                    key={`${result.chapter}-${result.verse}`}
+                    onClick={() => openSearchResult(result)}
+                  >
+                    <b>{displayedBook} {result.chapter}章{result.label}节</b>
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: highlightKeyword(
+                          isTraditional ? translate(result.text) : result.text,
+                          isTraditional ? translate(searchText.trim()) : searchText.trim(),
+                        ),
+                      }}
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>
         )}
 
         {picker === "font" && (
-          <div style={{ position: "absolute", top: 50, right: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 14, zIndex: 30, display: "flex", flexDirection: "column", gap: 14 }}>
-            {/* 字体大小 */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>字体大小</span>
-              <div className="bible-font-size-control" style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32 }}>
+          <div className="bible-reading-settings" role="dialog" aria-label="阅读设置">
+            <div className="bible-reading-setting-row">
+              <span>字体大小</span>
+              <div className="bible-font-size-control">
                 <button
                   type="button"
                   aria-label="缩小字体"
                   disabled={fontSize === 17}
                   onClick={() => setFontSize((size) => Math.max(17, size - 2))}
-                  style={{ width: 32, height: 32, display: "grid", placeItems: "center", background: "transparent", color: "var(--ink)", fontSize: 16, fontWeight: 700, opacity: fontSize === 17 ? 0.35 : 1 }}
                 >
                   −
                 </button>
-                <div style={{ width: 44, textAlign: "center", fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>{fontSize}px</div>
+                <b>{fontSize}px</b>
                 <button
                   type="button"
                   aria-label="放大字体"
                   disabled={fontSize === 23}
                   onClick={() => setFontSize((size) => Math.min(23, size + 2))}
-                  style={{ width: 32, height: 32, display: "grid", placeItems: "center", background: "transparent", color: "var(--ink)", fontSize: 16, fontWeight: 700, opacity: fontSize === 23 ? 0.35 : 1 }}
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* 简/繁切换 */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>语言简繁</span>
-              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: isTraditional ? "transparent" : "var(--yellow)", color: "var(--ink)", fontWeight: 700 }}
-                  onClick={() => setIsTraditional(false)}
-                >
-                  简
-                </button>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: isTraditional ? "var(--yellow)" : "transparent", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
-                  onClick={() => setIsTraditional(true)}
-                >
-                  繁
-                </button>
+            <div className="bible-reading-setting-row">
+              <span>语言简繁</span>
+              <div className="bible-setting-segment">
+                <button type="button" className={!isTraditional ? "active" : ""} onClick={() => setIsTraditional(false)}>简</button>
+                <button type="button" className={isTraditional ? "active" : ""} onClick={() => setIsTraditional(true)}>繁</button>
               </div>
             </div>
 
-            {/* 深色模式 */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>阅读模式</span>
-              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: isDarkMode ? "transparent" : "var(--yellow)", color: "var(--ink)", fontWeight: 700 }}
-                  onClick={() => setIsDarkMode(false)}
-                >
-                  浅色
-                </button>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: isDarkMode ? "var(--yellow)" : "transparent", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
-                  onClick={() => setIsDarkMode(true)}
-                >
-                  深色
-                </button>
+            <div className="bible-reading-setting-row">
+              <span>阅读模式</span>
+              <div className="bible-setting-segment">
+                <button type="button" className={!isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(false)}>浅色</button>
+                <button type="button" className={isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(true)}>深色</button>
               </div>
             </div>
 
-            {/* 显示经文标题 */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>显示标题</span>
-              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: showHeadings ? "var(--yellow)" : "transparent", color: "var(--ink)", fontWeight: 700 }}
-                  onClick={() => setShowHeadings(true)}
-                >
-                  显示
-                </button>
-                <button
-                  type="button"
-                  style={{ flex: 1, fontSize: 12, background: showHeadings ? "transparent" : "var(--yellow)", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
-                  onClick={() => setShowHeadings(false)}
-                >
-                  隐藏
-                </button>
+            <div className="bible-reading-setting-row">
+              <span>显示标题</span>
+              <div className="bible-setting-segment">
+                <button type="button" className={showHeadings ? "active" : ""} onClick={() => setShowHeadings(true)}>显示</button>
+                <button type="button" className={!showHeadings ? "active" : ""} onClick={() => setShowHeadings(false)}>隐藏</button>
               </div>
             </div>
           </div>
@@ -909,7 +836,7 @@ export function BiblePage() {
             return (
               <span key={v.label} className="bible-verse">
                 {showHeadings && v.heading && (
-                  <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{t(v.heading)}</span>
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{translate(v.heading)}</span>
                 )}
                 <span
                   id={`bible-verse-${v.verse}`}
@@ -935,7 +862,7 @@ export function BiblePage() {
                       textDecorationThickness: isSelected ? "1px" : undefined,
                       textUnderlineOffset: isSelected ? "5px" : undefined,
                     }}
-                    dangerouslySetInnerHTML={{ __html: t(v.text) }}
+                    dangerouslySetInnerHTML={{ __html: translate(v.text) }}
                   />
                 </span>
                 {noteVerseNumbers.has(v.verse) && (
@@ -1108,14 +1035,15 @@ export function BiblePage() {
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerses.length} 节</div>
               <div style={{ flex: 1 }} />
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
-              <button type="button" aria-label="关闭经文选择" onClick={closeSheet} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, margin: "-12px -12px -12px 2px", color: "var(--body)" }}><Icon name="x" size={17} /></button>
+              <button type="button" className="icon-btn icon-btn-ghost sheet-close-btn" aria-label="关闭经文选择" onClick={closeSheet}><Icon name="x" size={17} /></button>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, marginBottom: 10 }}>
               <div style={{ flex: "none", whiteSpace: "nowrap", fontSize: 11, fontWeight: 800 }}>高亮</div>
-              {HIGHLIGHT_COLORS.map((color) => (
+              {HIGHLIGHT_COLORS.map((color, colorIndex) => (
                 <button
                   key={color}
+                  aria-label={`使用第 ${colorIndex + 1} 种高亮颜色`}
                   onClick={() => {
                     selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color, version.code));
                     setStoreVersion((v) => v + 1);
@@ -1208,7 +1136,7 @@ export function BiblePage() {
       {shareOpen && selectedVerses.length > 0 && (
         <VerseShareSheet
           data={{
-            verseText: selectedVerses.map((verse) => stripHtml(verse.text)).join(" "),
+            verseText: selectedVerses.map((verse) => stripHtml(translate(verse.text))).join(" "),
             reference: `${displayedBook} ${chapter}:${selectedRangeLabel}`,
             versionLabel: version.label,
             shareUrl: `https://app.openbible.live/#/bible?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse?.verse ?? selectedVerses[0].verse}`,

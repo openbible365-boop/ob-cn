@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { countCommunityPlanMembers, findCommunityAccess } from "@/lib/community-access";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 
@@ -11,22 +12,6 @@ type ReviewInput = {
   decision?: unknown;
 };
 
-async function canReviewJoinRequests(userId: string, communityId: string) {
-  return db.community.findFirst({
-    where: {
-      id: communityId,
-      status: "ACTIVE",
-      memberships: {
-        some: {
-          userId,
-          role: { in: ["OWNER", "ADMIN"] },
-        },
-      },
-    },
-    select: { id: true },
-  });
-}
-
 export async function GET(_request: Request, { params }: RouteParams) {
   const user = await getSessionUser();
   if (!user) {
@@ -35,9 +20,16 @@ export async function GET(_request: Request, { params }: RouteParams) {
       { status: 401 },
     );
   }
+  if (user.status !== "ACTIVE") {
+    return NextResponse.json(
+      { ok: false, message: "当前账号暂时不能执行此操作" },
+      { status: 403 },
+    );
+  }
 
   const { communityId } = await params;
-  if (!(await canReviewJoinRequests(user.id, communityId))) {
+  const access = await findCommunityAccess(user.id, communityId);
+  if (!access?.isAdmin) {
     return NextResponse.json(
       { ok: false, message: "只有群主或管理员可以处理加入申请" },
       { status: 403 },
@@ -74,9 +66,16 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 401 },
     );
   }
+  if (user.status !== "ACTIVE") {
+    return NextResponse.json(
+      { ok: false, message: "当前账号暂时不能执行此操作" },
+      { status: 403 },
+    );
+  }
 
   const { communityId } = await params;
-  if (!(await canReviewJoinRequests(user.id, communityId))) {
+  const access = await findCommunityAccess(user.id, communityId);
+  if (!access?.isAdmin) {
     return NextResponse.json(
       { ok: false, message: "只有群主或管理员可以处理加入申请" },
       { status: 403 },
@@ -101,6 +100,16 @@ export async function POST(request: Request, { params }: RouteParams) {
       { ok: false, message: "请选择批准或拒绝" },
       { status: 400 },
     );
+  }
+
+  if (decision === "APPROVE" && access.entitlements.memberLimit !== null) {
+    const memberCount = await countCommunityPlanMembers(access.billingCommunityId);
+    if (memberCount >= access.entitlements.memberLimit) {
+      return NextResponse.json(
+        { ok: false, message: `当前方案最多允许 ${access.entitlements.memberLimit} 名成员，请先升级方案或移除闲置成员` },
+        { status: 409 },
+      );
+    }
   }
 
   const result = await db.$transaction(async (transaction) => {
@@ -136,6 +145,17 @@ export async function POST(request: Request, { params }: RouteParams) {
         },
       });
     }
+
+    await transaction.communityAuditLog.create({
+      data: {
+        communityId: access.community.id,
+        actorId: user.id,
+        action: decision === "APPROVE" ? "MEMBER_JOIN_APPROVE" : "MEMBER_JOIN_REJECT",
+        targetType: "User",
+        targetId: joinRequest.userId,
+        detail: { requestId },
+      },
+    });
 
     return joinRequest;
   });

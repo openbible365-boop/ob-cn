@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import { createCommunity } from "../data/community";
 
 const COLORS = ["var(--yellow)", "var(--purple)", "var(--orange)", "var(--pink)"];
@@ -43,10 +44,7 @@ export function CreateGroupPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">创建社群</div>
-      </div>
+      <UnifiedHeader title="创建社群" subtitle="新群组" ariaLabel="创建社群" onBack={() => navigate(-1)} backLabel="返回社群" />
 
       <div className="screen-scroll" style={{ padding: "18px 20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
         {/* avatar */}

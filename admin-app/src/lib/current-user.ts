@@ -13,7 +13,18 @@ export async function getSessionUser() {
   const store = await cookies();
   const uid = store.get(SESSION_COOKIE)?.value;
   if (!uid) return null;
-  return db.user.findUnique({ where: { id: uid } });
+  const user = await db.user.findUnique({ where: { id: uid } });
+  if (
+    user?.status === "MUTED" &&
+    user.mutedUntil &&
+    user.mutedUntil.getTime() <= Date.now()
+  ) {
+    return db.user.update({
+      where: { id: user.id },
+      data: { status: "ACTIVE", mutedUntil: null },
+    });
+  }
+  return user;
 }
 
 // For pages/actions that only make sense with an identity — bounce to the

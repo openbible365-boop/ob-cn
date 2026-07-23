@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
-import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
-import { getConversations } from "../data/huidu";
-import { getGroups, getMySignups } from "../data/community";
+import { HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { fetchMe, logout, type SessionUser } from "../data/profile";
 
 // 我的首页（design 5a）— real backend session; stats still from local stores.
@@ -96,7 +94,7 @@ export function MePage() {
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>
             无需登录也能在本机保存高亮；<br />登录后可跨设备同步高亮。
           </div>
-          <button className="btn-primary" style={{ width: "100%", background: "#E89A2C" }} onClick={() => navigate("/me/login")}>
+          <button className="btn-primary" style={{ width: "100%" }} onClick={() => navigate("/me/login")}>
             登录 / 注册
           </button>
         </div>
@@ -105,13 +103,11 @@ export function MePage() {
   }
 
   const stats = [
-    { label: "高亮", value: getHighlights().length, to: "/me/content?t=highlights" },
-    { label: "笔记", value: getNotes().length, to: "/me/content?t=notes" },
-    { label: "慧读对话", value: getConversations().length, to: "/huidu" },
-    { label: "活动报名", value: getMySignups().length, to: "/community" },
+    { label: "高亮", value: user.counts.highlights, to: "/me/content?t=highlights" },
+    { label: "笔记", value: user.counts.notes, to: "/me/content?t=notes" },
+    { label: "慧读对话", value: user.counts.conversations, to: "/huidu" },
+    { label: "活动报名", value: user.counts.eventSignups, to: "/community" },
   ];
-
-  const myGroups = getGroups().filter((g) => g.badgeStyle === "owner").length;
 
   const settingsRows = [
     { icon: "align-justify" as const, label: "我的内容", desc: "高亮 · 笔记 · 帖子", to: "/me/content" },
@@ -167,10 +163,29 @@ export function MePage() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{user.name}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{user.email ?? `群主 ×${myGroups}`}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{user.email ?? "已登录用户"} · {user.entitlements.label}</div>
           </div>
-          <button className="icon-btn" type="button" disabled aria-label="编辑资料即将开放" title="编辑资料即将开放" style={{ opacity: .48, cursor: "not-allowed" }}><Icon name="edit" size={16} /></button>
+          <button className="icon-btn" type="button" disabled aria-label="编辑资料即将开放" title="编辑资料即将开放"><Icon name="edit" size={16} /></button>
         </div>
+
+        {/* personal and group account contexts */}
+        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--body)", fontSize: 11, fontWeight: 800, letterSpacing: ".06em" }}>
+            <span>账户与团体</span><span>{user.groupAccounts.length} 个管理中的团体</span>
+          </div>
+          <div className="card" style={{ display: "flex", alignItems: "center", gap: 11, padding: "13px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 11, background: "var(--yellow)", fontWeight: 800 }}>我</div>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>个人账户</div><div style={{ marginTop: 2, color: "var(--body)", fontSize: 10, fontWeight: 650 }}>{user.entitlements.label} · 个人内容与慧读记录</div></div>
+            <div style={{ padding: "3px 7px", borderRadius: 7, background: "var(--surface-2)", color: "var(--body)", fontSize: 10, fontWeight: 800 }}>当前</div>
+          </div>
+          {user.groupAccounts.map((account) => (
+            <button key={account.id} className="card" onClick={() => navigate(`/community/${account.id}`)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "13px 14px", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 11, background: account.avatarColor, fontWeight: 800 }}>{account.abbreviation}</div>
+              <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{account.name}</div><div style={{ marginTop: 2, color: "var(--body)", fontSize: 10, fontWeight: 650 }}>{account.role === "OWNER" ? "群主" : "管理员"} · {account.entitlements.label} · {account.usage.members} 成员</div></div>
+              <Icon name="chevron-right" size={16} />
+            </button>
+          ))}
+        </section>
 
         {/* sync card */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(191,120,246,.14)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 14px" }}>

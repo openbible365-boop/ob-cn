@@ -150,7 +150,7 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
       <section className="verse-share-sheet">
         <div className="verse-share-heading">
           <div><small>生成分享图片</small><strong>分享经文</strong></div>
-          <button type="button" aria-label="关闭分享" onClick={onClose}><Icon name="x" size={21} /></button>
+          <button type="button" aria-label="关闭分享" onClick={onClose}><Icon name="x" size={20} /></button>
         </div>
 
         <div className="verse-share-preview">

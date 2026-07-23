@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 import { NOTIFICATION_PREFS, getPrefs, togglePref } from "../data/profile";
 
 // 通知管理（design 5c）— toggles persist to localStorage.
@@ -15,10 +16,7 @@ export function NotificationsPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" onClick={() => navigate("/me")}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">通知管理</div>
-      </div>
+      <UnifiedHeader title="通知管理" subtitle="本机设置" ariaLabel="通知管理" onBack={() => navigate("/me")} backLabel="返回我的" />
 
       <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
         <div className="card" style={{ padding: "4px 0" }}>

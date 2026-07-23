@@ -38,12 +38,24 @@ async function main() {
     await seedUsersCommunitiesAndMemberships();
   }
 
+  await ensureLocalTestAccounts();
   await seedAiAndDashboard();
   await seedContentModerationEventsAudit();
   await seedBibleAndCommentary();
   await seedPersonalSamples();
 
   console.log("Seed complete.");
+}
+
+async function ensureLocalTestAccounts() {
+  await db.user.updateMany({
+    where: { name: "王弟兄", email: null },
+    data: { email: "demo@openbible.local" },
+  });
+  await db.user.updateMany({
+    where: { name: "陈姊妹", email: null },
+    data: { email: "member@openbible.local" },
+  });
 }
 
 // Sample highlights/notes for the test account so /me and /me/content have
@@ -161,7 +173,7 @@ async function seedUsersCommunitiesAndMemberships() {
       description: "周五线上查经报名中",
       avatarColor: "#FFD465",
       tier: "MID",
-      tierPriceCents: 500,
+      tierPriceCents: 3_000,
       ownerId: users.wang.id,
       dailyActivity: 486,
       aiTokensToday: 182_000,
@@ -175,7 +187,7 @@ async function seedUsersCommunitiesAndMemberships() {
       description: "一年读经计划进行中",
       avatarColor: "#D9C2F0",
       tier: "HIGH",
-      tierPriceCents: 1000,
+      tierPriceCents: 9_800,
       ownerId: users.zhang.id,
       dailyActivity: 352,
       aiTokensToday: 121_000,
@@ -377,6 +389,7 @@ async function seedAiAndDashboard() {
 }
 
 async function seedContentModerationEventsAudit() {
+  const wang = await db.user.findFirstOrThrow({ where: { name: "王弟兄" } });
   const chen = await db.user.findFirstOrThrow({ where: { name: "陈姊妹" } });
   const li = await db.user.findFirstOrThrow({ where: { name: "李弟兄" } });
   const zhao = await db.user.findFirstOrThrow({ where: { name: "赵某" } });
@@ -442,6 +455,40 @@ async function seedContentModerationEventsAudit() {
     postSun = await db.post.findFirstOrThrow({ where: { authorId: sun.id } });
   }
 
+  const weeklyNoticeTitle = "本周查经与服事安排";
+  const weeklyNotice = await db.post.findFirst({
+    where: { communityId: youth.id, postType: "NOTICE", title: weeklyNoticeTitle },
+    select: { id: true, pinnedAt: true },
+  });
+  if (!weeklyNotice) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: wang.id,
+        postType: "NOTICE",
+        title: weeklyNoticeTitle,
+        content: "周五 20:00 一起查考约翰福音第 3 章，请提前阅读经文；需要线上参与的成员可在活动页报名。",
+        pinnedAt: new Date(),
+      },
+    });
+  } else if (!weeklyNotice.pinnedAt) {
+    await db.post.update({ where: { id: weeklyNotice.id }, data: { pinnedAt: new Date() } });
+  }
+
+  const articleTitle = "在忙碌生活中建立稳定的读经节奏";
+  if (!await db.post.findFirst({ where: { communityId: youth.id, postType: "ARTICLE", title: articleTitle } })) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: chen.id,
+        postType: "ARTICLE",
+        title: articleTitle,
+        content: "稳定的读经不一定从很长的时间开始。可以先固定每天十分钟，阅读一小段经文，记下一句触动自己的话，再用简短祷告回应。持续比一次读很多更重要，也可以在群动态里分享自己的领受，彼此鼓励。",
+        verseRef: "诗篇 119:105",
+      },
+    });
+  }
+
   // ---------- Sensitive word tiers ----------
   const wordTiers: [string, "BLOCK" | "REVIEW" | "LOG"][] = [
     ["加我微信", "BLOCK"], ["微商代理", "BLOCK"], ["刷单兼职", "BLOCK"],
@@ -501,6 +548,54 @@ async function seedContentModerationEventsAudit() {
         { communityId: grace.id, title: "一年读经计划 · 7 月主题分享", startAt: inDays(5), signupCount: 34 },
         { communityId: prayer.id, title: "晨祷接力", startAt: inDays(-1), endAt: inDays(-1), signupCount: 21 },
         { communityId: workplace.id, title: "职场伦理专题分享", startAt: inDays(-10), endAt: inDays(-10), signupCount: 9 },
+      ],
+    });
+  }
+
+  // ---------- Sub-groups and resource library ----------
+  let readingGroup = await db.community.findFirst({
+    where: { parentId: youth.id, abbreviation: "共读" },
+  });
+  if (!readingGroup) {
+    readingGroup = await db.community.create({
+      data: {
+        parentId: youth.id,
+        name: "约翰福音共读小组",
+        abbreviation: "共读",
+        description: "每周五线上逐章共读",
+        avatarColor: "#D9C2F0",
+        tier: youth.tier,
+        memberships: {
+          create: [
+            { userId: wang.id, role: "ADMIN" },
+            { userId: chen.id, role: "MEMBER" },
+          ],
+        },
+      },
+    });
+  }
+
+  if ((await db.communityResource.count({ where: { communityId: youth.id } })) === 0) {
+    await db.communityResource.createMany({
+      data: [
+        {
+          communityId: youth.id,
+          uploaderId: wang.id,
+          title: "本周共读预习说明",
+          description: "约翰福音第 3 章的观察问题与分享流程",
+          type: "LINK",
+          url: "https://openbible.live",
+          visibility: "MEMBERS",
+        },
+        {
+          communityId: youth.id,
+          uploaderId: wang.id,
+          title: "管理员带领手册",
+          description: "仅供群主和管理员查看",
+          type: "DOCUMENT",
+          url: "https://openbible.live",
+          visibility: "ADMINS",
+        },
       ],
     });
   }

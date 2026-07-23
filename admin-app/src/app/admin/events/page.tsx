@@ -52,7 +52,7 @@ export default async function EventsPage({
         <div className="title">活动监管</div>
         <div className="meta">全站活动列表 · 共 {events.length} 场</div>
         <div style={{ flex: 1 }} />
-        <form className="search-box" action="/events">
+        <form className="search-box" action="/admin/events">
           {status && status !== "all" ? <input type="hidden" name="status" value={status} /> : null}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />

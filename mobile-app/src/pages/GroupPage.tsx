@@ -1,6 +1,16 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UnifiedHeader } from "../components/UnifiedHeader";
+import {
+  CommunityEventsPanel,
+  CommunityGroupsPanel,
+  CommunityMorePanel,
+  CommunityMembersPanel,
+  CommunityResourcesPanel,
+  CommunitySharePanel,
+  type CommunityMoreSection,
+} from "../components/community/WorkspacePanels";
 import {
   askCommunityAssistant,
   confirmCommunityAssistantAction,
@@ -8,34 +18,22 @@ import {
   type AssistantRole,
   type AssistantVisibility,
 } from "../data/assistant";
+import { cacheCommunityWorkspace, fetchCommunityGroups, getGroup, upsertAssistantCommunity } from "../data/community";
 import {
-  fetchCommunityGroups,
-  getGroup,
-  getPosts,
-  getMyLikes,
-  toggleLike,
-  getEvents,
-  getMySignups,
-  toggleSignup,
-  upsertAssistantCommunity,
-} from "../data/community";
+  fetchCommunityWorkspace,
+  performWorkspaceAction,
+  type CommunityWorkspace,
+  type WorkspaceActionInput,
+} from "../data/community-workspace";
 
-const MEMBER_TABS = [
-  { id: "chat", label: "平台" },
-  { id: "info", label: "分享" },
+const TABS = [
+  { id: "feed", label: "群动态" },
+  { id: "assistant", label: "助手" },
   { id: "events", label: "活动" },
+  { id: "more", label: "更多" },
 ] as const;
 
-const OWNER_TABS = [
-  { id: "members", label: "成员" },
-  { id: "groups", label: "小组" },
-  { id: "resources", label: "资料" },
-] as const;
-
-const ALL_TABS = [...MEMBER_TABS, ...OWNER_TABS] as const;
-
-type TabId = (typeof ALL_TABS)[number]["id"];
-
+type TabId = (typeof TABS)[number]["id"];
 type ChatMessage = {
   id: string;
   role: AssistantRole;
@@ -44,28 +42,24 @@ type ChatMessage = {
   action?: AssistantAction;
 };
 
-// 分社群（design 4b 信息 / 4c 交流 / 4d 活动）
 export function GroupPage() {
-  const { groupId } = useParams();
+  const { groupId = "" } = useParams();
   const navigate = useNavigate();
-  const group = getGroup(groupId ?? "");
-  const isOfficial = groupId === "official" || group?.badgeStyle === "official";
-  const tabs = ALL_TABS;
-  const [tab, setTab] = useState<TabId>(() =>
-    groupId === "official" ? "chat" : "info",
-  );
-  const [version, setVersion] = useState(0);
-  const [memberCountLoading, setMemberCountLoading] = useState(
-    group?.memberCount == null,
-  );
+  const cachedGroup = getGroup(groupId);
+  const [tab, setTab] = useState<TabId>("feed");
+  const [moreSection, setMoreSection] = useState<CommunityMoreSection | null>(null);
+  const [workspace, setWorkspace] = useState<CommunityWorkspace | null>(null);
+  const [workspaceLoading, setWorkspaceLoading] = useState(true);
+  const [workspaceError, setWorkspaceError] = useState("");
+  const [workspaceMessage, setWorkspaceMessage] = useState("");
+  const [workspaceBusy, setWorkspaceBusy] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
       role: "assistant",
-      content:
-        groupId === "official"
-          ? "平安！我是慧读平台小助手。我可以帮你创建社群、搜索社群和申请加入社群；所有后台操作都会先请你确认。"
-          : `平安！我是${group?.name ?? "当前社群"}的平台助手。我可以解答信仰问题、陪你面对生活中的困难，也能协助办理${group?.name ?? "当前社群"}事务，例如邀请成员、搜索成员和新建小组。重要操作都会先请你确认。`,
+      content: groupId === "official"
+        ? "平安！我是慧读社群助手。我可以帮你处理社群事务；所有后台操作都会先请你确认。"
+        : `平安！我是${cachedGroup?.name ?? "当前社群"}的社群助手。我可以解答信仰问题、陪伴生活需要，也能协助办理社群事务。重要操作都会先请你确认。`,
     },
   ]);
   const [question, setQuestion] = useState("");
@@ -74,86 +68,102 @@ export function GroupPage() {
   const [confirmingMessageId, setConfirmingMessageId] = useState("");
   const [chatError, setChatError] = useState("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  void version;
 
-  useEffect(() => {
-    let active = true;
-    setMemberCountLoading(getGroup(groupId ?? "")?.memberCount == null);
-    fetchCommunityGroups().then((result) => {
-      if (!active) return;
-      if (result.ok) setVersion((current) => current + 1);
-      setMemberCountLoading(false);
-    });
-    return () => {
-      active = false;
-    };
+  const loadWorkspace = useCallback(async (showLoading = true) => {
+    if (!groupId) return;
+    if (showLoading) setWorkspaceLoading(true);
+    setWorkspaceError("");
+    const result = await fetchCommunityWorkspace(groupId);
+    if (result.ok) {
+      setWorkspace(result.workspace);
+      if (groupId !== "official") {
+        cacheCommunityWorkspace({
+          community: result.workspace.community,
+          role: result.workspace.access.role,
+          memberCount: result.workspace.usage.members,
+          groups: result.workspace.groups,
+        });
+      }
+    }
+    else setWorkspaceError(result.message);
+    setWorkspaceLoading(false);
   }, [groupId]);
 
   useEffect(() => {
-    if (isOfficial || !group?.name) return;
-    setChatMessages((current) =>
-      current.map((message) =>
-        message.id === "welcome"
-          ? {
-              ...message,
-              content: `平安！我是${group.name}的平台助手。我可以解答信仰问题、陪你面对生活中的困难，也能协助办理${group.name}事务，例如邀请成员、搜索成员和新建小组。重要操作都会先请你确认。`,
-            }
-          : message,
-      ),
-    );
-  }, [group?.name, isOfficial]);
+    let active = true;
+    void fetchCommunityGroups();
+    if (active) void loadWorkspace();
+    return () => { active = false; };
+  }, [loadWorkspace]);
+
+  const displayName = workspace?.community.name ?? cachedGroup?.name ?? "社群";
+  const displayId = workspace?.community.id ?? cachedGroup?.id ?? groupId;
+  const isOfficial = groupId === "official" || workspace?.community.tier === "OFFICIAL_FREE" || cachedGroup?.badgeStyle === "official";
 
   useEffect(() => {
-    if (tab !== "chat") return;
-    const frame = requestAnimationFrame(() => {
-      const element = chatScrollRef.current;
-      element?.scrollTo({ top: element.scrollHeight, behavior: "smooth" });
-    });
+    if (isOfficial || !displayName) return;
+    setChatMessages((current) => current.map((message) => message.id === "welcome" ? {
+      ...message,
+      content: `平安！我是${displayName}的社群助手。我可以解答信仰问题、陪伴生活需要，也能协助办理${displayName}事务。重要操作都会先请你确认。`,
+    } : message));
+  }, [displayName, isOfficial]);
+
+  useEffect(() => {
+    if (tab !== "assistant") return;
+    const frame = requestAnimationFrame(() => chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: "smooth" }));
     return () => cancelAnimationFrame(frame);
   }, [tab, chatMessages, isSending]);
+
+  function openMore(section: CommunityMoreSection) {
+    setMoreSection(section);
+    setTab("more");
+  }
+
+  function selectPrimaryTab(nextTab: TabId) {
+    setTab(nextTab);
+    if (nextTab !== "more") setMoreSection(null);
+  }
+
+  async function shareAssistantMessage(content: string) {
+    if (!window.confirm("确认将这段助手回答分享至群动态？发布后群成员可以看到。")) return;
+    const cleanContent = Array.from(content).slice(0, 2_000).join("");
+    if (await runWorkspaceAction({ action: "CREATE_POST", content: cleanContent })) {
+      selectPrimaryTab("feed");
+    }
+  }
+
+  async function runWorkspaceAction(input: WorkspaceActionInput) {
+    if (!groupId || workspaceBusy) return false;
+    setWorkspaceBusy(true);
+    setWorkspaceError("");
+    setWorkspaceMessage("");
+    const result = await performWorkspaceAction(groupId, input);
+    if (result.ok) {
+      setWorkspaceMessage(result.message);
+      if (result.refresh !== false) await loadWorkspace(false);
+    } else {
+      setWorkspaceError(result.message);
+    }
+    setWorkspaceBusy(false);
+    return result.ok;
+  }
 
   async function handleAssistantSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const prompt = question.trim();
-    if (!group || !prompt || isSending) return;
-
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: prompt,
-      visibility,
-    };
+    if (!displayId || !prompt || isSending) return;
+    const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: "user", content: prompt, visibility };
     const history = chatMessages.map(({ role, content }) => ({ role, content }));
-
     setChatMessages((current) => [...current, userMessage]);
     setQuestion("");
     setChatError("");
     setIsSending(true);
-
-    const result = await askCommunityAssistant({
-      groupId: group.id,
-      message: prompt,
-      history,
-      visibility,
-    });
-
+    const result = await askCommunityAssistant({ groupId: groupId || displayId, message: prompt, history, visibility });
     if (result.ok) {
-      setChatMessages((current) => [
-        ...current,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: result.answer,
-          action: result.action,
-        },
-      ]);
-      if (result.effect?.type === "COMMUNITY_CREATED" && result.effect.community) {
-        upsertAssistantCommunity(result.effect.community);
-      }
+      setChatMessages((current) => [...current, { id: `assistant-${Date.now()}`, role: "assistant", content: result.answer, action: result.action }]);
+      if (result.effect?.type === "COMMUNITY_CREATED" && result.effect.community) upsertAssistantCommunity(result.effect.community);
     } else {
-      setChatMessages((current) =>
-        current.filter((message) => message.id !== userMessage.id),
-      );
+      setChatMessages((current) => current.filter((message) => message.id !== userMessage.id));
       setQuestion(prompt);
       setChatError(result.message);
     }
@@ -161,388 +171,114 @@ export function GroupPage() {
   }
 
   async function handleActionConfirm(messageId: string, action: AssistantAction) {
-    if (!group || confirmingMessageId) return;
+    if (!displayId || confirmingMessageId) return;
     setConfirmingMessageId(messageId);
     setChatError("");
-    const result = await confirmCommunityAssistantAction({
-      groupId: group.id,
-      confirmationToken: action.token,
-    });
+    const result = await confirmCommunityAssistantAction({ groupId: groupId || displayId, confirmationToken: action.token });
     if (result.ok) {
       setChatMessages((current) => [
-        ...current.map((message) =>
-          message.id === messageId ? { ...message, action: undefined } : message,
-        ),
-        {
-          id: `assistant-result-${Date.now()}`,
-          role: "assistant" as const,
-          content: result.answer,
-        },
+        ...current.map((message) => message.id === messageId ? { ...message, action: undefined } : message),
+        { id: `assistant-result-${Date.now()}`, role: "assistant", content: result.answer },
       ]);
-      if (result.effect?.type === "COMMUNITY_CREATED" && result.effect.community) {
-        upsertAssistantCommunity(result.effect.community);
-      }
-    } else {
-      setChatError(result.message);
-    }
+      if (result.effect?.type === "COMMUNITY_CREATED" && result.effect.community) upsertAssistantCommunity(result.effect.community);
+      await loadWorkspace(false);
+    } else setChatError(result.message);
     setConfirmingMessageId("");
   }
 
   function handleActionCancel(messageId: string) {
     setChatMessages((current) => [
-      ...current.map((message) =>
-        message.id === messageId ? { ...message, action: undefined } : message,
-      ),
-      {
-        id: `assistant-cancel-${Date.now()}`,
-        role: "assistant" as const,
-        content: "这次操作已经取消，没有修改任何资料。",
-      },
+      ...current.map((message) => message.id === messageId ? { ...message, action: undefined } : message),
+      { id: `assistant-cancel-${Date.now()}`, role: "assistant", content: "这次操作已经取消，没有修改任何资料。" },
     ]);
   }
 
-  if (!group) {
-    return (
-      <div className="screen">
-        <div className="page-header">
-          <button className="icon-btn" onClick={() => navigate("/community")}><Icon name="chevron-left" size={18} /></button>
-          <div className="title">社群</div>
-        </div>
-        <div style={{ padding: 24, fontSize: 13, color: "var(--body)" }}>群组不存在。</div>
-      </div>
-    );
-  }
-
-  const posts = getPosts(group.id);
-  const myLikes = getMyLikes();
-  const events = getEvents(group.id);
-  const mySignups = getMySignups();
-
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      {/* header */}
-      <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px 12px", background: "var(--white)", borderBottom: "1px solid var(--line)" }}>
-        <button
-          aria-label="返回社群列表"
-          onClick={() => navigate("/community")}
-          style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 44, padding: 0, border: 0, background: "transparent", color: "var(--ink)" }}
-        >
-          <Icon name="chevron-left" size={36} />
-        </button>
-        <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: group.color, borderRadius: 10, fontSize: 15, fontWeight: 800 }}>
-          {group.letter}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 800 }}>{group.name}</div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-            {memberCountLoading
-              ? "正在读取成员数…"
-              : `${group.memberCount ?? "—"} 成员`}
-          </div>
-        </div>
-        {(group.membershipRole === "OWNER" || group.membershipRole === "ADMIN") && (
-          <button
-            aria-label="社群设置"
-            title="仅群主或管理员可见"
-            onClick={() => navigate(`/community/${group.id}/settings`)}
-            style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 42, height: 44, padding: 0, border: 0, background: "transparent", color: "var(--ink)" }}
-          >
-            <Icon name="settings" size={25} />
-          </button>
-        )}
-      </div>
+      <UnifiedHeader
+        title={displayName}
+        subtitle={workspaceLoading ? "读取中" : workspace ? `${workspace.usage.members} 人` : "不可用"}
+        ariaLabel={`${displayName}社群概览`}
+        onBack={() => navigate("/community")}
+        backLabel="返回社群列表"
+        actions={workspace?.access.isAdmin ? (
+          <button className="bible-toolbar-action" aria-label="社群管理" title="社群管理" onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
+        ) : undefined}
+      />
 
-      {/* sub tabs */}
-      <div style={{ flex: "none", display: "grid", gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`, background: "var(--white)", borderBottom: "1px solid var(--line)", padding: tabs.length > 3 ? "0 6px" : "0 16px" }}>
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 0, height: 42, padding: 0, whiteSpace: "nowrap", fontSize: tabs.length > 3 ? 13 : 14, fontWeight: tab === t.id ? 800 : 600, color: tab === t.id ? "var(--ink)" : "var(--body)" }}>
-            {t.label}
-            {tab === t.id && (
-              <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "var(--purple)", borderRadius: 100 }} />
-            )}
-          </button>
+      <div className="community-tabs" role="tablist" aria-label="社群功能">
+        {TABS.map((item) => (
+          <button key={item.id} role="tab" aria-selected={tab === item.id} onClick={() => selectPrimaryTab(item.id)} className={tab === item.id ? "active" : ""}>{item.label}</button>
         ))}
       </div>
 
-      {/* 信息 */}
-      {tab === "info" && (
-        <>
-          <div className="screen-scroll" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ background: "var(--yellow)", borderRadius: 16, boxShadow: "var(--shadow-card)", padding: "12px 14px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", background: "var(--ink)", color: "#fff", padding: "3px 6px", borderRadius: 6 }}>公告</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>群主 · 王弟兄 · 置顶</div>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.7 }}>本周五 20:00 线上共读约翰福音 3 章，到「活动」页一键报名。</div>
-            </div>
+      {(workspaceError || workspaceMessage) && (
+        <div className={`community-feedback${workspaceError ? " is-error" : ""}`} role={workspaceError ? "alert" : "status"}>
+          {workspaceError || workspaceMessage}
+          {workspaceError && <button onClick={() => loadWorkspace()}>重试</button>}
+        </div>
+      )}
 
-            {posts.map((p) => {
-              const liked = myLikes.includes(p.id);
-              return (
-                <div key={p.id} className="card" style={{ padding: "14px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                    <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, background: p.avatarColor, borderRadius: 100, fontSize: 13, fontWeight: 800 }}>
-                      {p.avatar}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800 }}>{p.author}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{p.time}</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.75, marginBottom: 10 }}>{p.text}</div>
-                  {p.verseRef && (
-                    <div
-                      onClick={() => navigate("/bible?c=3")}
-                      style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(191,120,246,.10)", border: "1px solid var(--line)", borderRadius: 12, padding: "10px 12px", marginBottom: 10 }}
-                    >
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: "var(--purple)", marginBottom: 3 }}>{p.verseRef}</div>
-                        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--body)", lineHeight: 1.6 }}>{p.verseText}</div>
-                      </div>
-                      <div style={{ color: "var(--purple)" }}><Icon name="chevron-right" size={16} /></div>
-                    </div>
-                  )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, color: "var(--body)" }}>
-                    <button
-                      onClick={() => { toggleLike(p.id); setVersion((v) => v + 1); }}
-                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, color: liked ? "var(--pink)" : "var(--body)" }}
-                    >
-                      <Icon name="heart" size={14} /> {p.likes + (liked ? 1 : 0)}
-                    </button>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700 }}>
-                      <Icon name="message-square" size={14} /> {p.comments}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {workspaceLoading && !workspace && <div className="route-status"><Icon name="users" size={22} /><b>正在读取社群</b><span>同步成员权限和栏目内容…</span></div>}
+
+      {workspace && tab === "feed" && <CommunitySharePanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
+      {workspace && tab === "events" && <CommunityEventsPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
+      {workspace && tab === "more" && !moreSection && <CommunityMorePanel workspace={workspace} onOpen={setMoreSection} />}
+      {workspace && tab === "more" && moreSection && (
+        <>
+          <div className="community-more-subheader">
+            <button onClick={() => setMoreSection(null)}><Icon name="chevron-left" size={16} />更多</button>
+            <b>{moreSection === "members" ? "成员" : moreSection === "groups" ? "小组" : "资料"}</b>
           </div>
-          <div style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))", display: "flex", gap: 10, alignItems: "center" }}>
-            <button className="icon-btn" style={{ width: 42, height: 42 }} title="添加图片"><Icon name="image" size={18} /></button>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", height: 42, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 500, color: "var(--body)" }}>
-              分享此刻的领受…
-            </div>
-            <button className="icon-btn" style={{ width: 42, height: 42, background: "var(--purple)", color: "#fff" }}><Icon name="send" size={18} /></button>
-          </div>
+          {moreSection === "members" && <CommunityMembersPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
+          {moreSection === "groups" && <CommunityGroupsPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
+          {moreSection === "resources" && <CommunityResourcesPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
         </>
       )}
 
-      {/* 交流 */}
-      {tab === "chat" && (
+      {tab === "assistant" && (
         <>
-          <div ref={chatScrollRef} className="screen-scroll" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(191,120,246,.14)", borderRadius: 16, padding: "12px 14px" }}>
-              <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, background: "var(--purple)", borderRadius: 100, color: "#fff" }}>
-                <Icon name="sparkle" size={18} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 2 }}>
-                  {isOfficial ? "慧读平台小助手" : `${group.letter}平台助手`}
-                </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-                  {isOfficial
-                    ? "官方服务助手 · 操作前会请你确认"
-                    : "信仰陪伴 · 生活关怀 · 社群事务"}
-                </div>
-              </div>
+          <div ref={chatScrollRef} className="screen-scroll community-chat-scroll">
+            <div className="community-assistant-banner">
+              <span><Icon name="sparkle" size={18} /></span>
+              <div><b>{isOfficial ? "慧读社群助手" : `${workspace?.community.abbreviation ?? cachedGroup?.letter ?? "群"}社群助手`}</b><small>{isOfficial ? "官方服务助手 · 操作前会请你确认" : "信仰陪伴 · 生活关怀 · 社群事务"}</small></div>
             </div>
-
-            {chatMessages.map((message) =>
-              message.role === "user" ? (
-                <div key={message.id} style={{ alignSelf: "flex-end", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, maxWidth: "82%" }}>
-                  <div style={{ background: "var(--ink)", color: "#fff", borderRadius: 12, padding: "9px 12px", fontSize: 14, fontWeight: 600, lineHeight: 1.6, boxShadow: "var(--shadow-card)", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                    {message.content}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "var(--body)" }}>
-                    <Icon name="eye" size={11} />
-                    {message.visibility === "private" ? "仅自己可见" : "群内公开"}
-                  </div>
-                </div>
-              ) : (
-                <div key={message.id} className="card" style={{ alignSelf: "flex-start", maxWidth: "90%", borderRadius: 12, padding: "10px 14px", fontSize: 13, lineHeight: 1.8, color: "var(--body)", fontWeight: 500, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                  <div>{message.content}</div>
-                  {message.action && (
-                    <div style={{ marginTop: 10, padding: 12, background: "rgba(232,154,44,.10)", border: "1px solid rgba(232,154,44,.35)", borderRadius: 12, color: "var(--ink)", whiteSpace: "normal" }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 5 }}>
-                        {message.action.title}
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.65, color: "var(--body)", whiteSpace: "pre-wrap" }}>
-                        {message.action.summary}
-                      </div>
-                      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                        <button
-                          type="button"
-                          disabled={Boolean(confirmingMessageId)}
-                          onClick={() => handleActionCancel(message.id)}
-                          style={{ flex: 1, height: 36, border: "1px solid var(--line)", borderRadius: 10, background: "var(--white)", fontSize: 12, fontWeight: 700 }}
-                        >
-                          取消
-                        </button>
-                        <button
-                          type="button"
-                          disabled={Boolean(confirmingMessageId)}
-                          onClick={() => handleActionConfirm(message.id, message.action!)}
-                          style={{ flex: 1.4, height: 36, borderRadius: 10, background: "#E89A2C", color: "#fff", fontSize: 12, fontWeight: 800, opacity: confirmingMessageId === message.id ? 0.6 : 1 }}
-                        >
-                          {confirmingMessageId === message.id
-                            ? "正在执行…"
-                            : message.action.confirmLabel}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ),
-            )}
-
-            {isSending && (
-              <div aria-live="polite" className="card" style={{ alignSelf: "flex-start", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "var(--body)", fontWeight: 600 }}>
-                正在思考…
+            {workspace && (
+              <div className="community-assistant-shortcuts" aria-label="助手快捷入口">
+                <button onClick={() => setQuestion("我有一个查经与经文问题：")}><Icon name="book" size={16} />查经问题</button>
+                <button onClick={() => selectPrimaryTab("events")}><Icon name="calendar" size={16} />创建活动</button>
+                <button onClick={() => openMore("members")}><Icon name="users" size={16} />查找成员</button>
+                <button onClick={() => openMore("groups")}><Icon name="users" size={16} />创建小组</button>
+                <button onClick={() => openMore("resources")}><Icon name="search" size={16} />查找资料</button>
+                <button onClick={() => workspace.access.isAdmin ? navigate(`/community/${groupId}/settings`) : setQuestion("请帮我查看当前有哪些待处理事项。")}><Icon name="bell" size={16} />待处理事项</button>
               </div>
             )}
-            <div className="disclaimer">
-              {isOfficial
-                ? "平台操作均需本人确认，并由后台再次校验权限"
-                : "重要社群操作需本人确认，并由后台再次校验权限"}
-            </div>
+            {chatMessages.map((message) => message.role === "user" ? (
+              <div key={message.id} className="community-user-message"><div>{message.content}</div><small><Icon name="eye" size={11} />仅自己可见</small></div>
+            ) : (
+              <div key={message.id} className="card community-assistant-message">
+                <div>{message.content}</div>
+                {message.action && (
+                  <div className="community-confirm-card">
+                    <b>{message.action.title}</b><p>{message.action.summary}</p>
+                    <div><button disabled={Boolean(confirmingMessageId)} onClick={() => handleActionCancel(message.id)} className="compact-action-btn">取消</button><button disabled={Boolean(confirmingMessageId)} onClick={() => handleActionConfirm(message.id, message.action!)} className="compact-action-btn is-primary">{confirmingMessageId === message.id ? "正在执行…" : message.action.confirmLabel}</button></div>
+                  </div>
+                )}
+                {message.id !== "welcome" && !message.action && workspace && (
+                  <button className="community-share-assistant" onClick={() => shareAssistantMessage(message.content)}>
+                    <Icon name="share" size={14} />分享至动态
+                  </button>
+                )}
+              </div>
+            ))}
+            {isSending && <div className="card community-assistant-message">正在思考…</div>}
+            <div className="disclaimer">重要社群操作需本人确认，并由后台再次校验权限</div>
           </div>
-          <form onSubmit={handleAssistantSubmit} style={{ flex: "none", background: "var(--white)", borderTop: "1px solid var(--line)", padding: "10px 16px calc(10px + env(safe-area-inset-bottom))" }}>
-            {chatError && (
-              <div role="alert" style={{ margin: "-2px 0 8px", fontSize: 11, fontWeight: 700, color: "#c64040" }}>
-                {chatError}
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <input
-                value={question}
-                onChange={(event) => {
-                  setQuestion(event.target.value);
-                  if (chatError) setChatError("");
-                }}
-                disabled={isSending}
-                maxLength={1200}
-                aria-label={isOfficial ? "向慧读平台小助手提问" : "向平台小助手提问"}
-                placeholder={isOfficial ? "告诉我你想办理的社群事项…" : `提问或办理${group.name}事务…`}
-                style={{ flex: 1, minWidth: 0, height: 46, padding: "0 14px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--white)", font: "inherit", fontSize: 14, fontWeight: 500, color: "var(--ink)", outline: "none" }}
-              />
-              <button
-                type="submit"
-                aria-label="发送问题"
-                disabled={isSending || !question.trim()}
-                className="icon-btn"
-                style={{ width: 46, height: 46, background: "var(--purple)", color: "#fff", opacity: isSending || !question.trim() ? 0.45 : 1 }}
-              >
-                <Icon name="send" size={20} />
-              </button>
-            </div>
+          <form onSubmit={handleAssistantSubmit} className="community-chat-composer">
+            {chatError && <div role="alert">{chatError}</div>}
+            <span><input value={question} onChange={(event) => { setQuestion(event.target.value); if (chatError) setChatError(""); }} disabled={isSending || !workspace} maxLength={1200} aria-label="向社群助手提问" placeholder={isOfficial ? "告诉我你想办理的社群事项…" : `提问或办理${displayName}事务…`} /><button type="submit" aria-label="发送问题" disabled={isSending || !workspace || !question.trim()} className="icon-btn icon-btn-primary composer-icon-btn"><Icon name="send" size={20} /></button></span>
           </form>
         </>
-      )}
-
-      {/* 活动 */}
-      {tab === "events" && (
-        <div className="screen-scroll" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="seg" style={{ alignSelf: "flex-start" }}>
-            <div className="seg-item active">进行中</div>
-            <div className="seg-item">未开始</div>
-            <div className="seg-item">已结束</div>
-          </div>
-
-          {events.map((e) => {
-            const signedUp = mySignups.includes(e.id);
-            const total = e.signups + (signedUp ? 1 : 0);
-            return (
-              <div key={e.id} className="card" style={{ padding: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, borderRadius: 6, padding: "3px 8px", background: e.tagStyle === "purple" ? "rgba(191,120,246,.16)" : "rgba(233,130,100,.2)", color: e.tagStyle === "purple" ? "var(--purple)" : "var(--orange-deep)" }}>
-                    {e.tag}
-                  </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{e.status}</div>
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 8 }}>{e.title}</div>
-                {e.when && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--body)", marginBottom: 4 }}>
-                    <Icon name="calendar" size={13} /> {e.when}
-                  </div>
-                )}
-                {e.where && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--body)", marginBottom: 12 }}>
-                    <Icon name="map-pin" size={13} /> {e.where}
-                  </div>
-                )}
-                {e.note && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--body)", marginBottom: 12 }}>
-                    <Icon name="check" size={13} /> {e.note}
-                  </div>
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  {e.capacity != null ? (
-                    <div style={{ flex: 1 }}>
-                      <div style={{ height: 6, background: "var(--surface-2)", borderRadius: 100, marginBottom: 5 }}>
-                        <div style={{ width: `${Math.min(100, (total / e.capacity) * 100)}%`, height: "100%", background: "var(--purple)", borderRadius: 100 }} />
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>已报名 {total}/{e.capacity}</div>
-                    </div>
-                  ) : (
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-                      <Icon name="bell" size={13} /> {e.reminder}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => { toggleSignup(e.id); setVersion((v) => v + 1); }}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", height: 40, padding: "0 18px",
-                      borderRadius: 100, fontSize: 13, fontWeight: 700, boxShadow: "var(--shadow-card)",
-                      ...(e.capacity != null
-                        ? signedUp
-                          ? { background: "var(--white)", border: "1px solid var(--line)", color: "var(--ink)" }
-                          : { background: "var(--purple)", color: "#fff" }
-                        : { background: "var(--white)", border: "1px solid var(--line)", color: "var(--ink)" }),
-                    }}
-                  >
-                    {e.capacity != null ? (signedUp ? "已报名 · 取消" : "一键报名") : "去打卡"}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {mySignups.some((id) => events.some((e) => e.id === id && e.capacity != null)) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(191,120,246,.14)", borderRadius: 12, padding: "10px 14px" }}>
-              <div style={{ color: "var(--purple)" }}><Icon name="check" size={15} /></div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>
-                你已报名「约翰福音 3 章共读」，开始前 2 小时将收到提醒。
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "members" && group && (
-        <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="card" style={{ padding: "16px" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>成员管理</div>
-            <div style={{ fontSize: 12, lineHeight: 1.65, color: "var(--body)" }}>查看社群成员、处理加入申请并管理成员权限。</div>
-          </div>
-        </div>
-      )}
-
-      {tab === "groups" && group && (
-        <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="card" style={{ padding: "16px" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>社群小组</div>
-            <div style={{ fontSize: 12, lineHeight: 1.65, color: "var(--body)" }}>在社群内建立和管理查经、团契等小组。</div>
-          </div>
-        </div>
-      )}
-
-      {tab === "resources" && group && (
-        <div className="screen-scroll" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="card" style={{ padding: "16px" }}>
-            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>社群资料</div>
-            <div style={{ fontSize: 12, lineHeight: 1.65, color: "var(--body)" }}>集中管理社群共读所需的文档、链接与学习资料。</div>
-          </div>
-        </div>
       )}
     </div>
   );

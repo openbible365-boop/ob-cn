@@ -14,6 +14,35 @@ export type SessionUser = {
   avatarUrl: string | null;
   tier: "BASIC_FREE" | "MID" | "HIGH";
   tierPriceCents: number;
+  accountType: "PERSONAL";
+  entitlements: {
+    label: string;
+    savedItems: number | null;
+    aiDailyTokenLimit: number | null;
+  };
+  counts: {
+    highlights: number;
+    notes: number;
+    conversations: number;
+    eventSignups: number;
+  };
+  groupAccounts: Array<{
+    id: string;
+    name: string;
+    abbreviation: string;
+    avatarColor: string;
+    role: "OWNER" | "ADMIN";
+    tier: "BASIC_FREE" | "MID" | "HIGH";
+    entitlements: {
+      label: string;
+      priceMonthlyCents: number;
+      memberLimit: number | null;
+      groupLimit: number | null;
+      resourceLimit: number | null;
+      aiDailyTokenLimit: number | null;
+    };
+    usage: { members: number; groups: number; resources: number };
+  }>;
 };
 
 type ApiResult = { ok: boolean; message: string; user?: SessionUser };

@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { formatTier } from "@/lib/format";
-import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity } from "@/lib/actions/communities";
+import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { auth } from "@/auth";
 
 export default async function CommunitiesPage({
   searchParams,
@@ -9,6 +10,8 @@ export default async function CommunitiesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
+  const session = await auth();
+  const canChangeTier = session?.user?.role === "SUPER_ADMIN";
 
   const [communities, total] = await Promise.all([
     db.community.findMany({
@@ -36,7 +39,7 @@ export default async function CommunitiesPage({
       <div className="admin-header">
         <div className="title">社群管理</div>
         <div style={{ flex: 1 }} />
-        <form className="search-box" action="/communities">
+        <form className="search-box" action="/admin/communities">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -92,7 +95,19 @@ export default async function CommunitiesPage({
                 {c.createdAt.toISOString().slice(0, 10)}
               </div>
               <div>
-                <span className="pill pill-purple">{formatTier(c.tier, c.tierPriceCents)}</span>
+                {c.isOfficial || c.parent || !canChangeTier ? (
+                  <span className="pill pill-purple">{formatTier(c.tier, c.tierPriceCents)}</span>
+                ) : (
+                  <form action={changeCommunityTier} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <input type="hidden" name="communityId" value={c.id} />
+                    <select name="tier" defaultValue={c.tier} aria-label={`${c.name}会员方案`} style={{ height: 28, border: "1px solid var(--line)", borderRadius: 8, background: "var(--white)", fontSize: 11, fontWeight: 700 }}>
+                      <option value="BASIC_FREE">初阶 免费</option>
+                      <option value="MID">中阶 ¥30</option>
+                      <option value="HIGH">高阶 ¥98</option>
+                    </select>
+                    <ConfirmSubmitButton className="action-purple" confirmMessage={`确认调整「${c.name}」的会员方案吗？此操作只修改权益，不会自动扣费。`}>保存</ConfirmSubmitButton>
+                  </form>
+                )}
               </div>
               <div className="row-actions">
                 {c.status === "DISSOLVED" ? (

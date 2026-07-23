@@ -151,3 +151,86 @@ export async function deleteHighlight(formData: FormData) {
 
   revalidatePath("/admin/annotations");
 }
+
+export async function deletePostComment(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const commentId = String(formData.get("commentId"));
+  const comment = await db.$transaction(async (transaction) => {
+    const found = await transaction.postComment.findUniqueOrThrow({
+      where: { id: commentId },
+      include: { author: true, post: true },
+    });
+    await transaction.postComment.delete({ where: { id: commentId } });
+    const remaining = await transaction.postComment.count({
+      where: { postId: found.postId },
+    });
+    await transaction.post.update({
+      where: { id: found.postId },
+      data: { commentCount: remaining },
+    });
+    return found;
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "删除帖子评论",
+    targetType: "PostComment",
+    targetId: comment.id,
+    detail: `作者 ${comment.author.name} · ${comment.content.slice(0, 30)}`,
+  });
+  revalidatePath("/admin/content");
+}
+
+export async function hideCommunityResource(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const resourceId = String(formData.get("resourceId"));
+  const resource = await db.communityResource.update({
+    where: { id: resourceId },
+    data: { status: "HIDDEN" },
+    include: { community: true },
+  });
+  await logAudit({
+    operatorId: session.user.id,
+    action: "下架社群资料",
+    targetType: "CommunityResource",
+    targetId: resource.id,
+    detail: `${resource.community.name} · ${resource.title}`,
+  });
+  revalidatePath("/admin/content");
+}
+
+export async function restoreCommunityResource(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const resourceId = String(formData.get("resourceId"));
+  const resource = await db.communityResource.update({
+    where: { id: resourceId },
+    data: { status: "ACTIVE" },
+    include: { community: true },
+  });
+  await logAudit({
+    operatorId: session.user.id,
+    action: "恢复社群资料",
+    targetType: "CommunityResource",
+    targetId: resource.id,
+    detail: `${resource.community.name} · ${resource.title}`,
+  });
+  revalidatePath("/admin/content");
+}
+
+export async function deleteCommunityResource(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const resourceId = String(formData.get("resourceId"));
+  const resource = await db.communityResource.update({
+    where: { id: resourceId },
+    data: { status: "DELETED" },
+    include: { community: true },
+  });
+  await logAudit({
+    operatorId: session.user.id,
+    action: "删除社群资料",
+    targetType: "CommunityResource",
+    targetId: resource.id,
+    detail: `${resource.community.name} · ${resource.title}`,
+  });
+  revalidatePath("/admin/content");
+}
