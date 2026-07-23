@@ -1757,3 +1757,55 @@ a {
   font-size: 13px;
   line-height: 1.8;
 }
+
+/* Dark Mode support */
+body.dark {
+  --ink: #e3e4e6;
+  --body: #a0a2ad;
+  --line: #30323c;
+  --surface: #121214;
+  --surface-2: #1c1d22;
+  --white: #1a1b22;
+}
+
+body.dark .bible-version-picker,
+body.dark .bible-chapter-picker,
+body.dark .audio-player-sheet,
+body.dark .verse-share-sheet,
+body.dark .annotation-guide,
+body.dark .annotation-overview-card {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .48);
+}
+
+body.dark .annotation-guide {
+  background: #25231c;
+  border-color: rgba(221, 180, 86, 0.18);
+}
+
+body.dark .annotation-overview-card {
+  background: #201e19;
+  border-color: rgba(221, 180, 86, 0.15);
+}
+
+body.dark .bible-version-option.active {
+  background: #2d2613 !important;
+  color: var(--yellow) !important;
+}
+
+body.dark input, 
+body.dark textarea {
+  background: #20222a;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+body.dark .bible-verse-note-indicator {
+  background: #332b1a;
+  color: var(--yellow);
+}
+
+body.dark .bible-inline-note {
+  background: #22242d;
+  border-color: var(--line);
+}
+

@@ -37,6 +37,8 @@ import {
   stopAndroidMedia,
   updateAndroidMedia,
 } from "../data/android-media";
+import { translateToTraditional } from "../utils/cc";
+
 
 const PlayingAudioIcon = () => (
   <span className="playing-audio-icon" aria-hidden="true">
@@ -55,7 +57,28 @@ export function BiblePage() {
   const bookCode = params.get("bk") ?? reading.book;
   const version = getVersion(versionCode);
   const book = getBookByCode(bookCode);
+
+  const [isTraditional, setIsTraditional] = useState(() => {
+    return localStorage.getItem("ob.bible.isTraditional") === "true";
+  });
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("ob.bible.isDarkMode") === "true";
+  });
+  const [showHeadings, setShowHeadings] = useState(() => {
+    const saved = localStorage.getItem("ob.bible.showHeadings");
+    return saved === null ? true : saved === "true";
+  });
+
+  const t = (text: string) => {
+    if (isTraditional && text) {
+      return translateToTraditional(text);
+    }
+    return text;
+  };
+
   const displayBook = bookName(book, version);
+  const displayedBook = t(displayBook);
+
 
   const [data, setData] = useState<BookData | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -126,6 +149,24 @@ export function BiblePage() {
     const audio = audioRef.current;
     if (audio) audio.playbackRate = audioSpeed;
   }, [audioSpeed]);
+
+  useEffect(() => {
+    localStorage.setItem("ob.bible.isTraditional", String(isTraditional));
+  }, [isTraditional]);
+
+  useEffect(() => {
+    localStorage.setItem("ob.bible.isDarkMode", String(isDarkMode));
+    if (isDarkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem("ob.bible.showHeadings", String(showHeadings));
+  }, [showHeadings]);
+
 
   useEffect(() => {
     if (picker !== "audio") return;
@@ -275,15 +316,15 @@ export function BiblePage() {
   const askHuidu = () => {
     if (selectedVerses.length === 0 || !selectedVerse) return;
     const fullVerseText = selectedVerses.map(v => stripHtml(v.text)).join("");
-    const customRef = `${displayBook} ${chapter}:${selectedRangeLabel}`;
-    const conv = startConversation(displayBook, chapter, selectedVerse.verse, fullVerseText, customRef);
+    const customRef = `${displayedBook} ${chapter}:${selectedRangeLabel}`;
+    const conv = startConversation(displayedBook, chapter, selectedVerse.verse, fullVerseText, customRef);
     navigate(`/huidu/${conv.id}`, { state: { justCreated: true } });
   };
 
   const copyVerse = async () => {
     if (selectedVerses.length === 0) return;
     const text = selectedVerses
-      .map((verse) => `${displayBook} ${chapter}:${verse.label} ${stripHtml(verse.text)}`)
+      .map((verse) => `${displayedBook} ${chapter}:${verse.label} ${stripHtml(verse.text)}`)
       .join("\n");
     try {
       await navigator.clipboard.writeText(text);
@@ -327,7 +368,7 @@ export function BiblePage() {
     }
 
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `${displayBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+      title: `${displayedBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
       artist: audioCurrentVerseText,
       album: "OpenBible · 语音圣经",
       artwork: hasAndroidMediaControls() ? [] : [
@@ -341,7 +382,7 @@ export function BiblePage() {
   }, [
     picker,
     audioUrl,
-    displayBook,
+    displayedBook,
     chapter,
     version.label,
     audioCurrentVerse?.verse,
@@ -398,7 +439,7 @@ export function BiblePage() {
       if (!androidMediaStartedRef.current) return;
       try {
         await updateAndroidMedia({
-          title: `${displayBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+          title: `${displayedBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
           text: audioCurrentVerseText,
           album: "OpenBible · 语音圣经",
           playing: audioPlaying,
@@ -419,7 +460,7 @@ export function BiblePage() {
     audioDuration,
     Math.floor(audioCurrentTime),
     audioSpeed,
-    displayBook,
+    displayedBook,
     chapter,
     version.label,
     audioCurrentVerse?.verse,
@@ -503,9 +544,9 @@ export function BiblePage() {
           <button
             className={`bible-reader-selector chapter${picker === "chapter" ? " is-open" : ""}`}
             onClick={() => { setPicker(picker === "chapter" ? null : "chapter"); setPickerBook(null); }}
-            aria-label={`选择经卷和章节，当前为${displayBook}第${chapter}章`}
+            aria-label={`选择经卷和章节，当前为${displayedBook}第${chapter}章`}
           >
-            {displayBook} {chapter}
+            {displayedBook} {chapter}
           </button>
           <button
             className={`bible-reader-selector version${picker === "version" ? " is-open" : ""}`}
@@ -535,16 +576,13 @@ export function BiblePage() {
           </button>
           <button
             className="bible-toolbar-action"
-            title="字体设置"
-            aria-label="字体设置"
+            title="设置"
+            aria-label="阅读设置"
             onClick={() => setPicker(picker === "font" ? null : "font")}
           >
-            <span className="bible-font-mark" aria-hidden="true">
-              <span className="small-a">A</span><span className="large-a">A</span>
-            </span>
+            <Icon name="settings" size={22} />
           </button>
         </div>
-
         {picker === "version" && (
           <div className="bible-version-picker" style={{ position: "absolute", top: 46, left: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 8, zIndex: 30 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", padding: "4px 6px 8px" }}>选择译本</div>
@@ -634,28 +672,94 @@ export function BiblePage() {
         )}
 
         {picker === "font" && (
-          <div style={{ position: "absolute", top: 50, right: 16, width: 176, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", marginBottom: 10 }}>字体大小</div>
-            <div className="bible-font-size-control">
-              <button
-                type="button"
-                aria-label="缩小字体"
-                disabled={fontSize === 17}
-                onClick={() => setFontSize((size) => Math.max(17, size - 2))}
-                style={{ opacity: fontSize === 17 ? 0.35 : 1 }}
-              >
-                −
-              </button>
-              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 800 }}>{fontSize}px</div>
-              <button
-                type="button"
-                aria-label="放大字体"
-                disabled={fontSize === 23}
-                onClick={() => setFontSize((size) => Math.min(23, size + 2))}
-                style={{ opacity: fontSize === 23 ? 0.35 : 1 }}
-              >
-                +
-              </button>
+          <div style={{ position: "absolute", top: 50, right: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 14, zIndex: 30, display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* 字体大小 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>字体大小</span>
+              <div className="bible-font-size-control" style={{ display: "flex", alignItems: "center", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32 }}>
+                <button
+                  type="button"
+                  aria-label="缩小字体"
+                  disabled={fontSize === 17}
+                  onClick={() => setFontSize((size) => Math.max(17, size - 2))}
+                  style={{ width: 32, height: 32, display: "grid", placeItems: "center", background: "transparent", color: "var(--ink)", fontSize: 16, fontWeight: 700, opacity: fontSize === 17 ? 0.35 : 1 }}
+                >
+                  −
+                </button>
+                <div style={{ width: 44, textAlign: "center", fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>{fontSize}px</div>
+                <button
+                  type="button"
+                  aria-label="放大字体"
+                  disabled={fontSize === 23}
+                  onClick={() => setFontSize((size) => Math.min(23, size + 2))}
+                  style={{ width: 32, height: 32, display: "grid", placeItems: "center", background: "transparent", color: "var(--ink)", fontSize: 16, fontWeight: 700, opacity: fontSize === 23 ? 0.35 : 1 }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* 简/繁切换 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>语言简繁</span>
+              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: isTraditional ? "transparent" : "var(--yellow)", color: "var(--ink)", fontWeight: 700 }}
+                  onClick={() => setIsTraditional(false)}
+                >
+                  简
+                </button>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: isTraditional ? "var(--yellow)" : "transparent", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
+                  onClick={() => setIsTraditional(true)}
+                >
+                  繁
+                </button>
+              </div>
+            </div>
+
+            {/* 深色模式 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>阅读模式</span>
+              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: isDarkMode ? "transparent" : "var(--yellow)", color: "var(--ink)", fontWeight: 700 }}
+                  onClick={() => setIsDarkMode(false)}
+                >
+                  浅色
+                </button>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: isDarkMode ? "var(--yellow)" : "transparent", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
+                  onClick={() => setIsDarkMode(true)}
+                >
+                  深色
+                </button>
+              </div>
+            </div>
+
+            {/* 显示经文标题 */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink)" }}>显示标题</span>
+              <div style={{ display: "flex", border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", height: 32, width: 108 }}>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: showHeadings ? "var(--yellow)" : "transparent", color: "var(--ink)", fontWeight: 700 }}
+                  onClick={() => setShowHeadings(true)}
+                >
+                  显示
+                </button>
+                <button
+                  type="button"
+                  style={{ flex: 1, fontSize: 12, background: showHeadings ? "transparent" : "var(--yellow)", color: "var(--ink)", borderLeft: "1px solid var(--line)", fontWeight: 700 }}
+                  onClick={() => setShowHeadings(false)}
+                >
+                  隐藏
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -690,14 +794,14 @@ export function BiblePage() {
             const noteExpanded = expandedNoteVerse === v.verse;
             return (
               <span key={v.label} className="bible-verse">
-                {v.heading && (
-                  <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{v.heading}</span>
+                {showHeadings && v.heading && (
+                  <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{t(v.heading)}</span>
                 )}
                 <span
                   id={`bible-verse-${v.verse}`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`选择${displayBook}第${chapter}章${v.label}节`}
+                  aria-label={`选择${displayedBook}第${chapter}章${v.label}节`}
                   onClick={() => toggleVerseSelection(v.verse)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
@@ -717,7 +821,7 @@ export function BiblePage() {
                       textDecorationThickness: isSelected ? "1px" : undefined,
                       textUnderlineOffset: isSelected ? "5px" : undefined,
                     }}
-                    dangerouslySetInnerHTML={{ __html: v.text }}
+                    dangerouslySetInnerHTML={{ __html: t(v.text) }}
                   />
                 </span>
                 {noteVerseNumbers.has(v.verse) && (
@@ -732,7 +836,7 @@ export function BiblePage() {
                   </button>
                 )}
                 {noteExpanded && (
-                  <span className="bible-inline-note" role="note" aria-label={`${displayBook}${chapter}章${v.label}节的笔记`}>
+                  <span className="bible-inline-note" role="note" aria-label={`${displayedBook}${chapter}章${v.label}节的笔记`}>
                     <span className="bible-inline-note-label">笔记</span>
                     <span className="bible-inline-note-list">
                       {verseNotes.map((note) => (
@@ -767,7 +871,7 @@ export function BiblePage() {
       {picker === "audio" && (
         <>
           <div className="audio-player-scrim" onClick={closeAudio} />
-          <section className="audio-player-sheet" role="dialog" aria-modal="true" aria-label={`${displayBook}第${chapter}章语音圣经`}>
+          <section className="audio-player-sheet" role="dialog" aria-modal="true" aria-label={`${displayedBook}第${chapter}章语音圣经`}>
             <div className="audio-player-handle" />
             <div className="audio-player-kicker">
               <Icon name="volume-2" size={18} />
@@ -776,7 +880,7 @@ export function BiblePage() {
                 <Icon name="x" size={22} />
               </button>
             </div>
-            <h2 className="audio-player-title">{displayBook} {chapter}</h2>
+            <h2 className="audio-player-title">{displayedBook} {chapter}</h2>
             <div
               className={`audio-player-status${audioError ? " error" : audioLoading || !audioUrl ? " loading" : " ready"}`}
               role="status"
@@ -823,7 +927,7 @@ export function BiblePage() {
             <button type="button" className="audio-current-passage" onClick={locateAudioVerse}>
               <span className="audio-current-icon"><span className="audio-wave" aria-hidden="true"><i /><i /><i /><i /></span></span>
               <span className="audio-current-copy">
-                <b>正在朗读 · {displayBook} {chapter}:{audioCurrentVerse?.label ?? 1}</b>
+                <b>正在朗读 · {displayedBook} {chapter}:{audioCurrentVerse?.label ?? 1}</b>
                 <small>{audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "经文加载中…"}</small>
               </span>
               <Icon name="chevron-right" size={20} />
@@ -886,7 +990,7 @@ export function BiblePage() {
         <>
           <div className="sheet">
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 800 }}>{displayBook} {chapter}:{selectedRangeLabel}</div>
+              <div style={{ fontSize: 15, fontWeight: 800 }}>{displayedBook} {chapter}:{selectedRangeLabel}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerses.length} 节</div>
               <div style={{ flex: 1 }} />
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
@@ -991,7 +1095,7 @@ export function BiblePage() {
         <VerseShareSheet
           data={{
             verseText: selectedVerses.map((verse) => stripHtml(verse.text)).join(" "),
-            reference: `${displayBook} ${chapter}:${selectedRangeLabel}`,
+            reference: `${displayedBook} ${chapter}:${selectedRangeLabel}`,
             versionLabel: version.label,
             shareUrl: `https://app.openbible.live/#/bible?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse?.verse ?? selectedVerses[0].verse}`,
           }}

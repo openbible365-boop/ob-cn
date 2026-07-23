@@ -16,6 +16,7 @@
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
     "@capawesome/capacitor-google-sign-in": "^0.1.2",
+    "opencc-js": "^1.4.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
