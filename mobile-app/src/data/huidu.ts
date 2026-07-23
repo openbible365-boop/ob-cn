@@ -56,6 +56,7 @@ export function getConversation(id: string) {
 
 export function startConversation(bookName: string, chapter: number, verse: number, verseText: string, customRefLabel?: string): Conversation {
   const refLabel = customRefLabel ?? `${bookName} ${chapter}:${verse}`;
+  const isMultiVerse = Boolean(customRefLabel && customRefLabel !== `${bookName} ${chapter}:${verse}`);
   const conv: Conversation = {
     id: uid(),
     chapter,
@@ -65,7 +66,7 @@ export function startConversation(bookName: string, chapter: number, verse: numb
     title: `${refLabel} 的历史背景与生活应用`,
     createdAt: new Date().toISOString(),
     messages: [
-      { role: "user", content: "请为我解释这节经文" },
+      { role: "user", content: isMultiVerse ? "请为我解释这些经文" : "请为我解释这节经文" },
       { role: "assistant", blocks: generateBlocks(refLabel, verseText) },
     ],
   };

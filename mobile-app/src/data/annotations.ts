@@ -12,7 +12,16 @@ const LEGACY_HIGHLIGHT_COLORS: Record<string, string> = {
 };
 
 export type Highlight = { book: string; chapter: number; verse: number; version?: string; color: string; createdAt: string };
-export type Note = { id: string; book: string; chapter: number; verse: number; version?: string; content: string; createdAt: string };
+export type Note = {
+  id: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  version?: string;
+  verses?: number[];
+  content: string;
+  createdAt: string;
+};
 type PendingOperation = { id: string; type: "upsert" | "delete"; book: string; chapter: number; verse: number };
 
 const HL_KEY = "ob.highlights";
@@ -114,8 +123,27 @@ export function getNotes(): Note[] {
   return load<Note[]>(NOTE_KEY, []).map((n) => ({ ...n, book: n.book ?? LEGACY_BOOK }));
 }
 
-export function addNote(book: string, chapter: number, verse: number, content: string, version?: string) {
-  const note: Note = { id: uid(), book, chapter, verse, version, content, createdAt: new Date().toISOString() };
+export function addNote(
+  book: string,
+  chapter: number,
+  verse: number,
+  content: string,
+  version?: string,
+  verses?: number[],
+) {
+  const normalizedVerses = verses?.length
+    ? [...new Set(verses)].sort((a, b) => a - b)
+    : undefined;
+  const note: Note = {
+    id: uid(),
+    book,
+    chapter,
+    verse,
+    version,
+    verses: normalizedVerses && normalizedVerses.length > 1 ? normalizedVerses : undefined,
+    content,
+    createdAt: new Date().toISOString(),
+  };
   save(NOTE_KEY, [note, ...getNotes()]);
   notify();
   return note;

@@ -22,6 +22,21 @@ function fmtDate(iso: string) {
   return iso.slice(5, 10).replace("-", "/");
 }
 
+function verseRangeLabel(verses: number[]) {
+  const sorted = [...new Set(verses)].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  for (let index = 0; index < sorted.length; index += 1) {
+    const start = sorted[index];
+    let end = start;
+    while (index + 1 < sorted.length && sorted[index + 1] === end + 1) {
+      end = sorted[index + 1];
+      index += 1;
+    }
+    ranges.push(start === end ? String(start) : `${start}-${end}`);
+  }
+  return ranges.join("、");
+}
+
 // 我的内容（design 5b）— lists the real local highlights & notes.
 export function MyContentPage() {
   const navigate = useNavigate();
@@ -133,7 +148,7 @@ export function MyContentPage() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontSize: 11, fontWeight: 800, background: "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
-                    {refLabel(n.book, n.chapter, n.verse, n.version)}
+                    {`${bookName(getBookByCode(n.book), getVersion(n.version ?? fallbackVersion.code))} ${n.chapter}:${verseRangeLabel(n.verses ?? [n.verse])} · ${getVersion(n.version ?? fallbackVersion.code).label}`}
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{fmtDate(n.createdAt)}</div>
                 </div>
