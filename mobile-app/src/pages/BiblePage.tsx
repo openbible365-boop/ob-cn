@@ -46,6 +46,21 @@ const PlayingAudioIcon = () => (
   </span>
 );
 
+function highlightKeyword(text: string, keyword: string) {
+  if (!keyword) return text;
+  const index = text.toLowerCase().indexOf(keyword.toLowerCase());
+  if (index === -1) return text;
+  
+  const start = Math.max(0, index - 15);
+  const end = Math.min(text.length, index + keyword.length + 20);
+  let snippet = text.slice(start, end);
+  if (start > 0) snippet = "..." + snippet;
+  if (end < text.length) snippet = snippet + "...";
+
+  const highlightRegex = new RegExp(`(${keyword})`, 'gi');
+  return snippet.replace(highlightRegex, `<mark style="background:var(--yellow);color:var(--ink);padding:0 2px;border-radius:2px;font-weight:700;">$1</mark>`);
+}
+
 export function BiblePage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -98,6 +113,21 @@ export function BiblePage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [expandedNoteVerse, setExpandedNoteVerse] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<{
+    chapter: number;
+    verse: number;
+    label: string;
+    text: string;
+  }[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    if (picker !== "search") {
+      setSearchResults([]);
+      setHasSearched(false);
+      setSearchText("");
+    }
+  }, [picker]);
   const [fontSize, setFontSize] = useState(() => {
     const saved = Number(localStorage.getItem("ob.bible.fontSize"));
     return [17, 19, 21, 23].includes(saved) ? saved : 19;
@@ -303,14 +333,57 @@ export function BiblePage() {
   };
 
   const submitSearch = () => {
-    const m = searchText.trim().match(/^(\d+)\s*[:：]\s*(\d+)$/);
+    const query = searchText.trim();
+    if (!query) return;
+
+    // 1. 检查是否为 "章:节" 快速跳转格式
+    const m = query.match(/^(\d+)\s*[:：]\s*(\d+)$/);
     if (m) {
       const c = Math.min(Math.max(Number(m[1]), 1), maxChapter);
       setParams({ t: version.code, bk: book.code, c: String(c) });
       setSelected(new Set([Number(m[2])]));
+      setLocatedVerse(Number(m[2]));
+      window.requestAnimationFrame(() => {
+        document.getElementById(`bible-verse-${m[2]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      setSearchText("");
+      setPicker(null);
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
     }
+
+    // 2. 在当前书卷中进行全文搜索
+    if (!data) return;
+    const results: { chapter: number; verse: number; label: string; text: string }[] = [];
+    for (const [chNum, versesList] of data.chapters.entries()) {
+      for (const v of versesList) {
+        const plainText = stripHtml(v.text);
+        if (plainText.toLowerCase().includes(query.toLowerCase())) {
+          results.push({
+            chapter: chNum,
+            verse: v.verse,
+            label: v.label,
+            text: plainText,
+          });
+        }
+      }
+    }
+    setSearchResults(results);
+    setHasSearched(true);
+  };
+
+  const handleResultClick = (res: { chapter: number; verse: number; label: string; text: string }) => {
+    setParams({ t: version.code, bk: book.code, c: String(res.chapter) });
+    setSelected(new Set([res.verse]));
+    setLocatedVerse(res.verse);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`bible-verse-${res.verse}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
     setSearchText("");
     setPicker(null);
+    setSearchResults([]);
+    setHasSearched(false);
   };
 
   const askHuidu = () => {
@@ -657,17 +730,58 @@ export function BiblePage() {
         )}
 
         {picker === "search" && (
-          <div style={{ position: "absolute", top: 50, right: 16, width: 240, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 10, zIndex: 30 }}>
+          <div style={{ position: "absolute", top: 50, right: 16, width: 280, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 12, zIndex: 30 }}>
             <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
               <input
                 autoFocus
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                placeholder="输入章:节，如 3:16"
-                style={{ width: "100%", height: 44, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14 }}
+                placeholder="输入章:节或搜索关键字，如 3:16"
+                style={{ width: "100%", height: 44, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, background: "var(--white)", color: "var(--ink)" }}
               />
             </form>
-            <div style={{ fontSize: 11, color: "var(--body)", paddingTop: 8 }}>回车跳转到对应经文</div>
+            <div style={{ fontSize: 11, color: "var(--body)", paddingTop: 8 }}>回车执行搜索/跳转</div>
+            {hasSearched && (
+              <div style={{ marginTop: 10, borderTop: "1px solid var(--line)", paddingTop: 10, maxHeight: 200, overflowY: "auto" }}>
+                <div style={{ fontSize: 11, color: "var(--body)", fontWeight: 800, marginBottom: 8 }}>
+                  搜索结果 ({searchResults.length})
+                </div>
+                {searchResults.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--body)", textAlign: "center", padding: "10px 0" }}>没有找到匹配经文</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {searchResults.map((res, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleResultClick(res)}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 3,
+                          width: "100%",
+                          padding: 6,
+                          borderRadius: 8,
+                          border: "1px solid transparent",
+                          textAlign: "left",
+                          background: "transparent",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "var(--surface)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "var(--purple)" }}>
+                          {displayedBook} {res.chapter}章{res.label}节
+                        </div>
+                        <div
+                          style={{ fontSize: 12, color: "var(--ink)", lineHeight: 1.5 }}
+                          dangerouslySetInnerHTML={{ __html: highlightKeyword(res.text, searchText.trim()) }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
