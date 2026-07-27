@@ -255,7 +255,10 @@ export function BiblePage() {
   useEffect(() => {
     localStorage.setItem("ob.bible.isDarkMode", String(isDarkMode));
     document.body.classList.toggle("dark", isDarkMode);
-    return () => document.body.classList.remove("dark");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      isDarkMode ? "#101116" : "#F6F7F8",
+    );
   }, [isDarkMode]);
 
   useEffect(() => {

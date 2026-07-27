@@ -49,6 +49,12 @@ export type SessionUser = {
 
 type ApiResult = { ok: boolean; message: string; user?: SessionUser };
 
+export const PROFILE_CHANGED_EVENT = "ob:profile-changed";
+
+export function announceProfileChanged(user: SessionUser) {
+  window.dispatchEvent(new CustomEvent<SessionUser>(PROFILE_CHANGED_EVENT, { detail: user }));
+}
+
 async function post(path: string, body?: unknown): Promise<ApiResult> {
   try {
     const response = await apiRequest<ApiResult>(path, {
@@ -104,6 +110,33 @@ export async function fetchMe(): Promise<SessionUser | null> {
     return response.data?.user ?? null;
   } catch {
     return null;
+  }
+}
+
+export async function updateAvatar(avatarUrl: string) {
+  try {
+    const response = await apiRequest<{
+      ok: boolean;
+      message?: string;
+      avatarUrl?: string;
+    }>("/api/mobile/me", {
+      method: "PATCH",
+      body: { avatarUrl },
+      readTimeout: 30_000,
+    });
+    if (!response.ok || !response.data?.ok) {
+      return {
+        ok: false as const,
+        message: response.data?.message ?? `服务器返回异常（${response.status}）`,
+      };
+    }
+    return {
+      ok: true as const,
+      message: response.data.message ?? "头像已更新",
+      avatarUrl: response.data.avatarUrl ?? avatarUrl,
+    };
+  } catch {
+    return { ok: false as const, message: "网络错误，请稍后重试" };
   }
 }
 
