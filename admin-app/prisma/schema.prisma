@@ -74,6 +74,7 @@ model User {
   eventSignups          EventSignup[]
   uploadedResources     CommunityResource[]
   communityAuditLogs    CommunityAuditLog[]
+  communityPresences    CommunityPresence[]
   highlights            Highlight[]
   notes                 Note[]
   conversations         Conversation[]
@@ -145,6 +146,7 @@ model Community {
   resources    CommunityResource[]
   auditLogs    CommunityAuditLog[]
   joinRequests CommunityJoinRequest[]
+  presences    CommunityPresence[]
 
   @@index([parentId])
 }
@@ -166,6 +168,19 @@ model Membership {
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, communityId])
+}
+
+model CommunityPresence {
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  lastSeenAt  DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@index([communityId, lastSeenAt])
 }
 
 enum CommunityJoinRequestStatus {
@@ -433,6 +448,8 @@ enum CommunityResourceType {
   AUDIO
   VIDEO
   IMAGE
+  TEXT
+  OTHER
 }
 
 enum CommunityResourceVisibility {
@@ -453,7 +470,13 @@ model CommunityResource {
   title       String
   description String?
   type        CommunityResourceType       @default(LINK)
-  url         String
+  url         String?
+  contentText String?                     @db.Text
+  fileName    String?
+  mimeType    String?
+  fileSize    Int?
+  storageKey  String?
+  indexedAt   DateTime?
   visibility  CommunityResourceVisibility @default(MEMBERS)
   status      CommunityResourceStatus     @default(ACTIVE)
   createdAt   DateTime                    @default(now())

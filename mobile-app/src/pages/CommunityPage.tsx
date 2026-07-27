@@ -4,13 +4,6 @@ import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { fetchCommunityGroups, type Group } from "../data/community";
 
-const BADGE_STYLES: Record<string, React.CSSProperties> = {
-  official: { background: "var(--yellow)", color: "var(--ink)" },
-  owner: { background: "rgba(191,120,246,.16)", color: "var(--purple)" },
-  muted: { background: "var(--surface-2)", color: "var(--body)", fontWeight: 700 },
-};
-
-// 社群主控台（design 4a）
 export function CommunityPage() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
@@ -50,34 +43,31 @@ export function CommunityPage() {
       to={g.badgeStyle === "official" && authenticated === false
         ? "/me/login"
         : `/community/${g.id}`}
-      className="card"
-      style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}
+      className={`community-directory-row${g.badgeStyle === "official" ? " is-official" : ""}`}
     >
-      <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 52, height: 52, background: g.color, borderRadius: 14, fontSize: 20, fontWeight: 800 }}>
+      <div className="community-directory-avatar" style={{ background: g.color }}>
         {g.letter}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-          <div style={{ fontSize: 16, fontWeight: 800 }}>{g.name}</div>
+      <div className="community-directory-copy">
+        <div className="community-directory-title">
+          <b>{g.name}</b>
           {g.badge && (
-            <div style={{ fontSize: 10, fontWeight: 800, borderRadius: 6, padding: "2px 6px", ...(BADGE_STYLES[g.badgeStyle ?? "muted"] ?? {}) }}>
+            <span className={`community-directory-badge is-${g.badgeStyle ?? "muted"}`}>
               {g.badge}
-            </div>
+            </span>
           )}
           {(g.pendingJoinRequestCount ?? 0) > 0 && (
-            <div style={{ fontSize: 10, fontWeight: 800, borderRadius: 6, padding: "2px 6px", background: "rgba(225,49,125,.11)", color: "var(--pink)" }}>
-              {g.pendingJoinRequestCount} 个加入申请
-            </div>
+            <span className="community-directory-badge is-alert">{g.pendingJoinRequestCount} 个申请</span>
           )}
         </div>
-        <div style={{ fontSize: 12, fontWeight: 500, color: "var(--body)" }}>{g.desc}</div>
+        <small>{g.badgeStyle === "official" ? `公共空间 · ${g.desc}` : `私有空间 · ${g.desc}`}</small>
       </div>
-      <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={18} /></div>
+      <Icon name="chevron-right" size={17} />
     </Link>
   );
 
   return (
-    <div className="screen" style={{ background: "var(--surface)" }}>
+    <div className="screen community-directory-screen">
       <UnifiedHeader
         title="社群"
         subtitle={loading ? "读取中" : `${groups.length} 个`}
@@ -89,28 +79,25 @@ export function CommunityPage() {
         ) : undefined}
       />
 
-      <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-        {official && row(official)}
+      <div className="screen-scroll community-directory-scroll">
+        {official && <div className="community-directory-list is-featured">{row(official)}</div>}
         {loading && (
-          <div style={{ padding: "18px 4px", fontSize: 13, color: "var(--body)" }}>
-            正在从服务器读取社群…
-          </div>
+          <div className="community-directory-status">正在读取社群…</div>
         )}
         {error && (
-          <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(225,49,125,.09)", color: "var(--pink)", fontSize: 13, fontWeight: 700 }}>
-            {error}
-          </div>
+          <div className="community-directory-error">{error}</div>
         )}
         {authenticated === true && (
-          <>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>我加入的社群和小组</div>
+          <section className="community-directory-section">
+            <div className="community-directory-section-title">
+              <b>我的社群与小组</b>
+              <span>{joined.length}</span>
+            </div>
             {!loading && !error && joined.length === 0 && (
-              <div style={{ padding: "18px 4px", fontSize: 13, color: "var(--body)" }}>
-                还没有加入其他社群
-              </div>
+              <div className="community-directory-status">还没有加入其他社群</div>
             )}
-            {joined.map(row)}
-          </>
+            {joined.length > 0 && <div className="community-directory-list">{joined.map(row)}</div>}
+          </section>
         )}
       </div>
     </div>

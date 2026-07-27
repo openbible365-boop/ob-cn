@@ -5,6 +5,8 @@ import { load, save } from "./store";
 import { clearHighlightsForLogout } from "./annotations";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
+import { fetchCommunityGroups } from "./community";
+import { fetchCommunityWorkspace } from "./community-workspace";
 
 export type SessionUser = {
   id: string;
@@ -102,6 +104,78 @@ export async function fetchMe(): Promise<SessionUser | null> {
     return response.data?.user ?? null;
   } catch {
     return null;
+  }
+}
+
+export type MyActivity = {
+  signupId: string;
+  signedUpAt: string;
+  id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  startAt: string;
+  endAt: string | null;
+  community: {
+    id: string;
+    name: string;
+    abbreviation: string;
+    avatarColor: string;
+  };
+};
+
+export async function fetchMyActivities(): Promise<
+  | { ok: true; activities: MyActivity[] }
+  | { ok: false; message: string }
+> {
+  try {
+    const response = await apiRequest<{
+      ok: boolean;
+      message?: string;
+      activities?: MyActivity[];
+    }>("/api/mobile/me/events");
+    if (!response.ok || !response.data?.ok || !response.data.activities) {
+      const directory = await fetchCommunityGroups();
+      if (!directory.ok) {
+        return {
+          ok: false,
+          message:
+            response.data?.message ?? `服务器返回异常（${response.status}）`,
+        };
+      }
+      const joinedGroups = directory.groups.filter(
+        (group) => group.id === "official" || Boolean(group.membershipRole),
+      );
+      const workspaces = await Promise.all(
+        joinedGroups.map((group) => fetchCommunityWorkspace(group.id)),
+      );
+      const activities = workspaces.flatMap((result): MyActivity[] => {
+        if (!result.ok) return [];
+        return result.workspace.events
+          .filter((event) => event.signedUpByMe)
+          .map((event) => ({
+            signupId: `${result.workspace.community.id}:${event.id}`,
+            signedUpAt: event.createdAt,
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            location: event.location,
+            startAt: event.startAt,
+            endAt: event.endAt,
+            community: {
+              id: result.workspace.community.id,
+              name: result.workspace.community.name,
+              abbreviation: result.workspace.community.abbreviation,
+              avatarColor: result.workspace.community.avatarColor,
+            },
+          }));
+      });
+      activities.sort((a, b) => a.startAt.localeCompare(b.startAt));
+      return { ok: true, activities };
+    }
+    return { ok: true, activities: response.data.activities };
+  } catch {
+    return { ok: false, message: "网络错误，请稍后重试" };
   }
 }
 

@@ -41,10 +41,12 @@ services:
       OPENBIBLE_LLM_BASE_URL: ${OPENBIBLE_LLM_BASE_URL:-http://host.docker.internal:8010/v1}
       OPENBIBLE_LLM_MODEL: ${OPENBIBLE_LLM_MODEL:-Qwen3-14B-AWQ}
       VLLM_API_KEY: ${VLLM_API_KEY:-}
+      COMMUNITY_UPLOAD_DIR: /app/uploads/community
     extra_hosts:
       - "host.docker.internal:172.20.0.1"
     volumes:
       - ./secrets/apple_sign_in_key.p8:/run/secrets/apple_sign_in_key:ro
+      - community_uploads:/app/uploads/community
     depends_on:
       db:
         condition: service_healthy
@@ -71,3 +73,4 @@ networks:
 
 volumes:
   db_data:
+  community_uploads:

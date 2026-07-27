@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
-import { getConversations } from "../data/huidu";
+import {
+  deleteConversation,
+  getConversations,
+  hasScriptureContext,
+  type Conversation,
+} from "../data/huidu";
 
 function fmtTime(iso: string) {
   return iso.slice(11, 16);
@@ -12,96 +17,194 @@ function isToday(iso: string) {
   return iso.slice(0, 10) === new Date().toISOString().slice(0, 10);
 }
 
-// 慧读首页（design 3a）
 export function HuiduHomePage() {
   const navigate = useNavigate();
-  const conversations = getConversations();
-  const [grouping, setGrouping] = useState<"time" | "book">("time");
-  const today = conversations.filter((c) => isToday(c.createdAt));
-  const earlier = conversations.filter((c) => !isToday(c.createdAt));
+  const [conversations, setConversations] = useState<Conversation[]>(() => getConversations());
+  const [grouping, setGrouping] = useState<"time" | "type">("time");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
 
-  const item = (c: (typeof conversations)[number], highlight: boolean) => (
-    <Link key={c.id} to={`/huidu/${c.id}`} className="card" style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, background: highlight ? "var(--yellow)" : "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
-            {c.refLabel}
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-            {Math.ceil(c.messages.length / 2)} 轮 · {fmtTime(c.createdAt)}
-          </div>
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{c.title}</div>
-      </div>
-      <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>
-    </Link>
+  const normalizedSearch = searchText.trim().toLocaleLowerCase("zh-CN");
+  const filteredConversations = useMemo(() => {
+    if (!normalizedSearch) return conversations;
+    return conversations.filter((conversation) => {
+      const messageText = conversation.messages
+        .map((message) => message.role === "user"
+          ? message.content
+          : message.content ?? (message.blocks ?? []).map((block) => block.text).join(" "))
+        .join(" ");
+      return `${conversation.refLabel ?? ""} ${conversation.title} ${messageText}`
+        .toLocaleLowerCase("zh-CN")
+        .includes(normalizedSearch);
+    });
+  }, [conversations, normalizedSearch]);
+
+  const today = filteredConversations.filter((conversation) => isToday(conversation.createdAt));
+  const earlier = filteredConversations.filter((conversation) => !isToday(conversation.createdAt));
+  const scriptureConversations = filteredConversations.filter(hasScriptureContext);
+  const generalConversations = filteredConversations.filter((conversation) => !hasScriptureContext(conversation));
+
+  const openNewDialog = () => {
+    navigate("/huidu/new");
+  };
+
+  const item = (conversation: Conversation, highlight: boolean) => (
+    <div key={conversation.id} className={`huidu-history-row-shell${highlight ? " is-current" : ""}`}>
+      <Link to={`/huidu/${conversation.id}`} className="huidu-history-row">
+        <span className="huidu-history-copy">
+          <span className="huidu-history-title">
+            {conversation.title}
+          </span>
+          <span className="huidu-history-detail">
+            <span className={`huidu-history-kind${hasScriptureContext(conversation) ? " is-scripture" : ""}`}>
+              {hasScriptureContext(conversation) ? conversation.refLabel : "AI 对话"}
+            </span>
+            <span className="huidu-history-meta">
+              {Math.ceil(conversation.messages.length / 2)} 轮 · {fmtTime(conversation.createdAt)}
+            </span>
+          </span>
+        </span>
+      </Link>
+      <button
+        type="button"
+        className="huidu-history-delete"
+        aria-label={`删除${conversation.title}对话记录`}
+        title="删除记录"
+        onClick={() => setDeleteTarget(conversation)}
+      >
+        <Icon name="trash" size={15} />
+      </button>
+    </div>
   );
 
   return (
-    <div className="screen" style={{ background: "var(--surface)" }}>
+    <div className="screen huidu-home-screen">
       <CompactToolbar
-        ariaLabel="慧读与今日额度"
+        ariaLabel="慧读"
         primary="慧读"
-        secondary={`本机 ${conversations.length}`}
+        secondary={`本地 ${conversations.length} 条`}
         actions={(
           <>
-            <button className="bible-toolbar-action" aria-label="返回圣经阅读" onClick={() => navigate("/bible")}>
-              <Icon name="book" size={20} />
-            </button>
-            <button className="bible-toolbar-action" aria-label="开始新的慧读对话" onClick={() => navigate("/bible")}>
-              <Icon name="sparkle" size={20} />
+            <button
+              className={`bible-toolbar-action${searchOpen ? " is-active" : ""}`}
+              type="button"
+              aria-label={searchOpen ? "关闭搜索" : "搜索慧读记录"}
+              title={searchOpen ? "关闭搜索" : "搜索"}
+              onClick={() => {
+                setSearchOpen((open) => !open);
+                if (searchOpen) setSearchText("");
+              }}
+            >
+              <Icon name={searchOpen ? "x" : "search"} size={19} />
             </button>
           </>
         )}
       />
 
-      <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-        <button
-          onClick={() => navigate("/bible")}
-          style={{ display: "flex", alignItems: "center", gap: 14, background: "var(--purple)", borderRadius: 16, boxShadow: "var(--shadow-card)", padding: "18px 16px", textAlign: "left" }}
-        >
-          <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, background: "rgba(255,255,255,.25)", borderRadius: 100, color: "#fff" }}>
-            <Icon name="star" size={20} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 2 }}>开始新对话</div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.85)" }}>也可在阅读页划线经文，直达慧读</div>
-          </div>
-          <div style={{ color: "#fff" }}><Icon name="chevron-right" size={18} /></div>
+      {searchOpen && (
+        <div className="huidu-search">
+          <Icon name="search" size={16} />
+          <input
+            autoFocus
+            type="search"
+            value={searchText}
+            placeholder="搜索经文、经卷或历史对话"
+            aria-label="搜索慧读历史"
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+          {searchText && (
+            <button type="button" aria-label="清空搜索" onClick={() => setSearchText("")}>
+              <Icon name="x" size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="screen-scroll huidu-home-scroll">
+        <button className="huidu-start" type="button" onClick={openNewDialog}>
+          <span className="huidu-start-icon" aria-hidden="true">
+            <Icon name="sparkle" size={21} />
+          </span>
+          <span className="huidu-start-copy">
+            <b>开始新的 AI 对话</b>
+            <small>自由提问，或选择经文深入阅读</small>
+          </span>
+          <Icon name="chevron-right" size={17} />
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>历史存档</div>
-          <div style={{ flex: 1 }} />
-          <div className="seg" role="group" aria-label="慧读历史排序">
-            <button type="button" className={`seg-item${grouping === "time" ? " active" : ""}`} aria-pressed={grouping === "time"} onClick={() => setGrouping("time")}>按时间</button>
-            <button type="button" className={`seg-item${grouping === "book" ? " active" : ""}`} aria-pressed={grouping === "book"} onClick={() => setGrouping("book")}>按卷章</button>
+        <section className="huidu-history-section" aria-label="AI 对话记录">
+          <div className="huidu-history-heading">
+            <div>
+              <b>对话记录</b>
+              <span>{normalizedSearch ? `${filteredConversations.length}/${conversations.length}` : `${conversations.length} 条`}</span>
+            </div>
+            <div className="huidu-history-sort" role="group" aria-label="AI 对话记录排序">
+              <button type="button" className={grouping === "time" ? "active" : ""} aria-pressed={grouping === "time"} onClick={() => setGrouping("time")}>时间</button>
+              <button type="button" className={grouping === "type" ? "active" : ""} aria-pressed={grouping === "type"} onClick={() => setGrouping("type")}>类型</button>
+            </div>
           </div>
+
+          {grouping === "time" && today.length > 0 && (
+            <div className="huidu-history-group">
+              <div className="huidu-history-label">今天</div>
+              <div className="huidu-history-list">{today.map((conversation, index) => item(conversation, index === 0))}</div>
+            </div>
+          )}
+          {grouping === "time" && earlier.length > 0 && (
+            <div className="huidu-history-group">
+              <div className="huidu-history-label">更早</div>
+              <div className="huidu-history-list">{earlier.map((conversation) => item(conversation, false))}</div>
+            </div>
+          )}
+          {grouping === "type" && generalConversations.length > 0 && (
+            <div className="huidu-history-group">
+              <div className="huidu-history-label">自由对话</div>
+              <div className="huidu-history-list">{generalConversations.map((conversation) => item(conversation, false))}</div>
+            </div>
+          )}
+          {grouping === "type" && scriptureConversations.length > 0 && (
+            <div className="huidu-history-group">
+              <div className="huidu-history-label">经文慧读</div>
+              <div className="huidu-history-list">{scriptureConversations.map((conversation) => item(conversation, false))}</div>
+            </div>
+          )}
+          {filteredConversations.length === 0 && (
+            <div className="huidu-history-empty">
+              {normalizedSearch
+                ? `没有找到与“${searchText.trim()}”相关的对话。`
+                : "还没有 AI 对话。自由提问或选择一节经文即可开始。"}
+            </div>
+          )}
+        </section>
+
+        <div className="disclaimer">
+          对话记录仅保存在本机。当前回答仅供阅读参考，不替代教会教导与权威释经。
         </div>
-
-        {grouping === "time" && today.length > 0 && (
-          <>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>今天</div>
-            {today.map((c, i) => item(c, i === 0))}
-          </>
-        )}
-        {grouping === "time" && earlier.length > 0 && (
-          <>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>更早</div>
-            {earlier.map((c) => item(c, false))}
-          </>
-        )}
-        {grouping === "book" && [...conversations]
-          .sort((a, b) => a.refLabel.localeCompare(b.refLabel, "zh-CN", { numeric: true }))
-          .map((conversation) => item(conversation, false))}
-        {conversations.length === 0 && (
-          <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>
-            还没有慧读记录。在阅读页点选一节经文，选择「慧读」试试。
-          </div>
-        )}
-
-        <div className="disclaimer">当前回答由本机阅读模板生成，仅供参考，不替代教会教导与权威释经</div>
       </div>
+
+      {deleteTarget && (
+        <div className="huidu-new-layer">
+          <button className="huidu-new-scrim" type="button" aria-label="取消删除" onClick={() => setDeleteTarget(null)} />
+          <section className="huidu-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="huidu-delete-title">
+            <h2 id="huidu-delete-title">删除这条慧读记录？</h2>
+            <p>{deleteTarget.title} · 删除后无法恢复</p>
+            <div>
+              <button type="button" onClick={() => setDeleteTarget(null)}>取消</button>
+              <button
+                type="button"
+                className="is-danger"
+                onClick={() => {
+                  setConversations(deleteConversation(deleteTarget.id));
+                  setDeleteTarget(null);
+                }}
+              >
+                删除
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

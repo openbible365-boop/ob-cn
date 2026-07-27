@@ -16,7 +16,7 @@ export function NotificationsPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <UnifiedHeader title="通知管理" subtitle="本机设置" ariaLabel="通知管理" onBack={() => navigate("/me")} backLabel="返回我的" />
+      <UnifiedHeader title="通知管理" subtitle="本机测试" ariaLabel="通知管理" onBack={() => navigate("/me")} backLabel="返回我的" />
 
       <div className="screen-scroll" style={{ padding: "16px 16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
         <div className="card" style={{ padding: "4px 0" }}>
@@ -34,7 +34,7 @@ export function NotificationsPage() {
               >
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{p.title}</div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{p.desc}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{p.desc}</div>
                 </div>
                 <span
                   aria-hidden="true"
@@ -54,7 +54,7 @@ export function NotificationsPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", borderRadius: 12, padding: "12px 14px" }}>
           <Icon name="bell" size={15} />
           <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            设置保存在本机。打包为 App 后，将结合系统推送权限生效。
+            当前仅保存本机开关偏好，尚未接入系统推送；不会向其他设备发送通知。
           </div>
         </div>
       </div>

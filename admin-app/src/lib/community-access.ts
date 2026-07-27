@@ -51,6 +51,7 @@ export async function findCommunityAccess(userId: string, reference: string) {
       description: true,
       avatarColor: true,
       isOfficial: true,
+      joinPolicy: true,
       tier: true,
       aiTokenDailyLimit: true,
       memberships: {

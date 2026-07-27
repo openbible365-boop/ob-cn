@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { VerseShareSheet } from "../components/VerseShareSheet";
 import {
+  BOOKS,
   VERSIONS,
   OT_BOOKS,
   NT_BOOKS,
@@ -44,6 +45,82 @@ const PlayingAudioIcon = () => (
     <i /><i /><i />
   </span>
 );
+
+type BibleSearchScope =
+  | "all"
+  | "ot"
+  | "nt"
+  | "law"
+  | "history"
+  | "wisdom"
+  | "prophets"
+  | "gospels"
+  | "acts"
+  | "letters"
+  | "revelation";
+
+type BibleSearchResult = {
+  book: string;
+  chapter: number;
+  verse: number;
+  label: string;
+  text: string;
+  versionCode: string;
+};
+
+type BibleSearchHistoryItem = {
+  term: string;
+  versionCode: string;
+};
+
+const BIBLE_SEARCH_HISTORY_KEY = "ob.bible.searchHistory";
+const BIBLE_SEARCH_RESULT_LIMIT = 120;
+const BIBLE_SEARCH_SCOPES: Array<{ key: BibleSearchScope; label: string }> = [
+  { key: "all", label: "整本圣经" },
+  { key: "ot", label: "旧约" },
+  { key: "nt", label: "新约" },
+  { key: "law", label: "律法书" },
+  { key: "history", label: "历史书" },
+  { key: "wisdom", label: "诗歌·智慧书" },
+  { key: "prophets", label: "先知书" },
+  { key: "gospels", label: "四福音" },
+  { key: "acts", label: "使徒行传" },
+  { key: "letters", label: "书信" },
+  { key: "revelation", label: "启示录" },
+];
+
+function booksForSearchScope(scope: BibleSearchScope) {
+  switch (scope) {
+    case "ot": return BOOKS.slice(0, 39);
+    case "nt": return BOOKS.slice(39);
+    case "law": return BOOKS.slice(0, 5);
+    case "history": return BOOKS.slice(5, 17);
+    case "wisdom": return BOOKS.slice(17, 22);
+    case "prophets": return BOOKS.slice(22, 39);
+    case "gospels": return BOOKS.slice(39, 43);
+    case "acts": return BOOKS.slice(43, 44);
+    case "letters": return BOOKS.slice(44, 65);
+    case "revelation": return BOOKS.slice(65, 66);
+    default: return BOOKS;
+  }
+}
+
+function readBibleSearchHistory(): BibleSearchHistoryItem[] {
+  try {
+    const stored = JSON.parse(localStorage.getItem(BIBLE_SEARCH_HISTORY_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(stored)) return [];
+    return stored
+      .filter((item): item is BibleSearchHistoryItem => (
+        typeof item === "object"
+        && item !== null
+        && typeof (item as BibleSearchHistoryItem).term === "string"
+        && typeof (item as BibleSearchHistoryItem).versionCode === "string"
+      ))
+      .slice(0, 8);
+  } catch {
+    return [];
+  }
+}
 
 function highlightKeyword(text: string, keyword: string) {
   if (!keyword) return text;
@@ -105,13 +182,14 @@ export function BiblePage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [expandedNoteVerse, setExpandedNoteVerse] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{
-    chapter: number;
-    verse: number;
-    label: string;
-    text: string;
-  }>>([]);
+  const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchScope, setSearchScope] = useState<BibleSearchScope>("all");
+  const [searchHistory, setSearchHistory] = useState<BibleSearchHistoryItem[]>(readBibleSearchHistory);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const searchRequestRef = useRef(0);
   const [fontSize, setFontSize] = useState(() => {
     const saved = Number(localStorage.getItem("ob.bible.fontSize"));
     return [17, 19, 21, 23].includes(saved) ? saved : 19;
@@ -134,12 +212,17 @@ export function BiblePage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
   const androidMediaStartedRef = useRef(false);
+  const continueAudioAfterLoadRef = useRef(false);
 
   useEffect(() => {
     if (picker === "search") return;
+    searchRequestRef.current += 1;
     setSearchResults([]);
     setHasSearched(false);
+    setSearchQuery("");
     setSearchText("");
+    setSearchLoading(false);
+    setSearchError("");
   }, [picker]);
 
   useEffect(() => {
@@ -186,7 +269,7 @@ export function BiblePage() {
   }, [showHeadings]);
 
   useEffect(() => {
-    if (picker !== "audio") return;
+    if (picker !== "audio" && !continueAudioAfterLoadRef.current) return;
     const currentKey = `${version.code}-${book.code}-${chapter}-${audioVoice}-${audioRequestVersion}`;
     if (loadedAudioKey === currentKey) return;
 
@@ -201,6 +284,7 @@ export function BiblePage() {
     setAudioError("");
 
     if (version.code !== "cuv") {
+      continueAudioAfterLoadRef.current = false;
       setLoadedAudioKey(null);
       setAudioError("当前仅和合本提供语音圣经，请先切换到和合本");
       return;
@@ -218,6 +302,7 @@ export function BiblePage() {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
+          continueAudioAfterLoadRef.current = false;
           setAudioError(error instanceof Error ? error.message : "当前章节暂无音频");
           setLoadedAudioKey(null);
         }
@@ -319,15 +404,35 @@ export function BiblePage() {
     setEditingNoteId(null);
   };
 
-  const submitSearch = () => {
-    const query = searchText.trim();
+  const saveSearchHistory = (term: string, targetVersionCode: string) => {
+    setSearchHistory((current) => {
+      const next = [
+        { term, versionCode: targetVersionCode },
+        ...current.filter((item) => (
+          item.term !== term || item.versionCode !== targetVersionCode
+        )),
+      ].slice(0, 8);
+      localStorage.setItem(BIBLE_SEARCH_HISTORY_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clearSearchHistory = () => {
+    localStorage.removeItem(BIBLE_SEARCH_HISTORY_KEY);
+    setSearchHistory([]);
+  };
+
+  const submitSearch = async (queryOverride?: string, versionOverride?: string) => {
+    const query = (queryOverride ?? searchText).trim();
     if (!query) return;
 
+    const targetVersion = getVersion(versionOverride ?? version.code);
     const m = query.match(/^(\d+)\s*[:：]\s*(\d+)$/);
     if (m) {
       const c = Math.min(Math.max(Number(m[1]), 1), maxChapter);
       const verse = Math.max(Number(m[2]), 1);
-      setParams({ t: version.code, bk: book.code, c: String(c), v: String(verse) });
+      saveSearchHistory(query, targetVersion.code);
+      setParams({ t: targetVersion.code, bk: book.code, c: String(c), v: String(verse) });
       setSelected(new Set([verse]));
       setSearchText("");
       setSearchResults([]);
@@ -336,29 +441,68 @@ export function BiblePage() {
       return;
     }
 
-    if (!data) return;
+    const requestId = searchRequestRef.current + 1;
+    searchRequestRef.current = requestId;
+    setSearchQuery(query);
+    setSearchLoading(true);
+    setSearchError("");
+    setHasSearched(false);
+    setSearchResults([]);
+    saveSearchHistory(query, targetVersion.code);
+
     const normalizedQuery = query.toLocaleLowerCase();
-    const results: Array<{ chapter: number; verse: number; label: string; text: string }> = [];
-    for (const [chapterNumber, chapterVerses] of data.chapters.entries()) {
-      for (const verse of chapterVerses) {
-        const plainText = stripHtml(verse.text);
-        if (!plainText.toLocaleLowerCase().includes(normalizedQuery)) continue;
-        results.push({
-          chapter: chapterNumber,
-          verse: verse.verse,
-          label: verse.label,
-          text: plainText,
-        });
-      }
+    const scopedBooks = booksForSearchScope(searchScope);
+    const results: BibleSearchResult[] = [];
+    let failedBooks = 0;
+
+    for (let offset = 0; offset < scopedBooks.length && results.length < BIBLE_SEARCH_RESULT_LIMIT; offset += 6) {
+      const batch = scopedBooks.slice(offset, offset + 6);
+      const loaded = await Promise.allSettled(
+        batch.map((targetBook) => loadBook(targetVersion.code, targetBook.code)),
+      );
+      if (requestId !== searchRequestRef.current) return;
+
+      loaded.forEach((outcome, index) => {
+        if (results.length >= BIBLE_SEARCH_RESULT_LIMIT) return;
+        if (outcome.status === "rejected") {
+          failedBooks += 1;
+          return;
+        }
+        const targetBook = batch[index];
+        for (const [chapterNumber, chapterVerses] of outcome.value.chapters.entries()) {
+          for (const verse of chapterVerses) {
+            const plainText = stripHtml(verse.text);
+            if (!plainText.toLocaleLowerCase().includes(normalizedQuery)) continue;
+            results.push({
+              book: targetBook.code,
+              chapter: chapterNumber,
+              verse: verse.verse,
+              label: verse.label,
+              text: plainText,
+              versionCode: targetVersion.code,
+            });
+            if (results.length >= BIBLE_SEARCH_RESULT_LIMIT) return;
+          }
+          if (results.length >= BIBLE_SEARCH_RESULT_LIMIT) return;
+        }
+      });
     }
+
+    if (requestId !== searchRequestRef.current) return;
     setSearchResults(results);
     setHasSearched(true);
+    setSearchLoading(false);
+    if (failedBooks === scopedBooks.length) {
+      setSearchError("经文数据暂时无法读取，请稍后重试");
+    } else if (failedBooks > 0) {
+      setSearchError(`有 ${failedBooks} 卷经文暂时无法读取，以下为已完成的结果`);
+    }
   };
 
-  const openSearchResult = (result: { chapter: number; verse: number }) => {
+  const openSearchResult = (result: BibleSearchResult) => {
     setParams({
-      t: version.code,
-      bk: book.code,
+      t: result.versionCode,
+      bk: result.book,
       c: String(result.chapter),
       v: String(result.verse),
     });
@@ -373,7 +517,14 @@ export function BiblePage() {
     if (selectedVerses.length === 0 || !selectedVerse) return;
     const fullVerseText = selectedVerses.map(v => stripHtml(v.text)).join("");
     const customRef = `${displayedBook} ${chapter}:${selectedRangeLabel}`;
-    const conv = startConversation(displayedBook, chapter, selectedVerse.verse, fullVerseText, customRef);
+    const conv = startConversation(
+      displayedBook,
+      chapter,
+      selectedVerse.verse,
+      fullVerseText,
+      customRef,
+      { bookCode: book.code, versionCode: version.code },
+    );
     navigate(`/huidu/${conv.id}`, { state: { justCreated: true } });
   };
 
@@ -396,6 +547,7 @@ export function BiblePage() {
     return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, "0")}`;
   };
   const audioProgress = audioDuration > 0 ? Math.min(100, audioCurrentTime / audioDuration * 100) : 0;
+  const audioCurrentTimeSecond = Math.floor(audioCurrentTime);
   const timestampDuration = audioTimestamps.at(-1)?.end ?? 0;
   const timestampTime = audioDuration > 0 && timestampDuration > 0
     ? audioCurrentTime * timestampDuration / audioDuration
@@ -410,12 +562,12 @@ export function BiblePage() {
     ?? verses[fallbackAudioIndex]
     ?? verses[0]
     ?? null;
+  const audioCurrentVerseNumber = audioCurrentVerse?.verse ?? null;
   const audioCurrentVerseText = audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "";
 
   useEffect(() => {
     if (
-      picker !== "audio"
-      || !audioUrl
+      !audioUrl
       || !audioCurrentVerse
       || !("mediaSession" in navigator)
       || typeof MediaMetadata === "undefined"
@@ -436,13 +588,11 @@ export function BiblePage() {
       ],
     });
   }, [
-    picker,
     audioUrl,
     displayedBook,
     chapter,
     version.label,
-    audioCurrentVerse?.verse,
-    audioCurrentVerse?.label,
+    audioCurrentVerse,
     audioCurrentVerseText,
   ]);
 
@@ -484,7 +634,7 @@ export function BiblePage() {
   }, []);
 
   useEffect(() => {
-    if (!hasAndroidMediaControls() || picker !== "audio" || !audioUrl || !audioCurrentVerse) return;
+    if (!hasAndroidMediaControls() || !audioUrl || !audioCurrentVerse) return;
     let cancelled = false;
     const updateNativeMedia = async () => {
       if (audioPlaying && !androidMediaStartedRef.current) {
@@ -500,7 +650,7 @@ export function BiblePage() {
           album: "OpenBible · 语音圣经",
           playing: audioPlaying,
           durationMs: Math.round(audioDuration * 1000),
-          positionMs: Math.round(audioCurrentTime * 1000),
+          positionMs: audioCurrentTimeSecond * 1000,
           speed: audioSpeed,
         });
       } catch {
@@ -510,19 +660,28 @@ export function BiblePage() {
     void updateNativeMedia();
     return () => { cancelled = true; };
   }, [
-    picker,
     audioUrl,
     audioPlaying,
     audioDuration,
-    Math.floor(audioCurrentTime),
+    audioCurrentTimeSecond,
     audioSpeed,
     displayedBook,
     chapter,
     version.label,
-    audioCurrentVerse?.verse,
-    audioCurrentVerse?.label,
+    audioCurrentVerse,
     audioCurrentVerseText,
   ]);
+
+  useEffect(() => {
+    if (!audioPlaying || picker === "audio" || audioCurrentVerseNumber === null) return;
+    const verseNumber = audioCurrentVerseNumber;
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(`bible-verse-${verseNumber}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [audioPlaying, audioCurrentVerseNumber, picker]);
 
   useEffect(() => {
     if (
@@ -563,8 +722,21 @@ export function BiblePage() {
     setPicker(null);
   };
   const gotoAudioChapter = (nextChapter: number) => {
+    continueAudioAfterLoadRef.current = false;
     audioRef.current?.pause();
     setParams({ t: version.code, bk: book.code, c: String(nextChapter) });
+    setSelected(new Set());
+  };
+  const continueToNextAudioChapter = () => {
+    const bookIndex = BOOKS.findIndex((item) => item.code === book.code);
+    const nextBook = chapter < maxChapter ? book : BOOKS[bookIndex + 1];
+    if (!nextBook) {
+      continueAudioAfterLoadRef.current = false;
+      return;
+    }
+    const nextChapter = chapter < maxChapter ? chapter + 1 : 1;
+    continueAudioAfterLoadRef.current = true;
+    setParams({ t: version.code, bk: nextBook.code, c: String(nextChapter) });
     setSelected(new Set());
   };
   const locateAudioVerse = () => {
@@ -588,11 +760,24 @@ export function BiblePage() {
           setAudioDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
           event.currentTarget.playbackRate = audioSpeed;
         }}
+        onCanPlay={(event) => {
+          if (!continueAudioAfterLoadRef.current) return;
+          continueAudioAfterLoadRef.current = false;
+          void event.currentTarget.play().catch(() => {
+            setAudioError("下一章自动播放失败，请点击播放继续");
+          });
+        }}
         onTimeUpdate={(event) => setAudioCurrentTime(event.currentTarget.currentTime)}
         onPlay={() => setAudioPlaying(true)}
         onPause={() => setAudioPlaying(false)}
-        onEnded={() => setAudioPlaying(false)}
-        onError={() => audioUrl && setAudioError("音频文件加载失败，请稍后重试")}
+        onEnded={() => {
+          setAudioPlaying(false);
+          continueToNextAudioChapter();
+        }}
+        onError={() => {
+          continueAudioAfterLoadRef.current = false;
+          if (audioUrl) setAudioError("音频文件加载失败，请稍后重试");
+        }}
       />
       {/* reading toolbar */}
       <div className="bible-toolbar">
@@ -716,42 +901,221 @@ export function BiblePage() {
         )}
 
         {picker === "search" && (
-          <div className="bible-search-panel">
-            <form onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
-              <input
-                autoFocus
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="输入章:节或搜索关键字，如 3:16"
-              />
-              <button type="submit" aria-label="执行经文搜索">搜索</button>
-            </form>
-            <small>回车执行搜索或跳转</small>
-            {hasSearched && (
-              <div className="bible-search-results" aria-live="polite">
-                <div className="bible-search-results-heading">搜索结果（{searchResults.length}）</div>
-                {searchResults.length === 0 ? (
-                  <div className="bible-search-empty">没有找到匹配经文</div>
-                ) : searchResults.map((result) => (
+          <section
+            className="bible-search-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="搜索圣经"
+          >
+            <header className="bible-search-header">
+              <form
+                className="bible-search-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void submitSearch();
+                }}
+              >
+                <label className="bible-search-field">
+                  <Icon name="search" size={21} />
+                  <input
+                    autoFocus
+                    aria-label="搜索圣经"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="请输入要搜索的文字"
+                  />
+                  {searchText && (
+                    <button
+                      type="button"
+                      className="bible-search-clear"
+                      aria-label="清空搜索文字"
+                      onClick={() => {
+                        searchRequestRef.current += 1;
+                        setSearchText("");
+                        setSearchResults([]);
+                        setHasSearched(false);
+                        setSearchQuery("");
+                        setSearchLoading(false);
+                        setSearchError("");
+                      }}
+                    >
+                      <Icon name="x" size={17} />
+                    </button>
+                  )}
+                </label>
+                <button type="submit" className="sr-only">搜索</button>
+              </form>
+              <button
+                type="button"
+                className="bible-search-cancel"
+                onClick={() => setPicker(null)}
+              >
+                取消
+              </button>
+            </header>
+
+            <div className="bible-search-filters">
+              <label className="bible-search-version">
+                <span className="sr-only">搜索译本</span>
+                <select
+                  aria-label="搜索译本"
+                  value={version.code}
+                  onChange={(event) => {
+                    searchRequestRef.current += 1;
+                    setParams({ t: event.target.value, bk: book.code, c: String(chapter) });
+                    setSearchResults([]);
+                    setHasSearched(false);
+                    setSearchQuery("");
+                    setSearchLoading(false);
+                    setSearchError("");
+                  }}
+                >
+                  {VERSIONS.map((targetVersion) => (
+                    <option key={targetVersion.code} value={targetVersion.code}>
+                      {targetVersion.label}
+                    </option>
+                  ))}
+                </select>
+                <span aria-hidden="true">▾</span>
+              </label>
+              <div className="bible-search-scopes" role="tablist" aria-label="搜索范围">
+                {BIBLE_SEARCH_SCOPES.map((scope) => (
                   <button
                     type="button"
-                    key={`${result.chapter}-${result.verse}`}
-                    onClick={() => openSearchResult(result)}
+                    role="tab"
+                    aria-selected={searchScope === scope.key}
+                    className={searchScope === scope.key ? "active" : ""}
+                    key={scope.key}
+                    onClick={() => {
+                      searchRequestRef.current += 1;
+                      setSearchScope(scope.key);
+                      setSearchResults([]);
+                      setHasSearched(false);
+                      setSearchQuery("");
+                      setSearchLoading(false);
+                      setSearchError("");
+                    }}
                   >
-                    <b>{displayedBook} {result.chapter}章{result.label}节</b>
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: highlightKeyword(
-                          isTraditional ? translate(result.text) : result.text,
-                          isTraditional ? translate(searchText.trim()) : searchText.trim(),
-                        ),
-                      }}
-                    />
+                    {scope.label}
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+
+            <div className="bible-search-content" aria-live="polite">
+              {searchLoading && (
+                <div className="bible-search-status" role="status">
+                  <span className="bible-search-spinner" aria-hidden="true" />
+                  正在搜索经文…
+                </div>
+              )}
+
+              {searchError && (
+                <div className="bible-search-error" role="alert">{searchError}</div>
+              )}
+
+              {!hasSearched && !searchLoading && (
+                <section className="bible-search-history">
+                  <div className="bible-search-section-heading">
+                    <h2>搜索历史</h2>
+                    {searchHistory.length > 0 && (
+                      <button
+                        type="button"
+                        aria-label="清空搜索历史"
+                        onClick={clearSearchHistory}
+                      >
+                        <Icon name="trash" size={19} />
+                      </button>
+                    )}
+                  </div>
+                  {searchHistory.length === 0 ? (
+                    <div className="bible-search-empty">
+                      <Icon name="search" size={25} />
+                      <p>输入关键词，搜索整本圣经</p>
+                      <small>也可以输入“章:节”，快速跳到当前书卷</small>
+                    </div>
+                  ) : (
+                    <div className="bible-search-history-list">
+                      {searchHistory.map((item) => (
+                        <button
+                          type="button"
+                          key={`${item.versionCode}-${item.term}`}
+                          onClick={() => {
+                            setSearchText(item.term);
+                            if (item.versionCode !== version.code) {
+                              setParams({
+                                t: item.versionCode,
+                                bk: book.code,
+                                c: String(chapter),
+                              });
+                            }
+                            void submitSearch(item.term, item.versionCode);
+                          }}
+                        >
+                          <span className="bible-search-history-icon" aria-hidden="true">
+                            <Icon name="rotate-ccw" size={20} />
+                          </span>
+                          <span>{item.term}</span>
+                          <small>{getVersion(item.versionCode).label}</small>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {hasSearched && !searchLoading && (
+                <section className="bible-search-results">
+                  <div className="bible-search-section-heading bible-search-results-heading">
+                    <h2>搜索结果</h2>
+                    <span>{searchResults.length} 条</span>
+                  </div>
+                  {searchResults.length === 0 ? (
+                    <div className="bible-search-empty">
+                      <Icon name="search" size={25} />
+                      <p>没有找到“{searchQuery}”</p>
+                      <small>试试更短的关键词，或切换译本和搜索范围</small>
+                    </div>
+                  ) : (
+                    <div className="bible-search-result-list">
+                      {searchResults.map((result) => {
+                        const resultVersion = getVersion(result.versionCode);
+                        const resultBook = getBookByCode(result.book);
+                        return (
+                          <button
+                            type="button"
+                            key={`${result.versionCode}-${result.book}-${result.chapter}-${result.verse}`}
+                            onClick={() => openSearchResult(result)}
+                          >
+                            <span className="bible-search-result-meta">
+                              <b>
+                                {translate(bookName(resultBook, resultVersion))} {result.chapter}:{result.label}
+                              </b>
+                              <small>{resultVersion.label}</small>
+                            </span>
+                            <span
+                              className="bible-search-result-text"
+                              dangerouslySetInnerHTML={{
+                                __html: highlightKeyword(
+                                  isTraditional ? translate(result.text) : result.text,
+                                  isTraditional ? translate(searchQuery) : searchQuery,
+                                ),
+                              }}
+                            />
+                          </button>
+                        );
+                      })}
+                      {searchResults.length >= BIBLE_SEARCH_RESULT_LIMIT && (
+                        <p className="bible-search-limit">
+                          已显示前 {BIBLE_SEARCH_RESULT_LIMIT} 条，请缩小搜索范围以查看更精确的结果
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          </section>
         )}
 
         {picker === "font" && (
@@ -831,6 +1195,7 @@ export function BiblePage() {
           {verses.map((v) => {
             const color = highlightMap.get(v.verse);
             const isSelected = selected.has(v.verse);
+            const isAudioCurrent = audioPlaying && audioCurrentVerseNumber === v.verse;
             const verseNotes = notes.filter((note) => note.verse === v.verse);
             const noteExpanded = expandedNoteVerse === v.verse;
             return (
@@ -840,6 +1205,7 @@ export function BiblePage() {
                 )}
                 <span
                   id={`bible-verse-${v.verse}`}
+                  className={`bible-verse-main${isAudioCurrent ? " is-audio-current" : ""}`}
                   role="button"
                   tabIndex={0}
                   aria-label={`选择${displayedBook}第${chapter}章${v.label}节`}
@@ -957,11 +1323,15 @@ export function BiblePage() {
 
             <div className="audio-controls">
               <button type="button" aria-label="上一章" disabled={chapter <= 1 || audioLoading} onClick={() => gotoAudioChapter(chapter - 1)}><Icon name="skip-back" size={27} /></button>
-              <button type="button" aria-label="后退30秒" disabled={!audioUrl} onClick={() => seekAudio(-30)}><span className="audio-seek-icon">↶<b>30</b></span></button>
+              <button type="button" aria-label="后退30秒" disabled={!audioUrl} onClick={() => seekAudio(-30)}>
+                <span className="audio-seek-icon"><Icon name="rotate-ccw" size={24} /><b>30</b></span>
+              </button>
               <button type="button" className="audio-play-button" disabled={!audioUrl || audioLoading} aria-label={audioPlaying ? "暂停" : "播放"} onClick={toggleAudio}>
                 <Icon name={audioPlaying ? "pause" : "play"} size={28} />
               </button>
-              <button type="button" aria-label="前进30秒" disabled={!audioUrl} onClick={() => seekAudio(30)}><span className="audio-seek-icon">↷<b>30</b></span></button>
+              <button type="button" aria-label="前进30秒" disabled={!audioUrl} onClick={() => seekAudio(30)}>
+                <span className="audio-seek-icon"><Icon name="rotate-cw" size={24} /><b>30</b></span>
+              </button>
               <button type="button" aria-label="下一章" disabled={chapter >= maxChapter || audioLoading} onClick={() => gotoAudioChapter(chapter + 1)}><Icon name="skip-forward" size={27} /></button>
             </div>
 
@@ -975,14 +1345,6 @@ export function BiblePage() {
             </button>
 
             <div className="audio-voice-section">
-              <div className="audio-voice-heading">
-                <span>选择音色</span>
-                <small>
-                  {resolvedAudioVoice && resolvedAudioVoice !== audioVoice
-                    ? `当前章节已自动使用${resolvedAudioVoice === "female" ? "女声" : "男声"}`
-                    : "可在播放时切换"}
-                </small>
-              </div>
               <div className="audio-voice-picker">
                 <button
                   type="button"
@@ -995,7 +1357,7 @@ export function BiblePage() {
                     {displayedAudioVoice === "female" ? "女" : "男"}
                   </span>
                   <span className="audio-voice-selected">
-                    {displayedAudioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
+                    音色 · {displayedAudioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
                   </span>
                   <span className="audio-voice-chevron" aria-hidden="true"><Icon name="chevron-down" size={18} /></span>
                 </button>
@@ -1034,12 +1396,12 @@ export function BiblePage() {
               <div style={{ fontSize: 15, fontWeight: 800 }}>{displayedBook} {chapter}:{selectedRangeLabel}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerses.length} 节</div>
               <div style={{ flex: 1 }} />
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
               <button type="button" className="icon-btn icon-btn-ghost sheet-close-btn" aria-label="关闭经文选择" onClick={closeSheet}><Icon name="x" size={17} /></button>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, marginBottom: 10 }}>
-              <div style={{ flex: "none", whiteSpace: "nowrap", fontSize: 11, fontWeight: 800 }}>高亮</div>
+              <div style={{ flex: "none", whiteSpace: "nowrap", fontSize: 12, fontWeight: 800 }}>高亮</div>
               {HIGHLIGHT_COLORS.map((color, colorIndex) => (
                 <button
                   key={color}

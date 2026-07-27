@@ -12,6 +12,8 @@ import { GroupSettingsPage } from "./pages/GroupSettingsPage";
 import { MePage } from "./pages/MePage";
 import { MyContentPage } from "./pages/MyContentPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { MyActivitiesPage } from "./pages/MyActivitiesPage";
+import { AccountDataPage } from "./pages/AccountDataPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LegalPage } from "./pages/LegalPage";
 import { syncHighlights } from "./data/annotations";
@@ -83,6 +85,8 @@ export default function App() {
         <Route path="/legal/:type" element={<LegalPage />} />
         <Route path="/me/content" element={<MyContentPage />} />
         <Route path="/me/notifications" element={<NotificationsPage />} />
+        <Route path="/me/activities" element={<RequireLogin><MyActivitiesPage /></RequireLogin>} />
+        <Route path="/me/account" element={<RequireLogin><AccountDataPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>
       {showTabBar && <TabBar hidden={!isTabBarVisible} />}

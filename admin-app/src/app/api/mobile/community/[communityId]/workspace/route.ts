@@ -26,6 +26,7 @@ type WorkspaceAction =
   | "CREATE_GROUP"
   | "CREATE_RESOURCE"
   | "UPDATE_RESOURCE_STATUS"
+  | "UPDATE_JOIN_POLICY"
   | "UPDATE_COMMUNITY";
 
 type WorkspaceInput = {
@@ -35,6 +36,7 @@ type WorkspaceInput = {
   mediaType?: unknown;
   mediaUrl?: unknown;
   content?: unknown;
+  contentText?: unknown;
   reason?: unknown;
   verseRef?: unknown;
   eventId?: unknown;
@@ -54,6 +56,7 @@ type WorkspaceInput = {
   visibility?: unknown;
   resourceId?: unknown;
   status?: unknown;
+  joinPolicy?: unknown;
 };
 
 const ACTIONS = new Set<WorkspaceAction>([
@@ -71,6 +74,7 @@ const ACTIONS = new Set<WorkspaceAction>([
   "CREATE_GROUP",
   "CREATE_RESOURCE",
   "UPDATE_RESOURCE_STATUS",
+  "UPDATE_JOIN_POLICY",
   "UPDATE_COMMUNITY",
 ]);
 
@@ -205,6 +209,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
         description: true,
         type: true,
         url: true,
+        contentText: true,
+        fileName: true,
+        mimeType: true,
+        fileSize: true,
+        indexedAt: true,
         visibility: true,
         createdAt: true,
         uploader: { select: { id: true, name: true } },
@@ -228,15 +237,23 @@ export async function GET(_request: Request, { params }: RouteParams) {
       description: community.description,
       avatarColor: community.avatarColor,
       tier: community.tier,
+      isOfficial: community.isOfficial,
+      kind: community.isOfficial ? "PUBLIC" : "PRIVATE",
+      joinPolicy: community.joinPolicy,
     },
     access: {
       role,
       isAdmin,
       isOwner,
-      canPublish: user.status === "ACTIVE",
+      canPublish:
+        user.status === "ACTIVE" &&
+        (!community.isOfficial || isAdmin),
       canManageMembers: isAdmin,
       canManageRoles: isOwner,
-      canCreateGroups: isAdmin && !community.parentId,
+      canCreateGroups:
+        isAdmin &&
+        !community.parentId &&
+        !community.isOfficial,
       canManageResources: isAdmin,
     },
     entitlements,
@@ -287,6 +304,12 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (!ACTIONS.has(action)) return error("不支持的社群操作");
 
   if (action === "CREATE_POST") {
+    if (community.isOfficial && !isAdmin) {
+      return error(
+        "公共社群内容由平台管理员发布；你可以在助手中整理内容并保存到自己的社群",
+        403,
+      );
+    }
     const postType = valueString(body.postType) || "POST";
     const title = valueString(body.title);
     const content = valueString(body.content);
@@ -369,6 +392,30 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
     await audit(community.id, user.id, "COMMUNITY_UPDATE", "Community", community.id, { name });
     return NextResponse.json({ ok: true, message: "社群资料已保存" });
+  }
+
+  if (action === "UPDATE_JOIN_POLICY") {
+    if (!isAdmin) return error("只有群主或管理员可以修改加入方式", 403);
+    if (community.isOfficial) return error("公共社群不使用加入审批设置", 409);
+    const joinPolicy = valueString(body.joinPolicy);
+    if (!["OPEN", "APPROVAL", "INVITE_ONLY"].includes(joinPolicy)) {
+      return error("请选择正确的加入方式");
+    }
+    await db.community.update({
+      where: { id: community.id },
+      data: {
+        joinPolicy: joinPolicy as "OPEN" | "APPROVAL" | "INVITE_ONLY",
+      },
+    });
+    await audit(
+      community.id,
+      user.id,
+      "COMMUNITY_JOIN_POLICY_UPDATE",
+      "Community",
+      community.id,
+      { joinPolicy },
+    );
+    return NextResponse.json({ ok: true, message: "加入方式已更新" });
   }
 
   if (action === "TOGGLE_LIKE") {
@@ -558,6 +605,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   if (action === "CREATE_GROUP") {
     if (!isAdmin) return error("只有群主或管理员可以创建小组", 403);
+    if (community.isOfficial) return error("公共社群不建立下属小组，请创建独立的私有社群", 409);
     if (community.parentId) return error("暂不支持在小组中继续建立下级小组", 409);
     const currentCount = await db.community.count({ where: { parentId: community.id, status: "ACTIVE" } });
     if (entitlements.groupLimit !== null && currentCount >= entitlements.groupLimit) return error(`当前方案最多创建 ${entitlements.groupLimit} 个小组`, 409);
@@ -596,11 +644,16 @@ export async function POST(request: Request, { params }: RouteParams) {
     const title = valueString(body.title);
     const description = valueString(body.description);
     const url = valueString(body.url);
+    const contentText = valueString(body.contentText);
     const type = valueString(body.type) || "LINK";
     const visibility = valueString(body.visibility) || "MEMBERS";
     if (!title || textLength(title) > 100) return error("资料标题须为 1 到 100 个字");
-    if (!isHttpUrl(url)) return error("请输入有效的 http 或 https 链接");
-    if (!["LINK", "DOCUMENT", "AUDIO", "VIDEO", "IMAGE"].includes(type)) return error("资料类型不正确");
+    if (textLength(description) > 1_000) return error("资料说明不能超过 1000 个字");
+    if (textLength(contentText) > 100_000) return error("知识库文字不能超过 100000 个字");
+    if (type === "TEXT" ? !contentText : !isHttpUrl(url)) {
+      return error(type === "TEXT" ? "请输入文本资料内容" : "请输入有效的 http 或 https 链接");
+    }
+    if (!["LINK", "DOCUMENT", "AUDIO", "VIDEO", "IMAGE", "TEXT", "OTHER"].includes(type)) return error("资料类型不正确");
     if (visibility !== "MEMBERS" && visibility !== "ADMINS") return error("资料可见范围不正确");
     const resource = await db.communityResource.create({
       data: {
@@ -608,14 +661,16 @@ export async function POST(request: Request, { params }: RouteParams) {
         uploaderId: user.id,
         title,
         description: description || null,
-        url,
-        type: type as "LINK" | "DOCUMENT" | "AUDIO" | "VIDEO" | "IMAGE",
+        url: url || null,
+        contentText: contentText || null,
+        indexedAt: contentText || description ? new Date() : null,
+        type: type as "LINK" | "DOCUMENT" | "AUDIO" | "VIDEO" | "IMAGE" | "TEXT" | "OTHER",
         visibility: visibility as "MEMBERS" | "ADMINS",
       },
       select: { id: true },
     });
-    await audit(community.id, user.id, "RESOURCE_CREATE", "CommunityResource", resource.id, { title, type, visibility });
-    return NextResponse.json({ ok: true, message: "资料已添加" });
+    await audit(community.id, user.id, "RESOURCE_CREATE", "CommunityResource", resource.id, { title, type, visibility, indexed: Boolean(contentText || description) });
+    return NextResponse.json({ ok: true, message: type === "TEXT" ? "文本已加入本群知识库" : "资料已添加并可供本群助手检索" });
   }
 
   if (action === "UPDATE_RESOURCE_STATUS") {
