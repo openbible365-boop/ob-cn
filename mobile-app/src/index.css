@@ -3303,6 +3303,7 @@ a {
   font-weight: 500;
   line-height: 1.75;
   text-wrap: pretty;
+  white-space: pre-line;
 }
 
 .huidu-answer-paragraph + .huidu-answer-paragraph {

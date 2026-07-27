@@ -515,7 +515,7 @@ export function BiblePage() {
 
   const askHuidu = () => {
     if (selectedVerses.length === 0 || !selectedVerse) return;
-    const fullVerseText = selectedVerses.map(v => stripHtml(v.text)).join("");
+    const fullVerseText = selectedVerses.map(v => `${v.label}节：${stripHtml(v.text)}`).join("\n\n");
     const customRef = `${displayedBook} ${chapter}:${selectedRangeLabel}`;
     const conv = startConversation(
       displayedBook,

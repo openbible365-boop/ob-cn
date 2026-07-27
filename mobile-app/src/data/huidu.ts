@@ -25,10 +25,29 @@ export type Conversation = {
 const KEY = "ob.conversations";
 
 export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[] {
-  const snippet = verseText.replace(/[「」“”]/g, "").slice(0, 20);
+  const lines = verseText.split("\n\n").filter(Boolean);
 
-  // 针对约翰福音 3:16 的高阶精细化三卡片模板
-  if (refLabel.includes("3:16")) {
+  // 1. 生成“逐节深入解读”的内容：对每一节经文单独生成一段
+  const detailedInterpretations = lines.map((line) => {
+    const colonIndex = line.indexOf("节：");
+    let label = "";
+    let content = line;
+    if (colonIndex > 0) {
+      label = line.slice(0, colonIndex);
+      content = line.slice(colonIndex + 2);
+    }
+    const snippet = content.replace(/[「」“”]/g, "").slice(0, 16);
+    
+    if (refLabel.includes("3:16") && label === "16") {
+      return `【第 16 节解读】：“神爱世人，甚至将祂的独生子赐给他们，叫一切信祂的，不至灭亡，反得永生。”这是救赎真理的最高峰。经文层层推进：爱的源头是神，爱的对象是世人，爱的重要彰显是赐下独生爱子，而爱的得救途径是完全的信靠而非人为努力。这呼召我们全然躺平在神深沉的安全感中。`;
+    }
+    
+    return `【第 ${label || "?"} 节解读】：“${content.slice(0, 30)}${content.length > 30 ? "…" : ""}” —— 经文聚焦在「${snippet}…」的真理上。我们要探究本节的核心原文字词，剖析其文化背景，并重点体会其在上下文中的叙事脉络与神的救赎心意。`;
+  }).join("\n\n");
+
+  const isJohn316 = refLabel.includes("3:16") && lines.length === 1;
+
+  if (isJohn316) {
     return [
       {
         tag: "逐节深入解读",
@@ -51,25 +70,30 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
     ];
   }
 
-  // 通用经文的三卡片模板
+  const firstLine = lines[0] || "";
+  const firstLineColon = firstLine.indexOf("节：");
+  const mainSnippet = (firstLineColon > 0 ? firstLine.slice(firstLineColon + 2) : firstLine)
+    .replace(/[「」“”]/g, "")
+    .slice(0, 16);
+
   return [
     {
       tag: "逐节深入解读",
       color: "#8750B6",
       dark: true,
-      text: `对《${refLabel}》进行逐字逐节剖析。结合本章上下文，经文聚焦于“${snippet}…”的教导。我们需要探究这段经文的原文字词涵义、历史文化背景，并重点体会其在整段脉络中的叙事或逻辑起承转合，深入明白神的真实心意。`,
+      text: detailedInterpretations,
     },
     {
       tag: "神学核心和现实意义",
       color: "#27AE60",
       dark: true,
-      text: "这段经文折射出了极其宝贵的神学核心真理（如神的恩典、主权或救赎心意），并对今天的我们提出具体的要求：在面临职场、人际关系、内心焦虑或生活抉择时，我们应当把该核心真理切实应用到现实生活中，以此更新我们的信心与日常行事为人。",
+      text: `这段经文折射出了极其宝贵的神学核心真理（如神的恩典、主权或救赎心意），并对今天的我们提出具体的要求：在面临职场、人际关系、内心焦虑或生活抉择时，我们应当把该核心真理切实应用到现实生活中，以此更新我们的信心与日常行事为人。`,
     },
     {
       tag: "总结",
       color: "#E89A2C",
       dark: true,
-      text: `总之，本节经文不仅是一句警醒或应许，更是一个在信仰旅程中随时的指引。建议今天以“${snippet.slice(0, 15)}…”这部分宝贵真理进行默想与祷告，使其切实在您的日常中发芽结实。`,
+      text: `总之，这几节经文不仅是一句警醒或应许，更是一个在信仰旅程中随时的指引。建议今天以“${mainSnippet}…”这部分宝贵真理进行默想与祷告，使其切实在您的日常中发芽结实。`,
     },
   ];
 }
