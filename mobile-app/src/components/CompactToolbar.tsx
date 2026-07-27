@@ -6,16 +6,20 @@ export function CompactToolbar({
   actions,
   overlay,
   onPrimaryClick,
+  onSecondaryClick,
   primaryAriaLabel,
+  secondaryAriaLabel,
   primaryOpen = false,
   ariaLabel,
 }: {
   primary: ReactNode;
-  secondary: ReactNode;
+  secondary?: ReactNode;
   actions?: ReactNode;
   overlay?: ReactNode;
   onPrimaryClick?: () => void;
+  onSecondaryClick?: () => void;
   primaryAriaLabel?: string;
+  secondaryAriaLabel?: string;
   primaryOpen?: boolean;
   ariaLabel: string;
 }) {
@@ -35,7 +39,20 @@ export function CompactToolbar({
         ) : (
           <div className="bible-reader-selector chapter">{primary}</div>
         )}
-        <div className="bible-reader-selector version">{secondary}</div>
+        {secondary !== undefined && (
+          onSecondaryClick ? (
+            <button
+              className="bible-reader-selector version"
+              type="button"
+              aria-label={secondaryAriaLabel}
+              onClick={onSecondaryClick}
+            >
+              {secondary}
+            </button>
+          ) : (
+            <div className="bible-reader-selector version">{secondary}</div>
+          )
+        )}
       </div>
       {actions && <div className="bible-toolbar-actions">{actions}</div>}
       {overlay}

@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { apiFormRequest, apiRequest } from "./api";
 
 export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER";
 export type WorkspacePostType = "POST" | "ARTICLE" | "NOTICE" | "MEDIA";
@@ -72,8 +72,13 @@ export type WorkspaceResource = {
   id: string;
   title: string;
   description: string | null;
-  type: "LINK" | "DOCUMENT" | "AUDIO" | "VIDEO" | "IMAGE";
-  url: string;
+  type: "LINK" | "DOCUMENT" | "AUDIO" | "VIDEO" | "IMAGE" | "TEXT" | "OTHER";
+  url: string | null;
+  contentText: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  fileSize: number | null;
+  indexedAt: string | null;
   visibility: "MEMBERS" | "ADMINS";
   createdAt: string;
   uploader: { id: string; name: string };
@@ -87,6 +92,9 @@ export type CommunityWorkspace = {
     description: string | null;
     avatarColor: string;
     tier: "OFFICIAL_FREE" | "BASIC_FREE" | "MID" | "HIGH";
+    isOfficial: boolean;
+    kind: "PUBLIC" | "PRIVATE";
+    joinPolicy: "OPEN" | "APPROVAL" | "INVITE_ONLY";
   };
   access: {
     role: WorkspaceRole;
@@ -137,8 +145,9 @@ export type WorkspaceActionInput =
   | { action: "UPDATE_MEMBER_ROLE"; userId: string; role: "ADMIN" | "MEMBER" }
   | { action: "REMOVE_MEMBER"; userId: string }
   | { action: "CREATE_GROUP"; name: string; abbreviation: string; description?: string; avatarColor?: string }
-  | { action: "CREATE_RESOURCE"; title: string; description?: string; type: WorkspaceResource["type"]; url: string; visibility: WorkspaceResource["visibility"] }
+  | { action: "CREATE_RESOURCE"; title: string; description?: string; type: WorkspaceResource["type"]; url?: string; contentText?: string; visibility: WorkspaceResource["visibility"] }
   | { action: "UPDATE_RESOURCE_STATUS"; resourceId: string; status: "ACTIVE" | "HIDDEN" | "DELETED" }
+  | { action: "UPDATE_JOIN_POLICY"; joinPolicy: CommunityWorkspace["community"]["joinPolicy"] }
   | { action: "UPDATE_COMMUNITY"; name: string; description?: string };
 
 export async function fetchCommunityWorkspace(communityId: string): Promise<
@@ -165,9 +174,61 @@ export async function fetchCommunityWorkspace(communityId: string): Promise<
     ) {
       return { ok: false, message: data?.message ?? `服务器返回异常（${response.status}）` };
     }
-    return { ok: true, workspace: data as CommunityWorkspace };
+    const isOfficial =
+      data.community.isOfficial ??
+      data.community.tier === "OFFICIAL_FREE";
+    return {
+      ok: true,
+      workspace: {
+        ...(data as CommunityWorkspace),
+        community: {
+          ...data.community,
+          isOfficial,
+          kind: isOfficial ? "PUBLIC" : "PRIVATE",
+          joinPolicy: data.community.joinPolicy ?? "APPROVAL",
+        },
+      },
+    };
   } catch {
     return { ok: false, message: "无法读取社群内容，请检查网络后重试" };
+  }
+}
+
+export async function heartbeatCommunityPresence(
+  communityId: string,
+): Promise<
+  | { ok: true; onlineCount: number; sampledAt: string }
+  | { ok: false; message: string }
+> {
+  try {
+    const response = await apiRequest<{
+      ok: boolean;
+      onlineCount?: number;
+      sampledAt?: string;
+      message?: string;
+    }>(
+      `/api/mobile/community/${encodeURIComponent(communityId)}/presence`,
+      { method: "POST" },
+    );
+    if (
+      !response.ok ||
+      response.data?.ok !== true ||
+      typeof response.data.onlineCount !== "number" ||
+      typeof response.data.sampledAt !== "string"
+    ) {
+      return {
+        ok: false,
+        message:
+          response.data?.message ?? `服务器返回异常（${response.status}）`,
+      };
+    }
+    return {
+      ok: true,
+      onlineCount: response.data.onlineCount,
+      sampledAt: response.data.sampledAt,
+    };
+  } catch {
+    return { ok: false, message: "无法更新在线状态" };
   }
 }
 
@@ -187,5 +248,39 @@ export async function performWorkspaceAction(
     };
   } catch {
     return { ok: false, message: "网络错误，请稍后重试" };
+  }
+}
+
+export async function uploadCommunityResource(
+  communityId: string,
+  input: {
+    file: File;
+    title: string;
+    description?: string;
+    knowledgeText?: string;
+    visibility: WorkspaceResource["visibility"];
+  },
+): Promise<{ ok: boolean; message: string }> {
+  const form = new FormData();
+  form.append("file", input.file);
+  form.append("title", input.title);
+  form.append("description", input.description ?? "");
+  form.append("knowledgeText", input.knowledgeText ?? "");
+  form.append("visibility", input.visibility);
+  try {
+    const response = await apiFormRequest<{
+      ok: boolean;
+      message?: string;
+    }>(
+      `/api/mobile/community/${encodeURIComponent(communityId)}/resources/upload`,
+      form,
+    );
+    return {
+      ok: response.ok && response.data?.ok === true,
+      message:
+        response.data?.message ?? `服务器返回异常（${response.status}）`,
+    };
+  } catch {
+    return { ok: false, message: "文件上传失败，请检查网络后重试" };
   }
 }

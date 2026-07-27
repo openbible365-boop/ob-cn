@@ -80,7 +80,7 @@ export function CreateGroupPage() {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>社群名称</div>
             <div style={{ flex: 1 }} />
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{name.length}/20</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{name.length}/20</div>
           </div>
           <input
             value={name}
@@ -90,9 +90,9 @@ export function CreateGroupPage() {
           />
           <div style={{ display: "flex", alignItems: "center", margin: "14px 0 8px" }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>社群简称</div>
-            <div style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, color: "var(--body)" }}>1 到 2 个字 · 全域唯一</div>
+            <div style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: "var(--body)" }}>1 到 2 个字 · 全域唯一</div>
             <div style={{ flex: 1 }} />
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{abbreviationLength}/2</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{abbreviationLength}/2</div>
           </div>
           <input
             value={abbreviation}
@@ -111,7 +111,7 @@ export function CreateGroupPage() {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 800 }}>社群简介（可选）</div>
             <div style={{ flex: 1 }} />
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{desc.length}/60</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{desc.length}/60</div>
           </div>
           <textarea
             value={desc}

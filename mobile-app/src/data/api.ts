@@ -3,6 +3,11 @@ import { Capacitor, CapacitorHttp } from "@capacitor/core";
 const NATIVE_API_ORIGIN =
   import.meta.env.VITE_API_ORIGIN || "https://app.openbible.live";
 
+export function resolveApiUrl(path: string) {
+  if (!Capacitor.isNativePlatform() || !path.startsWith("/")) return path;
+  return `${NATIVE_API_ORIGIN}${path}`;
+}
+
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -79,4 +84,29 @@ export async function apiRequest<T>(
     status: response.status,
     data: (await response.json().catch(() => null)) as T | null,
   };
+}
+
+export async function apiFormRequest<T>(
+  path: string,
+  formData: FormData,
+  readTimeout = 120_000,
+): Promise<ApiResponse<T>> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), readTimeout);
+  const url = resolveApiUrl(path.startsWith("/") ? path : `/${path}`);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      credentials: Capacitor.isNativePlatform() ? "include" : "same-origin",
+      signal: controller.signal,
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      data: (await response.json().catch(() => null)) as T | null,
+    };
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }

@@ -16,7 +16,6 @@ import {
 const TABS = [
   { id: "highlights", label: "高亮" },
   { id: "notes", label: "笔记" },
-  { id: "posts", label: "帖子" },
 ] as const;
 
 function fmtDate(iso: string) {
@@ -76,9 +75,9 @@ export function MyContentPage() {
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <UnifiedHeader title="我的内容" subtitle="个人资料" ariaLabel="我的内容" onBack={() => navigate("/me")} backLabel="返回我的" />
+      <UnifiedHeader title="我的内容" subtitle="内容记录" ariaLabel="我的内容" onBack={() => navigate("/me")} backLabel="返回我的" />
 
-      <div style={{ flex: "none", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "0 16px" }}>
+      <div style={{ flex: "none", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "0 16px" }}>
         {TABS.map((t) => (
           <button key={t.id} onClick={() => setParams({ t: t.id })} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", height: 44, fontSize: 14, fontWeight: tab === t.id ? 800 : 600, color: tab === t.id ? "var(--ink)" : "var(--body)" }}>
             {t.label}
@@ -102,10 +101,10 @@ export function MyContentPage() {
                 <div style={{ flex: "none", width: 4, borderRadius: 100, background: h.color }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, background: h.color, borderRadius: 6, padding: "2px 8px" }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, background: h.color, borderRadius: 6, padding: "2px 8px" }}>
                       {refLabel(h.book, h.chapter, h.verse, h.version)}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{fmtDate(h.createdAt)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{fmtDate(h.createdAt)}</div>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.7, color: "var(--body)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {verseText(h.book, h.chapter, h.verse, h.version)}
@@ -130,10 +129,10 @@ export function MyContentPage() {
                 style={{ display: "flex", flexDirection: "column", gap: 6, padding: "13px 14px", textAlign: "left", alignItems: "stretch" }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, background: "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, background: "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
                     {refLabel(n.book, n.chapter, n.verse, n.version)}
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{fmtDate(n.createdAt)}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{fmtDate(n.createdAt)}</div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.7 }}>{n.content}</div>
               </button>
@@ -142,12 +141,6 @@ export function MyContentPage() {
               <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>还没有笔记。在阅读页点选经文，选择「笔记」即可。</div>
             )}
           </>
-        )}
-
-        {tab === "posts" && (
-          <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px", lineHeight: 1.7 }}>
-            社群发帖功能接入账号服务后开放，届时你的帖子会汇总在这里。
-          </div>
         )}
       </div>
     </div>

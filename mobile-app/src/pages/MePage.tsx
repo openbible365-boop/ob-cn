@@ -2,46 +2,47 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
-import { HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
+import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
+import { getConversations } from "../data/huidu";
 import { fetchMe, logout, type SessionUser } from "../data/profile";
 import { useSettings } from "../context/SettingsContext";
 
-// 我的首页（design 5a）— real backend session; stats still from local stores.
 export function MePage() {
   const { translate } = useSettings();
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
-  const [, refreshHighlights] = useState(0);
+  const [, refreshLocalContent] = useState(0);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    fetchMe().then((u) => { if (!cancelled) setUser(u); });
+    fetchMe().then((result) => { if (!cancelled) setUser(result); });
     return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
-    const refresh = () => refreshHighlights((value) => value + 1);
+    const refresh = () => refreshLocalContent((value) => value + 1);
     window.addEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(HIGHLIGHTS_CHANGED_EVENT, refresh);
   }, []);
 
   if (user === undefined) {
     return (
-      <div className="screen" style={{ background: "var(--surface)" }}>
-        <CompactToolbar ariaLabel="个人中心" primary={translate("我的")} secondary={translate("个人")} />
-        <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", justifyContent: "center" }}>
-          <div style={{ fontSize: 13, color: "var(--body)" }}>{translate("加载中…")}</div>
-        </div>
+      <div className="screen me-screen">
+        <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate("读取中")} />
+        <div className="screen-scroll me-loading" role="status">{translate("正在读取账号…")}</div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="screen" style={{ background: "var(--surface)" }}>
+      <div className="screen me-screen">
         <CompactToolbar
-          ariaLabel="个人中心"
+          ariaLabel={translate("个人中心")}
           primary={translate("我的")}
           secondary={translate("个人")}
           actions={(
@@ -56,24 +57,14 @@ export function MePage() {
             </button>
           )}
         />
-        <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 6 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 78,
-                height: 78,
-                color: "var(--ink)",
-              }}
-              aria-label={translate("慧读圣经")}
-            >
+        <main className="screen-scroll me-guest-scroll">
+          <div className="me-guest-brand">
+            <div className="me-logo-shield" aria-label={translate("慧读圣经")}>
               <svg
                 viewBox="16 8 88 88"
                 xmlns="http://www.w3.org/2000/svg"
-                width="78"
-                height="78"
+                width="48"
+                height="48"
                 role="img"
                 aria-hidden="true"
                 style={{ overflow: "visible" }}
@@ -86,72 +77,59 @@ export function MePage() {
                 <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" strokeWidth="4" />
               </svg>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>
+            <h1>
               <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
               <span>{translate("圣经")}</span>
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{translate("智慧 · 读经 · 社群 · 共勉")}</div>
+            </h1>
+            <p>{translate("智慧 · 读经 · 社群 · 共勉")}</p>
           </div>
-          <div style={{ margin: "50px 0", fontSize: 20, fontWeight: 800, textAlign: "center" }}>{translate("尚未登录")}</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>
-            {translate("无需登录也能在本机保存高亮；")}<br />{translate("登录后可跨设备同步高亮。")}
-          </div>
-          <button className="btn-primary" style={{ width: "100%" }} onClick={() => navigate("/me/login")}>
-            {translate("登录 / 注册")}
+
+          <div className="me-guest-prompt">{translate("尚未登录")}</div>
+          <button className="me-login-button" type="button" onClick={() => navigate("/me/login")}>
+            {translate("登录或注册")}
           </button>
-        </div>
+          <div className="me-guest-benefits" aria-label={translate("登录后可用功能")}>
+            <span><Icon name="check" size={14} />{translate("跨设备同步高亮")}</span>
+            <span><Icon name="check" size={14} />{translate("管理社群与活动")}</span>
+            <span><Icon name="check" size={14} />{translate("保留个人阅读资料")}</span>
+          </div>
+          <small>{translate("不登录也可以在本机保存笔记和慧读记录。")}</small>
+        </main>
       </div>
     );
   }
 
   const stats = [
-    { label: translate("高亮"), value: user.counts.highlights, to: "/me/content?t=highlights" },
-    { label: translate("笔记"), value: user.counts.notes, to: "/me/content?t=notes" },
-    { label: translate("慧读对话"), value: user.counts.conversations, to: "/huidu" },
-    { label: translate("活动报名"), value: user.counts.eventSignups, to: "/community" },
+    { label: translate("高亮"), value: getHighlights().length, unit: translate("处"), to: "/me/content?t=highlights" },
+    { label: translate("笔记"), value: getNotes().length, unit: translate("条"), to: "/me/content?t=notes" },
+    { label: translate("慧读"), value: getConversations().length, unit: translate("次"), to: "/huidu" },
+    { label: translate("报名活动"), value: user.counts.eventSignups, unit: translate("项"), to: "/me/activities" },
   ];
 
-  const settingsRows = [
-    { icon: "align-justify" as const, label: translate("我的内容"), desc: translate("高亮 · 笔记 · 帖子"), to: "/me/content" },
-    { icon: "bell" as const, label: translate("通知管理"), desc: translate("推送与提醒偏好"), to: "/me/notifications" },
-    { icon: "sun" as const, label: translate("阅读偏好"), desc: translate("即将开放"), to: null },
-    { icon: "lock" as const, label: translate("隐私与安全"), desc: translate("即将开放"), to: null },
+  const accountRows = [
+    { icon: "align-justify", label: translate("我的内容"), desc: translate("查看高亮与笔记"), to: "/me/content" },
+    { icon: "download", label: translate("数据与账户"), desc: translate("查看同步状态并导出本机数据"), to: "/me/account" },
+    { icon: "bell", label: translate("通知设置"), desc: translate("管理本机测试提醒"), to: "/me/notifications" },
+    { icon: "file-text", label: translate("用户协议"), desc: translate("了解服务与使用规则"), to: "/legal/terms" },
+    { icon: "shield", label: translate("隐私政策"), desc: translate("查看数据与权限说明"), to: "/legal/privacy" },
   ];
+
+  const confirmLogout = async () => {
+    setLogoutBusy(true);
+    setLogoutError("");
+    const result = await logout();
+    setLogoutBusy(false);
+    if (result.ok) setUser(null);
+    else setLogoutError(result.message || translate("退出失败，请稍后重试"));
+  };
 
   return (
-    <div className="screen" style={{ background: "var(--surface)" }}>
-      <CompactToolbar
-        ariaLabel="个人中心"
-        primary="我的"
-        secondary="个人"
-        actions={(
-          <>
-            <button
-              className="bible-toolbar-action"
-              type="button"
-              aria-label="我的内容"
-              title="我的内容"
-              onClick={() => navigate("/me/content")}
-            >
-              <Icon name="align-justify" size={18} />
-            </button>
-            <button
-              className="bible-toolbar-action"
-              type="button"
-              aria-label="通知管理"
-              title="通知管理"
-              onClick={() => navigate("/me/notifications")}
-            >
-              <Icon name="bell" size={18} />
-            </button>
-          </>
-        )}
-      />
+    <div className="screen me-screen">
+      <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate(user.entitlements.label)} />
 
-      <div className="screen-scroll" style={{ padding: "16px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
-        {/* profile card */}
-        <div className="card" style={{ display: "flex", alignItems: "center", gap: 14, padding: 16 }}>
-          <div style={{ position: "relative", overflow: "hidden", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 56, height: 56, background: user.avatarColor, border: "1px solid var(--line)", borderRadius: 100, fontSize: 20, fontWeight: 800 }}>
+      <main className="screen-scroll me-scroll">
+        <section className="me-profile" aria-label={translate("账号信息")}>
+          <div className="me-avatar" style={{ background: user.avatarColor }}>
             {user.name.slice(0, 1)}
             {user.avatarUrl && (
               <img
@@ -159,88 +137,103 @@ export function MePage() {
                 alt=""
                 referrerPolicy="no-referrer"
                 onError={(event) => { event.currentTarget.style.display = "none"; }}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
               />
             )}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 3 }}>{user.name}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{user.email ?? "已登录用户"} · {user.entitlements.label}</div>
+          <div className="me-profile-copy">
+            <h1>{user.name}</h1>
+            <p>{user.email ?? translate("已登录用户")}</p>
           </div>
-          <button className="icon-btn" type="button" disabled aria-label="编辑资料即将开放" title="编辑资料即将开放"><Icon name="edit" size={16} /></button>
-        </div>
-
-        {/* personal and group account contexts */}
-        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--body)", fontSize: 11, fontWeight: 800, letterSpacing: ".06em" }}>
-            <span>账户与团体</span><span>{user.groupAccounts.length} 个管理中的团体</span>
-          </div>
-          <div className="card" style={{ display: "flex", alignItems: "center", gap: 11, padding: "13px 14px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 11, background: "var(--yellow)", fontWeight: 800 }}>我</div>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>个人账户</div><div style={{ marginTop: 2, color: "var(--body)", fontSize: 10, fontWeight: 650 }}>{user.entitlements.label} · 个人内容与慧读记录</div></div>
-            <div style={{ padding: "3px 7px", borderRadius: 7, background: "var(--surface-2)", color: "var(--body)", fontSize: 10, fontWeight: 800 }}>当前</div>
-          </div>
-          {user.groupAccounts.map((account) => (
-            <button key={account.id} className="card" onClick={() => navigate(`/community/${account.id}`)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "13px 14px", textAlign: "left" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 38, height: 38, borderRadius: 11, background: account.avatarColor, fontWeight: 800 }}>{account.abbreviation}</div>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 800 }}>{account.name}</div><div style={{ marginTop: 2, color: "var(--body)", fontSize: 10, fontWeight: 650 }}>{account.role === "OWNER" ? "群主" : "管理员"} · {account.entitlements.label} · {account.usage.members} 成员</div></div>
-              <Icon name="chevron-right" size={16} />
-            </button>
-          ))}
+          <span className="me-account-status">{translate("已登录")}</span>
         </section>
 
-        {/* sync card */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(191,120,246,.14)", border: "1px solid var(--line)", borderRadius: 16, padding: "12px 14px" }}>
-          <div style={{ flex: "none", color: "var(--purple)" }}><Icon name="cloud" size={18} /></div>
-          <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--body)", lineHeight: 1.6 }}>
-            高亮已与当前账号同步；笔记和慧读记录目前仅保存在本机。
+        <div className="me-sync-note">
+          <Icon name="cloud" size={16} />
+          <span>{translate("高亮与活动已同步；笔记、慧读记录保存在本机")}</span>
+        </div>
+
+        <section className="me-section" aria-labelledby="me-reading-title">
+          <div className="me-section-heading">
+            <h2 id="me-reading-title">{translate("阅读与活动")}</h2>
+            <button type="button" onClick={() => navigate("/me/content")}>{translate("查看内容")}</button>
           </div>
-        </div>
+          <div className="me-stats">
+            {stats.map((stat) => (
+              <button key={stat.label} type="button" onClick={() => navigate(stat.to)}>
+                <span className="me-stat-value">{stat.value}<small>{stat.unit}</small></span>
+                <span>{stat.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-        {/* stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {stats.map((s) => (
-            <button key={s.label} className="card" onClick={() => navigate(s.to)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "14px 4px" }}>
-              <div style={{ fontSize: 20, fontWeight: 800 }}>{s.value}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>{s.label}</div>
-            </button>
-          ))}
-        </div>
+        {user.groupAccounts.length > 0 && (
+          <section className="me-section" aria-labelledby="me-groups-title">
+            <div className="me-section-heading">
+              <h2 id="me-groups-title">{translate("管理的社群")}</h2>
+              <span>{user.groupAccounts.length} {translate("个")}</span>
+            </div>
+            <div className="me-group-list">
+              {user.groupAccounts.map((account) => (
+                <div className="me-group-item" key={account.id}>
+                  <button className="me-group-primary" type="button" onClick={() => navigate(`/community/${account.id}`)}>
+                    <span className="me-group-avatar" style={{ background: account.avatarColor }}>{account.abbreviation}</span>
+                    <span className="me-group-copy">
+                      <b>{account.name}</b>
+                      <small>{account.role === "OWNER" ? translate("群主") : translate("管理员")} · {account.usage.members} {translate("位成员")}</small>
+                    </span>
+                  </button>
+                  <button
+                    className="me-group-manage"
+                    type="button"
+                    aria-label={translate("管理") + translate(account.name)}
+                    onClick={() => navigate(`/community/${account.id}/settings`)}
+                  >
+                    {translate("管理")}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-        {/* settings list */}
-        <div className="card" style={{ padding: "4px 0" }}>
-          {settingsRows.map((r, i) => (
-            <button
-              key={r.label}
-              type="button"
-              disabled={!r.to}
-              aria-label={!r.to ? `${r.label}即将开放` : r.label}
-              onClick={() => r.to && navigate(r.to)}
-              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "13px 16px", textAlign: "left", borderTop: i > 0 ? "1px solid var(--surface-2)" : "none", opacity: r.to ? 1 : 0.55, cursor: r.to ? "pointer" : "not-allowed" }}
-            >
-              <div style={{ flex: "none", display: "flex", alignItems: "center", justifyContent: "center", width: 36, height: 36, background: "var(--surface-2)", borderRadius: 10 }}>
-                <Icon name={r.icon} size={16} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 1 }}>{r.label}</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{r.desc}</div>
-              </div>
-              {r.to && <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>}
-            </button>
-          ))}
-        </div>
+        <section className="me-section" aria-labelledby="me-account-title">
+          <div className="me-section-heading">
+            <h2 id="me-account-title">{translate("账户与设置")}</h2>
+          </div>
+          <div className="me-account-menu">
+            {accountRows.map((row) => (
+              <button key={row.label} type="button" onClick={() => navigate(row.to)}>
+                <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
+                <span className="me-menu-copy"><b>{row.label}</b><small>{row.desc}</small></span>
+                <Icon name="chevron-right" size={15} />
+              </button>
+            ))}
+          </div>
+        </section>
 
-        {/* logout */}
-        <button
-          onClick={async () => { await logout(); setUser(null); }}
-          className="card"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", color: "var(--pink)", fontSize: 14, fontWeight: 800 }}
-        >
-          <Icon name="log-out" size={16} /> 退出登录
-        </button>
+        {!logoutConfirm ? (
+          <button className="me-logout-button" type="button" onClick={() => setLogoutConfirm(true)}>
+            {translate("退出登录")}
+          </button>
+        ) : (
+          <section className="me-logout-confirm" aria-label={translate("确认退出登录")}>
+            <div>
+              <b>{translate("退出当前账号？")}</b>
+              <small>{translate("本机笔记和慧读记录不会删除。")}</small>
+            </div>
+            <div className="me-logout-actions">
+              <button type="button" disabled={logoutBusy} onClick={() => setLogoutConfirm(false)}>{translate("取消")}</button>
+              <button type="button" className="is-danger" disabled={logoutBusy} onClick={confirmLogout}>
+                {translate(logoutBusy ? "退出中…" : "确认退出")}
+              </button>
+            </div>
+          </section>
+        )}
+        {logoutError && <div className="me-logout-error" role="alert">{logoutError}</div>}
 
-        <div className="disclaimer">OpenBible v0.1</div>
-      </div>
+        <div className="me-version">OpenBible · v0.1</div>
+      </main>
     </div>
   );
 }

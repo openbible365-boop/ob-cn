@@ -10,6 +10,9 @@ export type Message =
   | { role: "assistant"; content?: string; blocks?: HuiduBlock[] };
 export type Conversation = {
   id: string;
+  kind?: "scripture" | "general";
+  bookCode?: string;
+  versionCode?: string;
   chapter: number;
   verse: number;
   refLabel: string;
@@ -54,10 +57,61 @@ export function getConversation(id: string) {
   return getConversations().find((c) => c.id === id) ?? null;
 }
 
-export function startConversation(bookName: string, chapter: number, verse: number, verseText: string, customRefLabel?: string): Conversation {
+export function deleteConversation(id: string) {
+  const remaining = getConversations().filter((conversation) => conversation.id !== id);
+  save(KEY, remaining);
+  return remaining;
+}
+
+export function hasScriptureContext(conversation: Conversation) {
+  return conversation.kind !== "general" && Boolean(conversation.refLabel && conversation.verseText);
+}
+
+export function updateConversationTitle(id: string, title: string) {
+  const conversations = getConversations();
+  const conversation = conversations.find((item) => item.id === id);
+  if (!conversation) return null;
+  conversation.title = title.trim().slice(0, 40) || conversation.title;
+  save(KEY, conversations);
+  return conversation;
+}
+
+function automaticTitle(question: string) {
+  const normalized = question.replace(/\s+/g, " ").trim();
+  const firstSentence = normalized.split(/[。！？!?]/)[0]?.trim() || normalized;
+  return firstSentence.length > 18 ? `${firstSentence.slice(0, 18)}…` : firstSentence;
+}
+
+export function startGeneralConversation(title: string, question: string): Conversation {
+  const conv: Conversation = {
+    id: uid(),
+    kind: "general",
+    chapter: 0,
+    verse: 0,
+    refLabel: "",
+    verseText: "",
+    title: title.trim().slice(0, 40) || automaticTitle(question) || "新的 AI 对话",
+    createdAt: new Date().toISOString(),
+    messages: [],
+  };
+  save(KEY, [conv, ...getConversations()]);
+  return conv;
+}
+
+export function startConversation(
+  bookName: string,
+  chapter: number,
+  verse: number,
+  verseText: string,
+  customRefLabel?: string,
+  context?: { bookCode?: string; versionCode?: string },
+): Conversation {
   const refLabel = customRefLabel ?? `${bookName} ${chapter}:${verse}`;
   const conv: Conversation = {
     id: uid(),
+    kind: "scripture",
+    bookCode: context?.bookCode,
+    versionCode: context?.versionCode,
     chapter,
     verse,
     refLabel,
@@ -135,6 +189,9 @@ export function appendFollowup(
   const all = getConversations();
   const conv = all.find((c) => c.id === id);
   if (!conv) return null;
+  if (conv.title === "新的 AI 对话" && conv.messages.length === 0) {
+    conv.title = automaticTitle(question) || conv.title;
+  }
   conv.messages = [
     ...conv.messages,
     { role: "user", content: question },

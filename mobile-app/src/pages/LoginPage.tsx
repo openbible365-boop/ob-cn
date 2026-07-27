@@ -208,12 +208,12 @@ export function LoginPage() {
           <button className="btn-primary" onClick={submit} disabled={busy}>
             {busy ? "请稍候…" : "登录 / 注册"}
           </button>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>首次使用同一邮箱登录将自动注册</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)", textAlign: "center" }}>首次使用同一邮箱登录将自动注册</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>或</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)" }}>或</div>
           <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
         </div>
 
