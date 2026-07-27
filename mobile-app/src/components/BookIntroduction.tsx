@@ -40,58 +40,67 @@ export function BookIntroduction({
   book,
   displayBook,
   fontSize,
+  translate = (text) => text,
   onStart,
 }: {
   book: Book;
   displayBook: string;
   fontSize: number;
+  translate?: (text: string) => string;
   onStart: () => void;
 }) {
   const profile = introductionProfile(book, displayBook);
   return (
     <div className="annotation-introduction">
       <header className="annotation-intro-hero">
-        <div className="annotation-intro-eyebrow">书卷阅读导览</div>
-        <h1>{displayBook}</h1>
-        <p>{profile.subtitle}</p>
+        <div className="annotation-intro-eyebrow">{displayBook} · {translate("绪论")}</div>
+        <div className="annotation-intro-title-row">
+          <h1>{displayBook}</h1>
+          <span>{translate(profile.category)}</span>
+        </div>
+        <p>{translate(profile.subtitle)}</p>
         <div className="annotation-intro-meta">
-          {book.order <= 39 ? "旧约" : "新约"} · {profile.category} · 共 {book.chapters} 章
+          {translate(book.order <= 39 ? "旧约" : "新约")} · {translate("共")} {book.chapters} {translate("章")}
         </div>
       </header>
 
       <section className="annotation-intro-section">
-        <h2>本卷定位</h2>
-        <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>{profile.description}</p>
+        <h2><span>{translate("概述")}</span></h2>
+        <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>{translate(profile.description)}</p>
       </section>
 
-      <section className="annotation-intro-section">
-        <h2>导览说明</h2>
-        <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>
-          本页提供书卷分类与阅读路线，帮助开始通读；它不是经过逐卷审订的正式绪论。详细背景与结构请结合每章「本章导读」和可靠注释阅读。
-        </p>
-      </section>
+      <div className="annotation-intro-facts" aria-label={translate("书卷基本信息")}>
+        <div><small>{translate("卷别")}</small><strong>{translate(book.order <= 39 ? "旧约" : "新约")}</strong></div>
+        <div><small>{translate("类别")}</small><strong>{translate(profile.category)}</strong></div>
+        <div><small>{translate("篇幅")}</small><strong>{book.chapters} {translate("章")}</strong></div>
+      </div>
 
       <section className="annotation-intro-section">
-        <h2>阅读重点</h2>
+        <h2><span>{translate("关键词")}</span></h2>
         <ul className="annotation-intro-themes">
-          {profile.themes.map((theme) => <li key={theme}>{theme}</li>)}
+          {profile.themes.map((theme) => <li key={theme}>{translate(theme)}</li>)}
         </ul>
       </section>
 
       <section className="annotation-intro-section">
-        <h2>阅读路线</h2>
+        <h2><span>{translate("全书大纲")}</span></h2>
         <div className="annotation-intro-stages">
-          {readingStages(book.chapters).map((stage) => (
+          {readingStages(book.chapters).map((stage, index) => (
             <div key={stage.label}>
-              <strong>{stage.label}</strong>
-              <small>{stage.range}</small>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{translate(stage.label)}</strong>
+              <small>{translate(stage.range)}</small>
             </div>
           ))}
         </div>
       </section>
 
+      <aside className="annotation-intro-note">
+        {translate("本页为移动端阅读导览。逐卷历史背景与写作信息仍以正式精读本绪论为准；各章内容请继续阅读「本章综览」与逐节注释。")}
+      </aside>
+
       <button className="annotation-intro-start" type="button" onClick={onStart}>
-        <span><small>开始阅读</small>{displayBook} 第 1 章</span>
+        <span><small>{translate("绪论读完")}</small>{translate("进入第 1 章")}</span>
         <Icon name="chevron-right" size={20} />
       </button>
     </div>

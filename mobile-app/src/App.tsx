@@ -46,6 +46,36 @@ export default function App() {
   useEffect(() => { void syncHighlights(); }, []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    let frame = 0;
+
+    const syncVisibleViewport = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const height = viewport?.height ?? window.innerHeight;
+        const offsetTop = viewport?.offsetTop ?? 0;
+        root.style.setProperty("--app-viewport-height", `${Math.round(height)}px`);
+        root.style.setProperty("--app-viewport-offset-top", `${Math.round(offsetTop)}px`);
+      });
+    };
+
+    syncVisibleViewport();
+    window.addEventListener("resize", syncVisibleViewport);
+    viewport?.addEventListener("resize", syncVisibleViewport);
+    viewport?.addEventListener("scroll", syncVisibleViewport);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", syncVisibleViewport);
+      viewport?.removeEventListener("resize", syncVisibleViewport);
+      viewport?.removeEventListener("scroll", syncVisibleViewport);
+      root.style.removeProperty("--app-viewport-height");
+      root.style.removeProperty("--app-viewport-offset-top");
+    };
+  }, []);
+
+  useEffect(() => {
     setIsTabBarVisible(true);
 
     if (!showTabBar || !AUTO_HIDE_TAB_PATHS.includes(pathname)) return;

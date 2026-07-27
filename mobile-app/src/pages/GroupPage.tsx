@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useSt
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { UserAvatar } from "../components/UserAvatar";
 import { VoiceInputButton } from "../components/VoiceInputButton";
 import {
   CommunityEventsPanel,
@@ -30,6 +31,7 @@ import {
   type WorkspaceResource,
 } from "../data/community-workspace";
 import { useSpeechInput } from "../hooks/useSpeechInput";
+import { useSessionUser } from "../hooks/useSessionUser";
 
 const TABS = [
   { id: "assistant", label: "助手" },
@@ -80,6 +82,7 @@ function workspaceRoleLabel(role?: "OWNER" | "ADMIN" | "MEMBER") {
 }
 
 export function GroupPage() {
+  const sessionUser = useSessionUser();
   const { groupId = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -470,7 +473,18 @@ export function GroupPage() {
             ) : (
               <>
             {chatMessages.filter((message) => message.id !== "welcome").map((message) => message.role === "user" ? (
-              <div key={message.id} className="community-user-message"><div>{message.content}</div><small><Icon name="eye" size={11} />仅自己可见</small></div>
+              <div key={message.id} className="community-user-message-row">
+                <div className="community-user-message">
+                  <div>{message.content}</div>
+                  <small><Icon name="eye" size={11} />仅自己可见</small>
+                </div>
+                <UserAvatar
+                  name={sessionUser?.name ?? "我"}
+                  avatarColor={sessionUser?.avatarColor ?? "var(--yellow)"}
+                  avatarUrl={sessionUser?.avatarUrl ?? null}
+                  size={30}
+                />
+              </div>
             ) : (
               <div key={message.id} className="card community-assistant-message">
                 <div>{message.content}</div>

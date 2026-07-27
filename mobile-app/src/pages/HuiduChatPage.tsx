@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { UserAvatar } from "../components/UserAvatar";
 import { VoiceInputButton } from "../components/VoiceInputButton";
 import {
   appendFollowup,
@@ -15,6 +16,7 @@ import {
   type HuiduBlock,
 } from "../data/huidu";
 import { useSpeechInput } from "../hooks/useSpeechInput";
+import { useSessionUser } from "../hooks/useSessionUser";
 import { BOOKS, VERSIONS, bookName, getReading } from "../data/scripture";
 
 function TypingDots() {
@@ -70,6 +72,7 @@ export function HuiduChatPage() {
   const [requestError, setRequestError] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const sessionUser = useSessionUser();
   const scrollRef = useRef<HTMLDivElement>(null);
   const answerTimerRef = useRef<number | null>(null);
   const initialQuestionStartedRef = useRef(false);
@@ -236,8 +239,16 @@ export function HuiduChatPage() {
           {conv.messages.map((message, index) => {
             if (message.role === "user") {
               return (
-                <div key={index} className="huidu-user-message">
-                  {message.content}
+                <div key={index} className="huidu-user-message-row">
+                  <div className="huidu-user-message">
+                    {message.content}
+                  </div>
+                  <UserAvatar
+                    name={sessionUser?.name ?? "我"}
+                    avatarColor={sessionUser?.avatarColor ?? "var(--yellow)"}
+                    avatarUrl={sessionUser?.avatarUrl ?? null}
+                    size={30}
+                  />
                 </div>
               );
             }

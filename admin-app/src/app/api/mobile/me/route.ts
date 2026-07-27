@@ -85,3 +85,52 @@ export async function GET() {
     },
   });
 }
+
+const ALLOWED_AVATAR_TYPES = new Set(["jpeg", "jpg", "png", "webp"]);
+const MAX_AVATAR_BYTES = 320 * 1024;
+
+export async function PATCH(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ ok: false, message: "未登录" }, { status: 401 });
+  }
+
+  let body: { avatarUrl?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, message: "请求格式不正确" }, { status: 400 });
+  }
+
+  if (typeof body.avatarUrl !== "string") {
+    return NextResponse.json({ ok: false, message: "请选择头像图片" }, { status: 400 });
+  }
+  const match = body.avatarUrl.match(
+    /^data:image\/([a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/i,
+  );
+  const imageType = match?.[1]?.toLowerCase() ?? "";
+  if (!match || !ALLOWED_AVATAR_TYPES.has(imageType)) {
+    return NextResponse.json(
+      { ok: false, message: "仅支持 JPG、PNG 或 WebP 图片" },
+      { status: 400 },
+    );
+  }
+  const imageBytes = Buffer.from(match[2], "base64");
+  if (imageBytes.length === 0 || imageBytes.length > MAX_AVATAR_BYTES) {
+    return NextResponse.json(
+      { ok: false, message: "处理后的头像不能超过 320KB" },
+      { status: 413 },
+    );
+  }
+
+  const updated = await db.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: body.avatarUrl },
+    select: { avatarUrl: true },
+  });
+  return NextResponse.json({
+    ok: true,
+    message: "头像已更新",
+    avatarUrl: updated.avatarUrl,
+  });
+}

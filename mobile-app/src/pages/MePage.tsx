@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
+import { UserAvatar } from "../components/UserAvatar";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
-import { fetchMe, logout, type SessionUser } from "../data/profile";
+import {
+  announceProfileChanged,
+  fetchMe,
+  logout,
+  updateAvatar,
+  type SessionUser,
+} from "../data/profile";
+import { prepareAvatarImage } from "../utils/avatar";
 
 export function MePage() {
   const navigate = useNavigate();
@@ -14,6 +22,9 @@ export function MePage() {
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,26 +95,73 @@ export function MePage() {
     else setLogoutError(result.message || "退出失败，请稍后重试");
   };
 
+  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || avatarBusy) return;
+
+    setAvatarBusy(true);
+    setAvatarMessage("");
+    try {
+      const avatarUrl = await prepareAvatarImage(file);
+      const result = await updateAvatar(avatarUrl);
+      if (!result.ok) {
+        setAvatarMessage(result.message);
+        return;
+      }
+      const updatedUser = { ...user, avatarUrl: result.avatarUrl };
+      setUser(updatedUser);
+      announceProfileChanged(updatedUser);
+      setAvatarMessage("头像已更新");
+    } catch (error) {
+      setAvatarMessage(error instanceof Error ? error.message : "头像处理失败，请重试");
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   return (
     <div className="screen me-screen">
       <CompactToolbar ariaLabel="个人中心" primary="我的" secondary={user.entitlements.label} />
 
       <main className="screen-scroll me-scroll">
         <section className="me-profile" aria-label="账号信息">
-          <div className="me-avatar" style={{ background: user.avatarColor }}>
-            {user.name.slice(0, 1)}
-            {user.avatarUrl && (
-              <img
-                src={user.avatarUrl}
-                alt=""
-                referrerPolicy="no-referrer"
-                onError={(event) => { event.currentTarget.style.display = "none"; }}
-              />
-            )}
-          </div>
+          <button
+            className="me-avatar-upload"
+            type="button"
+            aria-label={avatarBusy ? "正在更新头像" : "更换个人头像"}
+            disabled={avatarBusy}
+            onClick={() => avatarInputRef.current?.click()}
+          >
+            <UserAvatar
+              className="me-avatar"
+              name={user.name}
+              avatarColor={user.avatarColor}
+              avatarUrl={user.avatarUrl}
+              size={52}
+            />
+            <span className="me-avatar-edit" aria-hidden="true">
+              <Icon name="camera" size={11} />
+            </span>
+          </button>
+          <input
+            ref={avatarInputRef}
+            className="sr-only"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            onChange={handleAvatarChange}
+          />
           <div className="me-profile-copy">
             <h1>{user.name}</h1>
             <p>{user.email ?? "已登录用户"}</p>
+            {avatarMessage && (
+              <small
+                className={`me-avatar-message${avatarMessage === "头像已更新" ? " is-success" : ""}`}
+                role="status"
+              >
+                {avatarMessage}
+              </small>
+            )}
           </div>
           <span className="me-account-status">已登录</span>
         </section>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { UserAvatar } from "../components/UserAvatar";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { getHighlights, getNotes } from "../data/annotations";
 import { getConversations } from "../data/huidu";
@@ -56,9 +57,13 @@ export function AccountDataPage() {
       />
       <main className="screen-scroll me-detail-scroll">
         <section className="me-data-account">
-          <div className="me-data-avatar" style={{ background: user?.avatarColor ?? "var(--yellow)" }}>
-            {user?.name.slice(0, 1) ?? "我"}
-          </div>
+          <UserAvatar
+            className="me-data-avatar"
+            name={user?.name ?? "我"}
+            avatarColor={user?.avatarColor ?? "var(--yellow)"}
+            avatarUrl={user?.avatarUrl ?? null}
+            size={44}
+          />
           <div>
             <b>{user?.name ?? "正在读取账号…"}</b>
             <span>{user?.email ?? "已登录账户"}</span>
