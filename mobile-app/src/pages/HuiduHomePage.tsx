@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { getConversations } from "../data/huidu";
+import { useSettings } from "../context/SettingsContext";
 
 function fmtTime(iso: string) {
   return iso.slice(11, 16);
@@ -14,6 +15,7 @@ function isToday(iso: string) {
 
 // 慧读首页（design 3a）
 export function HuiduHomePage() {
+  const { translate } = useSettings();
   const navigate = useNavigate();
   const conversations = getConversations();
   const [grouping, setGrouping] = useState<"time" | "book">("time");
@@ -25,13 +27,13 @@ export function HuiduHomePage() {
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
           <div style={{ fontSize: 11, fontWeight: 800, background: highlight ? "var(--yellow)" : "var(--surface-2)", borderRadius: 6, padding: "2px 8px" }}>
-            {c.refLabel}
+            {translate(c.refLabel)}
           </div>
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-            {Math.ceil(c.messages.length / 2)} 轮 · {fmtTime(c.createdAt)}
+            {Math.ceil(c.messages.length / 2)} {translate("轮")} · {fmtTime(c.createdAt)}
           </div>
         </div>
-        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{c.title}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.5 }}>{translate(c.title)}</div>
       </div>
       <div style={{ color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>
     </Link>
@@ -41,8 +43,8 @@ export function HuiduHomePage() {
     <div className="screen" style={{ background: "var(--surface)" }}>
       <CompactToolbar
         ariaLabel="慧读与今日额度"
-        primary="慧读"
-        secondary={`本机 ${conversations.length}`}
+        primary={translate("慧读")}
+        secondary={`${translate("本机")} ${conversations.length}`}
         actions={(
           <>
             <button className="bible-toolbar-action" aria-label="返回圣经阅读" onClick={() => navigate("/bible")}>
@@ -64,30 +66,30 @@ export function HuiduHomePage() {
             <Icon name="star" size={20} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 2 }}>开始新对话</div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.85)" }}>也可在阅读页划线经文，直达慧读</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 2 }}>{translate("开始新对话")}</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.85)" }}>{translate("也可在阅读页划线经文，直达慧读")}</div>
           </div>
           <div style={{ color: "#fff" }}><Icon name="chevron-right" size={18} /></div>
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>历史存档</div>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>{translate("历史存档")}</div>
           <div style={{ flex: 1 }} />
           <div className="seg" role="group" aria-label="慧读历史排序">
-            <button type="button" className={`seg-item${grouping === "time" ? " active" : ""}`} aria-pressed={grouping === "time"} onClick={() => setGrouping("time")}>按时间</button>
-            <button type="button" className={`seg-item${grouping === "book" ? " active" : ""}`} aria-pressed={grouping === "book"} onClick={() => setGrouping("book")}>按卷章</button>
+            <button type="button" className={`seg-item${grouping === "time" ? " active" : ""}`} aria-pressed={grouping === "time"} onClick={() => setGrouping("time")}>{translate("按时间")}</button>
+            <button type="button" className={`seg-item${grouping === "book" ? " active" : ""}`} aria-pressed={grouping === "book"} onClick={() => setGrouping("book")}>{translate("按卷章")}</button>
           </div>
         </div>
 
         {grouping === "time" && today.length > 0 && (
           <>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>今天</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>{translate("今天")}</div>
             {today.map((c, i) => item(c, i === 0))}
           </>
         )}
         {grouping === "time" && earlier.length > 0 && (
           <>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>更早</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>{translate("更早")}</div>
             {earlier.map((c) => item(c, false))}
           </>
         )}
@@ -96,11 +98,11 @@ export function HuiduHomePage() {
           .map((conversation) => item(conversation, false))}
         {conversations.length === 0 && (
           <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>
-            还没有慧读记录。在阅读页点选一节经文，选择「慧读」试试。
+            {translate("还没有慧读记录。在阅读页点选一节经文，选择「慧读」试试。")}
           </div>
         )}
 
-        <div className="disclaimer">当前回答由本机阅读模板生成，仅供参考，不替代教会教导与权威释经</div>
+        <div className="disclaimer">{translate("当前回答由本机阅读模板生成，仅供参考，不替代教会教导与权威释经")}</div>
       </div>
     </div>
   );

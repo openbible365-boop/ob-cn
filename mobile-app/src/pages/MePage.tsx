@@ -4,9 +4,11 @@ import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
 import { HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { fetchMe, logout, type SessionUser } from "../data/profile";
+import { useSettings } from "../context/SettingsContext";
 
 // 我的首页（design 5a）— real backend session; stats still from local stores.
 export function MePage() {
+  const { translate } = useSettings();
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -27,9 +29,9 @@ export function MePage() {
   if (user === undefined) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <CompactToolbar ariaLabel="个人中心" primary="我的" secondary="个人" />
+        <CompactToolbar ariaLabel="个人中心" primary={translate("我的")} secondary={translate("个人")} />
         <div className="screen-scroll" style={{ padding: "40px 24px", display: "flex", justifyContent: "center" }}>
-          <div style={{ fontSize: 13, color: "var(--body)" }}>加载中…</div>
+          <div style={{ fontSize: 13, color: "var(--body)" }}>{translate("加载中…")}</div>
         </div>
       </div>
     );
@@ -40,14 +42,14 @@ export function MePage() {
       <div className="screen" style={{ background: "var(--surface)" }}>
         <CompactToolbar
           ariaLabel="个人中心"
-          primary="我的"
-          secondary="个人"
+          primary={translate("我的")}
+          secondary={translate("个人")}
           actions={(
             <button
               className="bible-toolbar-action"
               type="button"
-              aria-label="登录或注册"
-              title="登录或注册"
+              aria-label={translate("登录或注册")}
+              title={translate("登录或注册")}
               onClick={() => navigate("/me/login")}
             >
               <Icon name="user" size={18} />
@@ -65,7 +67,7 @@ export function MePage() {
                 height: 78,
                 color: "var(--ink)",
               }}
-              aria-label="慧读圣经"
+              aria-label={translate("慧读圣经")}
             >
               <svg
                 viewBox="16 8 88 88"
@@ -85,17 +87,17 @@ export function MePage() {
               </svg>
             </div>
             <div style={{ fontSize: 20, fontWeight: 800 }}>
-              <span style={{ color: "#E89A2C" }}>慧读</span>
-              <span>圣经</span>
+              <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
+              <span>{translate("圣经")}</span>
             </div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>智慧 · 读经 · 社群 · 共勉</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{translate("智慧 · 读经 · 社群 · 共勉")}</div>
           </div>
-          <div style={{ margin: "50px 0", fontSize: 20, fontWeight: 800, textAlign: "center" }}>尚未登录</div>
+          <div style={{ margin: "50px 0", fontSize: 20, fontWeight: 800, textAlign: "center" }}>{translate("尚未登录")}</div>
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--body)", textAlign: "center", lineHeight: 1.7 }}>
-            无需登录也能在本机保存高亮；<br />登录后可跨设备同步高亮。
+            {translate("无需登录也能在本机保存高亮；")}<br />{translate("登录后可跨设备同步高亮。")}
           </div>
           <button className="btn-primary" style={{ width: "100%" }} onClick={() => navigate("/me/login")}>
-            登录 / 注册
+            {translate("登录 / 注册")}
           </button>
         </div>
       </div>
@@ -103,17 +105,17 @@ export function MePage() {
   }
 
   const stats = [
-    { label: "高亮", value: user.counts.highlights, to: "/me/content?t=highlights" },
-    { label: "笔记", value: user.counts.notes, to: "/me/content?t=notes" },
-    { label: "慧读对话", value: user.counts.conversations, to: "/huidu" },
-    { label: "活动报名", value: user.counts.eventSignups, to: "/community" },
+    { label: translate("高亮"), value: user.counts.highlights, to: "/me/content?t=highlights" },
+    { label: translate("笔记"), value: user.counts.notes, to: "/me/content?t=notes" },
+    { label: translate("慧读对话"), value: user.counts.conversations, to: "/huidu" },
+    { label: translate("活动报名"), value: user.counts.eventSignups, to: "/community" },
   ];
 
   const settingsRows = [
-    { icon: "align-justify" as const, label: "我的内容", desc: "高亮 · 笔记 · 帖子", to: "/me/content" },
-    { icon: "bell" as const, label: "通知管理", desc: "推送与提醒偏好", to: "/me/notifications" },
-    { icon: "sun" as const, label: "阅读偏好", desc: "即将开放", to: null },
-    { icon: "lock" as const, label: "隐私与安全", desc: "即将开放", to: null },
+    { icon: "align-justify" as const, label: translate("我的内容"), desc: translate("高亮 · 笔记 · 帖子"), to: "/me/content" },
+    { icon: "bell" as const, label: translate("通知管理"), desc: translate("推送与提醒偏好"), to: "/me/notifications" },
+    { icon: "sun" as const, label: translate("阅读偏好"), desc: translate("即将开放"), to: null },
+    { icon: "lock" as const, label: translate("隐私与安全"), desc: translate("即将开放"), to: null },
   ];
 
   return (

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { BookIntroduction } from "../components/BookIntroduction";
+import { useSettings } from "../context/SettingsContext";
 import {
   OT_BOOKS,
   NT_BOOKS,
@@ -34,11 +35,12 @@ function commentaryReference(title: string) {
 
 // 注释页（design 2b）— real 精读本 (jingdu) commentary for every book.
 export function AnnotationsPage() {
+  const { translate } = useSettings();
   const [params, setParams] = useSearchParams();
   const reading = getReading();
   const version = getVersion(params.get("t") ?? reading.version);
   const book = getBookByCode(params.get("bk") ?? reading.book);
-  const displayBook = bookName(book, version);
+  const displayBook = translate(bookName(book, version));
   const isIntroduction = params.get("intro") === "1";
   const targetVerse = Number(params.get("v")) || null;
   const maxChapter = book.chapters;
@@ -122,9 +124,9 @@ export function AnnotationsPage() {
     <div className="screen annotation-reader-screen">
       <CompactToolbar
         ariaLabel="当前注释卷章与版本"
-        primary={`${displayBook} ${isIntroduction ? "绪论" : chapter}`}
-        secondary="精读本注释"
-        primaryAriaLabel={`选择书卷和章节，当前为${displayBook}${isIntroduction ? "绪论" : `第${chapter}章`}`}
+        primary={`${displayBook} ${isIntroduction ? translate("绪论") : chapter}`}
+        secondary={translate("精读本注释")}
+        primaryAriaLabel={`选择书卷和章节，当前为${displayBook}${isIntroduction ? translate("绪论") : `第${chapter}章`}`}
         primaryOpen={chapterPickerOpen}
         onPrimaryClick={() => {
           setChapterPickerOpen((open) => !open);
