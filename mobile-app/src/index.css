@@ -2512,6 +2512,10 @@ body.dark .notification-daily-verse-action {
   box-shadow: none;
 }
 
+.annotation-audio-player .audio-current-passage {
+  grid-template-columns: auto 1fr 18px;
+}
+
 .audio-current-copy { min-width: 0; }
 
 .audio-current-icon {
