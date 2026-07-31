@@ -1215,54 +1215,57 @@ export function BiblePage() {
         )}
 
         {picker === "font" && (
-          <div className="bible-reading-settings" role="dialog" aria-label="阅读设置">
-            <div className="bible-reading-setting-row">
-              <span>字体大小</span>
-              <div className="bible-font-size-control">
-                <button
-                  type="button"
-                  aria-label="缩小字体"
-                  disabled={fontSize === 17}
-                  onClick={() => setFontSize((size) => Math.max(17, size - 2))}
-                >
-                  −
-                </button>
-                <b>{fontSize}px</b>
-                <button
-                  type="button"
-                  aria-label="放大字体"
-                  disabled={fontSize === 23}
-                  onClick={() => setFontSize((size) => Math.min(23, size + 2))}
-                >
-                  +
-                </button>
+          <>
+            <div className="bible-reading-settings-backdrop" onClick={() => setPicker(null)} />
+            <div className="bible-reading-settings" role="dialog" aria-label="阅读设置">
+              <div className="bible-reading-setting-row">
+                <span>字体大小</span>
+                <div className="bible-font-size-control">
+                  <button
+                    type="button"
+                    aria-label="缩小字体"
+                    disabled={fontSize === 17}
+                    onClick={() => setFontSize((size) => Math.max(17, size - 2))}
+                  >
+                    −
+                  </button>
+                  <b>{fontSize}px</b>
+                  <button
+                    type="button"
+                    aria-label="放大字体"
+                    disabled={fontSize === 23}
+                    onClick={() => setFontSize((size) => Math.min(23, size + 2))}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="bible-reading-setting-row">
-              <span>语言简繁</span>
-              <div className="bible-setting-segment">
-                <button type="button" className={!isTraditional ? "active" : ""} onClick={() => setIsTraditional(false)}>简</button>
-                <button type="button" className={isTraditional ? "active" : ""} onClick={() => setIsTraditional(true)}>繁</button>
+              <div className="bible-reading-setting-row">
+                <span>语言简繁</span>
+                <div className="bible-setting-segment">
+                  <button type="button" className={!isTraditional ? "active" : ""} onClick={() => setIsTraditional(false)}>简</button>
+                  <button type="button" className={isTraditional ? "active" : ""} onClick={() => setIsTraditional(true)}>繁</button>
+                </div>
               </div>
-            </div>
 
-            <div className="bible-reading-setting-row">
-              <span>阅读模式</span>
-              <div className="bible-setting-segment">
-                <button type="button" className={!isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(false)}>浅色</button>
-                <button type="button" className={isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(true)}>深色</button>
+              <div className="bible-reading-setting-row">
+                <span>阅读模式</span>
+                <div className="bible-setting-segment">
+                  <button type="button" className={!isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(false)}>浅色</button>
+                  <button type="button" className={isDarkMode ? "active" : ""} onClick={() => setIsDarkMode(true)}>深色</button>
+                </div>
               </div>
-            </div>
 
-            <div className="bible-reading-setting-row">
-              <span>显示标题</span>
-              <div className="bible-setting-segment">
-                <button type="button" className={showHeadings ? "active" : ""} onClick={() => setShowHeadings(true)}>显示</button>
-                <button type="button" className={!showHeadings ? "active" : ""} onClick={() => setShowHeadings(false)}>隐藏</button>
+              <div className="bible-reading-setting-row">
+                <span>显示标题</span>
+                <div className="bible-setting-segment">
+                  <button type="button" className={showHeadings ? "active" : ""} onClick={() => setShowHeadings(true)}>显示</button>
+                  <button type="button" className={!showHeadings ? "active" : ""} onClick={() => setShowHeadings(false)}>隐藏</button>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 

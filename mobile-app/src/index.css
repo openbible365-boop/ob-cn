@@ -838,6 +838,16 @@ a {
   box-shadow: 0 12px 32px rgba(48, 49, 51, 0.16);
 }
 
+.bible-reading-settings-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 29;
+  background: transparent;
+}
+
 .bible-search-panel {
   position: fixed;
   top: 0;

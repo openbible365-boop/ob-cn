@@ -428,87 +428,90 @@ export function AnnotationsPage() {
               </div>
             )}
             {fontSettingsOpen && (
-              <div className="bible-reading-settings" role="dialog" aria-label={translate("注释阅读设置")}>
-                <div className="bible-reading-setting-row">
-                  <span>{translate("字体大小")}</span>
-                  <div className="bible-font-size-control">
-                    <button
-                      type="button"
-                      aria-label="缩小字体"
-                      disabled={fontSize === 15}
-                      onClick={() => setFontSize((size) => Math.max(15, size - 2))}
-                    >
-                      −
-                    </button>
-                    <b>{fontSize}px</b>
-                    <button
-                      type="button"
-                      aria-label="放大字体"
-                      disabled={fontSize === 21}
-                      onClick={() => setFontSize((size) => Math.min(21, size + 2))}
-                    >
-                      +
-                    </button>
+              <>
+                <div className="bible-reading-settings-backdrop" onClick={() => setFontSettingsOpen(false)} />
+                <div className="bible-reading-settings" role="dialog" aria-label={translate("注释阅读设置")}>
+                  <div className="bible-reading-setting-row">
+                    <span>{translate("字体大小")}</span>
+                    <div className="bible-font-size-control">
+                      <button
+                        type="button"
+                        aria-label="缩小字体"
+                        disabled={fontSize === 15}
+                        onClick={() => setFontSize((size) => Math.max(15, size - 2))}
+                      >
+                        −
+                      </button>
+                      <b>{fontSize}px</b>
+                      <button
+                        type="button"
+                        aria-label="放大字体"
+                        disabled={fontSize === 21}
+                        onClick={() => setFontSize((size) => Math.min(21, size + 2))}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bible-reading-setting-row">
+                    <span>{translate("语言简繁")}</span>
+                    <div className="bible-setting-segment">
+                      <button
+                        type="button"
+                        className={!isTraditional ? "active" : ""}
+                        onClick={() => setIsTraditional(false)}
+                      >
+                        简
+                      </button>
+                      <button
+                        type="button"
+                        className={isTraditional ? "active" : ""}
+                        onClick={() => setIsTraditional(true)}
+                      >
+                        繁
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bible-reading-setting-row">
+                    <span>{translate("阅读模式")}</span>
+                    <div className="bible-setting-segment">
+                      <button
+                        type="button"
+                        className={!isDarkMode ? "active" : ""}
+                        onClick={() => setIsDarkMode(false)}
+                      >
+                        {translate("浅色")}
+                      </button>
+                      <button
+                        type="button"
+                        className={isDarkMode ? "active" : ""}
+                        onClick={() => setIsDarkMode(true)}
+                      >
+                        {translate("深色")}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bible-reading-setting-row">
+                    <span>{translate("行间距")}</span>
+                    <div className="bible-setting-segment">
+                      <button
+                        type="button"
+                        className={lineSpacing === "compact" ? "active" : ""}
+                        onClick={() => setLineSpacing("compact")}
+                      >
+                        {translate("紧凑")}
+                      </button>
+                      <button
+                        type="button"
+                        className={lineSpacing === "comfortable" ? "active" : ""}
+                        onClick={() => setLineSpacing("comfortable")}
+                      >
+                        {translate("舒适")}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="bible-reading-setting-row">
-                  <span>{translate("语言简繁")}</span>
-                  <div className="bible-setting-segment">
-                    <button
-                      type="button"
-                      className={!isTraditional ? "active" : ""}
-                      onClick={() => setIsTraditional(false)}
-                    >
-                      简
-                    </button>
-                    <button
-                      type="button"
-                      className={isTraditional ? "active" : ""}
-                      onClick={() => setIsTraditional(true)}
-                    >
-                      繁
-                    </button>
-                  </div>
-                </div>
-                <div className="bible-reading-setting-row">
-                  <span>{translate("阅读模式")}</span>
-                  <div className="bible-setting-segment">
-                    <button
-                      type="button"
-                      className={!isDarkMode ? "active" : ""}
-                      onClick={() => setIsDarkMode(false)}
-                    >
-                      {translate("浅色")}
-                    </button>
-                    <button
-                      type="button"
-                      className={isDarkMode ? "active" : ""}
-                      onClick={() => setIsDarkMode(true)}
-                    >
-                      {translate("深色")}
-                    </button>
-                  </div>
-                </div>
-                <div className="bible-reading-setting-row">
-                  <span>{translate("行间距")}</span>
-                  <div className="bible-setting-segment">
-                    <button
-                      type="button"
-                      className={lineSpacing === "compact" ? "active" : ""}
-                      onClick={() => setLineSpacing("compact")}
-                    >
-                      {translate("紧凑")}
-                    </button>
-                    <button
-                      type="button"
-                      className={lineSpacing === "comfortable" ? "active" : ""}
-                      onClick={() => setLineSpacing("comfortable")}
-                    >
-                      {translate("舒适")}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </>
             )}
           </>
         )}
