@@ -79,6 +79,7 @@ export function MePage() {
   ];
 
   const accountRows = [
+    { icon: "calendar", label: "读经计划", desc: "管理个人与社群每日阅读", to: "/me/plans" },
     { icon: "align-justify", label: "我的内容", desc: "查看高亮与笔记", to: "/me/content" },
     { icon: "download", label: "数据与账户", desc: "查看同步状态并导出本机数据", to: "/me/account" },
     { icon: "bell", label: "通知设置", desc: "管理本机测试提醒", to: "/me/notifications" },

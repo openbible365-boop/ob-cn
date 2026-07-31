@@ -5,9 +5,21 @@ import { load, save, uid } from "./store";
 import { apiRequest } from "./api";
 
 export type HuiduBlock = { tag: string; color: string; dark: boolean; text: string };
+export type HuiduSource = {
+  id: string;
+  kind: "scripture" | "commentary" | "community";
+  label: string;
+  title?: string;
+  bookCode?: string;
+  versionCode?: string;
+  chapter?: number;
+  verseStart?: number;
+  verseEnd?: number;
+  resourceId?: string;
+};
 export type Message =
   | { role: "user"; content: string }
-  | { role: "assistant"; content?: string; blocks?: HuiduBlock[] };
+  | { role: "assistant"; content?: string; blocks?: HuiduBlock[]; sources?: HuiduSource[] };
 export type Conversation = {
   id: string;
   kind?: "scripture" | "general";
@@ -23,6 +35,10 @@ export type Conversation = {
 };
 
 const KEY = "ob.conversations";
+const PENDING_KEY = "ob.conversationPendingOps";
+type PendingConversationOperation = { id: string; type: "upsert" | "delete"; conversationId: string };
+let syncPromise: Promise<boolean> | null = null;
+let syncTimer: ReturnType<typeof setTimeout> | undefined;
 
 const JOHN_3_16_SUMMARY = "这段经文是福音的核心宣示：救恩源于神对世人主动的爱，祂差遣独生子耶稣基督钉十字架完成救赎。我们得救的途径完全是因着信靠祂而得享永生的全新生命，而非依赖行为的积累；这宝贵的应许带给我们面对今天一切忧虑的真实确据，呼召我们以感恩和信心去生活。";
 
@@ -53,13 +69,31 @@ export function getConversations(): Conversation[] {
   return load<Conversation[]>(KEY, []);
 }
 
+function saveConversations(conversations: Conversation[]) {
+  save(KEY, conversations);
+}
+
+function queueOperation(type: PendingConversationOperation["type"], conversationId: string) {
+  const rest = load<PendingConversationOperation[]>(PENDING_KEY, [])
+    .filter((operation) => operation.conversationId !== conversationId);
+  save(PENDING_KEY, [...rest, { id: uid(), type, conversationId }]);
+}
+
+function scheduleSync() {
+  if (typeof window === "undefined") return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => { void syncConversations(); }, 450);
+}
+
 export function getConversation(id: string) {
   return getConversations().find((c) => c.id === id) ?? null;
 }
 
 export function deleteConversation(id: string) {
   const remaining = getConversations().filter((conversation) => conversation.id !== id);
-  save(KEY, remaining);
+  saveConversations(remaining);
+  queueOperation("delete", id);
+  scheduleSync();
   return remaining;
 }
 
@@ -72,7 +106,9 @@ export function updateConversationTitle(id: string, title: string) {
   const conversation = conversations.find((item) => item.id === id);
   if (!conversation) return null;
   conversation.title = title.trim().slice(0, 40) || conversation.title;
-  save(KEY, conversations);
+  saveConversations(conversations);
+  queueOperation("upsert", id);
+  scheduleSync();
   return conversation;
 }
 
@@ -94,7 +130,9 @@ export function startGeneralConversation(title: string, question: string): Conve
     createdAt: new Date().toISOString(),
     messages: [],
   };
-  save(KEY, [conv, ...getConversations()]);
+  saveConversations([conv, ...getConversations()]);
+  queueOperation("upsert", conv.id);
+  scheduleSync();
   return conv;
 }
 
@@ -120,15 +158,33 @@ export function startConversation(
     createdAt: new Date().toISOString(),
     messages: [
       { role: "user", content: "请为我解释这节经文" },
-      { role: "assistant", blocks: generateBlocks(refLabel, verseText) },
+      {
+        role: "assistant",
+        blocks: generateBlocks(refLabel, verseText),
+        sources: [
+          {
+            id: `scripture-${context?.versionCode ?? "cuv"}-${context?.bookCode ?? ""}-${chapter}-${verse}`,
+            kind: "scripture",
+            label: refLabel,
+            title: "本轮经文",
+            bookCode: context?.bookCode,
+            versionCode: context?.versionCode,
+            chapter,
+            verseStart: verse,
+            verseEnd: verse,
+          },
+        ],
+      },
     ],
   };
-  save(KEY, [conv, ...getConversations()]);
+  saveConversations([conv, ...getConversations()]);
+  queueOperation("upsert", conv.id);
+  scheduleSync();
   return conv;
 }
 
 export type HuiduAssistantResult =
-  | { ok: true; answer: string }
+  | { ok: true; answer: string; sources: HuiduSource[] }
   | { ok: false; message: string; status?: number };
 
 function messageContent(message: Message) {
@@ -145,13 +201,17 @@ export async function requestHuiduFollowup(
 ): Promise<HuiduAssistantResult> {
   try {
     const response = await apiRequest<
-      { ok: true; answer: string } | { ok: false; message?: string }
+      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string }
     >("/api/mobile/huidu/assistant", {
       method: "POST",
       body: {
         conversationId: conversation.id,
         refLabel: conversation.refLabel,
         verseText: conversation.verseText,
+        bookCode: conversation.bookCode,
+        versionCode: conversation.versionCode,
+        chapter: conversation.chapter,
+        verse: conversation.verse,
         question,
         history: conversation.messages.map((message) => ({
           role: message.role,
@@ -172,7 +232,11 @@ export async function requestHuiduFollowup(
       };
     }
 
-    return { ok: true, answer: result.answer };
+    return {
+      ok: true,
+      answer: result.answer,
+      sources: Array.isArray(result.sources) ? result.sources : [],
+    };
   } catch {
     return {
       ok: false,
@@ -185,6 +249,7 @@ export function appendFollowup(
   id: string,
   question: string,
   answer: string,
+  sources: HuiduSource[] = [],
 ): Conversation | null {
   const all = getConversations();
   const conv = all.find((c) => c.id === id);
@@ -195,8 +260,63 @@ export function appendFollowup(
   conv.messages = [
     ...conv.messages,
     { role: "user", content: question },
-    { role: "assistant", content: answer },
+    { role: "assistant", content: answer, sources },
   ];
-  save(KEY, all);
+  saveConversations(all);
+  queueOperation("upsert", id);
+  scheduleSync();
   return conv;
+}
+
+export function syncConversations(): Promise<boolean> {
+  if (syncPromise) return syncPromise;
+  syncPromise = (async () => {
+    const operations = load<PendingConversationOperation[]>(PENDING_KEY, []);
+    const sentIds = new Set(operations.map((operation) => operation.id));
+    try {
+      const response = await apiRequest<{ conversations?: Conversation[] }>(
+        "/api/mobile/huidu/conversations",
+        {
+          method: "POST",
+          body: {
+            conversations: getConversations(),
+            deletions: operations
+              .filter((operation) => operation.type === "delete")
+              .map((operation) => operation.conversationId),
+          },
+        },
+      );
+      if (
+        response.status === 401 ||
+        !response.ok ||
+        !Array.isArray(response.data?.conversations)
+      ) return false;
+
+      const remaining = load<PendingConversationOperation[]>(PENDING_KEY, [])
+        .filter((operation) => !sentIds.has(operation.id));
+      save(PENDING_KEY, remaining);
+      let merged = response.data.conversations.map((conversation) => ({
+        ...conversation,
+        createdAt: String(conversation.createdAt),
+      }));
+      for (const operation of remaining) {
+        if (operation.type === "delete") {
+          merged = merged.filter((conversation) => conversation.id !== operation.conversationId);
+          continue;
+        }
+        const local = getConversations().find(
+          (conversation) => conversation.id === operation.conversationId,
+        );
+        if (local) {
+          merged = [local, ...merged.filter((conversation) => conversation.id !== local.id)];
+        }
+      }
+      saveConversations(merged);
+      if (remaining.length) scheduleSync();
+      return true;
+    } catch {
+      return false;
+    }
+  })().finally(() => { syncPromise = null; });
+  return syncPromise;
 }

@@ -14,13 +14,17 @@ const LEGACY_HIGHLIGHT_COLORS: Record<string, string> = {
 export type Highlight = { book: string; chapter: number; verse: number; version?: string; color: string; createdAt: string };
 export type Note = { id: string; book: string; chapter: number; verse: number; version?: string; content: string; createdAt: string };
 type PendingOperation = { id: string; type: "upsert" | "delete"; book: string; chapter: number; verse: number };
+type PendingNoteOperation = { id: string; type: "upsert" | "delete"; noteId: string };
 
 const HL_KEY = "ob.highlights";
 const PENDING_KEY = "ob.highlightPendingOps";
 const NOTE_KEY = "ob.notes";
+const NOTE_PENDING_KEY = "ob.notePendingOps";
 const LEGACY_BOOK = "jhn";
 let syncPromise: Promise<boolean> | null = null;
 let syncTimer: ReturnType<typeof setTimeout> | undefined;
+let noteSyncPromise: Promise<boolean> | null = null;
+let noteSyncTimer: ReturnType<typeof setTimeout> | undefined;
 
 function notify() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(HIGHLIGHTS_CHANGED_EVENT));
@@ -114,10 +118,28 @@ export function getNotes(): Note[] {
   return load<Note[]>(NOTE_KEY, []).map((n) => ({ ...n, book: n.book ?? LEGACY_BOOK }));
 }
 
+function saveNotes(notes: Note[]) {
+  save(NOTE_KEY, notes);
+  notify();
+}
+
+function queueNoteOperation(type: PendingNoteOperation["type"], noteId: string) {
+  const rest = load<PendingNoteOperation[]>(NOTE_PENDING_KEY, [])
+    .filter((operation) => operation.noteId !== noteId);
+  save(NOTE_PENDING_KEY, [...rest, { id: uid(), type, noteId }]);
+}
+
+function scheduleNoteSync() {
+  if (typeof window === "undefined") return;
+  clearTimeout(noteSyncTimer);
+  noteSyncTimer = setTimeout(() => { void syncNotes(); }, 350);
+}
+
 export function addNote(book: string, chapter: number, verse: number, content: string, version?: string) {
   const note: Note = { id: uid(), book, chapter, verse, version, content, createdAt: new Date().toISOString() };
-  save(NOTE_KEY, [note, ...getNotes()]);
-  notify();
+  saveNotes([note, ...getNotes()]);
+  queueNoteOperation("upsert", note.id);
+  scheduleNoteSync();
   return note;
 }
 
@@ -126,12 +148,58 @@ export function updateNote(id: string, content: string) {
   const current = notes.find((note) => note.id === id);
   if (!current) return null;
   const updated = { ...current, content };
-  save(NOTE_KEY, notes.map((note) => note.id === id ? updated : note));
-  notify();
+  saveNotes(notes.map((note) => note.id === id ? updated : note));
+  queueNoteOperation("upsert", id);
+  scheduleNoteSync();
   return updated;
 }
 
 export function deleteNote(id: string) {
-  save(NOTE_KEY, getNotes().filter((note) => note.id !== id));
-  notify();
+  saveNotes(getNotes().filter((note) => note.id !== id));
+  queueNoteOperation("delete", id);
+  scheduleNoteSync();
+}
+
+export function syncNotes(): Promise<boolean> {
+  if (noteSyncPromise) return noteSyncPromise;
+  noteSyncPromise = (async () => {
+    const operations = load<PendingNoteOperation[]>(NOTE_PENDING_KEY, []);
+    const sentIds = new Set(operations.map((operation) => operation.id));
+    try {
+      const response = await apiRequest<{ notes?: Note[] }>("/api/mobile/notes", {
+        method: "POST",
+        body: {
+          notes: getNotes(),
+          deletions: operations
+            .filter((operation) => operation.type === "delete")
+            .map((operation) => operation.noteId),
+        },
+      });
+      if (response.status === 401 || !response.ok || !Array.isArray(response.data?.notes)) {
+        return false;
+      }
+
+      const remaining = load<PendingNoteOperation[]>(NOTE_PENDING_KEY, [])
+        .filter((operation) => !sentIds.has(operation.id));
+      save(NOTE_PENDING_KEY, remaining);
+      let merged = response.data.notes.map((note) => ({
+        ...note,
+        createdAt: String(note.createdAt),
+      }));
+      for (const operation of remaining) {
+        if (operation.type === "delete") {
+          merged = merged.filter((note) => note.id !== operation.noteId);
+          continue;
+        }
+        const local = getNotes().find((note) => note.id === operation.noteId);
+        if (local) merged = [local, ...merged.filter((note) => note.id !== local.id)];
+      }
+      saveNotes(merged);
+      if (remaining.length) scheduleNoteSync();
+      return true;
+    } catch {
+      return false;
+    }
+  })().finally(() => { noteSyncPromise = null; });
+  return noteSyncPromise;
 }

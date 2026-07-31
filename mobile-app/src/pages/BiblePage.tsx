@@ -190,6 +190,14 @@ export function BiblePage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const searchRequestRef = useRef(0);
+  const readingScrollRef = useRef<HTMLDivElement>(null);
+  const activeChapterButtonRef = useRef<HTMLButtonElement>(null);
+  const swipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+  } | null>(null);
+  const suppressVerseClickRef = useRef(false);
   const [fontSize, setFontSize] = useState(() => {
     const saved = Number(localStorage.getItem("ob.bible.fontSize"));
     return [17, 19, 21, 23].includes(saved) ? saved : 19;
@@ -234,6 +242,10 @@ export function BiblePage() {
   useEffect(() => {
     setReading({ version: version.code, book: book.code, chapter });
   }, [version.code, book.code, chapter]);
+
+  useEffect(() => {
+    readingScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [book.code, chapter]);
 
   useEffect(() => {
     setData(null);
@@ -395,6 +407,50 @@ export function BiblePage() {
     setPickerBook(null);
   };
 
+  const gotoAdjacentChapter = (direction: -1 | 1) => {
+    const bookIndex = BOOKS.findIndex((candidate) => candidate.code === book.code);
+    if (direction < 0) {
+      if (chapter > 1) {
+        gotoChapter(chapter - 1);
+      } else if (bookIndex > 0) {
+        const previousBook = BOOKS[bookIndex - 1];
+        gotoChapter(previousBook.chapters, previousBook.code);
+      }
+      return;
+    }
+
+    if (chapter < maxChapter) {
+      gotoChapter(chapter + 1);
+    } else if (bookIndex >= 0 && bookIndex < BOOKS.length - 1) {
+      gotoChapter(1, BOOKS[bookIndex + 1].code);
+    }
+  };
+
+  const handleReadingPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    };
+  };
+
+  const handleReadingPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || start.pointerId !== event.pointerId || !event.isPrimary) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    if (Math.abs(deltaX) < 64 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+
+    suppressVerseClickRef.current = true;
+    window.setTimeout(() => {
+      suppressVerseClickRef.current = false;
+    }, 0);
+    gotoAdjacentChapter(deltaX < 0 ? 1 : -1);
+  };
+
   const gotoVersion = (t: string) => {
     setParams({ t, bk: book.code, c: String(chapter) });
     setPicker(null);
@@ -545,6 +601,20 @@ export function BiblePage() {
   };
 
   const pickerBookData = pickerBook ? getBookByCode(pickerBook) : null;
+
+  useEffect(() => {
+    if (
+      picker !== "chapter"
+      || pickerBookData?.code !== book.code
+      || !activeChapterButtonRef.current
+    ) return;
+
+    activeChapterButtonRef.current.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [book.code, picker, pickerBookData?.code]);
+
   const formatAudioTime = (seconds: number) => {
     const wholeSeconds = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
     return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, "0")}`;
@@ -786,11 +856,33 @@ export function BiblePage() {
       <div className="bible-toolbar">
         <div className="bible-reader-selectors" aria-label="经卷章节及译本选择">
           <button
-            className={`bible-reader-selector chapter${picker === "chapter" ? " is-open" : ""}`}
-            onClick={() => { setPicker(picker === "chapter" ? null : "chapter"); setPickerBook(null); }}
-            aria-label={`选择经卷和章节，当前为${displayedBook}第${chapter}章`}
+            className={`bible-reader-selector book${picker === "chapter" && !pickerBookData ? " is-open" : ""}`}
+            onClick={() => {
+              if (picker === "chapter" && !pickerBookData) {
+                setPicker(null);
+                return;
+              }
+              setPicker("chapter");
+              setPickerBook(null);
+            }}
+            aria-label={`选择书卷，当前为${displayedBook}`}
           >
-            {displayedBook} {chapter}
+            {displayedBook}
+          </button>
+          <button
+            className={`bible-reader-selector chapter-number${picker === "chapter" && pickerBookData ? " is-open" : ""}`}
+            onClick={() => {
+              if (picker === "chapter" && pickerBookData?.code === book.code) {
+                setPicker(null);
+                setPickerBook(null);
+                return;
+              }
+              setPicker("chapter");
+              setPickerBook(book.code);
+            }}
+            aria-label={`选择章节，当前为第${chapter}章`}
+          >
+            {chapter}
           </button>
           <button
             className={`bible-reader-selector version${picker === "version" ? " is-open" : ""}`}
@@ -867,6 +959,7 @@ export function BiblePage() {
                   {Array.from({ length: pickerBookData.chapters }, (_, i) => i + 1).map((n) => (
                     <button
                       key={n}
+                      ref={pickerBookData.code === book.code && n === chapter ? activeChapterButtonRef : undefined}
                       onClick={() => gotoChapter(n, pickerBookData.code)}
                       style={{
                         height: 40, borderRadius: 8, fontSize: 13, fontWeight: 700,
@@ -1175,9 +1268,15 @@ export function BiblePage() {
 
       {/* verses */}
       <div
-        className={`screen-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}`}
+        ref={readingScrollRef}
+        className={`screen-scroll bible-reading-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}`}
         style={{ padding: version.code === "pinyin" ? "12px 22px 24px" : version.lang === "ko" ? "14px 22px 24px" : "8px 24px 24px" }}
         onClick={() => picker && setPicker(null)}
+        onPointerDown={handleReadingPointerDown}
+        onPointerUp={handleReadingPointerUp}
+        onPointerCancel={() => {
+          swipeStartRef.current = null;
+        }}
       >
         {!data && !loadError && (
           <div style={{ fontSize: 13, color: "var(--body)" }}>加载经文中…</div>
@@ -1212,7 +1311,10 @@ export function BiblePage() {
                   role="button"
                   tabIndex={0}
                   aria-label={`选择${displayedBook}第${chapter}章${v.label}节`}
-                  onClick={() => toggleVerseSelection(v.verse)}
+                  onClick={() => {
+                    if (suppressVerseClickRef.current) return;
+                    toggleVerseSelection(v.verse);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -1394,44 +1496,47 @@ export function BiblePage() {
       {/* selection sheet (design 1b) */}
       {selectedVerses.length > 0 && selectedVerse && (
         <>
-          <div className="sheet">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 14 }}>
-              <div style={{ fontSize: 15, fontWeight: 800 }}>{displayedBook} {chapter}:{selectedRangeLabel}</div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>已选中 {selectedVerses.length} 节</div>
-              <div style={{ flex: 1 }} />
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", letterSpacing: "0.06em" }}>{version.label}</div>
+          <div className="sheet verse-action-sheet" role="dialog" aria-label="经文操作" data-testid="verse-action-sheet">
+            <header className="verse-action-sheet-header">
+              <div className="verse-action-reference">
+                <strong>{displayedBook} {chapter}:{selectedRangeLabel}</strong>
+                <span>{selectedVerses.length} 节 · {version.label}</span>
+              </div>
               <button type="button" className="icon-btn icon-btn-ghost sheet-close-btn" aria-label="关闭经文选择" onClick={closeSheet}><Icon name="x" size={17} /></button>
-            </div>
+            </header>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 10, marginBottom: 10 }}>
-              <div style={{ flex: "none", whiteSpace: "nowrap", fontSize: 12, fontWeight: 800 }}>高亮</div>
+            <div className="verse-highlight-row">
+              <span className="verse-highlight-label">高亮</span>
               {HIGHLIGHT_COLORS.map((color, colorIndex) => (
                 <button
                   key={color}
+                  type="button"
+                  className="verse-highlight-choice"
                   aria-label={`使用第 ${colorIndex + 1} 种高亮颜色`}
                   onClick={() => {
                     selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color, version.code));
                     setStoreVersion((v) => v + 1);
                   }}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34,
-                    background: color, borderRadius: "50%",
-                    border: selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) ? "2px solid var(--ink)" : "1px solid var(--line)",
-                  }}
                 >
-                  {selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) && <Icon name="check" size={14} />}
+                  <span
+                    className={`verse-highlight-swatch${selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) ? " active" : ""}`}
+                    style={{ background: color }}
+                  >
+                    {selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) && <Icon name="check" size={13} />}
+                  </span>
                 </button>
               ))}
-              <div style={{ flex: 1 }} />
               <button
-                title="取消高亮"
+                type="button"
+                className="verse-highlight-choice"
                 onClick={() => {
                   selectedVerses.forEach((verse) => clearHighlight(book.code, chapter, verse.verse));
                   setStoreVersion((v) => v + 1);
                 }}
                 aria-label="取消高亮"
-                style={{ width: 34, height: 34, borderRadius: "50%", border: "1px solid var(--line)", background: "linear-gradient(135deg,#FFFFFF 44%,#18191F 44%,#18191F 56%,#FFFFFF 56%)" }}
-              />
+              >
+                <span className="verse-highlight-swatch verse-highlight-clear" />
+              </button>
             </div>
 
             {noteOpen && selectedVerses.length === 1 ? (
@@ -1461,7 +1566,7 @@ export function BiblePage() {
                 <button type="submit" style={{ height: 44, padding: "0 16px", background: "var(--purple)", borderRadius: 100, color: "#fff", fontSize: 13, fontWeight: 800 }}>{editingNoteId ? "更新" : "保存"}</button>
               </form>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+              <div className="verse-action-grid">
                 {[
                   {
                     label: selectedNotes.length ? "编辑笔记" : "笔记",
@@ -1479,16 +1584,17 @@ export function BiblePage() {
                     disabled: selectedVerses.length !== 1,
                   },
                 ].map((a) => (
-                  <button key={a.label} disabled={a.disabled} onClick={a.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, opacity: a.disabled ? 0.35 : 1 }}>
-                    <div style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", width: 52, height: 52,
-                      background: a.primary ? "var(--purple)" : "var(--white)",
-                      border: "1px solid var(--line)", borderRadius: 12, boxShadow: "var(--shadow-card)",
-                      color: a.primary ? "#fff" : "var(--ink)",
-                    }}>
+                  <button
+                    type="button"
+                    key={a.label}
+                    className={`verse-action-button${a.primary ? " primary" : ""}`}
+                    disabled={a.disabled}
+                    onClick={a.onClick}
+                  >
+                    <span className="verse-action-icon">
                       <Icon name={a.icon} size={20} />
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: a.primary ? 800 : 700 }}>{a.label}</div>
+                    </span>
+                    <span className="verse-action-label">{a.label}</span>
                   </button>
                 ))}
               </div>

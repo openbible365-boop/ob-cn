@@ -14,9 +14,11 @@ import { MyContentPage } from "./pages/MyContentPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { MyActivitiesPage } from "./pages/MyActivitiesPage";
 import { AccountDataPage } from "./pages/AccountDataPage";
+import { ReadingPlansPage } from "./pages/ReadingPlansPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LegalPage } from "./pages/LegalPage";
-import { syncHighlights } from "./data/annotations";
+import { syncHighlights, syncNotes } from "./data/annotations";
+import { syncConversations } from "./data/huidu";
 import { fetchMe } from "./data/profile";
 
 function RequireLogin({ children }: { children: ReactNode }) {
@@ -43,7 +45,11 @@ export default function App() {
   const showTabBar = TAB_PATHS.includes(pathname);
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
-  useEffect(() => { void syncHighlights(); }, []);
+  useEffect(() => {
+    void syncHighlights();
+    void syncNotes();
+    void syncConversations();
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -117,6 +123,7 @@ export default function App() {
         <Route path="/me/notifications" element={<NotificationsPage />} />
         <Route path="/me/activities" element={<RequireLogin><MyActivitiesPage /></RequireLogin>} />
         <Route path="/me/account" element={<RequireLogin><AccountDataPage /></RequireLogin>} />
+        <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>
       {showTabBar && <TabBar hidden={!isTabBarVisible} />}

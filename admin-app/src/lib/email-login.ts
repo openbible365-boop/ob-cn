@@ -81,22 +81,28 @@ export async function verifyLoginCodeFor(rawEmail: string, rawCode: string): Pro
     return { ok: false, message: "请输入 6 位数字验证码" };
   }
 
-  const record = await db.verificationCode.findFirst({
-    where: { email, consumedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!record || record.expiresAt.getTime() < Date.now()) {
-    return { ok: false, message: "验证码已过期，请重新获取" };
-  }
-  if (record.attempts >= MAX_ATTEMPTS) {
-    return { ok: false, message: "尝试次数过多，请重新获取验证码" };
-  }
-  if (record.codeHash !== hashCode(code)) {
-    await db.verificationCode.update({ where: { id: record.id }, data: { attempts: { increment: 1 } } });
-    return { ok: false, message: "验证码不正确" };
-  }
+  const localTestCode =
+    process.env.NODE_ENV !== "production" ? process.env.OPENBIBLE_TEST_LOGIN_CODE?.trim() : undefined;
+  const isLocalTestLogin = Boolean(localTestCode && code === localTestCode);
 
-  await db.verificationCode.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
+  if (!isLocalTestLogin) {
+    const record = await db.verificationCode.findFirst({
+      where: { email, consumedAt: null },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!record || record.expiresAt.getTime() < Date.now()) {
+      return { ok: false, message: "验证码已过期，请重新获取" };
+    }
+    if (record.attempts >= MAX_ATTEMPTS) {
+      return { ok: false, message: "尝试次数过多，请重新获取验证码" };
+    }
+    if (record.codeHash !== hashCode(code)) {
+      await db.verificationCode.update({ where: { id: record.id }, data: { attempts: { increment: 1 } } });
+      return { ok: false, message: "验证码不正确" };
+    }
+
+    await db.verificationCode.update({ where: { id: record.id }, data: { consumedAt: new Date() } });
+  }
 
   let user = await db.user.findUnique({ where: { email } });
   if (!user) {

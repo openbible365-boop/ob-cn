@@ -8,6 +8,7 @@ type Role = "SUPER_ADMIN" | "MODERATOR";
 const NAV_ITEMS: { href: string; label: string; roles: Role[] }[] = [
   { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
+  { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"] },
   { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"] },
   { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"] },

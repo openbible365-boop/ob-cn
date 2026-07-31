@@ -128,6 +128,10 @@ a {
   -webkit-overflow-scrolling: touch;
 }
 
+.bible-reading-scroll {
+  touch-action: pan-y;
+}
+
 /* Commentary reading */
 .annotation-reader {
   padding: 16px 20px 24px;
@@ -552,12 +556,36 @@ a {
   font-size: 14px;
 }
 
+.bible-reader-selector.book {
+  max-width: 118px;
+  padding-right: 8px;
+  padding-left: 8px;
+  border-radius: 17px 0 0 17px;
+  font-size: 13px;
+}
+
+.bible-reader-selector.chapter-number {
+  width: 32px;
+  flex: none;
+  padding: 0 3px;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.bible-reader-selector.chapter-number.is-wide {
+  width: auto;
+  min-width: 46px;
+  padding-right: 7px;
+  padding-left: 7px;
+}
+
 .bible-reader-selector.version {
   max-width: 104px;
   border-radius: 0 17px 17px 0;
 }
 
-.bible-reader-selector.chapter.is-open {
+.bible-reader-selector.book.is-open,
+.bible-reader-selector.chapter-number.is-open {
   background: var(--ink);
   color: var(--yellow);
 }
@@ -592,8 +620,12 @@ a {
   bottom: 0;
   left: 0;
   z-index: 40;
-  overflow: hidden;
-  padding: 8px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 14px calc(82px + env(safe-area-inset-bottom));
+  scroll-padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  touch-action: pan-y;
   border-right: 0;
   border-bottom: 0;
   border-left: 0;
@@ -1670,6 +1702,19 @@ a {
     max-width: 108px;
   }
 
+  .bible-reader-selector.book {
+    max-width: 92px;
+    padding-right: 4px;
+    padding-left: 4px;
+    font-size: 12px;
+  }
+
+  .bible-reader-selector.chapter-number {
+    width: 32px;
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
   .bible-reader-selector.version {
     max-width: 74px;
   }
@@ -1688,6 +1733,104 @@ a {
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--shadow-card);
+}
+
+.notification-daily-verse-demo {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 178px;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid rgba(188, 142, 61, 0.22);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.2), transparent 34%),
+    linear-gradient(145deg, #fff5d9 0%, #fffaf0 52%, #f5edf9 100%);
+  color: #25201a;
+  text-align: left;
+  box-shadow: 0 10px 26px rgba(75, 62, 43, 0.08);
+}
+
+.notification-daily-verse-demo::after {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  color: rgba(143, 76, 193, 0.18);
+  content: "“";
+  font-family: Georgia, serif;
+  font-size: 86px;
+  line-height: 0.8;
+  pointer-events: none;
+}
+
+.notification-daily-verse-kicker {
+  position: relative;
+  z-index: 1;
+  color: #805516;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.notification-daily-verse-demo > strong {
+  position: relative;
+  z-index: 1;
+  max-width: 90%;
+  margin-top: 18px;
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.notification-daily-verse-reference {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  color: #675f54;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.notification-daily-verse-action {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 3px;
+  margin-top: 16px;
+  padding: 0 11px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #74409a;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+body.dark .notification-daily-verse-demo {
+  border-color: rgba(226, 184, 90, 0.2);
+  background:
+    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.26), transparent 36%),
+    linear-gradient(145deg, #2a2418 0%, #211f1b 50%, #241c2a 100%);
+  color: #f6f0e6;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+body.dark .notification-daily-verse-kicker {
+  color: #e6bd61;
+}
+
+body.dark .notification-daily-verse-reference {
+  color: #bcb4a8;
+}
+
+body.dark .notification-daily-verse-action {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d5acee;
 }
 
 .btn-primary {
@@ -1938,6 +2081,161 @@ a {
   border-top: 1px solid var(--line);
   padding: 16px 20px calc(14px + env(safe-area-inset-bottom));
   z-index: 41;
+}
+
+.verse-action-sheet {
+  padding: 11px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 0;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -10px 34px rgba(39, 34, 24, 0.12);
+}
+
+.verse-action-sheet-header {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 10px;
+}
+
+.verse-action-reference {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.verse-action-reference strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verse-action-reference span {
+  flex: none;
+  color: var(--body);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.verse-action-sheet .sheet-close-btn {
+  width: 44px;
+  height: 44px;
+  margin: 0 -10px 0 0;
+}
+
+.verse-highlight-row {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0 0 4px;
+}
+
+.verse-highlight-label {
+  width: 44px;
+  flex: none;
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.verse-highlight-choice {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.verse-highlight-choice:focus-visible,
+.verse-action-button:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: -2px;
+}
+
+.verse-highlight-swatch {
+  display: inline-flex;
+  width: 27px;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(24, 25, 31, 0.12);
+  border-radius: 50%;
+  color: var(--ink);
+}
+
+.verse-highlight-swatch.active {
+  border: 2px solid var(--ink);
+}
+
+.verse-highlight-clear {
+  background:
+    linear-gradient(135deg,
+      var(--white) 43%,
+      var(--ink) 44%,
+      var(--ink) 54%,
+      var(--white) 55%);
+}
+
+.verse-action-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.verse-action-button {
+  display: flex;
+  min-width: 0;
+  min-height: 62px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 12px;
+  color: var(--body);
+}
+
+.verse-action-button:disabled {
+  opacity: 0.35;
+}
+
+.verse-action-button:not(:disabled):active {
+  background: var(--surface);
+}
+
+.verse-action-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.verse-action-button.primary .verse-action-icon {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.verse-action-label {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verse-action-button.primary .verse-action-label {
+  color: var(--purple-deep);
+  font-weight: 800;
 }
 
 /* audio Bible player */
@@ -3962,6 +4260,43 @@ a {
   height: var(--icon-size);
 }
 
+.verse-share-templates {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.verse-share-templates button {
+  display: flex;
+  min-width: 0;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.verse-share-templates button.active {
+  border-color: var(--purple-deep);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.verse-share-templates i {
+  display: block;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border: 1px solid rgba(24, 25, 31, 0.12);
+  border-radius: 50%;
+}
+
 .verse-share-preview {
   display: grid;
   width: min(76vw, 308px);
@@ -5835,6 +6170,8 @@ body.dark .bible-reader-selector {
   color: var(--yellow-ink);
 }
 
+body.dark .bible-reader-selector.book.is-open,
+body.dark .bible-reader-selector.chapter-number.is-open,
 body.dark .bible-reader-selector.chapter.is-open,
 body.dark .bible-reader-selector.version.is-open {
   background: #282a31;
@@ -6078,6 +6415,17 @@ body.dark .verse-share-preview {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
+body.dark .verse-share-templates button {
+  background: var(--surface-2);
+  color: var(--body);
+}
+
+body.dark .verse-share-templates button.active {
+  border-color: var(--purple);
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
 body.dark .verse-share-actions button.primary {
   border-color: #6d572b;
   background: var(--yellow);
@@ -6201,4 +6549,188 @@ body.dark .community-article-expand > p,
 body.dark .community-member-result-row,
 body.dark .community-management-result button {
   border-color: var(--line);
+}
+
+/* Personal and community reading plans */
+.reading-plans-scroll {
+  padding: 18px 18px calc(var(--safe-bottom) + 28px);
+}
+
+.reading-plans-intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--yellow-soft);
+}
+
+.reading-plans-intro > span {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--yellow);
+  color: var(--yellow-ink);
+}
+
+.reading-plans-intro h1,
+.reading-plan-card h2 {
+  margin: 0;
+  color: var(--ink);
+}
+
+.reading-plans-intro h1 {
+  font-size: 18px;
+}
+
+.reading-plans-intro p,
+.reading-plan-card > p {
+  margin: 5px 0 0;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.reading-plan-card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--surface-soft);
+}
+
+.reading-plan-card-top,
+.reading-plan-today,
+.reading-plan-action {
+  display: flex;
+  align-items: center;
+}
+
+.reading-plan-card-top {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.reading-plan-card-top small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.reading-plan-scope {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reading-plan-scope.is-community {
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
+.reading-plan-scope.is-personal {
+  background: var(--surface);
+  color: var(--body);
+}
+
+.reading-plan-card h2 {
+  font-size: 18px;
+}
+
+.reading-plan-progress {
+  height: 5px;
+  margin: 14px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.reading-plan-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--purple);
+}
+
+.reading-plan-today {
+  width: 100%;
+  min-height: 58px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.reading-plan-today > span {
+  display: grid;
+  gap: 2px;
+}
+
+.reading-plan-today small,
+.reading-plan-today em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.reading-plan-today b {
+  font-size: 14px;
+}
+
+.reading-plan-action {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--purple);
+  color: #fff;
+  font-weight: 700;
+}
+
+.reading-plan-action.is-complete {
+  background: var(--surface);
+  color: var(--success);
+}
+
+.reading-plan-feedback {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 13px;
+}
+
+.reading-plan-feedback.is-error {
+  color: var(--danger);
+}
+
+.reading-plan-feedback button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+}
+
+.reading-plan-empty,
+.reading-plans-note {
+  padding: 20px 4px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
 }

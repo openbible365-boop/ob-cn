@@ -296,16 +296,31 @@ export function AnnotationsPage() {
     <div className="screen annotation-reader-screen">
       <CompactToolbar
         ariaLabel={translate("当前注释卷章与版本")}
-        primary={`${displayedBook} ${isIntroduction ? translate("绪论") : chapter}`}
+        primary={displayedBook}
+        middle={isIntroduction ? translate("绪论") : chapter}
         secondary={translate("精读本注释")}
-        primaryAriaLabel={`${translate("选择书卷和章节，当前为")}${displayedBook}${isIntroduction ? translate("绪论") : `${translate("第")}${chapter}${translate("章")}`}`}
-        primaryOpen={chapterPickerOpen}
+        primaryAriaLabel={`${translate("选择书卷，当前为")}${displayedBook}`}
+        middleAriaLabel={isIntroduction
+          ? `${translate("选择章节，当前为")}${displayedBook}${translate("绪论")}`
+          : `${translate("选择章节，当前为第")}${chapter}${translate("章")}`}
+        primaryOpen={chapterPickerOpen && !pickerBookData}
+        middleOpen={chapterPickerOpen && pickerBookData?.code === book.code}
+        middleWide={isIntroduction}
         onPrimaryClick={() => {
-          setChapterPickerOpen((open) => !open);
+          setChapterPickerOpen((open) => !(open && !pickerBookData));
           setCopyrightOpen(false);
           setFontSettingsOpen(false);
           setAudioOpen(false);
           setPickerBook(null);
+        }}
+        onMiddleClick={() => {
+          const currentChapterPickerOpen =
+            chapterPickerOpen && pickerBookData?.code === book.code;
+          setChapterPickerOpen(!currentChapterPickerOpen);
+          setCopyrightOpen(false);
+          setFontSettingsOpen(false);
+          setAudioOpen(false);
+          setPickerBook(currentChapterPickerOpen ? null : book.code);
         }}
         actions={(
           <>

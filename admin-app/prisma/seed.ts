@@ -21,6 +21,26 @@ async function main() {
     },
   });
 
+  const configuredAdminUsername = process.env.OPENBIBLE_ADMIN_USERNAME?.trim();
+  const configuredAdminPassword = process.env.OPENBIBLE_ADMIN_PASSWORD;
+  if (configuredAdminUsername && configuredAdminPassword) {
+    const configuredAdminPasswordHash = await bcrypt.hash(configuredAdminPassword, 10);
+    await db.operator.upsert({
+      where: { username: configuredAdminUsername },
+      update: {
+        passwordHash: configuredAdminPasswordHash,
+        name: "jing730 · 超级管理员",
+        role: "SUPER_ADMIN",
+      },
+      create: {
+        username: configuredAdminUsername,
+        passwordHash: configuredAdminPasswordHash,
+        name: "jing730 · 超级管理员",
+        role: "SUPER_ADMIN",
+      },
+    });
+  }
+
   const moderatorPasswordHash = await bcrypt.hash("moderator123", 10);
   await db.operator.upsert({
     where: { username: "moderator" },
@@ -268,6 +288,17 @@ async function seedAiAndDashboard() {
       monthLabel: "7 月",
       monthlyBudgetCents: 60_000,
       monthSpendCents: 37_200,
+    },
+  });
+
+  await db.shareCardSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      activeTemplate: "warm",
+      autoRotate: false,
+      rotationDays: 7,
     },
   });
 
