@@ -1294,7 +1294,6 @@ export function BiblePage() {
             fontWeight: 400,
             lineHeight: version.code === "pinyin" ? 2.18 : version.lang === "ko" ? 1.82 : 1.95,
             color: "var(--ink)",
-            textWrap: "pretty",
           }}
         >
           {verses.map((v) => {
