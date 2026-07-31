@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
+import { SettingsProvider } from "./context/SettingsContext";
 import "./index.css";
 import App from "./App";
 
@@ -16,7 +17,9 @@ document.querySelector('meta[name="theme-color"]')?.setAttribute(
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HashRouter>
-      <App />
+      <SettingsProvider>
+        <App />
+      </SettingsProvider>
     </HashRouter>
   </StrictMode>,
 );

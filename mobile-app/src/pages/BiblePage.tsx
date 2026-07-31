@@ -38,7 +38,7 @@ import {
   stopAndroidMedia,
   updateAndroidMedia,
 } from "../data/android-media";
-import { translateToTraditional } from "../utils/cc";
+import { useSettings } from "../context/SettingsContext";
 
 const PlayingAudioIcon = () => (
   <span className="playing-audio-icon" aria-hidden="true">
@@ -150,9 +150,7 @@ export function BiblePage() {
   const bookCode = params.get("bk") ?? reading.book;
   const version = getVersion(versionCode);
   const book = getBookByCode(bookCode);
-  const [isTraditional, setIsTraditional] = useState(
-    () => localStorage.getItem("ob.bible.isTraditional") === "true",
-  );
+  const { isTraditional, setIsTraditional, translate } = useSettings();
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("ob.bible.isDarkMode") === "true",
   );
@@ -160,7 +158,6 @@ export function BiblePage() {
     const saved = localStorage.getItem("ob.bible.showHeadings");
     return saved === null ? true : saved === "true";
   });
-  const translate = (text: string) => isTraditional && text ? translateToTraditional(text) : text;
   const displayBook = bookName(book, version);
   const displayedBook = translate(displayBook);
 
@@ -266,9 +263,6 @@ export function BiblePage() {
     if (audio) audio.playbackRate = audioSpeed;
   }, [audioSpeed]);
 
-  useEffect(() => {
-    localStorage.setItem("ob.bible.isTraditional", String(isTraditional));
-  }, [isTraditional]);
 
   useEffect(() => {
     localStorage.setItem("ob.bible.isDarkMode", String(isDarkMode));
@@ -382,8 +376,14 @@ export function BiblePage() {
     .filter((verse): verse is Verse => Boolean(verse));
   const selectedVerse = selectedVerses[0] ?? null;
   const selectedNotes = notes.filter((note) => selected.has(note.verse));
-  const openNoteEditor = (verseNumber: number, existing?: (typeof notes)[number]) => {
-    setSelected(new Set([verseNumber]));
+  const openNoteEditor = (
+    verseNumber: number,
+    existing?: (typeof notes)[number],
+    preserveSelection = false,
+  ) => {
+    if (!preserveSelection) {
+      setSelected(new Set([verseNumber]));
+    }
     setNoteText(existing?.content ?? "");
     setEditingNoteId(existing?.id ?? null);
     setNoteOpen(true);
@@ -574,7 +574,7 @@ export function BiblePage() {
 
   const askHuidu = () => {
     if (selectedVerses.length === 0 || !selectedVerse) return;
-    const fullVerseText = selectedVerses.map(v => stripHtml(v.text)).join("");
+    const fullVerseText = selectedVerses.map(v => `${v.label}节：${stripHtml(v.text)}`).join("\n\n");
     const customRef = `${displayedBook} ${chapter}:${selectedRangeLabel}`;
     const conv = startConversation(
       displayedBook,
@@ -1441,7 +1441,6 @@ export function BiblePage() {
             </div>
 
             <button type="button" className="audio-current-passage" onClick={locateAudioVerse}>
-              <span className="audio-current-icon"><span className="audio-wave" aria-hidden="true"><i /><i /><i /><i /></span></span>
               <span className="audio-current-copy">
                 <b>正在朗读 · {displayedBook} {chapter}:{audioCurrentVerse?.label ?? 1}</b>
                 <small>{audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "经文加载中…"}</small>
@@ -1571,8 +1570,8 @@ export function BiblePage() {
                   {
                     label: selectedNotes.length ? "编辑笔记" : "笔记",
                     icon: "edit",
-                    onClick: () => openNoteEditor(selectedVerse.verse, selectedNotes[0]),
-                    disabled: selectedVerses.length !== 1,
+                    onClick: () => openNoteEditor(selectedVerse.verse, selectedNotes[0], true),
+                    disabled: selectedVerses.length === 0,
                   },
                   { label: "复制", icon: "align-justify", onClick: copyVerse },
                   { label: "分享", icon: "share", onClick: () => setShareOpen(true) },
@@ -1580,8 +1579,8 @@ export function BiblePage() {
                   {
                     label: "注释",
                     icon: "message-square",
-                    onClick: () => navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`),
-                    disabled: selectedVerses.length !== 1,
+                    onClick: () => selectedVerse && navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`),
+                    disabled: selectedVerses.length === 0,
                   },
                 ].map((a) => (
                   <button

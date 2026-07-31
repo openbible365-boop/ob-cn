@@ -3,12 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { BookIntroduction } from "../components/BookIntroduction";
+import { useSettings } from "../context/SettingsContext";
 import { PlayingAudioIcon } from "../components/AudioBiblePlayer";
 import {
   AnnotationAudioPlayer,
   type AnnotationAudioSegment,
 } from "../components/AnnotationAudioPlayer";
-import { translateToTraditional } from "../utils/cc";
 import {
   OT_BOOKS,
   NT_BOOKS,
@@ -56,11 +56,12 @@ function commentaryTopic(title: string) {
 
 // 注释页（design 2b）— real 精读本 (jingdu) commentary for every book.
 export function AnnotationsPage() {
+  const { translate } = useSettings();
   const [params, setParams] = useSearchParams();
   const reading = getReading();
   const version = getVersion(params.get("t") ?? reading.version);
   const book = getBookByCode(params.get("bk") ?? reading.book);
-  const displayBook = bookName(book, version);
+  const displayBook = translate(bookName(book, version));
   const isIntroduction = params.get("intro") === "1";
   const targetVerse = Number(params.get("v")) || null;
   const maxChapter = book.chapters;
@@ -97,7 +98,6 @@ export function AnnotationsPage() {
   const [locatedAnnotation, setLocatedAnnotation] = useState<string | null>(null);
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   const pickerBookData = pickerBook ? getBookByCode(pickerBook) : null;
-  const translate = (text: string) => isTraditional && text ? translateToTraditional(text) : text;
   const displayedBook = translate(displayBook);
 
   const indexedCommentary = loadedCommentaryKey === commentaryChapterKey

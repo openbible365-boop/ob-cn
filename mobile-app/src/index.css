@@ -261,7 +261,8 @@ a {
 
 .annotation-intro-section > p {
   color: #26272d;
-  text-wrap: pretty;
+  text-align: justify;
+  word-break: break-word;
 }
 
 .annotation-intro-facts {
@@ -1366,7 +1367,8 @@ a {
   font-weight: 400;
   line-height: 1.85;
   overflow-wrap: anywhere;
-  text-wrap: pretty;
+  text-align: justify;
+  word-break: break-word;
 }
 
 .annotation-comparison-section {
@@ -2488,11 +2490,11 @@ body.dark .notification-daily-verse-action {
 
 .audio-current-passage {
   display: grid;
-  grid-template-columns: 32px 1fr 18px;
+  grid-template-columns: 1fr 18px;
   align-items: center;
   gap: 9px;
   width: 100%;
-  padding: 7px 9px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 14px;
   background: var(--surface-2);
@@ -3826,7 +3828,8 @@ body.dark .notification-daily-verse-action {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.75;
-  text-wrap: pretty;
+  text-align: justify;
+  word-break: break-word;
 }
 
 .huidu-message-list {
@@ -3933,7 +3936,9 @@ body.dark .notification-daily-verse-action {
   font-size: 12px;
   font-weight: 500;
   line-height: 1.75;
-  text-wrap: pretty;
+  white-space: pre-line;
+  text-align: justify;
+  word-break: break-word;
 }
 
 .huidu-answer-paragraph + .huidu-answer-paragraph {
@@ -6220,6 +6225,109 @@ body.dark .bible-inline-note {
 
 body.dark .bible-toolbar-action {
   color: var(--ink);
+}
+
+/* Guest view in MePage */
+.me-guest-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 20px;
+}
+
+.me-guest-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.me-logo-shield {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: var(--surface-2);
+  border-radius: 20px;
+  color: var(--ink);
+}
+
+.me-guest-brand h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  display: flex;
+  gap: 2px;
+}
+
+.me-guest-brand p {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--body);
+  margin: 0;
+}
+
+.me-guest-prompt {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 10px;
+}
+
+.me-login-button {
+  width: 100%;
+  height: 48px;
+  background: var(--purple);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(127, 85, 224, 0.15);
+  transition: all 0.2s ease;
+}
+
+.me-login-button:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.me-guest-benefits {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: 14px;
+  margin-top: 15px;
+}
+
+.me-guest-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.me-guest-benefits .app-icon {
+  color: #27ae60;
+}
+
+.me-guest-scroll small {
+  font-size: 12px;
+  color: var(--body);
+  line-height: 1.5;
+  margin-top: 5px;
 }
 
 body.dark .bible-setting-segment button.active {
