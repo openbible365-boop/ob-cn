@@ -4102,6 +4102,12 @@ body.dark .notification-daily-verse-action {
   40% { transform: translateY(-3px); opacity: 1; }
 }
 
+.bible-verse-content {
+  text-align: justify;
+  text-justify: inter-character;
+  word-break: break-word;
+}
+
 /* scripture markup from the source data: proper-noun marks + pinyin ruby */
 .verse-text mark {
   background: transparent;
