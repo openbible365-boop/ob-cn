@@ -80,7 +80,8 @@ export function loadBook(versionCode: string, bookCode: string): Promise<BookDat
   const key = `${versionCode}/${bookCode}`;
   let promise = bookCache.get(key);
   if (!promise) {
-    promise = fetch(`/data/bible/${versionCode}/${bookCode}.json`)
+    const folder = versionCode === "pinyin" ? "pinyin2" : versionCode;
+    promise = fetch(`/data/bible/${folder}/${bookCode}.json`)
       .then((r) => {
         if (!r.ok) throw new Error(`load ${key}: HTTP ${r.status}`);
         return r.json() as Promise<RawBook>;
