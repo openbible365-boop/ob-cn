@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 type Role = "SUPER_ADMIN" | "MODERATOR";
 
@@ -48,9 +49,33 @@ export function AdminSidebar({ operatorName, role }: { operatorName: string; rol
 
       <div style={{ flex: 1 }} />
 
-      <div className="operator">
-        <div className="avatar">运</div>
-        {operatorName}
+      <div className="operator" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <div className="avatar" style={{ flexShrink: 0 }}>运</div>
+          <span style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{operatorName}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm("确定要退出登录吗？")) {
+              void signOut({ callbackUrl: "/admin/login" });
+            }
+          }}
+          style={{
+            border: 0,
+            background: "rgba(225,49,125,.11)",
+            color: "var(--pink)",
+            cursor: "pointer",
+            fontSize: 11,
+            fontWeight: 800,
+            padding: "4px 8px",
+            borderRadius: 6,
+            flexShrink: 0
+          }}
+          title="退出登录"
+        >
+          退出
+        </button>
       </div>
     </div>
   );
