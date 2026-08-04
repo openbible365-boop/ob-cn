@@ -3,15 +3,35 @@ import { formatTier } from "@/lib/format";
 import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { auth } from "@/auth";
+import Link from "next/link";
 
 export default async function CommunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; showMembers?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, showMembers } = await searchParams;
   const session = await auth();
   const canChangeTier = session?.user?.role === "SUPER_ADMIN";
+
+  let activeMembers: any[] = [];
+  let targetCommunityName = "";
+  if (showMembers) {
+    const communityInfo = await db.community.findUnique({
+      where: { id: showMembers },
+      select: {
+        name: true,
+        memberships: {
+          include: { user: true },
+          orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+        },
+      },
+    });
+    if (communityInfo) {
+      targetCommunityName = communityInfo.name;
+      activeMembers = communityInfo.memberships;
+    }
+  }
 
   const [communities, total] = await Promise.all([
     db.community.findMany({
@@ -87,7 +107,11 @@ export default async function CommunitiesPage({
                 ) : null}
               </div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>{c.owner?.name ?? "—"}</div>
-              <div style={{ fontWeight: 700 }}>{c._count.memberships}</div>
+              <div style={{ fontWeight: 700 }}>
+                <Link href={`/admin/communities?showMembers=${c.id}${q ? `&q=${q}` : ""}`} style={{ color: "var(--purple)", textDecoration: "underline" }}>
+                  {c._count.memberships}
+                </Link>
+              </div>
               <div>
                 <span className={`pill ${c.status === "ACTIVE" ? "pill-muted" : "pill-pink"}`}>{statusLabel}</span>
               </div>
@@ -145,6 +169,136 @@ export default async function CommunitiesPage({
           );
         })}
       </div>
+
+      {showMembers && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "var(--white)",
+            borderRadius: 16,
+            padding: 24,
+            width: 480,
+            maxWidth: "95%",
+            maxHeight: "80vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.15)",
+            border: "1px solid var(--line)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>成员清单</h3>
+                <span style={{ fontSize: 11, color: "var(--body)", fontWeight: 600 }}>{targetCommunityName || "当前社群"}</span>
+              </div>
+              <Link
+                href={`/admin/communities${q ? `?q=${q}` : ""}`}
+                style={{
+                  border: 0,
+                  background: "transparent",
+                  color: "var(--body)",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  fontWeight: 700,
+                  textDecoration: "none"
+                }}
+              >
+                ×
+              </Link>
+            </div>
+            
+            <div style={{
+              overflowY: "auto",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              paddingRight: 4
+            }}>
+              {activeMembers.length === 0 ? (
+                <div style={{ fontSize: 12, color: "var(--body)", textAlign: "center", padding: "20px 0" }}>没有成员。</div>
+              ) : (
+                activeMembers.map((m) => {
+                  const roleLabel = m.role === "OWNER" ? "群主" : m.role === "ADMIN" ? "管理员" : "成员";
+                  const roleColor = m.role === "OWNER" ? "rgba(225,49,125,.11)" : m.role === "ADMIN" ? "rgba(191,120,246,.15)" : "var(--surface-2)";
+                  const roleTextColor = m.role === "OWNER" ? "var(--pink)" : m.role === "ADMIN" ? "var(--purple)" : "var(--body)";
+                  
+                  return (
+                    <div key={m.id} style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 12,
+                      border: "1px solid var(--line)",
+                      background: "var(--surface)"
+                    }}>
+                      <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 100,
+                        background: m.user.avatarColor,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        flexShrink: 0
+                      }}>
+                        {m.user.name.slice(0, 1)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>{m.user.name}</span>
+                          <span style={{
+                            fontSize: 9,
+                            padding: "1px 5px",
+                            background: roleColor,
+                            color: roleTextColor,
+                            borderRadius: 6,
+                            fontWeight: 800
+                          }}>{roleLabel}</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--body)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {m.user.email ?? "无邮箱"} · 加入于 {m.joinedAt.toISOString().slice(0, 10)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            
+            <Link
+              href={`/admin/communities${q ? `?q=${q}` : ""}`}
+              style={{
+                marginTop: 18,
+                textAlign: "center",
+                display: "block",
+                background: "var(--surface-2)",
+                color: "var(--ink)",
+                textDecoration: "none",
+                padding: "10px",
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                border: "1px solid var(--line)"
+              }}
+            >
+              关闭成员列表
+            </Link>
+          </div>
+        </div>
+      )}
     </>
   );
 }

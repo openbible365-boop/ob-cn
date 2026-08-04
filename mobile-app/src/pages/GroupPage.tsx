@@ -110,6 +110,12 @@ export function GroupPage() {
   const [pendingResourceFile, setPendingResourceFile] = useState<File | null>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const resourceFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadDesc, setUploadDesc] = useState("");
+  const [uploadKnowledge, setUploadKnowledge] = useState(true);
+  const [uploadVisibility, setUploadVisibility] = useState<"MEMBERS" | "ADMINS">("MEMBERS");
   const speechInput = useSpeechInput({
     value: question,
     onChange: setQuestion,
@@ -294,28 +300,6 @@ export function GroupPage() {
         setIsSending(false);
         return;
       }
-      const result = await uploadCommunityResource(groupId || displayId, {
-        file: resourceFile,
-        title: resourceFile.name.replace(/\.[^.]+$/, "") || resourceFile.name,
-        description: prompt || undefined,
-        knowledgeText: prompt || undefined,
-        visibility: "MEMBERS",
-      });
-      if (result.ok) {
-        setChatMessages((current) => [...current, {
-          id: `assistant-upload-${Date.now()}`,
-          role: "assistant",
-          content: `${result.message} 已保存到${displayName}资料库，并加入本群知识库。`,
-          operation: true,
-        }]);
-        await loadWorkspace(false);
-      } else {
-        setChatMessages((current) => current.filter((message) => message.id !== userMessage.id));
-        setPendingResourceFile(resourceFile);
-        setQuestion(prompt);
-        setChatError(result.message);
-      }
-      setIsSending(false);
       return;
     }
     const result = await askCommunityAssistant({ groupId: groupId || displayId, message: prompt, history, visibility });
@@ -351,9 +335,59 @@ export function GroupPage() {
       return;
     }
     setPendingResourceFile(file);
-    setChatError("");
-    setTab("assistant");
+    if (!usesPrivateConversationAttachments) {
+      setUploadTitle(file.name.replace(/\.[^.]+$/, "") || file.name);
+      setUploadDesc("");
+      setUploadKnowledge(true);
+      setUploadVisibility("MEMBERS");
+      setShowUploadModal(true);
+    }
   }
+
+  const handleCancelUpload = () => {
+    setPendingResourceFile(null);
+    setShowUploadModal(false);
+  };
+
+  const handleRealUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingResourceFile || !displayId || isSending) return;
+    setIsSending(true);
+    setChatError("");
+    
+    const userMessage: ChatMessage = {
+      id: `user-upload-${Date.now()}`,
+      role: "user",
+      content: `上传资料：《${uploadTitle}》${uploadDesc ? `\n说明：${uploadDesc}` : ""}`,
+      visibility,
+    };
+    setChatMessages((current) => [...current, userMessage]);
+    setShowUploadModal(false);
+
+    const result = await uploadCommunityResource(groupId || displayId, {
+      file: pendingResourceFile,
+      title: uploadTitle.trim(),
+      description: uploadDesc.trim() || undefined,
+      knowledgeText: uploadKnowledge ? (uploadDesc.trim() || "群资料内容") : undefined,
+      visibility: uploadVisibility,
+    });
+
+    if (result.ok) {
+      setChatMessages((current) => [...current, {
+        id: `assistant-upload-${Date.now()}`,
+        role: "assistant",
+        content: `资料《${uploadTitle}》上传成功，已加入${displayName}资料库${uploadKnowledge ? "并完成 AI 索引" : ""}。`,
+        operation: true,
+      }]);
+      setPendingResourceFile(null);
+      await loadWorkspace(false);
+    } else {
+      setChatMessages((current) => current.filter((message) => message.id !== userMessage.id));
+      setChatError(result.message);
+      setShowUploadModal(true);
+    }
+    setIsSending(false);
+  };
 
   async function handleActionConfirm(messageId: string, action: AssistantAction) {
     if (!displayId || confirmingMessageId) return;
@@ -397,6 +431,40 @@ export function GroupPage() {
           <button className="bible-toolbar-action" aria-label={isOfficial ? "平台管理" : "社群管理"} title={isOfficial ? "平台管理" : "社群管理"} onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
         ) : undefined}
       />
+
+      {workspace && workspace.community.parentId && (
+        <div style={{ background: "rgba(191,120,246,0.08)", padding: "10px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink)", fontWeight: 600 }}>
+            <Icon name="users" size={14} style={{ color: "var(--purple)" }} />
+            <span>{workspace.access.isDirectMember ? "已加入该小组" : "目前通过主社群访问此小组"}</span>
+          </div>
+          <button
+            type="button"
+            disabled={workspaceBusy}
+            onClick={() => {
+              if (workspace.access.isDirectMember) {
+                if (window.confirm("确定退出该小组吗？")) {
+                  void runWorkspaceAction({ action: "LEAVE_SUBGROUP" });
+                }
+              } else {
+                void runWorkspaceAction({ action: "JOIN_SUBGROUP" });
+              }
+            }}
+            style={{
+              padding: "4px 10px",
+              background: workspace.access.isDirectMember ? "transparent" : "var(--purple)",
+              color: workspace.access.isDirectMember ? "var(--pink)" : "var(--white)",
+              border: workspace.access.isDirectMember ? "1px solid var(--line)" : 0,
+              borderRadius: 8,
+              fontSize: 11,
+              fontWeight: 800,
+              cursor: "pointer"
+            }}
+          >
+            {workspace.access.isDirectMember ? "退出小组" : "加入小组"}
+          </button>
+        </div>
+      )}
 
       <div className={`community-tabs${isOfficial ? " is-official" : workspace?.access.isAdmin ? " has-groups" : ""}`} role="tablist" aria-label="社群功能">
         {visibleTabs.map((item) => (
@@ -561,6 +629,67 @@ export function GroupPage() {
             </span>
           </form>
         </>
+      )}
+      {showUploadModal && pendingResourceFile && (
+        <div className="community-publish-backdrop" onClick={handleCancelUpload} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="community-action-sheet" role="dialog" aria-modal="true" aria-label="资料上传详情" onClick={(event) => event.stopPropagation()} style={{ maxWidth: 400, width: "95%", borderRadius: 18, padding: 22 }}>
+            <div className="community-publish-sheet-header" style={{ marginBottom: 15 }}>
+              <div><b>上传群资料</b><span>补充资料详细信息，使群成员及 AI 更易检索</span></div>
+              <button type="button" aria-label="关闭" onClick={handleCancelUpload}><Icon name="x" size={19} /></button>
+            </div>
+            <form onSubmit={handleRealUpload} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
+                资料标题 (最多 100 字)
+                <input
+                  required
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value.slice(0, 100))}
+                  style={{ width: "100%", height: 40, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)" }}
+                />
+              </label>
+
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
+                资料简介 (说明)
+                <textarea
+                  value={uploadDesc}
+                  onChange={(e) => setUploadDesc(e.target.value.slice(0, 500))}
+                  rows={3}
+                  placeholder="填写资料摘要、用途，有助于小组成员阅读"
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)", resize: "vertical", font: "inherit" }}
+                />
+              </label>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "var(--body)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={uploadKnowledge}
+                  onChange={(e) => setUploadKnowledge(e.target.checked)}
+                  style={{ width: 16, height: 16, cursor: "pointer" }}
+                />
+                同步至 AI 知识库 (允许助手引用此内容)
+              </label>
+
+              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
+                可见范围
+                <select
+                  value={uploadVisibility}
+                  onChange={(e) => setUploadVisibility(e.target.value as "MEMBERS" | "ADMINS")}
+                  style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)" }}
+                >
+                  <option value="MEMBERS">全体成员可见 (MEMBERS)</option>
+                  <option value="ADMINS">仅管理员可见 (ADMINS)</option>
+                </select>
+              </label>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="button" className="btn-secondary" onClick={handleCancelUpload} style={{ flex: 1, minHeight: 40, border: "1px solid var(--line)" }}>取消</button>
+                <button type="submit" className="btn-primary" disabled={isSending} style={{ flex: 1, minHeight: 40 }}>
+                  {isSending ? "正在上传..." : "确认上传"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

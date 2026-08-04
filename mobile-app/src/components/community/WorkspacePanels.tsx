@@ -285,19 +285,166 @@ export function CommunityEventsPanel({ workspace, busy, runAction }: PanelProps)
   );
 }
 
+function readableLastSeen(value: string | null | undefined) {
+  if (!value) return "离线";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "离线";
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 60_000) return "刚刚在线";
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 60) return `${diffMin} 分钟前在线`;
+  const diffHrs = Math.floor(diffMin / 60);
+  if (diffHrs < 24) return `${diffHrs} 小时前在线`;
+  const diffDays = Math.floor(diffHrs / 24);
+  return `${diffDays} 天前在线`;
+}
+
 export function CommunityMembersPanel({ workspace, busy, runAction }: PanelProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMsg, setInviteMsg] = useState("");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    setInviteBusy(true);
+    setInviteError("");
+    setInviteMsg("");
+    const ok = await runAction({ action: "INVITE_MEMBER", email: inviteEmail.trim() });
+    if (ok) {
+      setInviteMsg("邀请成功！已成功将该用户加入社群。");
+      setInviteEmail("");
+      setTimeout(() => {
+        setShowInvite(false);
+        setInviteMsg("");
+      }, 2000);
+    } else {
+      setInviteError("邀请失败，请确认邮箱格式或该用户是否已注册且状态正常。");
+    }
+    setInviteBusy(false);
+  };
+
+  const filteredMembers = workspace.members.filter((member) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      member.user.name.toLowerCase().includes(query) ||
+      (member.user.email ?? "").toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="screen-scroll community-panel-stack">
-      <div className="community-usage-line"><span>成员 {workspace.usage.members}{workspace.entitlements.memberLimit === null ? "" : `/${workspace.entitlements.memberLimit}`}</span><span>{workspace.entitlements.label}方案</span></div>
-      {workspace.members.map((member) => (
-        <article key={member.user.id} className="card community-member-card">
-          <div className="community-person-row">
+      <div className="community-usage-line" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>成员 {workspace.usage.members}{workspace.entitlements.memberLimit === null ? "" : `/${workspace.entitlements.memberLimit}`}</span>
+        {workspace.access.isAdmin && (
+          <button
+            type="button"
+            onClick={() => setShowInvite(true)}
+            style={{
+              padding: "4px 10px",
+              background: "rgba(191,120,246,0.15)",
+              color: "var(--purple)",
+              border: 0,
+              borderRadius: 8,
+              fontSize: 11,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              gap: 4
+            }}
+          >
+            <Icon name="plus" size={12} />
+            邀请成员
+          </button>
+        )}
+      </div>
+
+      <div style={{ padding: "0 14px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", background: "var(--surface-2)", borderRadius: 10, padding: "8px 12px", border: "1px solid var(--line)" }}>
+          <Icon name="search" size={16} style={{ color: "var(--body)", marginRight: 8 }} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索成员姓名或邮箱..."
+            style={{ border: 0, background: "transparent", fontSize: 13, color: "var(--ink)", width: "100%", outline: "none" }}
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery("")} style={{ border: 0, background: "transparent", color: "var(--body)", cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <Icon name="x" size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showInvite && (
+        <div className="community-publish-backdrop" onClick={() => setShowInvite(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="community-action-sheet" role="dialog" aria-modal="true" aria-label="邀请新成员" onClick={(event) => event.stopPropagation()} style={{ maxWidth: 360, width: "90%", borderRadius: 18, padding: 20 }}>
+            <div className="community-publish-sheet-header" style={{ marginBottom: 15 }}>
+              <div><b>邀请新成员</b><span>通过已注册邮箱邀请对方加入社群</span></div>
+              <button type="button" aria-label="关闭邀请" onClick={() => setShowInvite(false)}><Icon name="x" size={19} /></button>
+            </div>
+            <form onSubmit={handleInviteSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <input
+                type="email"
+                required
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="请输入对方登录邮箱..."
+                style={{ width: "100%", height: 44, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, background: "var(--white)" }}
+              />
+              {inviteError && <div style={{ fontSize: 11, color: "var(--pink)", fontWeight: 700 }}>{inviteError}</div>}
+              {inviteMsg && <div style={{ fontSize: 11, color: "#267A45", fontWeight: 700 }}>{inviteMsg}</div>}
+              <button type="submit" className="btn-primary" disabled={inviteBusy} style={{ minHeight: 40, width: "100%", marginTop: 8 }}>
+                {inviteBusy ? "邀请中..." : "确认邀请"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {filteredMembers.length === 0 && <div className="empty-state-inline">没有找到符合条件的成员。</div>}
+      {filteredMembers.map((member) => (
+        <article key={member.user.id} className="card community-member-card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="community-person-row" style={{ width: "100%" }}>
             {member.user.avatarUrl ? <img src={member.user.avatarUrl} alt="" /> : <span style={{ background: member.user.avatarColor }}>{Array.from(member.user.name)[0] ?? "友"}</span>}
-            <div><b>{member.user.name}</b><small>{roleLabel(member.role)} · {member.user.status === "ACTIVE" ? "正常" : member.user.status === "MUTED" ? "已禁言" : "已封禁"}</small></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <b>{member.user.name}</b>
+                {member.role === "OWNER" && <span style={{ fontSize: 8, padding: "2px 6px", background: "rgba(225,49,125,.11)", color: "var(--pink)", borderRadius: 6, fontWeight: 800 }}>群主</span>}
+                {member.role === "ADMIN" && <span style={{ fontSize: 8, padding: "2px 6px", background: "rgba(191,120,246,.15)", color: "var(--purple)", borderRadius: 6, fontWeight: 800 }}>管理员</span>}
+              </div>
+              <small>
+                {member.user.status === "MUTED" ? "已禁言" : member.user.status === "BANNED" ? "已封禁" : "正常"}
+                {` · ${readableLastSeen(member.user.lastSeenAt)}`}
+              </small>
+            </div>
           </div>
           {workspace.access.canManageMembers && member.role !== "OWNER" && (
-            <div className="community-member-actions">
-              {workspace.access.canManageRoles && <button className="compact-action-btn" disabled={busy} onClick={() => runAction({ action: "UPDATE_MEMBER_ROLE", userId: member.user.id, role: member.role === "ADMIN" ? "MEMBER" : "ADMIN" })}>{member.role === "ADMIN" ? "取消管理员" : "设为管理员"}</button>}
+            <div className="community-member-actions" style={{ marginTop: 4 }}>
+              {workspace.access.canManageRoles && (
+                <button className="compact-action-btn" disabled={busy} onClick={() => runAction({ action: "UPDATE_MEMBER_ROLE", userId: member.user.id, role: member.role === "ADMIN" ? "MEMBER" : "ADMIN" })}>
+                  {member.role === "ADMIN" ? "取消管理员" : "设为管理员"}
+                </button>
+              )}
+              {member.user.status === "MUTED" ? (
+                <button className="compact-action-btn" disabled={busy} onClick={() => runAction({ action: "UNMUTE_MEMBER", userId: member.user.id })}>
+                  解除禁言
+                </button>
+              ) : (
+                <button className="compact-action-btn" disabled={busy} onClick={() => window.confirm(`确认禁言 ${member.user.name} 7天吗？`) && runAction({ action: "MUTE_MEMBER", userId: member.user.id })}>
+                  禁言
+                </button>
+              )}
+              {workspace.access.isOwner && (
+                <button className="compact-action-btn" disabled={busy} onClick={() => window.confirm(`确认将群主转让给 ${member.user.name} 吗？您的身份将变更为管理员。`) && runAction({ action: "TRANSFER_OWNER", userId: member.user.id })}>
+                  转让群主
+                </button>
+              )}
               <button className="compact-action-btn is-danger" disabled={busy} onClick={() => window.confirm(`确认将 ${member.user.name} 移出社群？`) && runAction({ action: "REMOVE_MEMBER", userId: member.user.id })}>移除</button>
             </div>
           )}
@@ -327,15 +474,43 @@ export function CommunityResourcesPanel({
   onAskAssistant: (resource: WorkspaceResource) => void;
 }) {
   const [resourceFilter, setResourceFilter] = useState<ResourceFilter>("ALL");
-  const visibleResources = workspace.resources.filter((resource) =>
-    matchesResourceFilter(resource, resourceFilter),
-  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const visibleResources = workspace.resources.filter((resource) => {
+    const matchesFilter = matchesResourceFilter(resource, resourceFilter);
+    if (!matchesFilter) return false;
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      resource.title.toLowerCase().includes(query) ||
+      (resource.description ?? "").toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="screen-scroll community-panel-stack">
       <div className="community-usage-line">
         <span>资料 {workspace.usage.resources}{workspace.entitlements.resourceLimit === null ? "" : `/${workspace.entitlements.resourceLimit}`}</span>
       </div>
+      
+      <div style={{ padding: "0 14px 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", background: "var(--surface-2)", borderRadius: 10, padding: "8px 12px", border: "1px solid var(--line)" }}>
+          <Icon name="search" size={16} style={{ color: "var(--body)", marginRight: 8 }} />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索资料标题或描述..."
+            style={{ border: 0, background: "transparent", fontSize: 13, color: "var(--ink)", width: "100%", outline: "none" }}
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery("")} style={{ border: 0, background: "transparent", color: "var(--body)", cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <Icon name="x" size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="community-knowledge-note">
         <Icon name="sparkle" size={16} />
         <span>资料仅供本群使用；管理员可在“助手”中上传，AI 会检索当前群知识库。</span>
@@ -360,7 +535,7 @@ export function CommunityResourcesPanel({
         </div>
       )}
       {workspace.resources.length === 0 && <div className="empty-state-inline">暂时没有共享资料。{workspace.access.canManageResources ? "请返回“助手”上传。" : ""}</div>}
-      {workspace.resources.length > 0 && visibleResources.length === 0 && <div className="empty-state-inline">这个分类暂时没有资料。</div>}
+      {workspace.resources.length > 0 && visibleResources.length === 0 && <div className="empty-state-inline">没有找到符合条件的资料。</div>}
       {visibleResources.map((resource) => (
         <article key={resource.id} className="card community-resource-card">
           {resource.url && resource.type === "IMAGE" && <img className="community-resource-media-preview" src={resolveApiUrl(resource.url)} alt={resource.title} loading="lazy" />}
@@ -370,7 +545,12 @@ export function CommunityResourcesPanel({
             <span><Icon name={resourceIconName(resource)} size={18} /></span>
             <div>
               <b>{resource.title}</b>
-              <small>{resourceTypeLabel(resource.type)}{typeof resource.fileSize === "number" ? ` · ${readableFileSize(resource.fileSize)}` : ""} · {resource.visibility === "ADMINS" ? "仅管理员" : "全体成员"} · {resource.uploader.name}</small>
+              <small>
+                {resourceTypeLabel(resource.type)}
+                {typeof resource.fileSize === "number" ? ` · ${readableFileSize(resource.fileSize)}` : ""}
+                {typeof resource.downloadCount === "number" ? ` · 查看/下载 ${resource.downloadCount} 次` : ""}
+                {` · ${resource.visibility === "ADMINS" ? "仅管理员" : "全体成员"} · ${resource.uploader.name}`}
+              </small>
               {resource.description && <p>{resource.description}</p>}
               {resource.indexedAt && <em><Icon name="sparkle" size={11} />已加入本群知识库</em>}
             </div>
@@ -378,6 +558,10 @@ export function CommunityResourcesPanel({
           {resource.type === "TEXT" && resource.contentText && <details className="community-resource-text"><summary>查看文本内容</summary><p>{resource.contentText}</p></details>}
           <div className="community-resource-actions">
             <button className="compact-action-btn" onClick={() => onAskAssistant(resource)}><Icon name="sparkle" size={14} />问助手</button>
+            <button className={`compact-action-btn${resource.bookmarkedByMe ? " is-bookmarked" : ""}`} disabled={busy} onClick={() => runAction({ action: "TOGGLE_RESOURCE_BOOKMARK", resourceId: resource.id })} style={resource.bookmarkedByMe ? { color: "var(--pink)", fontWeight: 700 } : undefined}>
+              <Icon name="bookmark" size={14} />
+              {resource.bookmarkedByMe ? "已收藏" : "收藏"}
+            </button>
             {resource.url && <a className="compact-action-btn" href={resolveApiUrl(resource.url)} target="_blank" rel="noreferrer"><Icon name="download" size={14} />{resource.fileName ? "查看/下载" : "打开链接"}</a>}
             {workspace.access.canManageResources && <button className="compact-action-btn is-danger" disabled={busy} onClick={() => window.confirm("确认下架这份资料？") && runAction({ action: "UPDATE_RESOURCE_STATUS", resourceId: resource.id, status: "HIDDEN" })}>下架</button>}
           </div>

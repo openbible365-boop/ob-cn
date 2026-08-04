@@ -56,6 +56,7 @@ export type WorkspaceMember = {
     avatarColor: string;
     avatarUrl: string | null;
     status: "ACTIVE" | "MUTED" | "BANNED";
+    lastSeenAt?: string | null;
   };
 };
 
@@ -82,6 +83,8 @@ export type WorkspaceResource = {
   visibility: "MEMBERS" | "ADMINS";
   createdAt: string;
   uploader: { id: string; name: string };
+  downloadCount?: number;
+  bookmarkedByMe?: boolean;
 };
 
 export type CommunityWorkspace = {
@@ -100,6 +103,7 @@ export type CommunityWorkspace = {
     role: WorkspaceRole;
     isAdmin: boolean;
     isOwner: boolean;
+    isDirectMember?: boolean;
     canPublish: boolean;
     canManageMembers: boolean;
     canManageRoles: boolean;
@@ -148,7 +152,15 @@ export type WorkspaceActionInput =
   | { action: "CREATE_RESOURCE"; title: string; description?: string; type: WorkspaceResource["type"]; url?: string; contentText?: string; visibility: WorkspaceResource["visibility"] }
   | { action: "UPDATE_RESOURCE_STATUS"; resourceId: string; status: "ACTIVE" | "HIDDEN" | "DELETED" }
   | { action: "UPDATE_JOIN_POLICY"; joinPolicy: CommunityWorkspace["community"]["joinPolicy"] }
-  | { action: "UPDATE_COMMUNITY"; name: string; description?: string };
+  | { action: "UPDATE_COMMUNITY"; name: string; description?: string }
+  | { action: "INVITE_MEMBER"; email: string }
+  | { action: "MUTE_MEMBER"; userId: string }
+  | { action: "UNMUTE_MEMBER"; userId: string }
+  | { action: "TRANSFER_OWNER"; userId: string }
+  | { action: "JOIN_SUBGROUP" }
+  | { action: "LEAVE_SUBGROUP" }
+  | { action: "ARCHIVE_GROUP"; groupId: string }
+  | { action: "TOGGLE_RESOURCE_BOOKMARK"; resourceId: string };
 
 export async function fetchCommunityWorkspace(communityId: string): Promise<
   | { ok: true; workspace: CommunityWorkspace }

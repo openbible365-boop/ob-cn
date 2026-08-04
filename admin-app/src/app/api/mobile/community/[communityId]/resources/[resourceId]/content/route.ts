@@ -43,6 +43,27 @@ export async function GET(request: Request, { params }: RouteParams) {
     },
   });
   if (!resource?.storageKey) return error("文件不存在", 404);
+
+  const reqRange = request.headers.get("range");
+  if (!reqRange || reqRange.startsWith("bytes=0-")) {
+    await db.$transaction([
+      db.communityResource.update({
+        where: { id: resourceId },
+        data: { downloadCount: { increment: 1 } },
+      }),
+      db.communityAuditLog.create({
+        data: {
+          communityId: access.community.id,
+          actorId: user.id,
+          action: "RESOURCE_DOWNLOAD",
+          targetType: "CommunityResource",
+          targetId: resourceId,
+          detail: { fileName: resource.fileName },
+        },
+      }),
+    ]).catch((err) => console.error("Failed to log download count", err));
+  }
+
   const absolutePath = resolvedStoragePath(resource.storageKey);
   if (!absolutePath) return error("文件路径无效", 400);
 
