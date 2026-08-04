@@ -108,9 +108,9 @@ export default async function CommunitiesPage({
               </div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>{c.owner?.name ?? "—"}</div>
               <div style={{ fontWeight: 700 }}>
-                <Link href={`/admin/communities?showMembers=${c.id}${q ? `&q=${q}` : ""}`} style={{ color: "var(--purple)", textDecoration: "underline" }}>
+                <a href={`/admin/communities?showMembers=${c.id}${q ? `&q=${q}` : ""}`} style={{ color: "var(--purple)", textDecoration: "underline" }}>
                   {c._count.memberships}
-                </Link>
+                </a>
               </div>
               <div>
                 <span className={`pill ${c.status === "ACTIVE" ? "pill-muted" : "pill-pink"}`}>{statusLabel}</span>
@@ -200,7 +200,7 @@ export default async function CommunitiesPage({
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>成员清单</h3>
                 <span style={{ fontSize: 11, color: "var(--body)", fontWeight: 600 }}>{targetCommunityName || "当前社群"}</span>
               </div>
-              <Link
+              <a
                 href={`/admin/communities${q ? `?q=${q}` : ""}`}
                 style={{
                   border: 0,
@@ -213,7 +213,7 @@ export default async function CommunitiesPage({
                 }}
               >
                 ×
-              </Link>
+              </a>
             </div>
             
             <div style={{
@@ -278,7 +278,7 @@ export default async function CommunitiesPage({
               )}
             </div>
             
-            <Link
+             <a
               href={`/admin/communities${q ? `?q=${q}` : ""}`}
               style={{
                 marginTop: 18,
@@ -295,7 +295,7 @@ export default async function CommunitiesPage({
               }}
             >
               关闭成员列表
-            </Link>
+            </a>
           </div>
         </div>
       )}
