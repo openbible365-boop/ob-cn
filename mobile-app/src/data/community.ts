@@ -127,6 +127,7 @@ type CommunityListApiResult = {
     avatarColor: string;
     tier: "OFFICIAL_FREE" | "BASIC_FREE" | "MID" | "HIGH";
     isOfficial: boolean;
+    status: string;
     membershipRole: "OWNER" | "ADMIN" | "MEMBER" | null;
     memberCount: number;
     pendingJoinRequestCount: number;
@@ -154,38 +155,47 @@ export async function fetchCommunityGroups(): Promise<
       };
     }
 
-    const groups = result.communities.map((community): Group => ({
-      id: community.id,
-      letter: community.abbreviation,
-      color: community.avatarColor,
-      name: community.name,
-      badge: community.isOfficial
-        ? "公共社群"
-        : community.membershipRole === "OWNER"
-          ? "群主"
-          : undefined,
-      badgeStyle: community.isOfficial
-        ? "official"
-        : community.membershipRole === "OWNER"
-          ? "owner"
-          : undefined,
-      desc: community.isOfficial
-        ? "全体已注册成员"
-        : community.description
-          ? `${community.memberCount} 成员 · ${community.description}`
-          : `${community.memberCount} 成员`,
-      memberCount: community.memberCount,
-      tier:
-        community.tier === "MID"
-          ? "中阶"
-          : community.tier === "HIGH"
-            ? "高阶"
-            : community.tier === "BASIC_FREE"
-              ? "初阶"
-              : "官方",
-      membershipRole: community.membershipRole,
-      pendingJoinRequestCount: community.pendingJoinRequestCount,
-    }));
+    const groups = result.communities.map((community): Group => {
+      const isPending = community.status === "PENDING_APPROVAL";
+      return {
+        id: community.id,
+        letter: community.abbreviation,
+        color: community.avatarColor,
+        name: community.name,
+        badge: community.isOfficial
+          ? "公共社群"
+          : isPending
+            ? "审核中"
+            : community.membershipRole === "OWNER"
+              ? "群主"
+              : undefined,
+        badgeStyle: community.isOfficial
+          ? "official"
+          : isPending
+            ? "muted"
+            : community.membershipRole === "OWNER"
+              ? "owner"
+              : undefined,
+        desc: community.isOfficial
+          ? "全体已注册成员"
+          : isPending
+            ? "社群审核中，通过后即可使用"
+            : community.description
+              ? `${community.memberCount} 成员 · ${community.description}`
+              : `${community.memberCount} 成员`,
+        memberCount: community.memberCount,
+        tier:
+          community.tier === "MID"
+            ? "中阶"
+            : community.tier === "HIGH"
+              ? "高阶"
+              : community.tier === "BASIC_FREE"
+                ? "初阶"
+                : "官方",
+        membershipRole: community.membershipRole,
+        pendingJoinRequestCount: community.pendingJoinRequestCount,
+      };
+    });
     save(GROUPS_KEY, groups);
     return {
       ok: true,

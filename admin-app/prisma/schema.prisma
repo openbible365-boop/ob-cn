@@ -108,6 +108,7 @@ enum CommunityTier {
 }
 
 enum CommunityStatus {
+  PENDING_APPROVAL
   ACTIVE
   BANNED
   DISSOLVED

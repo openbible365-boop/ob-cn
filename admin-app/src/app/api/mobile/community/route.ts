@@ -21,13 +21,25 @@ export async function GET() {
   const [communities, ownedCommunityCount] = await Promise.all([
     db.community.findMany({
       where: {
-        status: "ACTIVE",
-        OR: user
-          ? [
-              { isOfficial: true },
-              { memberships: { some: { userId: user.id } } },
-            ]
-          : [{ isOfficial: true }],
+        OR: [
+          {
+            status: "ACTIVE",
+            OR: user
+              ? [
+                  { isOfficial: true },
+                  { memberships: { some: { userId: user.id } } },
+                ]
+              : [{ isOfficial: true }],
+          },
+          ...(user
+            ? [
+                {
+                  ownerId: user.id,
+                  status: "PENDING_APPROVAL",
+                },
+              ]
+            : []),
+        ],
       },
       select: {
         id: true,
@@ -37,6 +49,7 @@ export async function GET() {
         avatarColor: true,
         tier: true,
         isOfficial: true,
+        status: true,
         memberships: user
           ? {
               where: { userId: user.id },
@@ -70,6 +83,7 @@ export async function GET() {
       avatarColor: community.avatarColor,
       tier: community.tier,
       isOfficial: community.isOfficial,
+      status: community.status,
       membershipRole:
         "memberships" in community
           ? community.memberships[0]?.role ?? null
@@ -165,6 +179,7 @@ export async function POST(request: Request) {
         ownerId: user.id,
         tier: "BASIC_FREE",
         tierPriceCents: 0,
+        status: "PENDING_APPROVAL",
         memberships: {
           create: { userId: user.id, role: "OWNER" },
         },
@@ -176,6 +191,7 @@ export async function POST(request: Request) {
         description: true,
         avatarColor: true,
         tier: true,
+        status: true,
       },
     });
 

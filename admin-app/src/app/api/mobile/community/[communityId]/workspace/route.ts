@@ -657,6 +657,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           avatarColor,
           joinPolicy: "APPROVAL",
           tier: community.tier,
+          status: "PENDING_APPROVAL",
           memberships: { create: { userId: user.id, role } },
         },
         select: { id: true },

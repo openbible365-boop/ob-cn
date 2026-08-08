@@ -150,3 +150,42 @@ export async function changeCommunityTier(formData: FormData) {
   });
   revalidatePath("/admin/communities");
 }
+
+export async function approveCommunity(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const communityId = String(formData.get("communityId"));
+
+  const community = await db.community.update({
+    where: { id: communityId },
+    data: { status: "ACTIVE" },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "审批通过社群",
+    targetType: "Community",
+    targetId: community.id,
+    detail: community.name,
+  });
+
+  revalidatePath("/admin/communities");
+}
+
+export async function rejectCommunity(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const communityId = String(formData.get("communityId"));
+
+  const community = await db.community.delete({
+    where: { id: communityId },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "拒绝创建社群",
+    targetType: "Community",
+    targetId: communityId,
+    detail: `拒绝创建社群申请: ${community.name}`,
+  });
+
+  revalidatePath("/admin/communities");
+}

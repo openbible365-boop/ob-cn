@@ -24,6 +24,8 @@ services:
       DATABASE_URL: postgresql://openbible:${DB_PASSWORD}@db:5432/ob_cn?schema=public
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
+      AUTH_URL: https://admin.openbible.live/api/auth
+      NEXTAUTH_URL: https://admin.openbible.live
       APP_URL: https://admin.openbible.live
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-465}

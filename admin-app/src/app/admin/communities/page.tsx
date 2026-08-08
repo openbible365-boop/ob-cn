@@ -1,6 +1,14 @@
 import { db } from "@/lib/db";
 import { formatTier } from "@/lib/format";
-import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
+import {
+  warnCommunity,
+  banCommunity,
+  unbanCommunity,
+  dissolveCommunity,
+  changeCommunityTier,
+  approveCommunity,
+  rejectCommunity,
+} from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { auth } from "@/auth";
 import Link from "next/link";
@@ -8,9 +16,9 @@ import Link from "next/link";
 export default async function CommunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; showMembers?: string }>;
+  searchParams: Promise<{ q?: string; showMembers?: string; status?: string }>;
 }) {
-  const { q, showMembers } = await searchParams;
+  const { q, showMembers, status } = await searchParams;
   const session = await auth();
   const canChangeTier = session?.user?.role === "SUPER_ADMIN";
 
@@ -33,17 +41,21 @@ export default async function CommunitiesPage({
     }
   }
 
+  const filter: any = {};
+  if (q) {
+    filter.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { abbreviation: { contains: q, mode: "insensitive" } },
+      { owner: { name: { contains: q, mode: "insensitive" } } },
+    ];
+  }
+  if (status) {
+    filter.status = status;
+  }
+
   const [communities, total] = await Promise.all([
     db.community.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { abbreviation: { contains: q, mode: "insensitive" } },
-              { owner: { name: { contains: q, mode: "insensitive" } } },
-            ],
-          }
-        : undefined,
+      where: filter,
       include: {
         owner: true,
         parent: { select: { id: true, name: true } },
@@ -51,7 +63,7 @@ export default async function CommunitiesPage({
       },
       orderBy: { createdAt: "asc" },
     }),
-    db.community.count(),
+    db.community.count({ where: filter }),
   ]);
 
   return (
@@ -69,6 +81,14 @@ export default async function CommunitiesPage({
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <Link href="/admin/communities" className={`pill ${!status ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>全部</Link>
+          <Link href="/admin/communities?status=PENDING_APPROVAL" className={`pill ${status === "PENDING_APPROVAL" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>待审核</Link>
+          <Link href="/admin/communities?status=ACTIVE" className={`pill ${status === "ACTIVE" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>正常</Link>
+          <Link href="/admin/communities?status=BANNED" className={`pill ${status === "BANNED" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>已封禁</Link>
+          <Link href="/admin/communities?status=DISSOLVED" className={`pill ${status === "DISSOLVED" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>已解散</Link>
+        </div>
+
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 800 }}>全网分社群清单 · {total} 个</div>
           <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
@@ -82,7 +102,13 @@ export default async function CommunitiesPage({
 
         {communities.map((c) => {
           const statusLabel =
-            c.status === "DISSOLVED" ? "已解散" : c.status === "BANNED" ? "已封禁" : "正常";
+            c.status === "DISSOLVED"
+              ? "已解散"
+              : c.status === "BANNED"
+                ? "已封禁"
+                : c.status === "PENDING_APPROVAL"
+                  ? "待审核"
+                  : "正常";
 
           return (
             <div key={c.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 100px 90px 100px 110px 110px 220px" }}>
@@ -113,7 +139,13 @@ export default async function CommunitiesPage({
                 </a>
               </div>
               <div>
-                <span className={`pill ${c.status === "ACTIVE" ? "pill-muted" : "pill-pink"}`}>{statusLabel}</span>
+                <span className={`pill ${
+                  c.status === "ACTIVE"
+                    ? "pill-muted"
+                    : c.status === "PENDING_APPROVAL"
+                      ? "pill-yellow"
+                      : "pill-pink"
+                }`}>{statusLabel}</span>
               </div>
               <div style={{ fontWeight: 600, color: "var(--body)" }}>
                 {c.createdAt.toISOString().slice(0, 10)}
@@ -136,6 +168,22 @@ export default async function CommunitiesPage({
               <div className="row-actions">
                 {c.status === "DISSOLVED" ? (
                   <span className="action-body">已解散</span>
+                ) : c.status === "PENDING_APPROVAL" ? (
+                  <>
+                    <form action={approveCommunity}>
+                      <input type="hidden" name="communityId" value={c.id} />
+                      <button type="submit" className="action-purple">通过</button>
+                    </form>
+                    <form action={rejectCommunity}>
+                      <input type="hidden" name="communityId" value={c.id} />
+                      <ConfirmSubmitButton
+                        className="action-pink"
+                        confirmMessage={`确定要拒绝「${c.name}」的创建申请吗？拒绝后该社群将被直接删除且不可恢复。`}
+                      >
+                        拒绝
+                      </ConfirmSubmitButton>
+                    </form>
+                  </>
                 ) : (
                   <>
                     <form action={warnCommunity}>

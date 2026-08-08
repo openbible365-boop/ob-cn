@@ -921,6 +921,7 @@ async function executeConfirmedAction(payload: SignedAction) {
           tier: "BASIC_FREE",
           tierPriceCents: 0,
           joinPolicy: "APPROVAL",
+          status: "PENDING_APPROVAL",
           memberships: { create: { userId: payload.userId, role: "OWNER" } },
         },
         select: {
@@ -930,6 +931,7 @@ async function executeConfirmedAction(payload: SignedAction) {
           description: true,
           avatarColor: true,
           tier: true,
+          status: true,
         },
       });
       return NextResponse.json({
@@ -1018,11 +1020,12 @@ async function executeConfirmedAction(payload: SignedAction) {
             : "#FFD465",
           joinPolicy: "APPROVAL",
           tier: access.community.tier,
+          status: "PENDING_APPROVAL",
           memberships: {
             create: { userId: payload.userId, role: access.role },
           },
         },
-        select: { id: true, name: true },
+        select: { id: true, name: true, status: true },
       });
       await db.communityAuditLog.create({
         data: {
