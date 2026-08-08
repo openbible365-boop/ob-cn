@@ -35,7 +35,7 @@ export async function GET() {
             ? [
                 {
                   ownerId: user.id,
-                  status: "PENDING_APPROVAL",
+                  status: "PENDING_APPROVAL" as const,
                 },
               ]
             : []),
