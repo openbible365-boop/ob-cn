@@ -98,6 +98,7 @@ export type CommunityWorkspace = {
     isOfficial: boolean;
     kind: "PUBLIC" | "PRIVATE";
     joinPolicy: "OPEN" | "APPROVAL" | "INVITE_ONLY";
+    parentId?: string | null;
   };
   access: {
     role: WorkspaceRole;

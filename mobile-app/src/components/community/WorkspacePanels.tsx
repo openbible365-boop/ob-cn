@@ -89,9 +89,6 @@ function readableTime(value: string) {
   }).format(date);
 }
 
-function roleLabel(role: "OWNER" | "ADMIN" | "MEMBER") {
-  return role === "OWNER" ? "群主" : role === "ADMIN" ? "管理员" : "成员";
-}
 
 function resourceTypeLabel(type: WorkspaceResource["type"]) {
   return {
@@ -365,7 +362,9 @@ export function CommunityMembersPanel({ workspace, busy, runAction }: PanelProps
 
       <div style={{ padding: "0 14px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", background: "var(--surface-2)", borderRadius: 10, padding: "8px 12px", border: "1px solid var(--line)" }}>
-          <Icon name="search" size={16} style={{ color: "var(--body)", marginRight: 8 }} />
+          <span style={{ display: "flex", alignItems: "center", color: "var(--body)", marginRight: 8 }}>
+            <Icon name="search" size={16} />
+          </span>
           <input
             type="search"
             value={searchQuery}
@@ -495,7 +494,9 @@ export function CommunityResourcesPanel({
       
       <div style={{ padding: "0 14px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", background: "var(--surface-2)", borderRadius: 10, padding: "8px 12px", border: "1px solid var(--line)" }}>
-          <Icon name="search" size={16} style={{ color: "var(--body)", marginRight: 8 }} />
+          <span style={{ display: "flex", alignItems: "center", color: "var(--body)", marginRight: 8 }}>
+            <Icon name="search" size={16} />
+          </span>
           <input
             type="search"
             value={searchQuery}

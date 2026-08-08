@@ -435,7 +435,9 @@ export function GroupPage() {
       {workspace && workspace.community.parentId && (
         <div style={{ background: "rgba(191,120,246,0.08)", padding: "10px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink)", fontWeight: 600 }}>
-            <Icon name="users" size={14} style={{ color: "var(--purple)" }} />
+            <span style={{ display: "flex", alignItems: "center", color: "var(--purple)" }}>
+              <Icon name="users" size={14} />
+            </span>
             <span>{workspace.access.isDirectMember ? "已加入该小组" : "目前通过主社群访问此小组"}</span>
           </div>
           <button
