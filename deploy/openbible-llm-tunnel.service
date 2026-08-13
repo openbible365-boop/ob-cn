@@ -1,0 +1,24 @@
+[Unit]
+Description=OpenBible application-to-GPU LLM tunnel
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/ssh -NT \
+  -i /root/.ssh/openbible_llm_ed25519 \
+  -p 6000 \
+  -o BatchMode=yes \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=accept-new \
+  -L 172.20.0.1:8010:127.0.0.1:8010 \
+  root@47.238.7.44
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,121 @@
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
+
+const NATIVE_API_ORIGIN =
+  import.meta.env.VITE_API_ORIGIN || "https://app.openbible.live";
+
+export function resolveApiUrl(path: string) {
+  if (!Capacitor.isNativePlatform() || !path.startsWith("/")) return path;
+  return `${NATIVE_API_ORIGIN}${path}`;
+}
+
+/**
+ * 头像现在由服务端以文件返回路径；历史数据仍可能是 base64 data URI，
+ * 两种都能直接当 img.src 用，只有相对路径需要在原生端补上来源。
+ */
+export function resolveAvatarUrl(value: string | null | undefined) {
+  if (!value) return null;
+  return resolveApiUrl(value);
+}
+
+type ApiRequestOptions = {
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  body?: unknown;
+  headers?: Record<string, string>;
+  connectTimeout?: number;
+  readTimeout?: number;
+};
+
+export type ApiResponse<T> = {
+  ok: boolean;
+  status: number;
+  data: T | null;
+};
+
+function parseNativeData<T>(data: unknown): T | null {
+  if (data == null) return null;
+  if (typeof data !== "string") return data as T;
+
+  try {
+    return JSON.parse(data) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponse<T>> {
+  const method = options.method ?? "GET";
+  const headers = {
+    ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
+    ...options.headers,
+  };
+
+  if (Capacitor.isNativePlatform()) {
+    const response = await CapacitorHttp.request({
+      url: `${NATIVE_API_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`,
+      method,
+      headers,
+      data: options.body,
+      connectTimeout: options.connectTimeout ?? 15_000,
+      readTimeout: options.readTimeout ?? 90_000,
+      responseType: "json",
+    });
+
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
+      data: parseNativeData<T>(response.data),
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    options.readTimeout ?? 20_000,
+  );
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      credentials: "same-origin",
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    data: (await response.json().catch(() => null)) as T | null,
+  };
+}
+
+export async function apiFormRequest<T>(
+  path: string,
+  formData: FormData,
+  readTimeout = 120_000,
+): Promise<ApiResponse<T>> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), readTimeout);
+  const url = resolveApiUrl(path.startsWith("/") ? path : `/${path}`);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      credentials: Capacitor.isNativePlatform() ? "include" : "same-origin",
+      signal: controller.signal,
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      data: (await response.json().catch(() => null)) as T | null,
+    };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}

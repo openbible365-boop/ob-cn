@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenBible · 产品原型</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  body { background: var(--surface); }
+  .landing {
+    max-width: 960px; margin: 0 auto; padding: 72px 24px;
+  }
+  .landing-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 48px; }
+  .landing-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .landing-logo .mark {
+    display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+    background: var(--yellow); border-radius: 14px;
+  }
+  .landing-title { font-size: 30px; font-weight: 800; }
+  .landing-sub { font-size: 14px; font-weight: 500; color: var(--body); line-height: 1.7; max-width: 640px; }
+  .surface-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .surface-card {
+    display: flex; flex-direction: column; gap: 10px; padding: 24px; background: var(--white);
+    border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-card);
+    text-decoration: none; color: var(--ink); transition: transform .15s ease;
+  }
+  .surface-card:hover { transform: translateY(-2px); }
+  .surface-card .icon-wrap {
+    display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+    border-radius: 12px; margin-bottom: 4px;
+  }
+  .surface-card .name { font-size: 17px; font-weight: 800; }
+  .surface-card .desc { font-size: 12px; font-weight: 500; color: var(--body); line-height: 1.7; }
+  .surface-card .screens { font-size: 11px; font-weight: 700; color: var(--purple); margin-top: auto; padding-top: 6px; }
+  @media (max-width: 720px) {
+    .surface-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="landing">
+  <div class="landing-header">
+    <div class="landing-logo">
+      <div class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+      <div class="landing-title">OpenBible 产品原型</div>
+    </div>
+    <div class="landing-sub">基于 Design Canvas 全量还原的可点击原型 · Neobrutalism 风格 · 手机端核心阅读 / 注释 / 慧读 / 社群 / 个人中心，网页端三栏工作台，以及运营后台管理系统。数据均为示例内容。</div>
+  </div>
+
+  <div class="surface-grid">
+    <a class="surface-card" href="mobile/index.html">
+      <div class="icon-wrap" style="background:var(--yellow);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#18191F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+      <div class="name">手机端</div>
+      <div class="desc">圣经阅读 · 划线即问慧读 · 注释 · 社群 · 个人中心。18 个互通屏幕，含真实导航与状态。</div>
+      <div class="screens">进入原型 →</div>
+    </a>
+    <a class="surface-card" href="web/index.html">
+      <div class="icon-wrap" style="background:rgba(191,120,246,.16);color:var(--purple);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"></rect><line x1="8" y1="22" x2="16" y2="22"></line><line x1="12" y1="18" x2="12" y2="22"></line></svg></div>
+      <div class="name">网页端</div>
+      <div class="desc">openbible.live 桌面版：阅读页三栏联动、社群工作台、活动月历，与手机端视觉完全对齐。</div>
+      <div class="screens">进入原型 →</div>
+    </a>
+    <a class="surface-card" href="admin/index.html">
+      <div class="icon-wrap" style="background:var(--ink);color:var(--yellow);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+      <div class="name">后台管理</div>
+      <div class="desc">运营数据看板、AI 模型与提示词管理、内容审核、社群与用户管控。</div>
+      <div class="screens">进入原型 →</div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

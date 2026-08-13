@@ -1,0 +1,978 @@
+// OpenBible admin backend — data model for user & community management.
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Admin backend operators (separate from app end-users) ----------
+
+enum OperatorRole {
+  SUPER_ADMIN
+  MODERATOR
+}
+
+model Operator {
+  id           String       @id @default(cuid())
+  username     String       @unique
+  passwordHash String
+  name         String
+  role         OperatorRole @default(SUPER_ADMIN)
+  createdAt    DateTime     @default(now())
+
+  auditLogs           AuditLog[]
+  commentaryRevisions CommentaryRevision[]
+}
+
+// ---------- End-users of the OpenBible app ----------
+
+enum UserStatus {
+  ACTIVE
+  MUTED
+  BANNED
+}
+
+enum UserTier {
+  BASIC_FREE
+  MID
+  HIGH
+}
+
+enum AuthProvider {
+  EMAIL
+  APPLE
+  GOOGLE
+}
+
+model User {
+  id             String     @id @default(cuid())
+  uid            Int        @unique @default(autoincrement())
+  name           String
+  email          String?    @unique
+  avatarColor    String     @default("#FFD465")
+  avatarUrl      String?
+  tier           UserTier   @default(BASIC_FREE)
+  tierPriceCents Int        @default(0)
+  status         UserStatus @default(ACTIVE)
+  mutedUntil     DateTime?
+  banReason      String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime   @default(now())
+
+  authAccounts          AuthAccount[]
+  memberships           Membership[]
+  ownedCommunities      Community[]             @relation("CommunityOwner")
+  posts                 Post[]
+  postComments          PostComment[]
+  postLikes             PostLike[]
+  postBookmarks         PostBookmark[]
+  submittedReports      Report[]                @relation("ReportSubmitter")
+  eventSignups          EventSignup[]
+  uploadedResources     CommunityResource[]
+  communityAuditLogs    CommunityAuditLog[]
+  communityPresences    CommunityPresence[]
+  highlights            Highlight[]
+  notes                 Note[]
+  sessions              Session[]
+  conversations         Conversation[]
+  createdReadingPlans   ReadingPlan[]           @relation("ReadingPlanCreator")
+  readingPlanProgress   ReadingPlanEnrollment[]
+  notificationSettings  NotificationSetting[]
+  userNotifications     UserNotification[]
+  communityJoinRequests CommunityJoinRequest[]  @relation("CommunityJoinRequester")
+  reviewedJoinRequests  CommunityJoinRequest[]  @relation("CommunityJoinReviewer")
+}
+
+model AuthAccount {
+  id                String       @id @default(cuid())
+  userId            String
+  provider          AuthProvider
+  providerAccountId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@unique([provider, providerAccountId])
+}
+
+// ---------- Communities (分社群) ----------
+
+enum CommunityTier {
+  OFFICIAL_FREE
+  BASIC_FREE
+  MID
+  HIGH
+}
+
+enum CommunityStatus {
+  ACTIVE
+  BANNED
+  DISSOLVED
+}
+
+enum CommunityJoinPolicy {
+  OPEN
+  APPROVAL
+  INVITE_ONLY
+}
+
+model Community {
+  id                String              @id @default(cuid())
+  parentId          String?             @map("parent_id")
+  name              String
+  abbreviation      String              @unique
+  description       String?
+  avatarColor       String              @default("#FFD465")
+  isOfficial        Boolean             @default(false)
+  joinPolicy        CommunityJoinPolicy @default(APPROVAL)
+  tier              CommunityTier       @default(BASIC_FREE)
+  tierPriceCents    Int                 @default(0)
+  ownerId           String?             @unique
+  warningCount      Int                 @default(0)
+  status            CommunityStatus     @default(ACTIVE)
+  dailyActivity     Int                 @default(0)
+  aiTokensToday     Int                 @default(0)
+  aiTokenUsageDate  DateTime?           @db.Date
+  aiTokenDailyLimit Int?
+  createdAt         DateTime            @default(now())
+
+  parent       Community?             @relation("CommunityGroups", fields: [parentId], references: [id], onDelete: Cascade)
+  groups       Community[]            @relation("CommunityGroups")
+  owner        User?                  @relation("CommunityOwner", fields: [ownerId], references: [id])
+  memberships  Membership[]
+  posts        Post[]
+  reports      Report[]
+  events       Event[]
+  resources    CommunityResource[]
+  readingPlans ReadingPlan[]
+  auditLogs    CommunityAuditLog[]
+  joinRequests CommunityJoinRequest[]
+  presences    CommunityPresence[]
+
+  @@index([parentId])
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Membership {
+  id          String         @id @default(cuid())
+  userId      String
+  communityId String
+  role        MembershipRole @default(MEMBER)
+  joinedAt    DateTime       @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+}
+
+model CommunityPresence {
+  id          String   @id @default(cuid())
+  userId      String
+  communityId String
+  lastSeenAt  DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@index([communityId, lastSeenAt])
+}
+
+enum CommunityJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model CommunityJoinRequest {
+  id          String                     @id @default(cuid())
+  userId      String
+  communityId String
+  status      CommunityJoinRequestStatus @default(PENDING)
+  message     String?
+  reviewerId  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+
+  user      User      @relation("CommunityJoinRequester", fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  reviewer  User?     @relation("CommunityJoinReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, communityId])
+  @@index([communityId, status])
+  @@index([userId, status])
+}
+
+// ---------- Dashboard: daily snapshots ----------
+// Dashboard snapshots. Community CRUD now writes real operational data;
+// analytics aggregation remains a separate scheduled job/seed concern.
+
+model DailyMetric {
+  id                  String   @id @default(cuid())
+  date                DateTime @unique @db.Date
+  dau                 Int
+  mau                 Int
+  retentionD1Pct      Float
+  retentionD7Pct      Float
+  retentionD30Pct     Float
+  huiduPenetrationPct Float
+  avgRoundsPerSession Float
+  bibleReadingPct     Int
+  huiduPct            Int
+  communityPct        Int
+  annotationPct       Int
+  aiCallCount         Int
+  aiTokenCount        Int
+  aiAvgFirstTokenMs   Int
+  aiLikeRatePct       Float
+}
+
+model HotTopic {
+  id    String   @id @default(cuid())
+  date  DateTime @db.Date
+  label String
+  rank  Int
+}
+
+// ---------- AI model & prompt management ----------
+
+model AiSettings {
+  id                  String  @id @default("singleton")
+  autoFallbackEnabled Boolean @default(true)
+  rateLimited         Boolean @default(false)
+  monthLabel          String
+  monthlyBudgetCents  Int
+  monthSpendCents     Int
+}
+
+// ---------- Share-card visual settings ----------
+
+model ShareCardSettings {
+  id             String   @id @default("singleton")
+  activeTemplate String   @default("warm")
+  autoRotate     Boolean  @default(false)
+  rotationDays   Int      @default(7)
+  updatedAt      DateTime @updatedAt
+}
+
+enum AiModelRole {
+  PRIMARY
+  BACKUP
+}
+
+enum AiModelStatus {
+  NORMAL
+  STANDBY
+  DEGRADED
+}
+
+model AiModel {
+  id              String        @id @default(cuid())
+  role            AiModelRole   @unique
+  provider        String
+  modelName       String
+  temperature     Float
+  status          AiModelStatus @default(NORMAL)
+  apiKeyLast4     String?
+  apiKeyUpdatedAt DateTime?
+}
+
+enum PromptVersionStatus {
+  CANARY
+  GA
+  ARCHIVED
+}
+
+model PromptVersion {
+  id             String              @id @default(cuid())
+  version        String              @unique
+  description    String
+  status         PromptVersionStatus @default(CANARY)
+  rolloutPercent Int                 @default(10)
+  likeRatePct    Float?
+  dislikeRatePct Float?
+  createdAt      DateTime            @default(now())
+}
+
+// ---------- Content management & moderation ----------
+
+enum PostStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+}
+
+enum CommunityPostType {
+  POST
+  ARTICLE
+  NOTICE
+  MEDIA
+}
+
+enum CommunityPostMediaType {
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+enum CommunityPostVisibility {
+  PUBLIC
+  MEMBERS
+  ADMINS
+}
+
+model Post {
+  id           String                  @id @default(cuid())
+  communityId  String
+  authorId     String
+  postType     CommunityPostType       @default(POST)
+  title        String?
+  content      String
+  verseRef     String?
+  mediaType    CommunityPostMediaType?
+  mediaUrl     String?
+  visibility   CommunityPostVisibility @default(MEMBERS)
+  pinnedAt     DateTime?
+  likeCount    Int                     @default(0)
+  commentCount Int                     @default(0)
+  status       PostStatus              @default(VISIBLE)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  community Community      @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User           @relation(fields: [authorId], references: [id])
+  reports   Report[]
+  likes     PostLike[]
+  bookmarks PostBookmark[]
+  comments  PostComment[]
+
+  @@index([communityId, status, pinnedAt, createdAt])
+  @@index([communityId, status, createdAt])
+  @@index([communityId, visibility, status, createdAt])
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model PostBookmark {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId, createdAt])
+}
+
+enum SensitiveWordLevel {
+  BLOCK
+  REVIEW
+  LOG
+}
+
+model SensitiveWord {
+  id        String             @id @default(cuid())
+  word      String             @unique
+  level     SensitiveWordLevel
+  createdAt DateTime           @default(now())
+}
+
+enum ReportHitLevel {
+  BLOCK
+  REVIEW
+  LOG
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+}
+
+model Report {
+  id              String         @id @default(cuid())
+  postId          String?
+  reporterId      String?
+  communityId     String
+  contentSnapshot String
+  reason          String
+  hitLevel        ReportHitLevel
+  status          ReportStatus   @default(PENDING)
+  resolution      String?
+  createdAt       DateTime       @default(now())
+  resolvedAt      DateTime?
+
+  post      Post?     @relation(fields: [postId], references: [id])
+  reporter  User?     @relation("ReportSubmitter", fields: [reporterId], references: [id], onDelete: SetNull)
+  community Community @relation(fields: [communityId], references: [id])
+
+  @@index([reporterId, createdAt])
+  @@index([postId, status])
+}
+
+// ---------- Event supervision (活动监管) ----------
+
+model Event {
+  id          String    @id @default(cuid())
+  communityId String
+  title       String
+  description String?
+  location    String?
+  startAt     DateTime
+  endAt       DateTime?
+  capacity    Int?
+  signupCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  community Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  signups   EventSignup[]
+}
+
+enum CommunityResourceType {
+  LINK
+  DOCUMENT
+  AUDIO
+  VIDEO
+  IMAGE
+  TEXT
+  OTHER
+}
+
+enum CommunityResourceVisibility {
+  MEMBERS
+  ADMINS
+}
+
+enum CommunityResourceStatus {
+  ACTIVE
+  HIDDEN
+  DELETED
+}
+
+enum CommunityKnowledgeStatus {
+  PARSING
+  INDEXED
+  FAILED
+  REINDEX_REQUIRED
+}
+
+model CommunityResource {
+  id              String                      @id @default(cuid())
+  communityId     String
+  uploaderId      String
+  title           String
+  description     String?
+  type            CommunityResourceType       @default(LINK)
+  url             String?
+  contentText     String?                     @db.Text
+  fileName        String?
+  mimeType        String?
+  fileSize        Int?
+  storageKey      String?
+  indexedAt       DateTime?
+  knowledgeStatus CommunityKnowledgeStatus    @default(PARSING)
+  indexError      String?
+  visibility      CommunityResourceVisibility @default(MEMBERS)
+  status          CommunityResourceStatus     @default(ACTIVE)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  uploader  User      @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, status, createdAt])
+}
+
+model CommunityAuditLog {
+  id          String   @id @default(cuid())
+  communityId String
+  actorId     String
+  action      String
+  targetType  String
+  targetId    String
+  detail      Json?
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, createdAt])
+}
+
+model EventSignup {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+// ---------- Permissions & audit ----------
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  operatorId String
+  action     String
+  targetType String
+  targetId   String
+  detail     String
+  createdAt  DateTime @default(now())
+
+  operator Operator @relation(fields: [operatorId], references: [id])
+}
+
+// ---------- Bible reading, commentary, highlights & notes ----------
+
+model Verse {
+  id          String @id @default(cuid())
+  translation String
+  book        String
+  bookOrder   Int
+  chapter     Int
+  verse       Int
+  text        String
+
+  @@unique([translation, book, chapter, verse])
+  @@index([translation, book, chapter])
+  @@index([translation, bookOrder, chapter])
+}
+
+model Commentary {
+  id         String  @id @default(cuid())
+  book       String
+  chapter    Int
+  rangeStart Int
+  rangeEnd   Int
+  title      String
+  body       String
+  highlight  Boolean @default(false)
+
+  @@index([book, chapter])
+}
+
+model Highlight {
+  id        String   @id @default(cuid())
+  userId    String
+  book      String
+  chapter   Int
+  verse     Int
+  color     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, book, chapter, verse])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  book      String
+  chapter   Int
+  verse     Int
+  content   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- 慧读 (AI reading assistant) conversations ----------
+
+model Conversation {
+  id            String   @id @default(cuid())
+  userId        String
+  translation   String
+  book          String
+  chapter       Int
+  verseStart    Int
+  verseEnd      Int
+  verseRefLabel String
+  verseText     String
+  title         String
+  createdAt     DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  blocks         Json?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+// ---------- Personal and community reading plans ----------
+
+enum ReadingPlanScope {
+  PERSONAL
+  COMMUNITY
+  PUBLIC
+}
+
+model ReadingPlan {
+  id          String           @id @default(cuid())
+  creatorId   String?
+  communityId String?
+  title       String
+  description String?
+  scope       ReadingPlanScope @default(PERSONAL)
+  totalDays   Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  creator     User?                   @relation("ReadingPlanCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  community   Community?              @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  days        ReadingPlanDay[]
+  enrollments ReadingPlanEnrollment[]
+
+  @@index([creatorId, scope])
+  @@index([communityId, createdAt])
+}
+
+model ReadingPlanDay {
+  id          String  @id @default(cuid())
+  planId      String
+  dayNumber   Int
+  title       String?
+  translation String  @default("cuv")
+  book        String
+  chapter     Int
+  verseStart  Int
+  verseEnd    Int
+
+  plan ReadingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, dayNumber])
+  @@index([planId, dayNumber])
+}
+
+model ReadingPlanEnrollment {
+  id            String    @id @default(cuid())
+  planId        String
+  userId        String
+  completedDays Int       @default(0)
+  startedAt     DateTime  @default(now())
+  lastReadAt    DateTime?
+  completedAt   DateTime?
+
+  plan ReadingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, userId])
+  @@index([userId, startedAt])
+}
+
+// ---------- Per-user notification preferences (网站「通知管理」) ----------
+
+model NotificationSetting {
+  id      String  @id @default(cuid())
+  userId  String
+  key     String
+  enabled Boolean
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+enum UserNotificationType {
+  EVENT_REMINDER
+  COMMENT_REPLY
+  JOIN_REQUEST
+  JOIN_REVIEW
+  AI_TASK
+  DAILY_VERSE
+}
+
+model UserNotification {
+  id        String               @id @default(cuid())
+  userId    String
+  type      UserNotificationType
+  title     String
+  body      String
+  href      String?
+  uniqueKey String?              @unique
+  readAt    DateTime?
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+// ---------- Email verification codes (登录/注册) ----------
+// Codes are stored hashed; a code is valid for 10 minutes, allows 5 attempts,
+// and is consumed on successful login.
+
+model VerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+// ============================================================================
+// 从网页版（openbible-main / FastAPI）迁移过来的内容模块。
+// 这四块原本只有网页版有，整合后网页版与 App 共用同一套数据与后台。
+// 标题、摘要、正文保留中英韩三语字段，跟随前端语言切换显示。
+// ============================================================================
+
+enum EncyclopediaEntryType {
+  DICTIONARY // 词典条目
+  ARTICLE // 文章
+  DEVOTIONAL // 灵修短文
+}
+
+/// 圣经百科：词典、文章、灵修短文三类长文内容。
+model EncyclopediaEntry {
+  id          String                @id @default(cuid())
+  entryType   EncyclopediaEntryType
+  category    String?
+  /// 词典首字母索引（A-Z / #），其它类型可空
+  indexLetter String?
+  /// 封面：CSS 渐变、图片 URL 或图标名
+  coverStyle  String?
+  author      String?
+  sortOrder   Int                   @default(0)
+  isActive    Boolean               @default(true)
+
+  titleZh   String?
+  titleEn   String?
+  titleKo   String?
+  summaryZh String?
+  summaryEn String?
+  summaryKo String?
+  contentZh String?
+  contentEn String?
+  contentKo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entryType, isActive, sortOrder])
+  @@index([indexLetter])
+}
+
+enum MediaItemType {
+  VIDEO
+  AUDIO
+}
+
+/// 影音库：讲道视频与音频节目。文件本身放外部链接，不占用本站存储。
+model MediaItem {
+  id          String        @id @default(cuid())
+  mediaType   MediaItemType
+  title       String
+  series      String?
+  category    String
+  /// 显示用时长，例如 "45:32"
+  duration    String?
+  /// 讲员或主讲人
+  teacher     String?
+  description String?
+  coverStyle  String?
+  url         String?
+  sortOrder   Int           @default(0)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([mediaType, isActive, sortOrder])
+}
+
+/// 属灵阶段：慕道、初信、成长、成熟等，用于引导问题分组。
+model SpiritualStage {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions SpiritualQuestion[]
+}
+
+/// 属灵阶段下的引导问题。category 区分通用问题与经文抽屉问题。
+model SpiritualQuestion {
+  id           String   @id @default(cuid())
+  stageId      String
+  questionText String
+  category     String   @default("general")
+  description  String?
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stage SpiritualStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId, isActive, sortOrder])
+  @@index([category])
+}
+
+/// 研经笔记：按经节存放的注释语料，供后台维护与 AI 检索。
+/// 与 Commentary 的区别：Commentary 是阅读页展示用的段落式注释（带标题、经节范围），
+/// StudyNote 是逐节语料，键为 "gen-1-1" 形式的经节引用。
+model StudyNote {
+  id        String   @id @default(cuid())
+  verseRef  String   @unique
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verseRef])
+}
+
+/// 支持计划（会员方案）。按当前阶段的约定：目录可维护，但不接通真实扣费。
+model SupportPlan {
+  id            String   @id
+  name          String
+  nameEn        String?
+  nameKo        String?
+  priceMonthly  Float    @default(0)
+  priceOnce     Float    @default(0)
+  badge         String?
+  badgeEn       String?
+  badgeKo       String?
+  /// 权益列表，按换行分隔
+  features      String
+  featuresEn    String?
+  featuresKo    String?
+  dialogueLimit Int      @default(20)
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// 精读本注释正文（data/commentary/jingdu/*.json 的数据库副本）。
+/// 数据库为编辑与校对的唯一真相来源；前端仍读静态 JSON，
+/// 由后台的「发布」动作把库内容导出回文件（见 lib/actions/commentary.ts）。
+model CommentaryEntry {
+  id         String @id @default(cuid())
+  /// 1–66，对应 data/commentary/jingdu/<bookOrder>.json
+  bookOrder  Int
+  chapter    Int
+  /// "overview"（段落综览）| "commentary"（逐节注释）
+  entryType  String
+  /// 原始引用串，如 "3:1-21"；原始数据同章内可能重复，故不作唯一键
+  verses     String
+  /// 从引用解析出的起止节，用于按开始节排序
+  rangeStart Int
+  rangeEnd   Int
+  /// 同章内的原始顺序，导出时据此还原文件次序
+  sortOrder  Int
+  text       String
+  html       String
+  /// DRAFT 草稿中 / REVIEWED 已校对 / PUBLISHED 已发布
+  status     String   @default("PUBLISHED")
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  revisions CommentaryRevision[]
+
+  @@unique([bookOrder, chapter, sortOrder])
+  @@index([bookOrder, chapter])
+  @@index([status])
+}
+
+/// 注释每次修改的留痕，可回溯与还原。
+model CommentaryRevision {
+  id         String          @id @default(cuid())
+  entryId    String
+  entry      CommentaryEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  beforeText String
+  afterText  String
+  operatorId String?
+  operator   Operator?       @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime        @default(now())
+
+  @@index([entryId, createdAt])
+}
+
+
+/// 终端用户会话。
+///
+/// Cookie 里放的是不可猜测的随机 token，库里只存它的 SHA-256——
+/// 即便数据库泄露也无法据此伪造登录态。
+/// 早期版本 cookie 直接存明文 user id，任何人拿到他人 id（社群接口会返回作者 id）
+/// 即可冒充该账号，此模型即为修复该问题而引入。
+model Session {
+  id         String   @id @default(cuid())
+  /// token 的 SHA-256 十六进制串，不存原文
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  /// 便于用户在「登录设备」里辨认，也便于排查异常登录
+  userAgent  String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}

@@ -1,0 +1,1192 @@
+import "dotenv/config";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import bcrypt from "bcryptjs";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/client";
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const db = new PrismaClient({ adapter });
+
+async function main() {
+  const passwordHash = await bcrypt.hash("admin12345", 10);
+  await db.operator.upsert({
+    where: { username: "admin" },
+    update: {},
+    create: {
+      username: "admin",
+      passwordHash,
+      name: "运营 · 超级管理员",
+      role: "SUPER_ADMIN",
+    },
+  });
+
+  const configuredAdminUsername = process.env.OPENBIBLE_ADMIN_USERNAME?.trim();
+  const configuredAdminPassword = process.env.OPENBIBLE_ADMIN_PASSWORD;
+  if (configuredAdminUsername && configuredAdminPassword) {
+    const configuredAdminPasswordHash = await bcrypt.hash(configuredAdminPassword, 10);
+    await db.operator.upsert({
+      where: { username: configuredAdminUsername },
+      update: {
+        passwordHash: configuredAdminPasswordHash,
+        name: "jing730 · 超级管理员",
+        role: "SUPER_ADMIN",
+      },
+      create: {
+        username: configuredAdminUsername,
+        passwordHash: configuredAdminPasswordHash,
+        name: "jing730 · 超级管理员",
+        role: "SUPER_ADMIN",
+      },
+    });
+  }
+
+  const moderatorPasswordHash = await bcrypt.hash("moderator123", 10);
+  await db.operator.upsert({
+    where: { username: "moderator" },
+    update: {},
+    create: {
+      username: "moderator",
+      passwordHash: moderatorPasswordHash,
+      name: "内容审核员",
+      role: "MODERATOR",
+    },
+  });
+
+  const alreadySeeded = (await db.user.count()) > 0;
+  if (!alreadySeeded) {
+    await seedUsersCommunitiesAndMemberships();
+  }
+
+  await ensureLocalTestAccounts();
+  await seedAiAndDashboard();
+  await seedContentModerationEventsAudit();
+  if (process.env.NODE_ENV !== "production" || process.env.SEED_COMMUNITY_VALIDATION_FIXTURES === "true") {
+    await seedCommunityValidationFixtures();
+  }
+  await seedBibleAndCommentary();
+  await seedPersonalSamples();
+
+  console.log("Seed complete.");
+}
+
+async function ensureLocalTestAccounts() {
+  await db.user.updateMany({
+    where: { name: "王弟兄", email: null },
+    data: { email: "demo@openbible.local" },
+  });
+  await db.user.updateMany({
+    where: { name: "陈姊妹", email: null },
+    data: { email: "member@openbible.local" },
+  });
+}
+
+async function ensureValidationUser(input: {
+  email: string;
+  name: string;
+  avatarColor: string;
+  status?: "ACTIVE" | "MUTED" | "BANNED";
+}) {
+  return db.user.upsert({
+    where: { email: input.email },
+    update: {
+      name: input.name,
+      avatarColor: input.avatarColor,
+      status: input.status ?? "ACTIVE",
+    },
+    create: {
+      email: input.email,
+      name: input.name,
+      avatarColor: input.avatarColor,
+      status: input.status ?? "ACTIVE",
+      authAccounts: { create: [{ provider: "EMAIL" }] },
+    },
+  });
+}
+
+async function seedCommunityValidationFixtures() {
+  const users = {
+    owner: await ensureValidationUser({
+      email: "owner.community@openbible.local",
+      name: "验收群主",
+      avatarColor: "#FFD465",
+    }),
+    admin: await ensureValidationUser({
+      email: "admin.community@openbible.local",
+      name: "验收管理员",
+      avatarColor: "#D9C2F0",
+    }),
+    member: await ensureValidationUser({
+      email: "member.community@openbible.local",
+      name: "验收成员",
+      avatarColor: "#8FCFB0",
+    }),
+    applicant: await ensureValidationUser({
+      email: "applicant.community@openbible.local",
+      name: "待审核成员",
+      avatarColor: "#8FB8E8",
+    }),
+    muted: await ensureValidationUser({
+      email: "muted.community@openbible.local",
+      name: "受限成员",
+      avatarColor: "#F0C7B7",
+      status: "MUTED",
+    }),
+  };
+
+  const community = await db.community.upsert({
+    where: { abbreviation: "验收" },
+    update: {
+      name: "功能验证社群",
+      description: "本地功能验收专用：覆盖角色、动态、活动、小组、资料与通知",
+      avatarColor: "#FFD465",
+      joinPolicy: "APPROVAL",
+      tier: "MID",
+      ownerId: users.owner.id,
+      status: "ACTIVE",
+    },
+    create: {
+      name: "功能验证社群",
+      abbreviation: "验收",
+      description: "本地功能验收专用：覆盖角色、动态、活动、小组、资料与通知",
+      avatarColor: "#FFD465",
+      joinPolicy: "APPROVAL",
+      tier: "MID",
+      ownerId: users.owner.id,
+    },
+  });
+
+  for (const [userId, role] of [
+    [users.owner.id, "OWNER"],
+    [users.admin.id, "ADMIN"],
+    [users.member.id, "MEMBER"],
+    [users.muted.id, "MEMBER"],
+  ] as const) {
+    await db.membership.upsert({
+      where: { userId_communityId: { userId, communityId: community.id } },
+      update: { role },
+      create: { userId, communityId: community.id, role },
+    });
+  }
+
+  await db.communityJoinRequest.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.applicant.id,
+        communityId: community.id,
+      },
+    },
+    update: {
+      status: "PENDING",
+      message: "希望参加每周查经并加入服事安排。",
+      reviewerId: null,
+      reviewedAt: null,
+    },
+    create: {
+      userId: users.applicant.id,
+      communityId: community.id,
+      status: "PENDING",
+      message: "希望参加每周查经并加入服事安排。",
+    },
+  });
+
+  const subgroup = await db.community.upsert({
+    where: { abbreviation: "验组" },
+    update: {
+      parentId: community.id,
+      name: "验证查经小组",
+      description: "用于验证父子社群与小组权限继承",
+      avatarColor: "#D9C2F0",
+      joinPolicy: "APPROVAL",
+      tier: community.tier,
+      status: "ACTIVE",
+    },
+    create: {
+      parentId: community.id,
+      name: "验证查经小组",
+      abbreviation: "验组",
+      description: "用于验证父子社群与小组权限继承",
+      avatarColor: "#D9C2F0",
+      joinPolicy: "APPROVAL",
+      tier: community.tier,
+    },
+  });
+  await db.membership.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.admin.id,
+        communityId: subgroup.id,
+      },
+    },
+    update: { role: "ADMIN" },
+    create: {
+      userId: users.admin.id,
+      communityId: subgroup.id,
+      role: "ADMIN",
+    },
+  });
+  await db.membership.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.member.id,
+        communityId: subgroup.id,
+      },
+    },
+    update: { role: "MEMBER" },
+    create: {
+      userId: users.member.id,
+      communityId: subgroup.id,
+      role: "MEMBER",
+    },
+  });
+
+  async function ensurePost(input: {
+    title: string;
+    postType: "POST" | "ARTICLE" | "NOTICE" | "MEDIA";
+    content: string;
+    status?: "VISIBLE" | "HIDDEN";
+    pinnedAt?: Date | null;
+    mediaType?: "IMAGE" | "AUDIO" | "VIDEO";
+    mediaUrl?: string;
+    verseRef?: string;
+  }) {
+    const existing = await db.post.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      authorId: input.postType === "POST" ? users.member.id : users.admin.id,
+      title: input.title,
+      postType: input.postType,
+      content: input.content,
+      status: input.status ?? "VISIBLE",
+      pinnedAt: input.pinnedAt ?? null,
+      mediaType: input.mediaType ?? null,
+      mediaUrl: input.mediaUrl ?? null,
+      verseRef: input.verseRef ?? null,
+    } as const;
+    return existing
+      ? db.post.update({ where: { id: existing.id }, data })
+      : db.post.create({ data });
+  }
+
+  const notice = await ensurePost({
+    title: "【验收】周五查经通知",
+    postType: "NOTICE",
+    content: "周五 20:00 查考约翰福音第 3 章，请提前阅读并在活动页报名。",
+    pinnedAt: new Date(),
+    verseRef: "约翰福音 3:16",
+  });
+  await ensurePost({
+    title: "【验收】如何预备查经分享",
+    postType: "ARTICLE",
+    content: "先观察经文，再理解上下文，最后写下一个可以实践的回应。",
+  });
+  await ensurePost({
+    title: "【验收】音频分享演示",
+    postType: "MEDIA",
+    content: "用于验证音频动态的展示和播放状态。",
+    mediaType: "AUDIO",
+    mediaUrl: "https://example.com/openbible-validation.mp3",
+  });
+  await ensurePost({
+    title: "【验收】待审核内容",
+    postType: "POST",
+    content: "这条内容用于验证管理员隐藏内容后的成员可见性。",
+    status: "HIDDEN",
+  });
+  const memberPost = await ensurePost({
+    title: "【验收】成员经文分享",
+    postType: "POST",
+    content: "你的话是我脚前的灯，是我路上的光。",
+    verseRef: "诗篇 119:105",
+  });
+  await db.postLike.upsert({
+    where: {
+      postId_userId: { postId: memberPost.id, userId: users.admin.id },
+    },
+    update: {},
+    create: { postId: memberPost.id, userId: users.admin.id },
+  });
+  await db.postBookmark.upsert({
+    where: {
+      postId_userId: { postId: notice.id, userId: users.member.id },
+    },
+    update: {},
+    create: { postId: notice.id, userId: users.member.id },
+  });
+  if (!await db.postComment.findFirst({
+    where: {
+      postId: memberPost.id,
+      authorId: users.admin.id,
+      content: "谢谢分享，周五一起继续讨论。",
+    },
+  })) {
+    await db.postComment.create({
+      data: {
+        postId: memberPost.id,
+        authorId: users.admin.id,
+        content: "谢谢分享，周五一起继续讨论。",
+      },
+    });
+  }
+  await db.post.update({
+    where: { id: memberPost.id },
+    data: {
+      likeCount: await db.postLike.count({ where: { postId: memberPost.id } }),
+      commentCount: await db.postComment.count({ where: { postId: memberPost.id } }),
+    },
+  });
+
+  const now = Date.now();
+  async function ensureEvent(input: {
+    title: string;
+    startAt: Date;
+    endAt: Date;
+    capacity?: number;
+  }) {
+    const existing = await db.event.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      title: input.title,
+      description: "本地验收活动，用于验证状态、报名和提醒。",
+      location: "线上会议室",
+      startAt: input.startAt,
+      endAt: input.endAt,
+      capacity: input.capacity ?? 20,
+    };
+    return existing
+      ? db.event.update({ where: { id: existing.id }, data })
+      : db.event.create({ data });
+  }
+  const upcomingEvent = await ensureEvent({
+    title: "【验收】报名中的查经活动",
+    startAt: new Date(now + 3 * 86_400_000),
+    endAt: new Date(now + 3 * 86_400_000 + 90 * 60_000),
+  });
+  await ensureEvent({
+    title: "【验收】进行中的线上活动",
+    startAt: new Date(now - 30 * 60_000),
+    endAt: new Date(now + 60 * 60_000),
+  });
+  await ensureEvent({
+    title: "【验收】已经结束的活动",
+    startAt: new Date(now - 7 * 86_400_000),
+    endAt: new Date(now - 7 * 86_400_000 + 90 * 60_000),
+  });
+  const fullEvent = await ensureEvent({
+    title: "【验收】名额已满的活动",
+    startAt: new Date(now + 5 * 86_400_000),
+    endAt: new Date(now + 5 * 86_400_000 + 60 * 60_000),
+    capacity: 2,
+  });
+  for (const userId of [users.owner.id, users.admin.id]) {
+    await db.eventSignup.upsert({
+      where: { eventId_userId: { eventId: fullEvent.id, userId } },
+      update: {},
+      create: { eventId: fullEvent.id, userId },
+    });
+  }
+  await db.event.update({
+    where: { id: fullEvent.id },
+    data: {
+      signupCount: await db.eventSignup.count({ where: { eventId: fullEvent.id } }),
+    },
+  });
+  await db.eventSignup.upsert({
+    where: {
+      eventId_userId: {
+        eventId: upcomingEvent.id,
+        userId: users.member.id,
+      },
+    },
+    update: {},
+    create: { eventId: upcomingEvent.id, userId: users.member.id },
+  });
+  await db.event.update({
+    where: { id: upcomingEvent.id },
+    data: {
+      signupCount: await db.eventSignup.count({ where: { eventId: upcomingEvent.id } }),
+    },
+  });
+
+  async function ensureResource(input: {
+    title: string;
+    type: "TEXT" | "DOCUMENT" | "AUDIO" | "VIDEO";
+    knowledgeStatus: "PARSING" | "INDEXED" | "FAILED" | "REINDEX_REQUIRED";
+    visibility?: "MEMBERS" | "ADMINS";
+    contentText?: string;
+    indexError?: string;
+  }) {
+    const existing = await db.communityResource.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      uploaderId: users.admin.id,
+      title: input.title,
+      description: "本地知识库状态验收资料",
+      type: input.type,
+      contentText: input.contentText ?? null,
+      knowledgeStatus: input.knowledgeStatus,
+      indexedAt: input.knowledgeStatus === "INDEXED" ? new Date() : null,
+      indexError: input.indexError ?? null,
+      visibility: input.visibility ?? "MEMBERS",
+      status: "ACTIVE" as const,
+    };
+    return existing
+      ? db.communityResource.update({ where: { id: existing.id }, data })
+      : db.communityResource.create({ data });
+  }
+  await ensureResource({
+    title: "【验收】青年查经计划",
+    type: "TEXT",
+    knowledgeStatus: "INDEXED",
+    contentText: "第 3 页：每周查经采用观察、解释、应用三个步骤。",
+  });
+  await ensureResource({
+    title: "【验收】正在解析的讲义",
+    type: "DOCUMENT",
+    knowledgeStatus: "PARSING",
+  });
+  await ensureResource({
+    title: "【验收】解析失败的音频",
+    type: "AUDIO",
+    knowledgeStatus: "FAILED",
+    indexError: "未识别到可索引的语音内容",
+  });
+  await ensureResource({
+    title: "【验收】需要重新索引的视频",
+    type: "VIDEO",
+    knowledgeStatus: "REINDEX_REQUIRED",
+    indexError: "资料内容已经更新",
+  });
+  await ensureResource({
+    title: "【验收】管理员带领说明",
+    type: "TEXT",
+    knowledgeStatus: "INDEXED",
+    visibility: "ADMINS",
+    contentText: "仅管理员可见：处理成员申请前先核对申请说明和社群规则。",
+  });
+
+  for (const notification of [
+    {
+      userId: users.member.id,
+      type: "EVENT_REMINDER" as const,
+      title: "活动即将开始",
+      body: "【验收】报名中的查经活动将在两小时后开始。",
+      href: `/community/${community.id}?tab=events`,
+      uniqueKey: "validation:event-reminder",
+    },
+    {
+      userId: users.member.id,
+      type: "COMMENT_REPLY" as const,
+      title: "你的动态收到新评论",
+      body: "验收管理员回复了你的经文分享。",
+      href: `/community/${community.id}?tab=feed`,
+      uniqueKey: "validation:comment-reply",
+    },
+    {
+      userId: users.owner.id,
+      type: "JOIN_REQUEST" as const,
+      title: "收到新的入群申请",
+      body: "待审核成员申请加入功能验证社群。",
+      href: `/community/${community.id}/settings`,
+      uniqueKey: "validation:join-request",
+    },
+    {
+      userId: users.admin.id,
+      type: "AI_TASK" as const,
+      title: "资料索引任务已完成",
+      body: "《【验收】青年查经计划》已经加入知识库。",
+      href: `/community/${community.id}?tab=resources`,
+      uniqueKey: "validation:ai-task",
+    },
+    {
+      userId: users.applicant.id,
+      type: "JOIN_REVIEW" as const,
+      title: "入群申请已通过",
+      body: "你的功能验证社群加入申请已通过审核。",
+      href: `/community/${community.id}`,
+      uniqueKey: "validation:join-review",
+    },
+    {
+      userId: users.member.id,
+      type: "DAILY_VERSE" as const,
+      title: "今日金句",
+      body: "你的话是我脚前的灯，是我路上的光。— 诗篇 119:105",
+      href: "/bible?t=cuv&bk=psa&c=119&v=105",
+      uniqueKey: "validation:daily-verse",
+    },
+  ]) {
+    await db.userNotification.upsert({
+      where: { uniqueKey: notification.uniqueKey },
+      update: notification,
+      create: notification,
+    });
+  }
+
+  if (!await db.communityAuditLog.findFirst({
+    where: {
+      communityId: community.id,
+      action: "VALIDATION_FIXTURES_READY",
+    },
+  })) {
+    await db.communityAuditLog.create({
+      data: {
+        communityId: community.id,
+        actorId: users.owner.id,
+        action: "VALIDATION_FIXTURES_READY",
+        targetType: "Community",
+        targetId: community.id,
+        detail: { localOnly: true, fixtureVersion: 1 },
+      },
+    });
+  }
+}
+
+// Sample highlights/notes for the test account so /me and /me/content have
+// realistic rows on first run (copy matches the mobile 5b design).
+async function seedPersonalSamples() {
+  const wang = await db.user.findFirstOrThrow({ where: { name: "王弟兄" } });
+
+  if ((await db.highlight.count({ where: { userId: wang.id } })) === 0) {
+    await db.highlight.createMany({
+      data: [
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 16, color: "#FFD465" },
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 19, color: "#FFD465" },
+      ],
+    });
+  }
+
+  if ((await db.note.count({ where: { userId: wang.id } })) === 0) {
+    await db.note.createMany({
+      data: [
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 16, content: "「甚至」二字提醒我：爱是有代价的行动。为周五分享准备一个见证。" },
+        { userId: wang.id, book: "约翰福音", chapter: 3, verse: 8, content: "风的比喻：看不见风，却能看见被风吹动的树。生命的改变就是圣灵工作的痕迹。" },
+        { userId: wang.id, book: "约翰福音", chapter: 2, verse: 5, content: "马利亚的嘱咐：「他告诉你们什么，你们就做什么。」顺服先于明白。" },
+      ],
+    });
+  }
+}
+
+async function ensureUser(name: string, data: Parameters<typeof db.user.create>[0]["data"]) {
+  const existing = await db.user.findFirst({ where: { name } });
+  if (existing) return existing;
+  return db.user.create({ data });
+}
+
+async function ensureMembership(userId: string, communityId: string) {
+  await db.membership.upsert({
+    where: { userId_communityId: { userId, communityId } },
+    update: {},
+    create: { userId, communityId, role: "MEMBER" },
+  });
+}
+
+async function seedUsersCommunitiesAndMemberships() {
+  const users = {
+    platform: await db.user.create({
+      data: { name: "平台运营", avatarColor: "#EEEFF4" },
+    }),
+    wang: await db.user.create({
+      data: {
+        name: "王弟兄",
+        avatarColor: "#FFD465",
+        authAccounts: {
+          create: [{ provider: "EMAIL" }, { provider: "APPLE" }],
+        },
+      },
+    }),
+    chen: await db.user.create({
+      data: {
+        name: "陈姊妹",
+        avatarColor: "#E9B7A5",
+        authAccounts: {
+          create: [{ provider: "EMAIL" }, { provider: "GOOGLE" }],
+        },
+      },
+    }),
+    li: await db.user.create({
+      data: {
+        name: "李弟兄",
+        avatarColor: "#D9C2F0",
+        authAccounts: { create: [{ provider: "EMAIL" }] },
+      },
+    }),
+    zhang: await db.user.create({
+      data: {
+        name: "张长老",
+        avatarColor: "#D9C2F0",
+        authAccounts: { create: [{ provider: "EMAIL" }] },
+      },
+    }),
+    liu: await db.user.create({
+      data: {
+        name: "刘姊妹",
+        avatarColor: "#F0C7B7",
+        authAccounts: { create: [{ provider: "EMAIL" }] },
+      },
+    }),
+    zhao: await db.user.create({
+      data: {
+        name: "赵某",
+        avatarColor: "#EEEFF4",
+        status: "BANNED",
+        banReason: "垃圾广告",
+        authAccounts: { create: [{ provider: "EMAIL" }] },
+      },
+    }),
+  };
+
+  const huidu = await db.community.create({
+    data: {
+      name: "慧读总群",
+      abbreviation: "慧读",
+      description: "全体用户 · 官方公告与慧读答疑",
+      avatarColor: "#D9C2F0",
+      isOfficial: true,
+      tier: "OFFICIAL_FREE",
+      tierPriceCents: 0,
+      ownerId: users.platform.id,
+      dailyActivity: 2140,
+    },
+  });
+
+  const youth = await db.community.create({
+    data: {
+      name: "青年查经小组",
+      abbreviation: "青年",
+      description: "周五线上查经报名中",
+      avatarColor: "#FFD465",
+      tier: "MID",
+      tierPriceCents: 3_000,
+      ownerId: users.wang.id,
+      dailyActivity: 486,
+      aiTokensToday: 182_000,
+    },
+  });
+
+  const grace = await db.community.create({
+    data: {
+      name: "恩典读经群",
+      abbreviation: "恩典",
+      description: "一年读经计划进行中",
+      avatarColor: "#D9C2F0",
+      tier: "HIGH",
+      tierPriceCents: 9_800,
+      ownerId: users.zhang.id,
+      dailyActivity: 352,
+      aiTokensToday: 121_000,
+    },
+  });
+
+  const prayer = await db.community.create({
+    data: {
+      name: "姊妹祷告会",
+      abbreviation: "姊妹",
+      description: "今晨祷告接力已完成",
+      avatarColor: "#F0C7B7",
+      tier: "BASIC_FREE",
+      tierPriceCents: 0,
+      ownerId: users.liu.id,
+      warningCount: 1,
+      dailyActivity: 291,
+      aiTokensToday: 34_000,
+    },
+  });
+
+  const workplace = await db.community.create({
+    data: {
+      name: "职场灵修站",
+      abbreviation: "职场",
+      description: "在职场中同行灵修",
+      avatarColor: "#F0C7B7",
+      tier: "BASIC_FREE",
+      tierPriceCents: 0,
+      ownerId: users.li.id,
+      dailyActivity: 204,
+      aiTokensToday: 21_000,
+    },
+  });
+
+  await db.membership.createMany({
+    data: [
+      { userId: users.platform.id, communityId: huidu.id, role: "OWNER" },
+      { userId: users.wang.id, communityId: huidu.id, role: "MEMBER" },
+      { userId: users.chen.id, communityId: huidu.id, role: "MEMBER" },
+      { userId: users.li.id, communityId: huidu.id, role: "MEMBER" },
+      { userId: users.zhang.id, communityId: huidu.id, role: "MEMBER" },
+      { userId: users.liu.id, communityId: huidu.id, role: "MEMBER" },
+
+      { userId: users.wang.id, communityId: youth.id, role: "OWNER" },
+      { userId: users.chen.id, communityId: youth.id, role: "MEMBER" },
+      { userId: users.li.id, communityId: youth.id, role: "MEMBER" },
+
+      { userId: users.zhang.id, communityId: grace.id, role: "OWNER" },
+
+      { userId: users.liu.id, communityId: prayer.id, role: "OWNER" },
+      { userId: users.zhao.id, communityId: prayer.id, role: "MEMBER" },
+
+      { userId: users.li.id, communityId: workplace.id, role: "OWNER" },
+      { userId: users.wang.id, communityId: workplace.id, role: "MEMBER" },
+    ],
+  });
+}
+
+async function seedAiAndDashboard() {
+  const tokenTotals: Record<string, number> = {
+    青年查经小组: 182_000,
+    恩典读经群: 121_000,
+    姊妹祷告会: 34_000,
+    职场灵修站: 21_000,
+  };
+  for (const [name, aiTokensToday] of Object.entries(tokenTotals)) {
+    await db.community.updateMany({ where: { name }, data: { aiTokensToday } });
+  }
+
+  await db.aiSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      autoFallbackEnabled: true,
+      rateLimited: false,
+      monthLabel: "7 月",
+      monthlyBudgetCents: 60_000,
+      monthSpendCents: 37_200,
+    },
+  });
+
+  await db.shareCardSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      activeTemplate: "warm",
+      autoRotate: false,
+      rotationDays: 7,
+    },
+  });
+
+  await db.aiModel.upsert({
+    where: { role: "PRIMARY" },
+    update: {},
+    create: {
+      role: "PRIMARY",
+      provider: "Anthropic",
+      modelName: "claude-sonnet-4-5",
+      temperature: 0.4,
+      status: "NORMAL",
+    },
+  });
+
+  await db.aiModel.upsert({
+    where: { role: "BACKUP" },
+    update: {},
+    create: {
+      role: "BACKUP",
+      provider: "Zhipu",
+      modelName: "glm-4.7",
+      temperature: 0.4,
+      status: "STANDBY",
+    },
+  });
+
+  await db.promptVersion.upsert({
+    where: { version: "v3.0" },
+    update: {},
+    create: {
+      version: "v3.0",
+      description: "初版三段式释经 Prompt",
+      status: "ARCHIVED",
+      rolloutPercent: 0,
+      likeRatePct: 88.2,
+      dislikeRatePct: 3.1,
+    },
+  });
+  await db.promptVersion.upsert({
+    where: { version: "v3.1" },
+    update: {},
+    create: {
+      version: "v3.1",
+      description: "增加免责声明注入与敏感话题绕行",
+      status: "GA",
+      rolloutPercent: 80,
+      likeRatePct: 90.7,
+      dislikeRatePct: 2.4,
+    },
+  });
+  await db.promptVersion.upsert({
+    where: { version: "v3.2" },
+    update: {},
+    create: {
+      version: "v3.2",
+      description: "强化三段式结构 + 释经框架约束收紧",
+      status: "CANARY",
+      rolloutPercent: 20,
+      likeRatePct: 93.1,
+      dislikeRatePct: 1.8,
+    },
+  });
+
+  // ---------- Daily snapshots for the dashboard ----------
+  // No real event pipeline yet (mobile/web clients are still static
+  // prototypes) — this backfills 30 days of plausible history so the
+  // dashboard reads from a real table instead of hardcoded numbers. A
+  // future aggregation job can write into DailyMetric the same way.
+  const DAYS = 30;
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const dauAt = (i: number) => {
+    if (i <= 22) return 11000 * Math.pow(11537 / 11000, i / 22);
+    return 11537 * Math.pow(12483 / 11537, (i - 22) / 7);
+  };
+
+  for (let i = 0; i < DAYS; i += 1) {
+    const date = new Date(today);
+    date.setUTCDate(date.getUTCDate() - (DAYS - 1 - i));
+
+    const dau = Math.round(dauAt(i));
+    const mau = Math.round(dau * 3.117);
+    const wobble = Math.sin(i / 3) * 0.6;
+
+    await db.dailyMetric.upsert({
+      where: { date },
+      update: {},
+      create: {
+        date,
+        dau,
+        mau,
+        retentionD1Pct: Number((43.6 + wobble).toFixed(1)),
+        retentionD7Pct: Number((27.4 + wobble * 0.5).toFixed(1)),
+        retentionD30Pct: Number((18.9 + wobble * 0.3).toFixed(1)),
+        huiduPenetrationPct: Number((37.8 + wobble * 0.4).toFixed(1)),
+        avgRoundsPerSession: Number((3.4 + wobble * 0.05).toFixed(1)),
+        bibleReadingPct: 46,
+        huiduPct: 27,
+        communityPct: 19,
+        annotationPct: 8,
+        aiCallCount: Math.round(dau * 0.658),
+        aiTokenCount: Math.round(dau * 0.658 * 511),
+        aiAvgFirstTokenMs: 1400 + Math.round(wobble * 20),
+        aiLikeRatePct: Number((91 + wobble * 0.3).toFixed(1)),
+      },
+    });
+  }
+
+  await db.hotTopic.deleteMany({ where: { date: today } });
+  await db.hotTopic.createMany({
+    data: [
+      { date: today, label: "重生的含义", rank: 1 },
+      { date: today, label: "安息日", rank: 2 },
+      { date: today, label: "希腊文原意", rank: 3 },
+    ],
+  });
+}
+
+async function seedContentModerationEventsAudit() {
+  const wang = await db.user.findFirstOrThrow({ where: { name: "王弟兄" } });
+  const chen = await db.user.findFirstOrThrow({ where: { name: "陈姊妹" } });
+  const li = await db.user.findFirstOrThrow({ where: { name: "李弟兄" } });
+  const zhao = await db.user.findFirstOrThrow({ where: { name: "赵某" } });
+  const sun = await ensureUser("孙弟兄", {
+    name: "孙弟兄",
+    avatarColor: "#8FB8E8",
+    authAccounts: { create: [{ provider: "EMAIL" }] },
+  });
+
+  const youth = await db.community.findFirstOrThrow({ where: { name: "青年查经小组" } });
+  const grace = await db.community.findFirstOrThrow({ where: { name: "恩典读经群" } });
+  const prayer = await db.community.findFirstOrThrow({ where: { name: "姊妹祷告会" } });
+  const workplace = await db.community.findFirstOrThrow({ where: { name: "职场灵修站" } });
+
+  await ensureMembership(sun.id, youth.id);
+  await ensureMembership(zhao.id, grace.id);
+
+  // ---------- Posts ----------
+  const postsAlreadySeeded = (await db.post.count()) > 0;
+  let postZhao: Awaited<ReturnType<typeof db.post.create>>;
+  let postSun: Awaited<ReturnType<typeof db.post.create>>;
+
+  if (!postsAlreadySeeded) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: chen.id,
+        content: "今天重读这节，被「甚至」两个字击中——神的爱不是抽象的，是舍己的行动。",
+        verseRef: "约翰福音 3:16 · 和合本",
+        likeCount: 24,
+        commentCount: 8,
+      },
+    });
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: li.id,
+        content: "周五查经前建议大家先读完 3 章，把不明白的地方先问问慧读，带着问题来。",
+        likeCount: 11,
+        commentCount: 3,
+      },
+    });
+    postZhao = await db.post.create({
+      data: {
+        communityId: grace.id,
+        authorId: zhao.id,
+        content: "加我微信购买特效保健品，包治百病，仅限今日！",
+        likeCount: 0,
+        commentCount: 0,
+      },
+    });
+    postSun = await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: sun.id,
+        content: "你们这群人懂什么，全都是异端，我看不下去了。",
+        likeCount: 0,
+        commentCount: 2,
+      },
+    });
+  } else {
+    postZhao = await db.post.findFirstOrThrow({ where: { authorId: zhao.id, communityId: grace.id } });
+    postSun = await db.post.findFirstOrThrow({ where: { authorId: sun.id } });
+  }
+
+  const weeklyNoticeTitle = "本周查经与服事安排";
+  const weeklyNotice = await db.post.findFirst({
+    where: { communityId: youth.id, postType: "NOTICE", title: weeklyNoticeTitle },
+    select: { id: true, pinnedAt: true },
+  });
+  if (!weeklyNotice) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: wang.id,
+        postType: "NOTICE",
+        title: weeklyNoticeTitle,
+        content: "周五 20:00 一起查考约翰福音第 3 章，请提前阅读经文；需要线上参与的成员可在活动页报名。",
+        pinnedAt: new Date(),
+      },
+    });
+  } else if (!weeklyNotice.pinnedAt) {
+    await db.post.update({ where: { id: weeklyNotice.id }, data: { pinnedAt: new Date() } });
+  }
+
+  const articleTitle = "在忙碌生活中建立稳定的读经节奏";
+  if (!await db.post.findFirst({ where: { communityId: youth.id, postType: "ARTICLE", title: articleTitle } })) {
+    await db.post.create({
+      data: {
+        communityId: youth.id,
+        authorId: chen.id,
+        postType: "ARTICLE",
+        title: articleTitle,
+        content: "稳定的读经不一定从很长的时间开始。可以先固定每天十分钟，阅读一小段经文，记下一句触动自己的话，再用简短祷告回应。持续比一次读很多更重要，也可以在群动态里分享自己的领受，彼此鼓励。",
+        verseRef: "诗篇 119:105",
+      },
+    });
+  }
+
+  // ---------- Sensitive word tiers ----------
+  const wordTiers: [string, "BLOCK" | "REVIEW" | "LOG"][] = [
+    ["加我微信", "BLOCK"], ["微商代理", "BLOCK"], ["刷单兼职", "BLOCK"],
+    ["投资理财骗局", "BLOCK"], ["代购渠道", "BLOCK"], ["私自转账", "BLOCK"],
+    ["免费领取活动", "BLOCK"], ["扫码领取奖品", "BLOCK"], ["贷款办理", "BLOCK"],
+    ["彩票内幕", "BLOCK"], ["保健品推销", "BLOCK"], ["传销话术", "BLOCK"],
+    ["异端指控", "REVIEW"], ["极端言论", "REVIEW"], ["挑衅性用语", "REVIEW"],
+    ["煽动性内容", "REVIEW"], ["人身攻击用语", "REVIEW"], ["仇恨言论", "REVIEW"],
+    ["轻微粗口", "LOG"], ["敏感政治词", "LOG"], ["待观察用语", "LOG"], ["争议性话题", "LOG"],
+  ];
+  for (const [word, level] of wordTiers) {
+    await db.sensitiveWord.upsert({ where: { word }, update: {}, create: { word, level } });
+  }
+
+  // ---------- Reports ----------
+  const reportsAlreadySeeded = (await db.report.count()) > 0;
+  if (!reportsAlreadySeeded) {
+    await db.report.create({
+      data: {
+        postId: postZhao.id,
+        communityId: grace.id,
+        contentSnapshot: postZhao.content,
+        reason: "垃圾广告",
+        hitLevel: "BLOCK",
+      },
+    });
+    await db.report.create({
+      data: {
+        postId: postSun.id,
+        communityId: youth.id,
+        contentSnapshot: postSun.content,
+        reason: "人身攻击",
+        hitLevel: "REVIEW",
+      },
+    });
+    await db.report.create({
+      data: {
+        postId: null,
+        communityId: workplace.id,
+        contentSnapshot: "活动「免费圣地旅游，先交定金」",
+        reason: "虚假活动",
+        hitLevel: "BLOCK",
+      },
+    });
+  }
+
+  // ---------- Events ----------
+  const eventsAlreadySeeded = (await db.event.count()) > 0;
+  if (!eventsAlreadySeeded) {
+    const now = new Date();
+    const inDays = (d: number) => new Date(now.getTime() + d * 86_400_000);
+
+    await db.event.createMany({
+      data: [
+        { communityId: youth.id, title: "约翰福音 3 章共读", startAt: inDays(2), endAt: inDays(2.06), signupCount: 12 },
+        { communityId: youth.id, title: "四福音 40 天通读", startAt: inDays(-18), endAt: inDays(22), signupCount: 20 },
+        { communityId: grace.id, title: "一年读经计划 · 7 月主题分享", startAt: inDays(5), signupCount: 34 },
+        { communityId: prayer.id, title: "晨祷接力", startAt: inDays(-1), endAt: inDays(-1), signupCount: 21 },
+        { communityId: workplace.id, title: "职场伦理专题分享", startAt: inDays(-10), endAt: inDays(-10), signupCount: 9 },
+      ],
+    });
+  }
+
+  // ---------- Sub-groups and resource library ----------
+  let readingGroup = await db.community.findFirst({
+    where: { parentId: youth.id, abbreviation: "共读" },
+  });
+  if (!readingGroup) {
+    readingGroup = await db.community.create({
+      data: {
+        parentId: youth.id,
+        name: "约翰福音共读小组",
+        abbreviation: "共读",
+        description: "每周五线上逐章共读",
+        avatarColor: "#D9C2F0",
+        tier: youth.tier,
+        memberships: {
+          create: [
+            { userId: wang.id, role: "ADMIN" },
+            { userId: chen.id, role: "MEMBER" },
+          ],
+        },
+      },
+    });
+  }
+
+  if ((await db.communityResource.count({ where: { communityId: youth.id } })) === 0) {
+    await db.communityResource.createMany({
+      data: [
+        {
+          communityId: youth.id,
+          uploaderId: wang.id,
+          title: "本周共读预习说明",
+          description: "约翰福音第 3 章的观察问题与分享流程",
+          type: "LINK",
+          url: "https://openbible.live",
+          visibility: "MEMBERS",
+        },
+        {
+          communityId: youth.id,
+          uploaderId: wang.id,
+          title: "管理员带领手册",
+          description: "仅供群主和管理员查看",
+          type: "DOCUMENT",
+          url: "https://openbible.live",
+          visibility: "ADMINS",
+        },
+      ],
+    });
+  }
+
+  // ---------- Sample audit log history ----------
+  const auditAlreadySeeded = (await db.auditLog.count()) > 0;
+  if (!auditAlreadySeeded) {
+    const admin = await db.operator.findUniqueOrThrow({ where: { username: "admin" } });
+    await db.auditLog.createMany({
+      data: [
+        { operatorId: admin.id, action: "封禁用户", targetType: "User", targetId: zhao.id, detail: "赵某 · 原因：垃圾广告" },
+        { operatorId: admin.id, action: "警告社群", targetType: "Community", targetId: prayer.id, detail: "姊妹祷告会 · 累计警告 1 次" },
+      ],
+    });
+  }
+}
+
+async function seedBibleAndCommentary() {
+  // Verse text is authentic public-domain 和合本 (新标点和合本，简体) sourced
+  // from bolls.life and committed at prisma/data/john-cuv.json — not hand-typed.
+  const versesAlreadySeeded = (await db.verse.count()) > 0;
+  if (!versesAlreadySeeded) {
+    const raw = readFileSync(join(__dirname, "data", "john-cuv.json"), "utf-8");
+    const parsed = JSON.parse(raw) as {
+      translation: string;
+      book: string;
+      bookOrder: number;
+      verses: { chapter: number; verse: number; text: string }[];
+    };
+
+    await db.verse.createMany({
+      data: parsed.verses.map((v) => ({
+        translation: parsed.translation,
+        book: parsed.book,
+        bookOrder: parsed.bookOrder,
+        chapter: v.chapter,
+        verse: v.verse,
+        text: v.text,
+      })),
+    });
+  }
+
+  // Study-Bible commentary is our own editorial content (matches the design's
+  // 精读本注释), keyed to verse ranges within John 3.
+  const commentaryAlreadySeeded = (await db.commentary.count()) > 0;
+  if (!commentaryAlreadySeeded) {
+    await db.commentary.createMany({
+      data: [
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 1,
+          rangeEnd: 8,
+          title: "3:1–8 · 重生的对话",
+          body: "尼哥底母是法利赛人、犹太公会的成员，夜里来见耶稣，既出于谨慎，也暗示他尚在黑暗中摸索。「重生」原文亦作「从上头生」：不是道德修补，而是圣灵所赐的全新生命。「风随着意思吹」以风喻灵，指明重生是神主权的工作。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 9,
+          rangeEnd: 15,
+          title: "3:9–15 · 举蛇的预表",
+          body: "耶稣引用民数记 21 章旷野举铜蛇的事件：百姓仰望铜蛇便得医治，预表人子将被举起在十字架上——凡仰望信靠他的，就得永生。「举起」在约翰福音中兼指被钉与得荣耀。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 16,
+          rangeEnd: 17,
+          title: "3:16–17 · 福音中的福音",
+          highlight: true,
+          body: "本段是整卷约翰福音信息的浓缩。「爱」（agapaō）指神主动、舍己的爱；「世人」表明这爱临到普世众人。「独生子」（monogenēs）强调基督与父独一无二的关系；「赐给」呼应 3:14 被举起的人子——爱在十字架上成为具体行动。定罪不是神差子的目的（3:17），信而得生才是。",
+        },
+        {
+          book: "约翰福音",
+          chapter: 3,
+          rangeStart: 18,
+          rangeEnd: 21,
+          title: "3:18–21 · 光与黑暗的分野",
+          body: "信与不信在此刻已分出结局：不信者「罪已经定了」。光来到世间成为试金石——人对光的态度显明其行为的本相；行真理的必来就光。",
+        },
+      ],
+    });
+  }
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await db.$disconnect();
+  });

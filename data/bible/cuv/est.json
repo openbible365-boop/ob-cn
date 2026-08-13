@@ -1,0 +1,731 @@
+{
+  "book": "以斯帖记",
+  "bookEn": "Esther",
+  "abbr": "Est",
+  "version": "cunps",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>作王，从<mark class=\"pn\">印度</mark>直到<mark class=\"pn\">古实</mark>，统管一百二十七省。",
+          "heading": "亚哈随鲁王废瓦实提王后"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王在<mark class=\"pn\">书珊</mark>城的宫登基；"
+        },
+        {
+          "verse": 3,
+          "text": "在位第三年，为他一切首领臣仆设摆筵席，有<mark class=\"pn\">波斯</mark>和<mark class=\"pn\">玛代</mark>的权贵，就是各省的贵胄与首领，在他面前。"
+        },
+        {
+          "verse": 4,
+          "text": "他把他荣耀之国的丰富和他美好威严的尊贵给他们看了许多日，就是一百八十日。"
+        },
+        {
+          "verse": 5,
+          "text": "这日子满了，又为所有住<mark class=\"pn\">书珊</mark>城的大小人民在御园的院子里设摆筵席七日。"
+        },
+        {
+          "verse": 6,
+          "text": "有白色、绿色、蓝色的帐子，用细麻绳、紫色绳从银环内系在白玉石柱上；有金银的床榻摆在红、白、黄、黑玉石的铺石地上。"
+        },
+        {
+          "verse": 7,
+          "text": "用金器皿赐酒，器皿各有不同。御酒甚多，足显王的厚意。"
+        },
+        {
+          "verse": 8,
+          "text": "喝酒有例，不准勉强人，因王吩咐宫里的一切臣宰，让人各随己意。"
+        },
+        {
+          "verse": 9,
+          "text": "王后<mark class=\"pn\">瓦实提</mark>在<mark class=\"pn\">亚哈随鲁</mark>王的宫内也为妇女设摆筵席。"
+        },
+        {
+          "verse": 10,
+          "text": "第七日，<mark class=\"pn\">亚哈随鲁</mark>王饮酒，心中快乐，就吩咐在他面前侍立的七个太监<mark class=\"pn\">米户幔</mark>、<mark class=\"pn\">比斯他</mark>、<mark class=\"pn\">哈波拿</mark>、<mark class=\"pn\">比革他</mark>、<mark class=\"pn\">亚拔他</mark>、<mark class=\"pn\">西达</mark>、<mark class=\"pn\">甲迦</mark>，"
+        },
+        {
+          "verse": 11,
+          "text": "请王后<mark class=\"pn\">瓦实提</mark>头戴王后的冠冕到王面前，使各等臣民看她的美貌，因为她容貌甚美。"
+        },
+        {
+          "verse": 12,
+          "text": "王后<mark class=\"pn\">瓦实提</mark>却不肯遵太监所传的王命而来，所以王甚发怒，心如火烧。"
+        },
+        {
+          "verse": "13-14",
+          "text": "那时，在王左右常见王面、国中坐高位的，有<mark class=\"pn\">波斯</mark>和<mark class=\"pn\">玛代</mark>的七个大臣，就是<mark class=\"pn\">甲示拿</mark>、<mark class=\"pn\">示达</mark>、<mark class=\"pn\">押玛他</mark>、<mark class=\"pn\">他施斯</mark>、<mark class=\"pn\">米力</mark>、<mark class=\"pn\">玛西拿</mark>、<mark class=\"pn\">米母干</mark>，都是达时务的明哲人。按王的常规，办事必先询问知例明法的人。王问他们说："
+        },
+        {
+          "verse": 15,
+          "text": "“王后<mark class=\"pn\">瓦实提</mark>不遵太监所传的王命，照例应当怎样办理呢？”"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">米母干</mark>在王和众首领面前回答说：“王后<mark class=\"pn\">瓦实提</mark>这事，不但得罪王，并且有害于王各省的臣民；"
+        },
+        {
+          "verse": 17,
+          "text": "因为王后这事必传到众妇人的耳中，说：‘<mark class=\"pn\">亚哈随鲁</mark>王吩咐王后<mark class=\"pn\">瓦实提</mark>到王面前，她却不来’，她们就藐视自己的丈夫。"
+        },
+        {
+          "verse": 18,
+          "text": "今日<mark class=\"pn\">波斯</mark>和<mark class=\"pn\">玛代</mark>的众夫人听见王后这事，必向王的大臣照样行；从此必大开藐视和忿怒之端。"
+        },
+        {
+          "verse": 19,
+          "text": "王若以为美，就降旨写在<mark class=\"pn\">波斯</mark>和<mark class=\"pn\">玛代</mark>人的例中，永不更改，不准<mark class=\"pn\">瓦实提</mark>再到王面前，将她王后的位分赐给比她还好的人。"
+        },
+        {
+          "verse": 20,
+          "text": "所降的旨意传遍通国（国度本来广大），所有的妇人，无论丈夫贵贱都必尊敬他。”"
+        },
+        {
+          "verse": 21,
+          "text": "王和众首领都以<mark class=\"pn\">米母干</mark>的话为美，王就照这话去行，"
+        },
+        {
+          "verse": 22,
+          "text": "发诏书，用各省的文字、各族的方言通知各省，使为丈夫的在家中作主，各说本地的方言。"
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "这事以后，<mark class=\"pn\">亚哈随鲁</mark>王的忿怒止息，就想念<mark class=\"pn\">瓦实提</mark>和她所行的，并怎样降旨办她。",
+          "heading": "以斯帖被立为王后"
+        },
+        {
+          "verse": 2,
+          "text": "于是王的侍臣对王说：“不如为王寻找美貌的处女。"
+        },
+        {
+          "verse": 3,
+          "text": "王可以派官在国中的各省招聚美貌的处女到<mark class=\"pn\">书珊</mark>城（或作“宫”）的女院，交给掌管女子的太监<mark class=\"pn\">希该</mark>，给她们当用的香品。"
+        },
+        {
+          "verse": 4,
+          "text": "王所喜爱的女子可以立为王后，代替<mark class=\"pn\">瓦实提</mark>。”王以这事为美，就如此行。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">书珊</mark>城有一个<mark class=\"pn\">犹大</mark>人，名叫<mark class=\"pn\">末底改</mark>，是<mark class=\"pn\">便雅悯</mark>人<mark class=\"pn\">基士</mark>的曾孙，<mark class=\"pn\">示每</mark>的孙子，<mark class=\"pn\">睚珥</mark>的儿子。"
+        },
+        {
+          "verse": 6,
+          "text": "从前<mark class=\"pn\">巴比伦</mark>王<mark class=\"pn\">尼布甲尼撒</mark>将<mark class=\"pn\">犹大</mark>王<mark class=\"pn\">耶哥尼雅</mark>（又名“约雅斤”）和百姓从<mark class=\"pn\">耶路撒冷</mark>掳去，<mark class=\"pn\">末底改</mark>也在其内。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">末底改</mark>抚养他叔叔的女儿<mark class=\"pn\">哈大沙</mark>（后名<mark class=\"pn\">以斯帖</mark>），因为她没有父母。这女子又容貌俊美；她父母死了，<mark class=\"pn\">末底改</mark>就收她为自己的女儿。"
+        },
+        {
+          "verse": 8,
+          "text": "王的谕旨传出，就招聚许多女子到<mark class=\"pn\">书珊</mark>城，交给掌管女子的<mark class=\"pn\">希该</mark>；<mark class=\"pn\">以斯帖</mark>也送入王宫，交付<mark class=\"pn\">希该</mark>。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">希该</mark>喜悦<mark class=\"pn\">以斯帖</mark>，就恩待她，急忙给她需用的香品和她所当得的份，又派所当得的七个宫女服侍她，使她和她的宫女搬入女院上好的房屋。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">以斯帖</mark>未曾将籍贯宗族告诉人，因为<mark class=\"pn\">末底改</mark>嘱咐她不可叫人知道。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">末底改</mark>天天在女院前边行走，要知道<mark class=\"pn\">以斯帖</mark>平安不平安，并后事如何。"
+        },
+        {
+          "verse": 12,
+          "text": "众女子照例先洁净身体十二个月：六个月用没药油，六个月用香料和洁身之物。满了日期，然后挨次进去见<mark class=\"pn\">亚哈随鲁</mark>王。"
+        },
+        {
+          "verse": 13,
+          "text": "女子进去见王是这样：从女院到王宫的时候，凡她所要的都必给她。"
+        },
+        {
+          "verse": 14,
+          "text": "晚上进去，次日回到女子第二院，交给掌管妃嫔的太监<mark class=\"pn\">沙甲</mark>；除非王喜爱她，再提名召她，就不再进去见王。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">末底改</mark>叔叔<mark class=\"pn\">亚比孩</mark>的女儿，就是<mark class=\"pn\">末底改</mark>收为自己女儿的<mark class=\"pn\">以斯帖</mark>，按次序当进去见王的时候，除了掌管女子的太监<mark class=\"pn\">希该</mark>所派定给她的，她别无所求。凡看见<mark class=\"pn\">以斯帖</mark>的都喜悦她。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王第七年十月，就是提别月，<mark class=\"pn\">以斯帖</mark>被引入宫见王。"
+        },
+        {
+          "verse": 17,
+          "text": "王爱<mark class=\"pn\">以斯帖</mark>过于爱众女，她在王眼前蒙宠爱比众处女更甚。王就把王后的冠冕戴在她头上，立她为王后，代替<mark class=\"pn\">瓦实提</mark>。"
+        },
+        {
+          "verse": 18,
+          "text": "王因<mark class=\"pn\">以斯帖</mark>的缘故给众首领和臣仆设摆大筵席，又豁免各省的租税，并照王的厚意大颁赏赐。"
+        },
+        {
+          "verse": 19,
+          "text": "第二次招聚处女的时候，<mark class=\"pn\">末底改</mark>坐在朝门。",
+          "heading": "末底改救王的命"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">以斯帖</mark>照着<mark class=\"pn\">末底改</mark>所嘱咐的，还没有将籍贯宗族告诉人；因为<mark class=\"pn\">以斯帖</mark>遵<mark class=\"pn\">末底改</mark>的命，如抚养她的时候一样。"
+        },
+        {
+          "verse": 21,
+          "text": "当那时候，<mark class=\"pn\">末底改</mark>坐在朝门，王的太监中有两个守门的，<mark class=\"pn\">辟探</mark>和<mark class=\"pn\">提列</mark>，恼恨<mark class=\"pn\">亚哈随鲁</mark>王，想要下手害他。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">末底改</mark>知道了，就告诉王后<mark class=\"pn\">以斯帖</mark>。<mark class=\"pn\">以斯帖</mark>奉<mark class=\"pn\">末底改</mark>的名，报告于王；"
+        },
+        {
+          "verse": 23,
+          "text": "究察这事，果然是实，就把二人挂在木头上，将这事在王面前写于历史上。"
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "这事以后，<mark class=\"pn\">亚哈随鲁</mark>王抬举<mark class=\"pn\">亚甲</mark>族<mark class=\"pn\">哈米大他</mark>的儿子<mark class=\"pn\">哈曼</mark>，使他高升，叫他的爵位超过与他同事的一切臣宰。",
+          "heading": "哈曼阴谋除灭犹大人"
+        },
+        {
+          "verse": 2,
+          "text": "在朝门的一切臣仆都跪拜<mark class=\"pn\">哈曼</mark>，因为王如此吩咐；惟独<mark class=\"pn\">末底改</mark>不跪不拜。"
+        },
+        {
+          "verse": 3,
+          "text": "在朝门的臣仆问<mark class=\"pn\">末底改</mark>说：“你为何违背王的命令呢？”"
+        },
+        {
+          "verse": 4,
+          "text": "他们天天劝他，他还是不听，他们就告诉<mark class=\"pn\">哈曼</mark>，要看<mark class=\"pn\">末底改</mark>的事站得住站不住，因他已经告诉他们自己是<mark class=\"pn\">犹大</mark>人。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">哈曼</mark>见<mark class=\"pn\">末底改</mark>不跪不拜，他就怒气填胸。"
+        },
+        {
+          "verse": 6,
+          "text": "他们已将<mark class=\"pn\">末底改</mark>的本族告诉<mark class=\"pn\">哈曼</mark>；他以为下手害<mark class=\"pn\">末底改</mark>一人是小事，就要灭绝<mark class=\"pn\">亚哈随鲁</mark>王通国所有的<mark class=\"pn\">犹大</mark>人，就是<mark class=\"pn\">末底改</mark>的本族。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王十二年正月，就是尼散月，人在<mark class=\"pn\">哈曼</mark>面前，按日日月月掣普珥，就是掣签，要定何月何日为吉，择定了十二月，就是亚达月。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">哈曼</mark>对<mark class=\"pn\">亚哈随鲁</mark>王说：“有一种民散居在王国各省的民中；他们的律例与万民的律例不同，也不守王的律例，所以容留他们与王无益。"
+        },
+        {
+          "verse": 9,
+          "text": "王若以为美，请下旨意灭绝他们；我就捐一万他连得银子交给掌管国帑的人，纳入王的府库。”"
+        },
+        {
+          "verse": 10,
+          "text": "于是王从自己手上摘下戒指给<mark class=\"pn\">犹大</mark>人的仇敌，<mark class=\"pn\">亚甲</mark>族<mark class=\"pn\">哈米大他</mark>的儿子<mark class=\"pn\">哈曼</mark>。"
+        },
+        {
+          "verse": 11,
+          "text": "王对<mark class=\"pn\">哈曼</mark>说：“这银子仍赐给你，这民也交给你，你可以随意待他们。”"
+        },
+        {
+          "verse": 12,
+          "text": "正月十三日，就召了王的书记来，照着<mark class=\"pn\">哈曼</mark>一切所吩咐的，用各省的文字、各族的方言，奉<mark class=\"pn\">亚哈随鲁</mark>王的名写旨意，传与总督和各省的省长，并各族的首领；又用王的戒指盖印，"
+        },
+        {
+          "verse": 13,
+          "text": "交给驿卒传到王的各省，吩咐将<mark class=\"pn\">犹大</mark>人，无论老少妇女孩子，在一日之间，十二月，就是亚达月十三日，全然剪除，杀戮灭绝，并夺他们的财为掠物。"
+        },
+        {
+          "verse": 14,
+          "text": "抄录这旨意，颁行各省，宣告各族，使他们预备等候那日。"
+        },
+        {
+          "verse": 15,
+          "text": "驿卒奉王命急忙起行，旨意也传遍<mark class=\"pn\">书珊</mark>城。王同<mark class=\"pn\">哈曼</mark>坐下饮酒，<mark class=\"pn\">书珊</mark>城的民却都慌乱。"
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">末底改</mark>知道所做的这一切事，就撕裂衣服，穿麻衣，蒙灰尘，在城中行走，痛哭哀号。",
+          "heading": "末底改求以斯帖帮忙"
+        },
+        {
+          "verse": 2,
+          "text": "到了朝门前停住脚步，因为穿麻衣的不可进朝门。"
+        },
+        {
+          "verse": 3,
+          "text": "王的谕旨所到的各省各处，<mark class=\"pn\">犹大</mark>人大大悲哀，禁食哭泣哀号，穿麻衣躺在灰中的甚多。"
+        },
+        {
+          "verse": 4,
+          "text": "王后<mark class=\"pn\">以斯帖</mark>的宫女和太监来把这事告诉<mark class=\"pn\">以斯帖</mark>，她甚是忧愁，就送衣服给<mark class=\"pn\">末底改</mark>穿，要他脱下麻衣，他却不受。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">以斯帖</mark>就把王所派伺候她的一个太监，名叫<mark class=\"pn\">哈他革</mark>召来，吩咐他去见<mark class=\"pn\">末底改</mark>，要知道这是什么事，是什么缘故。"
+        },
+        {
+          "verse": 6,
+          "text": "于是<mark class=\"pn\">哈他革</mark>出到朝门前的宽阔处见<mark class=\"pn\">末底改</mark>。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">末底改</mark>将自己所遇的事，并<mark class=\"pn\">哈曼</mark>为灭绝<mark class=\"pn\">犹大</mark>人应许捐入王库的银数都告诉了他；"
+        },
+        {
+          "verse": 8,
+          "text": "又将所抄写传遍<mark class=\"pn\">书珊</mark>城要灭绝<mark class=\"pn\">犹大</mark>人的旨意交给<mark class=\"pn\">哈他革</mark>，要给<mark class=\"pn\">以斯帖</mark>看，又要给她说明，并嘱咐她进去见王，为本族的人在王面前恳切祈求。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">哈他革</mark>回来，将<mark class=\"pn\">末底改</mark>的话告诉<mark class=\"pn\">以斯帖</mark>；"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">以斯帖</mark>就吩咐<mark class=\"pn\">哈他革</mark>去见<mark class=\"pn\">末底改</mark>，说："
+        },
+        {
+          "verse": 11,
+          "text": "“王的一切臣仆和各省的人民都知道有一个定例：若不蒙召，擅入内院见王的，无论男女必被治死；除非王向他伸出金杖，不得存活。现在我没有蒙召进去见王已经三十日了。”"
+        },
+        {
+          "verse": 12,
+          "text": "人就把<mark class=\"pn\">以斯帖</mark>这话告诉<mark class=\"pn\">末底改</mark>。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">末底改</mark>托人回复<mark class=\"pn\">以斯帖</mark>说：“你莫想在王宫里强过一切<mark class=\"pn\">犹大</mark>人，得免这祸。"
+        },
+        {
+          "verse": 14,
+          "text": "此时你若闭口不言，<mark class=\"pn\">犹大</mark>人必从别处得解脱，蒙拯救；你和你父家必致灭亡。焉知你得了王后的位分不是为现今的机会吗？”"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">以斯帖</mark>就吩咐人回报<mark class=\"pn\">末底改</mark>说："
+        },
+        {
+          "verse": 16,
+          "text": "“你当去招聚<mark class=\"pn\">书珊</mark>城所有的<mark class=\"pn\">犹大</mark>人，为我禁食三昼三夜，不吃不喝；我和我的宫女也要这样禁食。然后我违例进去见王，我若死就死吧！”"
+        },
+        {
+          "verse": 17,
+          "text": "于是<mark class=\"pn\">末底改</mark>照<mark class=\"pn\">以斯帖</mark>一切所吩咐的去行。"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "第三日，<mark class=\"pn\">以斯帖</mark>穿上朝服，进王宫的内院，对殿站立。王在殿里坐在宝座上，对着殿门。",
+          "heading": "以斯帖为王和哈曼设筵席"
+        },
+        {
+          "verse": 2,
+          "text": "王见王后<mark class=\"pn\">以斯帖</mark>站在院内，就施恩于她，向她伸出手中的金杖；<mark class=\"pn\">以斯帖</mark>便向前摸杖头。"
+        },
+        {
+          "verse": 3,
+          "text": "王对她说：“王后<mark class=\"pn\">以斯帖</mark>啊，你要什么？你求什么，就是国的一半也必赐给你。”"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">以斯帖</mark>说：“王若以为美，就请王带着<mark class=\"pn\">哈曼</mark>今日赴我所预备的筵席。”"
+        },
+        {
+          "verse": 5,
+          "text": "王说：“叫<mark class=\"pn\">哈曼</mark>速速照<mark class=\"pn\">以斯帖</mark>的话去行。”于是王带着<mark class=\"pn\">哈曼</mark>赴<mark class=\"pn\">以斯帖</mark>所预备的筵席。"
+        },
+        {
+          "verse": 6,
+          "text": "在酒席筵前，王又问<mark class=\"pn\">以斯帖</mark>说：“你要什么，我必赐给你；你求什么，就是国的一半也必为你成就。”"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">以斯帖</mark>回答说：“我有所要，我有所求。"
+        },
+        {
+          "verse": 8,
+          "text": "我若在王眼前蒙恩，王若愿意赐我所要的，准我所求的，就请王带着<mark class=\"pn\">哈曼</mark>再赴我所要预备的筵席。明日我必照王所问的说明。”"
+        },
+        {
+          "verse": 9,
+          "text": "那日<mark class=\"pn\">哈曼</mark>心中快乐，欢欢喜喜地出来；但见<mark class=\"pn\">末底改</mark>在朝门不站起来，连身也不动，就满心恼怒<mark class=\"pn\">末底改</mark>。",
+          "heading": "哈曼阴谋杀末底改"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">哈曼</mark>暂且忍耐回家，叫人请他朋友和他妻子<mark class=\"pn\">细利斯</mark>来。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">哈曼</mark>将他富厚的荣耀、众多的儿女，和王抬举他使他超乎首领臣仆之上，都述说给他们听。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">哈曼</mark>又说：“王后<mark class=\"pn\">以斯帖</mark>预备筵席，除了我之外不许别人随王赴席。明日王后又请我随王赴席；"
+        },
+        {
+          "verse": 13,
+          "text": "只是我见<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>坐在朝门，虽有这一切荣耀，也与我无益。”"
+        },
+        {
+          "verse": 14,
+          "text": "他的妻<mark class=\"pn\">细利斯</mark>和他一切的朋友对他说：“不如立一个五丈高的木架，明早求王将<mark class=\"pn\">末底改</mark>挂在其上，然后你可以欢欢喜喜地随王赴席。”<mark class=\"pn\">哈曼</mark>以这话为美，就叫人做了木架。"
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "那夜王睡不着觉，就吩咐人取历史来，念给他听。",
+          "heading": "王赐末底改荣誉"
+        },
+        {
+          "verse": 2,
+          "text": "正遇见书上写着说：王的太监中有两个守门的，<mark class=\"pn\">辟探</mark>和<mark class=\"pn\">提列</mark>，想要下手害<mark class=\"pn\">亚哈随鲁</mark>王，<mark class=\"pn\">末底改</mark>将这事告诉王后。"
+        },
+        {
+          "verse": 3,
+          "text": "王说：“<mark class=\"pn\">末底改</mark>行了这事，赐他什么尊荣爵位没有？”伺候王的臣仆回答说：“没有赐他什么。”"
+        },
+        {
+          "verse": 4,
+          "text": "王说：“谁在院子里？”（那时<mark class=\"pn\">哈曼</mark>正进王宫的外院，要求王将<mark class=\"pn\">末底改</mark>挂在他所预备的木架上。）"
+        },
+        {
+          "verse": 5,
+          "text": "臣仆说：“<mark class=\"pn\">哈曼</mark>站在院内。”王说：“叫他进来。”"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">哈曼</mark>就进去。王问他说：“王所喜悦尊荣的人，当如何待他呢？”<mark class=\"pn\">哈曼</mark>心里说：“王所喜悦尊荣的，不是我是谁呢？”"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">哈曼</mark>就回答说：“王所喜悦尊荣的，"
+        },
+        {
+          "verse": 8,
+          "text": "当将王常穿的朝服和戴冠的御马，"
+        },
+        {
+          "verse": 9,
+          "text": "都交给王极尊贵的一个大臣，命他将衣服给王所喜悦尊荣的人穿上，使他骑上马，走遍城里的街市，在他面前宣告说：王所喜悦尊荣的人，就如此待他。”"
+        },
+        {
+          "verse": 10,
+          "text": "王对<mark class=\"pn\">哈曼</mark>说：“你速速将这衣服和马，照你所说的，向坐在朝门的<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>去行。凡你所说的，一样不可缺。”"
+        },
+        {
+          "verse": 11,
+          "text": "于是<mark class=\"pn\">哈曼</mark>将朝服给<mark class=\"pn\">末底改</mark>穿上，使他骑上马，走遍城里的街市，在他面前宣告说：“王所喜悦尊荣的人，就如此待他。”"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">末底改</mark>仍回到朝门，<mark class=\"pn\">哈曼</mark>却忧忧闷闷地蒙着头，急忙回家去了，"
+        },
+        {
+          "verse": 13,
+          "text": "将所遇的一切事详细说给他的妻<mark class=\"pn\">细利斯</mark>和他的众朋友听。他的智慧人和他的妻<mark class=\"pn\">细利斯</mark>对他说：“你在<mark class=\"pn\">末底改</mark>面前始而败落，他如果是<mark class=\"pn\">犹大</mark>人，你必不能胜他，终必在他面前败落。”"
+        },
+        {
+          "verse": 14,
+          "text": "他们还与<mark class=\"pn\">哈曼</mark>说话的时候，王的太监来催<mark class=\"pn\">哈曼</mark>快去赴<mark class=\"pn\">以斯帖</mark>所预备的筵席。"
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "王带着<mark class=\"pn\">哈曼</mark>来赴王后<mark class=\"pn\">以斯帖</mark>的筵席。",
+          "heading": "哈曼被处死"
+        },
+        {
+          "verse": 2,
+          "text": "这第二次在酒席筵前，王又问<mark class=\"pn\">以斯帖</mark>说：“王后<mark class=\"pn\">以斯帖</mark>啊，你要什么，我必赐给你；你求什么，就是国的一半也必为你成就。”"
+        },
+        {
+          "verse": 3,
+          "text": "王后<mark class=\"pn\">以斯帖</mark>回答说：“我若在王眼前蒙恩，王若以为美，我所愿的，是愿王将我的性命赐给我；我所求的，是求王将我的本族赐给我。"
+        },
+        {
+          "verse": 4,
+          "text": "因我和我的本族被卖了，要剪除杀戮灭绝我们。我们若被卖为奴为婢，我也闭口不言；但王的损失，敌人万不能补足。”"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王问王后<mark class=\"pn\">以斯帖</mark>说：“擅敢起意如此行的是谁？这人在哪里呢？”"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">以斯帖</mark>说：“仇人敌人就是这恶人<mark class=\"pn\">哈曼</mark>！”<mark class=\"pn\">哈曼</mark>在王和王后面前就甚惊惶。"
+        },
+        {
+          "verse": 7,
+          "text": "王便大怒，起来离开酒席往御园去了。<mark class=\"pn\">哈曼</mark>见王定意要加罪与他，就起来，求王后<mark class=\"pn\">以斯帖</mark>救命。"
+        },
+        {
+          "verse": 8,
+          "text": "王从御园回到酒席之处，见<mark class=\"pn\">哈曼</mark>伏在<mark class=\"pn\">以斯帖</mark>所靠的榻上；王说：“他竟敢在宫内、在我面前凌辱王后吗？”这话一出王口，人就蒙了<mark class=\"pn\">哈曼</mark>的脸。"
+        },
+        {
+          "verse": 9,
+          "text": "伺候王的一个太监名叫<mark class=\"pn\">哈波拿</mark>，说：“<mark class=\"pn\">哈曼</mark>为那救王有功的<mark class=\"pn\">末底改</mark>做了五丈高的木架，现今立在<mark class=\"pn\">哈曼</mark>家里。”王说：“把<mark class=\"pn\">哈曼</mark>挂在其上。”"
+        },
+        {
+          "verse": 10,
+          "text": "于是人将<mark class=\"pn\">哈曼</mark>挂在他为<mark class=\"pn\">末底改</mark>所预备的木架上。王的忿怒这才止息。"
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "当日，<mark class=\"pn\">亚哈随鲁</mark>王把<mark class=\"pn\">犹大</mark>人仇敌<mark class=\"pn\">哈曼</mark>的家产赐给王后<mark class=\"pn\">以斯帖</mark>。<mark class=\"pn\">末底改</mark>也来到王面前，因为<mark class=\"pn\">以斯帖</mark>已经告诉王，<mark class=\"pn\">末底改</mark>是她的亲属。",
+          "heading": "犹大人的反击"
+        },
+        {
+          "verse": 2,
+          "text": "王摘下自己的戒指，就是从<mark class=\"pn\">哈曼</mark>追回的，给了<mark class=\"pn\">末底改</mark>。<mark class=\"pn\">以斯帖</mark>派<mark class=\"pn\">末底改</mark>管理<mark class=\"pn\">哈曼</mark>的家产。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">以斯帖</mark>又俯伏在王脚前，流泪哀告，求他除掉<mark class=\"pn\">亚甲</mark>族<mark class=\"pn\">哈曼</mark>害<mark class=\"pn\">犹大</mark>人的恶谋。"
+        },
+        {
+          "verse": 4,
+          "text": "王向<mark class=\"pn\">以斯帖</mark>伸出金杖；<mark class=\"pn\">以斯帖</mark>就起来，站在王前，"
+        },
+        {
+          "verse": 5,
+          "text": "说：“<mark class=\"pn\">亚甲</mark>族<mark class=\"pn\">哈米大他</mark>的儿子<mark class=\"pn\">哈曼</mark>设谋传旨，要杀灭在王各省的<mark class=\"pn\">犹大</mark>人。现今王若愿意，我若在王眼前蒙恩，王若以为美，若喜悦我，请王另下旨意，废除<mark class=\"pn\">哈曼</mark>所传的那旨意。"
+        },
+        {
+          "verse": 6,
+          "text": "我何忍见我本族的人受害？何忍见我同宗的人被灭呢？”"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王对王后<mark class=\"pn\">以斯帖</mark>和<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>说：“因<mark class=\"pn\">哈曼</mark>要下手害<mark class=\"pn\">犹大</mark>人，我已将他的家产赐给<mark class=\"pn\">以斯帖</mark>，人也将<mark class=\"pn\">哈曼</mark>挂在木架上。"
+        },
+        {
+          "verse": 8,
+          "text": "现在你们可以随意奉王的名写谕旨给<mark class=\"pn\">犹大</mark>人，用王的戒指盖印；因为奉王名所写、用王戒指盖印的谕旨，人都不能废除。”"
+        },
+        {
+          "verse": 9,
+          "text": "三月，就是西弯月二十三日，将王的书记召来，按着<mark class=\"pn\">末底改</mark>所吩咐的，用各省的文字、各族的方言，并<mark class=\"pn\">犹大</mark>人的文字方言写谕旨，传给那从<mark class=\"pn\">印度</mark>直到<mark class=\"pn\">古实</mark>一百二十七省的<mark class=\"pn\">犹大</mark>人和总督省长首领。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">末底改</mark>奉<mark class=\"pn\">亚哈随鲁</mark>王的名写谕旨，用王的戒指盖印，交给骑御马圈快马的驿卒，传到各处。"
+        },
+        {
+          "verse": "11-12",
+          "text": "谕旨中，王准各省各城的<mark class=\"pn\">犹大</mark>人在一日之间，十二月，就是亚达月十三日，聚集保护性命，剪除杀戮灭绝那要攻击<mark class=\"pn\">犹大</mark>人的一切仇敌和他们的妻子儿女，夺取他们的财为掠物。"
+        },
+        {
+          "verse": 13,
+          "text": "抄录这谕旨，颁行各省，宣告各族，使<mark class=\"pn\">犹大</mark>人预备等候那日，在仇敌身上报仇。"
+        },
+        {
+          "verse": 14,
+          "text": "于是骑快马的驿卒被王命催促，急忙起行；谕旨也传遍<mark class=\"pn\">书珊</mark>城。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">末底改</mark>穿着蓝色白色的朝服，头戴大金冠冕，又穿紫色细麻布的外袍，从王面前出来；<mark class=\"pn\">书珊</mark>城的人民都欢呼快乐。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">犹大</mark>人有光荣，欢喜快乐而得尊贵。"
+        },
+        {
+          "verse": 17,
+          "text": "王的谕旨所到的各省各城，<mark class=\"pn\">犹大</mark>人都欢喜快乐，设摆筵宴，以那日为吉日。那国的人民，有许多因惧怕<mark class=\"pn\">犹大</mark>人，就入了<mark class=\"pn\">犹大</mark>籍。"
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "十二月，乃亚达月十三日，王的谕旨将要举行，就是<mark class=\"pn\">犹大</mark>人的仇敌盼望辖制他们的日子，<mark class=\"pn\">犹大</mark>人反倒辖制恨他们的人。",
+          "heading": "犹大人除灭他们的仇敌"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">犹大</mark>人在<mark class=\"pn\">亚哈随鲁</mark>王各省的城里聚集，下手击杀那要害他们的人。无人能敌挡他们，因为各族都惧怕他们。"
+        },
+        {
+          "verse": 3,
+          "text": "各省的首领、总督、省长，和办理王事的人，因惧怕<mark class=\"pn\">末底改</mark>，就都帮助<mark class=\"pn\">犹大</mark>人。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">末底改</mark>在朝中为大，名声传遍各省，日渐昌盛。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">犹大</mark>人用刀击杀一切仇敌，任意杀灭恨他们的人。"
+        },
+        {
+          "verse": 6,
+          "text": "在<mark class=\"pn\">书珊</mark>城，<mark class=\"pn\">犹大</mark>人杀灭了五百人；"
+        },
+        {
+          "verse": 7,
+          "text": "又杀<mark class=\"pn\">巴珊大他</mark>、<mark class=\"pn\">达分</mark>、<mark class=\"pn\">亚斯帕他</mark>、"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">破拉他</mark>、<mark class=\"pn\">亚大利雅</mark>、<mark class=\"pn\">亚利大他</mark>、"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">帕玛斯他</mark>、<mark class=\"pn\">亚利赛</mark>、<mark class=\"pn\">亚利代</mark>、<mark class=\"pn\">瓦耶撒他</mark>；"
+        },
+        {
+          "verse": 10,
+          "text": "这十人都是<mark class=\"pn\">哈米大他</mark>的孙子、<mark class=\"pn\">犹大</mark>人仇敌<mark class=\"pn\">哈曼</mark>的儿子。<mark class=\"pn\">犹大</mark>人却没有下手夺取财物。"
+        },
+        {
+          "verse": 11,
+          "text": "当日，将<mark class=\"pn\">书珊</mark>城被杀的人数呈在王前。"
+        },
+        {
+          "verse": 12,
+          "text": "王对王后<mark class=\"pn\">以斯帖</mark>说：“<mark class=\"pn\">犹大</mark>人在<mark class=\"pn\">书珊</mark>城杀灭了五百人，又杀了<mark class=\"pn\">哈曼</mark>的十个儿子，在王的各省不知如何呢？现在你要什么，我必赐给你；你还求什么，也必为你成就。”"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">以斯帖</mark>说：“王若以为美，求你准<mark class=\"pn\">书珊</mark>的<mark class=\"pn\">犹大</mark>人，明日也照今日的旨意行，并将<mark class=\"pn\">哈曼</mark>十个儿子的尸首挂在木架上。”"
+        },
+        {
+          "verse": 14,
+          "text": "王便允准如此行。旨意传在<mark class=\"pn\">书珊</mark>，人就把<mark class=\"pn\">哈曼</mark>十个儿子的尸首挂起来了。"
+        },
+        {
+          "verse": 15,
+          "text": "亚达月十四日，<mark class=\"pn\">书珊</mark>的<mark class=\"pn\">犹大</mark>人又聚集在<mark class=\"pn\">书珊</mark>，杀了三百人，却没有下手夺取财物。"
+        },
+        {
+          "verse": 16,
+          "text": "在王各省其余的<mark class=\"pn\">犹大</mark>人也都聚集保护性命，杀了恨他们的人七万五千，却没有下手夺取财物。这样，就脱离仇敌，得享平安。"
+        },
+        {
+          "verse": 17,
+          "text": "亚达月十三日，行了这事；十四日安息，以这日为设筵欢乐的日子。"
+        },
+        {
+          "verse": 18,
+          "text": "但<mark class=\"pn\">书珊</mark>的<mark class=\"pn\">犹大</mark>人，这十三日、十四日聚集杀戮仇敌；十五日安息，以这日为设筵欢乐的日子。"
+        },
+        {
+          "verse": 19,
+          "text": "所以住无城墙乡村的<mark class=\"pn\">犹大</mark>人，如今都以亚达月十四日为设筵欢乐的吉日，彼此馈送礼物。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">末底改</mark>记录这事，写信与<mark class=\"pn\">亚哈随鲁</mark>王各省远近所有的<mark class=\"pn\">犹大</mark>人，",
+          "heading": "普珥日"
+        },
+        {
+          "verse": 21,
+          "text": "嘱咐他们每年守亚达月十四、十五两日，"
+        },
+        {
+          "verse": 22,
+          "text": "以这月的两日为<mark class=\"pn\">犹大</mark>人脱离仇敌得平安、转忧为喜、转悲为乐的吉日。在这两日设筵欢乐，彼此馈送礼物，周济穷人。"
+        },
+        {
+          "verse": 23,
+          "text": "于是，<mark class=\"pn\">犹大</mark>人按着<mark class=\"pn\">末底改</mark>所写与他们的信，应承照初次所守的守为永例；"
+        },
+        {
+          "verse": 24,
+          "text": "是因<mark class=\"pn\">犹大</mark>人的仇敌<mark class=\"pn\">亚甲</mark>族<mark class=\"pn\">哈米大他</mark>的儿子<mark class=\"pn\">哈曼</mark>设谋杀害<mark class=\"pn\">犹大</mark>人，掣普珥，就是掣签，为要杀尽灭绝他们；"
+        },
+        {
+          "verse": 25,
+          "text": "这事报告于王，王便降旨使<mark class=\"pn\">哈曼</mark>谋害<mark class=\"pn\">犹大</mark>人的恶事归到他自己的头上，并吩咐把他和他的众子都挂在木架上。"
+        },
+        {
+          "verse": 26,
+          "text": "照着普珥的名字，<mark class=\"pn\">犹大</mark>人就称这两日为“普珥日”。他们因这信上的话，又因所看见所遇见的事，"
+        },
+        {
+          "verse": 27,
+          "text": "就应承自己与后裔，并归附他们的人，每年按时必守这两日，永远不废。"
+        },
+        {
+          "verse": 28,
+          "text": "各省各城、家家户户、世世代代纪念遵守这两日，使这“普珥日”在<mark class=\"pn\">犹大</mark>人中不可废掉，在他们后裔中也不可忘记。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">亚比孩</mark>的女儿王后<mark class=\"pn\">以斯帖</mark>和<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>以全权写第二封信，坚嘱<mark class=\"pn\">犹大</mark>人守这“普珥日”，"
+        },
+        {
+          "verse": 30,
+          "text": "用和平诚实话写信给<mark class=\"pn\">亚哈随鲁</mark>王国中一百二十七省所有的<mark class=\"pn\">犹大</mark>人，"
+        },
+        {
+          "verse": 31,
+          "text": "劝他们按时守这“普珥日”，禁食呼求，是照<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>和王后<mark class=\"pn\">以斯帖</mark>所嘱咐的，也照<mark class=\"pn\">犹大</mark>人为自己与后裔所应承的。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">以斯帖</mark>命定守“普珥日”，这事也记录在书上。"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">亚哈随鲁</mark>王使旱地和海岛的人民都进贡。",
+          "heading": "亚哈随鲁和末底改的功绩"
+        },
+        {
+          "verse": 2,
+          "text": "他以权柄能力所行的，并他抬举<mark class=\"pn\">末底改</mark>使他高升的事，岂不都写在<mark class=\"pn\">玛代</mark>和<mark class=\"pn\">波斯</mark>王的历史上吗？"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">犹大</mark>人<mark class=\"pn\">末底改</mark>作<mark class=\"pn\">亚哈随鲁</mark>王的宰相，在<mark class=\"pn\">犹大</mark>人中为大，得他众弟兄的喜悦，为本族的人求好处，向他们说和平的话。"
+        }
+      ]
+    }
+  ]
+}

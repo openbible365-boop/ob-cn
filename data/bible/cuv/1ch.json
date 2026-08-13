@@ -1,0 +1,3991 @@
+{
+  "book": "历代志上",
+  "bookEn": "1Chronicles",
+  "abbr": "1Ch",
+  "version": "cunps",
+  "chapters": [
+    {
+      "chapter": 1,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">亚当</mark> 生 <mark class=\"pn\">塞特</mark>；<mark class=\"pn\">塞特</mark>生<mark class=\"pn\">以挪士</mark>；",
+          "heading": "从亚当到亚伯拉罕"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">以挪士</mark>生<mark class=\"pn\">该南</mark>；<mark class=\"pn\">该南</mark>生<mark class=\"pn\">玛勒列</mark>；<mark class=\"pn\">玛勒列</mark>生<mark class=\"pn\">雅列</mark>；"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">雅列</mark>生<mark class=\"pn\">以诺</mark>；<mark class=\"pn\">以诺</mark>生<mark class=\"pn\">玛土撒拉</mark>；<mark class=\"pn\">玛土撒拉</mark>生<mark class=\"pn\">拉麦</mark>；"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">拉麦</mark>生<mark class=\"pn\">挪亚</mark>；<mark class=\"pn\">挪亚</mark>生<mark class=\"pn\">闪</mark>、<mark class=\"pn\">含</mark>、<mark class=\"pn\">雅弗</mark>。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">雅弗</mark>的儿子是<mark class=\"pn\">歌篾</mark>、<mark class=\"pn\">玛各</mark>、<mark class=\"pn\">玛代</mark>、<mark class=\"pn\">雅完</mark>、<mark class=\"pn\">土巴</mark>、<mark class=\"pn\">米设</mark>、<mark class=\"pn\">提拉</mark>。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">歌篾</mark>的儿子是<mark class=\"pn\">亚实基拿</mark>、<mark class=\"pn\">低法</mark>（“低法”在创世记10章3节作“利法”）、<mark class=\"pn\">陀迦玛</mark>。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">雅完</mark>的儿子是<mark class=\"pn\">以利沙</mark>、<mark class=\"pn\">他施</mark>、<mark class=\"pn\">基提</mark>、<mark class=\"pn\">多单</mark>（“多单”有作“罗单”的）。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">含</mark>的儿子是<mark class=\"pn\">古实</mark>、<mark class=\"pn\">麦西</mark>、<mark class=\"pn\">弗</mark>、<mark class=\"pn\">迦南</mark>。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">古实</mark>的儿子是<mark class=\"pn\">西巴</mark>、<mark class=\"pn\">哈腓拉</mark>、<mark class=\"pn\">撒弗他</mark>、<mark class=\"pn\">拉玛</mark>、<mark class=\"pn\">撒弗提迦</mark>。<mark class=\"pn\">拉玛</mark>的儿子是<mark class=\"pn\">示巴</mark>、<mark class=\"pn\">底但</mark>。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">古实</mark>生<mark class=\"pn\">宁录</mark>；他为世上英雄之首。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">麦西</mark>生<mark class=\"pn\">路低</mark>人、<mark class=\"pn\">亚拿米</mark>人、<mark class=\"pn\">利哈比</mark>人、<mark class=\"pn\">拿弗土希</mark>人、"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">帕斯鲁细</mark>人、<mark class=\"pn\">迦斯路希</mark>人、<mark class=\"pn\">迦斐托</mark>人；从<mark class=\"pn\">迦斐托</mark>出来的有<mark class=\"pn\">非利士</mark>人。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">迦南</mark>生长子<mark class=\"pn\">西顿</mark>，又生<mark class=\"pn\">赫</mark>"
+        },
+        {
+          "verse": 14,
+          "text": "和<mark class=\"pn\">耶布斯</mark>人、<mark class=\"pn\">亚摩利</mark>人、<mark class=\"pn\">革迦撒</mark>人、"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">希未</mark>人、<mark class=\"pn\">亚基</mark>人、<mark class=\"pn\">西尼</mark>人、"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">亚瓦底</mark>人、<mark class=\"pn\">洗玛利</mark>人，并<mark class=\"pn\">哈马</mark>人。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">闪</mark>的儿子是<mark class=\"pn\">以拦</mark>、<mark class=\"pn\">亚述</mark>、<mark class=\"pn\">亚法</mark> <mark class=\"pn\">撒</mark>、<mark class=\"pn\">路德</mark>、<mark class=\"pn\">亚兰</mark>、<mark class=\"pn\">乌斯</mark>、<mark class=\"pn\">户勒</mark>、<mark class=\"pn\">基帖</mark>、<mark class=\"pn\">米设</mark>（“米设”创世记10章23节作“玛施”）。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">亚法撒</mark>生<mark class=\"pn\">沙拉</mark>；<mark class=\"pn\">沙拉</mark>生<mark class=\"pn\">希伯</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">希伯</mark>生了两个儿子：一个名叫<mark class=\"pn\">法勒</mark>（“法勒”就是“分”的意思），因为那时人就分地居住；<mark class=\"pn\">法勒</mark>的兄弟名叫<mark class=\"pn\">约坍</mark>。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">约坍</mark>生<mark class=\"pn\">亚摩答</mark>、<mark class=\"pn\">沙列</mark>、<mark class=\"pn\">哈萨玛非</mark>、<mark class=\"pn\">耶拉</mark>、"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">哈多兰</mark>、<mark class=\"pn\">乌萨</mark>、<mark class=\"pn\">德拉</mark>、"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">以巴录</mark>、<mark class=\"pn\">亚比玛利</mark>、<mark class=\"pn\">示巴</mark>、"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">阿斐</mark>、<mark class=\"pn\">哈腓拉</mark>、<mark class=\"pn\">约巴</mark>。这都是<mark class=\"pn\">约坍</mark>的儿子。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">闪</mark> 生 <mark class=\"pn\">亚法撒</mark>；<mark class=\"pn\">亚法撒</mark>生<mark class=\"pn\">沙拉</mark>；"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">沙拉</mark>生<mark class=\"pn\">希伯</mark>；<mark class=\"pn\">希伯</mark>生<mark class=\"pn\">法勒</mark>；<mark class=\"pn\">法勒</mark>生<mark class=\"pn\">拉吴</mark>；"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">拉吴</mark>生<mark class=\"pn\">西鹿</mark>；<mark class=\"pn\">西鹿</mark>生<mark class=\"pn\">拿鹤</mark>；<mark class=\"pn\">拿鹤</mark>生<mark class=\"pn\">他拉</mark>；"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">他拉</mark>生<mark class=\"pn\">亚伯兰</mark>，<mark class=\"pn\">亚伯兰</mark>就是<mark class=\"pn\">亚伯拉罕</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">亚伯拉罕</mark>的儿子是<mark class=\"pn\">以撒</mark>、<mark class=\"pn\">以实玛利</mark>。",
+          "heading": "以实玛利的后裔"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">以实玛利</mark>的儿子记在下面：<mark class=\"pn\">以实玛利</mark>的长子是<mark class=\"pn\">尼拜约</mark>，其次是<mark class=\"pn\">基达</mark>、<mark class=\"pn\">亚德别</mark>、<mark class=\"pn\">米比衫</mark>、"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">米施玛</mark>、<mark class=\"pn\">度玛</mark>、<mark class=\"pn\">玛撒</mark>、<mark class=\"pn\">哈达</mark>、<mark class=\"pn\">提玛</mark>、"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">伊突</mark>、<mark class=\"pn\">拿非施</mark>、<mark class=\"pn\">基底玛</mark>。这都是<mark class=\"pn\">以实玛利</mark>的儿子。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">亚伯拉罕</mark>的妾<mark class=\"pn\">基土拉</mark>所生的儿子，就是<mark class=\"pn\">心兰</mark>、<mark class=\"pn\">约珊</mark>、<mark class=\"pn\">米但</mark>、<mark class=\"pn\">米甸</mark>、<mark class=\"pn\">伊施巴</mark>、<mark class=\"pn\">书亚</mark>。<mark class=\"pn\">约珊</mark>的儿子是<mark class=\"pn\">示巴</mark>、<mark class=\"pn\">底但</mark>。"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">米甸</mark>的儿子是<mark class=\"pn\">以法</mark>、<mark class=\"pn\">以弗</mark>、<mark class=\"pn\">哈诺</mark>、<mark class=\"pn\">亚比大</mark>、<mark class=\"pn\">以勒大</mark>。这都是<mark class=\"pn\">基土拉</mark>的子孙。"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">亚伯拉罕</mark>生<mark class=\"pn\">以撒</mark>；<mark class=\"pn\">以撒</mark>的儿子是<mark class=\"pn\">以扫</mark>和<mark class=\"pn\">以色列</mark>。",
+          "heading": "以扫的后裔"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">以扫</mark>的儿子是<mark class=\"pn\">以利法</mark>、<mark class=\"pn\">流珥</mark>、<mark class=\"pn\">耶乌施</mark>、<mark class=\"pn\">雅兰</mark>、<mark class=\"pn\">可拉</mark>。"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">以利法</mark>的儿子是<mark class=\"pn\">提幔</mark>、<mark class=\"pn\">阿抹</mark>、<mark class=\"pn\">洗玻</mark>、<mark class=\"pn\">迦坦</mark>、<mark class=\"pn\">基纳斯</mark>、<mark class=\"pn\">亭纳</mark>、<mark class=\"pn\">亚玛力</mark>。"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">流珥</mark>的儿子是<mark class=\"pn\">拿哈</mark>、<mark class=\"pn\">谢拉</mark>、<mark class=\"pn\">沙玛</mark>、<mark class=\"pn\">米撒</mark>。"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">西珥</mark>的儿子是<mark class=\"pn\">罗坍</mark>、<mark class=\"pn\">朔巴</mark>、<mark class=\"pn\">祭便</mark>、<mark class=\"pn\">亚拿</mark>、<mark class=\"pn\">底顺</mark>、<mark class=\"pn\">以察</mark>、<mark class=\"pn\">底珊</mark>。",
+          "heading": "以东地的原住民"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">罗坍</mark>的儿子是<mark class=\"pn\">何利</mark>、<mark class=\"pn\">荷幔</mark>；<mark class=\"pn\">罗坍</mark>的妹子是<mark class=\"pn\">亭纳</mark>。"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">朔巴</mark>的儿子是<mark class=\"pn\">亚勒文</mark>、<mark class=\"pn\">玛拿辖</mark>、<mark class=\"pn\">以巴录</mark>、<mark class=\"pn\">示非</mark>、<mark class=\"pn\">阿南</mark>。<mark class=\"pn\">祭便</mark>的儿子是<mark class=\"pn\">亚雅</mark>、<mark class=\"pn\">亚拿</mark>。"
+        },
+        {
+          "verse": 41,
+          "text": "<mark class=\"pn\">亚拿</mark>的儿子是<mark class=\"pn\">底顺</mark>。<mark class=\"pn\">底顺</mark>的儿子是<mark class=\"pn\">哈默兰</mark>、<mark class=\"pn\">伊是班</mark>、<mark class=\"pn\">益兰</mark>、<mark class=\"pn\">基兰</mark>。"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">以察</mark>的儿子是<mark class=\"pn\">辟罕</mark>、<mark class=\"pn\">撒番</mark>、<mark class=\"pn\">亚干</mark>。<mark class=\"pn\">底珊</mark>的儿子是<mark class=\"pn\">乌斯</mark>、<mark class=\"pn\">亚兰</mark>。"
+        },
+        {
+          "verse": 43,
+          "text": "<mark class=\"pn\">以色列</mark>人未有君王治理之先，在<mark class=\"pn\">以东</mark>地作王的记在下面：有<mark class=\"pn\">比珥</mark>的儿子<mark class=\"pn\">比拉</mark>，他的京城名叫<mark class=\"pn\">亭哈巴</mark>。",
+          "heading": "以东诸王"
+        },
+        {
+          "verse": 44,
+          "text": "<mark class=\"pn\">比拉</mark>死了，<mark class=\"pn\">波斯拉</mark>人<mark class=\"pn\">谢拉</mark>的儿子<mark class=\"pn\">约巴</mark>接续他作王。"
+        },
+        {
+          "verse": 45,
+          "text": "<mark class=\"pn\">约巴</mark>死了，<mark class=\"pn\">提幔</mark>地的人<mark class=\"pn\">户珊</mark>接续他作王。"
+        },
+        {
+          "verse": 46,
+          "text": "<mark class=\"pn\">户珊</mark>死了，<mark class=\"pn\">比达</mark>的儿子<mark class=\"pn\">哈达</mark>接续他作王。这<mark class=\"pn\">哈达</mark>就是在<mark class=\"pn\">摩押</mark>地杀败<mark class=\"pn\">米甸</mark>人的，他的京城名叫<mark class=\"pn\">亚未得</mark>。"
+        },
+        {
+          "verse": 47,
+          "text": "<mark class=\"pn\">哈达</mark>死了，<mark class=\"pn\">玛士利加</mark>人<mark class=\"pn\">桑拉</mark>接续他作王。"
+        },
+        {
+          "verse": 48,
+          "text": "<mark class=\"pn\">桑拉</mark>死了，大河边的<mark class=\"pn\">利河伯</mark>人<mark class=\"pn\">扫罗</mark>接续他作王。"
+        },
+        {
+          "verse": 49,
+          "text": "<mark class=\"pn\">扫罗</mark>死了，<mark class=\"pn\">亚革波</mark>的儿子<mark class=\"pn\">巴勒哈南</mark>接续他作王。"
+        },
+        {
+          "verse": 50,
+          "text": "<mark class=\"pn\">巴勒哈南</mark>死了，<mark class=\"pn\">哈达</mark>接续他作王。他的京城名叫<mark class=\"pn\">巴伊</mark>，他的妻子名叫<mark class=\"pn\">米希她别</mark>，是<mark class=\"pn\">米萨合</mark>的孙女，<mark class=\"pn\">玛特列</mark>的女儿。"
+        },
+        {
+          "verse": 51,
+          "text": "<mark class=\"pn\">哈达</mark>死了，<mark class=\"pn\">以东</mark>人的族长有<mark class=\"pn\">亭纳</mark>族长、<mark class=\"pn\">亚勒瓦</mark>族长、<mark class=\"pn\">耶帖</mark>族长、"
+        },
+        {
+          "verse": 52,
+          "text": "<mark class=\"pn\">亚何利巴玛</mark>族长、<mark class=\"pn\">以拉</mark>族长、<mark class=\"pn\">比嫩</mark>族长、"
+        },
+        {
+          "verse": 53,
+          "text": "<mark class=\"pn\">基纳斯</mark>族长、<mark class=\"pn\">提幔</mark>族长、<mark class=\"pn\">米比萨</mark>族长、"
+        },
+        {
+          "verse": 54,
+          "text": "<mark class=\"pn\">玛基叠</mark>族长、<mark class=\"pn\">以兰</mark>族长。这都是<mark class=\"pn\">以东</mark>人的族长。"
+        }
+      ]
+    },
+    {
+      "chapter": 2,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以色列</mark>的儿子是<mark class=\"pn\">流便</mark>、<mark class=\"pn\">西缅</mark>、<mark class=\"pn\">利未</mark>、<mark class=\"pn\">犹大</mark>、<mark class=\"pn\">以萨迦</mark>、<mark class=\"pn\">西布伦</mark>、",
+          "heading": "犹大的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">但</mark>、<mark class=\"pn\">约瑟</mark>、<mark class=\"pn\">便雅悯</mark>、<mark class=\"pn\">拿弗他利</mark>、<mark class=\"pn\">迦得</mark>、<mark class=\"pn\">亚设</mark>。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">犹大</mark>的儿子是<mark class=\"pn\">珥</mark>、<mark class=\"pn\">俄南</mark>、<mark class=\"pn\">示拉</mark>，这三人是<mark class=\"pn\">迦南</mark>人<mark class=\"pn\">书亚</mark>女儿所生的。<mark class=\"pn\">犹大</mark>的长子<mark class=\"pn\">珥</mark>在耶和华眼中看为恶，耶和华就使他死了。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">犹大</mark>的儿妇<mark class=\"pn\">他玛</mark>给<mark class=\"pn\">犹大</mark>生<mark class=\"pn\">法勒斯</mark>和<mark class=\"pn\">谢拉</mark>。<mark class=\"pn\">犹大</mark>共有五个儿子。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">法勒斯</mark>的儿子是<mark class=\"pn\">希斯仑</mark>、<mark class=\"pn\">哈母勒</mark>。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">谢拉</mark>的儿子是<mark class=\"pn\">心利</mark>、<mark class=\"pn\">以探</mark>、<mark class=\"pn\">希幔</mark>、<mark class=\"pn\">甲各</mark>、<mark class=\"pn\">大拉</mark>（“大拉”就是“达大”），共五人。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">迦米</mark>的儿子是<mark class=\"pn\">亚干</mark>，这<mark class=\"pn\">亚干</mark>在当灭的物上犯了罪，连累了<mark class=\"pn\">以色列</mark>人。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">以探</mark>的儿子是<mark class=\"pn\">亚撒利雅</mark>。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">希斯仑</mark>所生的儿子是<mark class=\"pn\">耶拉篾</mark>、<mark class=\"pn\">兰</mark>、<mark class=\"pn\">基路拜</mark>。",
+          "heading": "大卫王的家谱"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">兰</mark>生<mark class=\"pn\">亚米拿达</mark>；<mark class=\"pn\">亚米拿达</mark>生<mark class=\"pn\">拿顺</mark>。<mark class=\"pn\">拿顺</mark>作<mark class=\"pn\">犹大</mark>人的首领。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">拿顺</mark>生<mark class=\"pn\">撒门</mark>；<mark class=\"pn\">撒门</mark>生<mark class=\"pn\">波阿斯</mark>；"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">波阿斯</mark>生<mark class=\"pn\">俄备得</mark>；<mark class=\"pn\">俄备得</mark>生<mark class=\"pn\">耶西</mark>；"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">耶西</mark>生长子<mark class=\"pn\">以利押</mark>，次子<mark class=\"pn\">亚比拿达</mark>，三子<mark class=\"pn\">示米亚</mark>（“示米亚”就是“沙玛”，见撒母耳上16章9节），"
+        },
+        {
+          "verse": 14,
+          "text": "四子<mark class=\"pn\">拿坦业</mark>，五子<mark class=\"pn\">拉代</mark>，"
+        },
+        {
+          "verse": 15,
+          "text": "六子<mark class=\"pn\">阿鲜</mark>，七子<mark class=\"pn\">大卫</mark>。"
+        },
+        {
+          "verse": 16,
+          "text": "他们的姐妹是<mark class=\"pn\">洗鲁雅</mark>和<mark class=\"pn\">亚比该</mark>。<mark class=\"pn\">洗鲁雅</mark>的儿子是<mark class=\"pn\">亚比筛</mark>、<mark class=\"pn\">约押</mark>、<mark class=\"pn\">亚撒黑</mark>，共三人。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">亚比该</mark>生<mark class=\"pn\">亚玛撒</mark>；<mark class=\"pn\">亚玛撒</mark>的父亲是<mark class=\"pn\">以实玛利</mark>人<mark class=\"pn\">益帖</mark>。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">希斯仑</mark>的儿子<mark class=\"pn\">迦勒</mark>娶<mark class=\"pn\">阿苏巴</mark>和<mark class=\"pn\">耶略</mark>为妻，<mark class=\"pn\">阿苏巴</mark>的儿子是<mark class=\"pn\">耶设</mark>、<mark class=\"pn\">朔罢</mark>、<mark class=\"pn\">押墩</mark>。",
+          "heading": "希斯仑的后裔"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">阿苏巴</mark>死了，<mark class=\"pn\">迦勒</mark>又娶<mark class=\"pn\">以法他</mark>，生了<mark class=\"pn\">户珥</mark>。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">户珥</mark>生<mark class=\"pn\">乌利</mark>；<mark class=\"pn\">乌利</mark>生<mark class=\"pn\">比撒列</mark>。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">希斯仑</mark>正六十岁娶了<mark class=\"pn\">基列</mark>父亲<mark class=\"pn\">玛吉</mark>的女儿，与她同房；<mark class=\"pn\">玛吉</mark>的女儿生了<mark class=\"pn\">西割</mark>；"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">西割</mark>生<mark class=\"pn\">睚珥</mark>。<mark class=\"pn\">睚珥</mark>在<mark class=\"pn\">基列</mark>地有二十三个城邑。"
+        },
+        {
+          "verse": 23,
+          "text": "后来<mark class=\"pn\">基述</mark>人和<mark class=\"pn\">亚兰</mark>人夺了<mark class=\"pn\">睚珥</mark>的城邑，并<mark class=\"pn\">基纳</mark>和其乡村，共六十个。这都是<mark class=\"pn\">基列</mark>父亲<mark class=\"pn\">玛吉</mark>之子的。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">希斯仑</mark>在<mark class=\"pn\">迦勒以法他</mark>死后，他的妻<mark class=\"pn\">亚比雅</mark>给他生了<mark class=\"pn\">亚施户</mark>；<mark class=\"pn\">亚施户</mark>是<mark class=\"pn\">提哥亚</mark>的父亲。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">希斯仑</mark>的长子<mark class=\"pn\">耶拉篾</mark>生长子<mark class=\"pn\">兰</mark>，又生<mark class=\"pn\">布拿</mark>、<mark class=\"pn\">阿连</mark>、<mark class=\"pn\">阿鲜</mark>、<mark class=\"pn\">亚希雅</mark>。",
+          "heading": "耶拉篾的后裔"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">耶拉篾</mark>又娶一妻名叫<mark class=\"pn\">亚她拉</mark>，是<mark class=\"pn\">阿南</mark>的母亲。"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">耶拉篾</mark>长子<mark class=\"pn\">兰</mark>的儿子是<mark class=\"pn\">玛斯</mark>、<mark class=\"pn\">雅悯</mark>、<mark class=\"pn\">以结</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">阿南</mark>的儿子是<mark class=\"pn\">沙买</mark>、<mark class=\"pn\">雅大</mark>。<mark class=\"pn\">沙买</mark>的儿子是<mark class=\"pn\">拿答</mark>、<mark class=\"pn\">亚比述</mark>。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">亚比述</mark>的妻名叫<mark class=\"pn\">亚比孩</mark>，<mark class=\"pn\">亚比孩</mark>给他生了<mark class=\"pn\">亚办</mark>和<mark class=\"pn\">摩利</mark>。"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">拿答</mark>的儿子是<mark class=\"pn\">西列</mark>、<mark class=\"pn\">亚遍</mark>；<mark class=\"pn\">西列</mark>死了没有儿子。"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">亚遍</mark>的儿子是<mark class=\"pn\">以示</mark>；<mark class=\"pn\">以示</mark>的儿子是<mark class=\"pn\">示珊</mark>；<mark class=\"pn\">示珊</mark>的儿子是<mark class=\"pn\">亚来</mark>。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">沙买</mark>兄弟<mark class=\"pn\">雅大</mark>的儿子是<mark class=\"pn\">益帖</mark>、<mark class=\"pn\">约拿单</mark>；<mark class=\"pn\">益帖</mark>死了没有儿子。"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">约拿单</mark>的儿子是<mark class=\"pn\">比勒</mark>、<mark class=\"pn\">撒萨</mark>。这都是<mark class=\"pn\">耶拉篾</mark>的子孙。"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">示珊</mark>没有儿子，只有女儿。<mark class=\"pn\">示珊</mark>有一个仆人名叫<mark class=\"pn\">耶哈</mark>，是<mark class=\"pn\">埃及</mark>人。"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">示珊</mark>将女儿给了仆人<mark class=\"pn\">耶哈</mark>为妻，给他生了<mark class=\"pn\">亚太</mark>。"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">亚太</mark>生<mark class=\"pn\">拿单</mark>；<mark class=\"pn\">拿单</mark>生<mark class=\"pn\">撒拔</mark>；"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">撒拔</mark>生<mark class=\"pn\">以弗拉</mark>；<mark class=\"pn\">以弗拉</mark>生<mark class=\"pn\">俄备得</mark>；"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">俄备得</mark>生<mark class=\"pn\">耶户</mark>；<mark class=\"pn\">耶户</mark>生<mark class=\"pn\">亚撒利雅</mark>；"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">亚撒利雅</mark>生<mark class=\"pn\">希利斯</mark>；<mark class=\"pn\">希利斯</mark>生<mark class=\"pn\">以利亚萨</mark>；"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">以利亚萨</mark>生<mark class=\"pn\">西斯买</mark>；<mark class=\"pn\">西斯买</mark>生<mark class=\"pn\">沙龙</mark>；"
+        },
+        {
+          "verse": 41,
+          "text": "<mark class=\"pn\">沙龙</mark>生<mark class=\"pn\">耶加米雅</mark>；<mark class=\"pn\">耶加米雅</mark>生<mark class=\"pn\">以利沙玛</mark>。"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">耶拉篾</mark>兄弟<mark class=\"pn\">迦勒</mark>的长子<mark class=\"pn\">米沙</mark>，是<mark class=\"pn\">西弗</mark>之祖<mark class=\"pn\">玛利沙</mark>的儿子，是<mark class=\"pn\">希伯仑</mark>之祖。",
+          "heading": "迦勒的其余后裔"
+        },
+        {
+          "verse": 43,
+          "text": "<mark class=\"pn\">希伯仑</mark>的儿子是<mark class=\"pn\">可拉</mark>、<mark class=\"pn\">他普亚</mark>、<mark class=\"pn\">利肯</mark>、<mark class=\"pn\">示玛</mark>。"
+        },
+        {
+          "verse": 44,
+          "text": "<mark class=\"pn\">示玛</mark>生<mark class=\"pn\">拉含</mark>，是<mark class=\"pn\">约干</mark>之祖。<mark class=\"pn\">利肯</mark>生<mark class=\"pn\">沙买</mark>。"
+        },
+        {
+          "verse": 45,
+          "text": "<mark class=\"pn\">沙买</mark>的儿子是<mark class=\"pn\">玛云</mark>；<mark class=\"pn\">玛云</mark>是<mark class=\"pn\">伯夙</mark>之祖。"
+        },
+        {
+          "verse": 46,
+          "text": "<mark class=\"pn\">迦勒</mark>的妾<mark class=\"pn\">以法</mark>生<mark class=\"pn\">哈兰</mark>、<mark class=\"pn\">摩撒</mark>、<mark class=\"pn\">迦谢</mark>；<mark class=\"pn\">哈兰</mark>生<mark class=\"pn\">迦卸</mark>。（"
+        },
+        {
+          "verse": 47,
+          "text": "<mark class=\"pn\">雅代</mark>的儿子是<mark class=\"pn\">利健</mark>、<mark class=\"pn\">约坦</mark>、<mark class=\"pn\">基珊</mark>、<mark class=\"pn\">毗力</mark>、<mark class=\"pn\">以法</mark>、<mark class=\"pn\">沙亚弗</mark>。）"
+        },
+        {
+          "verse": 48,
+          "text": "<mark class=\"pn\">迦勒</mark>的妾<mark class=\"pn\">玛迦</mark>生<mark class=\"pn\">示别</mark>、<mark class=\"pn\">特哈拿</mark>，"
+        },
+        {
+          "verse": 49,
+          "text": "又生<mark class=\"pn\">麦玛拿</mark>之祖<mark class=\"pn\">沙亚弗</mark>、<mark class=\"pn\">抹比拿</mark>和<mark class=\"pn\">基比亚</mark>之祖<mark class=\"pn\">示法</mark>。<mark class=\"pn\">迦勒</mark>的女儿是<mark class=\"pn\">押撒</mark>。"
+        },
+        {
+          "verse": 50,
+          "text": "<mark class=\"pn\">迦勒</mark>的子孙就是<mark class=\"pn\">以法他</mark>的长子、<mark class=\"pn\">户珥</mark>的儿子，记在下面：<mark class=\"pn\">基列耶琳</mark>之祖<mark class=\"pn\">朔巴</mark>，"
+        },
+        {
+          "verse": 51,
+          "text": "<mark class=\"pn\">伯利恒</mark>之祖<mark class=\"pn\">萨玛</mark>，<mark class=\"pn\">伯迦得</mark>之祖<mark class=\"pn\">哈勒</mark>。"
+        },
+        {
+          "verse": 52,
+          "text": "<mark class=\"pn\">基列耶琳</mark>之祖<mark class=\"pn\">朔巴</mark>的子孙是<mark class=\"pn\">哈罗以</mark>和一半<mark class=\"pn\">米努哈</mark>人（“米努哈人”即“玛拿哈人”）。"
+        },
+        {
+          "verse": 53,
+          "text": "<mark class=\"pn\">基列耶琳</mark>的诸族是<mark class=\"pn\">以帖</mark>人、<mark class=\"pn\">布特</mark>人、<mark class=\"pn\">舒玛</mark>人、<mark class=\"pn\">密来</mark>人，又从这些族中生出<mark class=\"pn\">琐拉</mark>人和<mark class=\"pn\">以实陶</mark>人来。"
+        },
+        {
+          "verse": 54,
+          "text": "<mark class=\"pn\">萨玛</mark>的子孙是<mark class=\"pn\">伯利恒</mark>人、<mark class=\"pn\">尼陀法</mark>人、<mark class=\"pn\">亚他绿伯约押</mark>人、一半<mark class=\"pn\">玛拿哈</mark>人、<mark class=\"pn\">琐利</mark>人，"
+        },
+        {
+          "verse": 55,
+          "text": "和住<mark class=\"pn\">雅比斯</mark>众文士家的<mark class=\"pn\">特拉</mark>人、<mark class=\"pn\">示米押</mark>人、<mark class=\"pn\">苏甲</mark>人。这都是<mark class=\"pn\">基尼</mark>人<mark class=\"pn\">利甲</mark>家之祖<mark class=\"pn\">哈末</mark>所生的。"
+        }
+      ]
+    },
+    {
+      "chapter": 3,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">希伯仑</mark>所生的儿子记在下面：长子<mark class=\"pn\">暗嫩</mark>是<mark class=\"pn\">耶斯列</mark>人<mark class=\"pn\">亚希暖</mark>生的。次子<mark class=\"pn\">但以利</mark>是<mark class=\"pn\">迦密</mark>人<mark class=\"pn\">亚比该</mark>生的。",
+          "heading": "大卫的儿女"
+        },
+        {
+          "verse": 2,
+          "text": "三子<mark class=\"pn\">押沙龙</mark>是<mark class=\"pn\">基述</mark>王<mark class=\"pn\">达买</mark>的女儿<mark class=\"pn\">玛迦</mark>生的。四子<mark class=\"pn\">亚多尼雅</mark>是<mark class=\"pn\">哈及</mark>生的。"
+        },
+        {
+          "verse": 3,
+          "text": "五子<mark class=\"pn\">示法提雅</mark>是<mark class=\"pn\">亚比他</mark>生的。六子<mark class=\"pn\">以特念</mark>是<mark class=\"pn\">大卫</mark>的妻<mark class=\"pn\">以格拉</mark>生的。"
+        },
+        {
+          "verse": 4,
+          "text": "这六人都是<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">希伯仑</mark>生的。<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">希伯仑</mark>作王七年零六个月，在<mark class=\"pn\">耶路撒冷</mark>作王三十三年。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">耶路撒冷</mark>所生的儿子是<mark class=\"pn\">示米亚</mark>、<mark class=\"pn\">朔罢</mark>、<mark class=\"pn\">拿单</mark>、<mark class=\"pn\">所罗门</mark>。这四人是<mark class=\"pn\">亚米利</mark>的女儿<mark class=\"pn\">拔书亚</mark>生的。"
+        },
+        {
+          "verse": 6,
+          "text": "还有<mark class=\"pn\">益辖</mark>、<mark class=\"pn\">以利沙玛</mark>、<mark class=\"pn\">以利法列</mark>、"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">挪迦</mark>、<mark class=\"pn\">尼斐</mark>、<mark class=\"pn\">雅非亚</mark>、"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">以利沙玛</mark>、<mark class=\"pn\">以利雅大</mark>、<mark class=\"pn\">以利法列</mark>，共九人。"
+        },
+        {
+          "verse": 9,
+          "text": "这都是<mark class=\"pn\">大卫</mark>的儿子，还有他们的妹子<mark class=\"pn\">他玛</mark>，妃嫔的儿子不在其内。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">所罗门</mark>的儿子是<mark class=\"pn\">罗波安</mark>；<mark class=\"pn\">罗波安</mark>的儿子是<mark class=\"pn\">亚比雅</mark>；<mark class=\"pn\">亚比雅</mark>的儿子是<mark class=\"pn\">亚撒</mark>；<mark class=\"pn\">亚撒</mark>的儿子是<mark class=\"pn\">约沙法</mark>；",
+          "heading": "所罗门的后裔"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">约沙法</mark>的儿子是<mark class=\"pn\">约兰</mark>；<mark class=\"pn\">约兰</mark>的儿子是<mark class=\"pn\">亚哈谢</mark>；<mark class=\"pn\">亚哈谢</mark>的儿子是<mark class=\"pn\">约阿施</mark>；"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">约阿施</mark>的儿子是<mark class=\"pn\">亚玛谢</mark>；<mark class=\"pn\">亚玛谢</mark>的儿子是<mark class=\"pn\">亚撒利雅</mark>；<mark class=\"pn\">亚撒利雅</mark>的儿子是<mark class=\"pn\">约坦</mark>；"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">约坦</mark>的儿子是<mark class=\"pn\">亚哈斯</mark>；<mark class=\"pn\">亚哈斯</mark>的儿子是<mark class=\"pn\">希西家</mark>；<mark class=\"pn\">希西家</mark>的儿子是<mark class=\"pn\">玛拿西</mark>；"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">玛拿西</mark>的儿子是<mark class=\"pn\">亚们</mark>；<mark class=\"pn\">亚们</mark>的儿子是<mark class=\"pn\">约西亚</mark>；"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">约西亚</mark>的长子是<mark class=\"pn\">约哈难</mark>，次子是<mark class=\"pn\">约雅敬</mark>，三子是<mark class=\"pn\">西底家</mark>，四子是<mark class=\"pn\">沙龙</mark>。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">约雅敬</mark>的儿子是<mark class=\"pn\">耶哥尼雅</mark>和<mark class=\"pn\">西底家</mark>。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">耶哥尼雅</mark>被掳。他的儿子是<mark class=\"pn\">撒拉铁</mark>、",
+          "heading": "耶哥尼雅的后裔"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">玛基兰</mark>、<mark class=\"pn\">毗大雅</mark>、<mark class=\"pn\">示拿萨</mark>、<mark class=\"pn\">耶加米</mark>、<mark class=\"pn\">何沙玛</mark>、<mark class=\"pn\">尼大比雅</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">毗大雅</mark>的儿子是<mark class=\"pn\">所罗巴伯</mark>、<mark class=\"pn\">示每</mark>。<mark class=\"pn\">所罗巴伯</mark>的儿子是<mark class=\"pn\">米书兰</mark>、<mark class=\"pn\">哈拿尼雅</mark>，他们的妹子名叫<mark class=\"pn\">示罗密</mark>。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">米书兰</mark>的儿子是<mark class=\"pn\">哈舒巴</mark>、<mark class=\"pn\">阿黑</mark>、<mark class=\"pn\">比利家</mark>、<mark class=\"pn\">哈撒底</mark>、<mark class=\"pn\">于沙希悉</mark>，共五人。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">哈拿尼雅</mark>的儿子是<mark class=\"pn\">毗拉提</mark>、<mark class=\"pn\">耶筛亚</mark>。还有<mark class=\"pn\">利法雅</mark>的众子，<mark class=\"pn\">亚珥难</mark>的众子，<mark class=\"pn\">俄巴底亚</mark>的众子，<mark class=\"pn\">示迦尼</mark>的众子。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">示迦尼</mark>的儿子是<mark class=\"pn\">示玛雅</mark>；<mark class=\"pn\">示玛雅</mark>的儿子是<mark class=\"pn\">哈突</mark>、<mark class=\"pn\">以甲</mark>、<mark class=\"pn\">巴利亚</mark>、<mark class=\"pn\">尼利雅</mark>、<mark class=\"pn\">沙法</mark>，共六人。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">尼利雅</mark>的儿子是<mark class=\"pn\">以利约乃</mark>、<mark class=\"pn\">希西家</mark>、<mark class=\"pn\">亚斯利干</mark>，共三人。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">以利约乃</mark>的儿子是<mark class=\"pn\">何大雅</mark>、<mark class=\"pn\">以利亚实</mark>、<mark class=\"pn\">毗莱雅</mark>、<mark class=\"pn\">阿谷</mark>、<mark class=\"pn\">约哈难</mark>、<mark class=\"pn\">第莱雅</mark>、<mark class=\"pn\">阿拿尼</mark>，共七人。"
+        }
+      ]
+    },
+    {
+      "chapter": 4,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">犹大</mark>的儿子是<mark class=\"pn\">法勒斯</mark>、<mark class=\"pn\">希斯仑</mark>、<mark class=\"pn\">迦米</mark>、<mark class=\"pn\">户珥</mark>、<mark class=\"pn\">朔巴</mark>。",
+          "heading": "复记犹大的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">朔巴</mark>的儿子<mark class=\"pn\">利亚雅</mark>生<mark class=\"pn\">雅哈</mark>；<mark class=\"pn\">雅哈</mark>生<mark class=\"pn\">亚户买</mark>和<mark class=\"pn\">拉哈</mark>。这是<mark class=\"pn\">琐拉</mark>人的诸族。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">以坦</mark>之祖的儿子是<mark class=\"pn\">耶斯列</mark>、<mark class=\"pn\">伊施玛</mark>、<mark class=\"pn\">伊得巴</mark>；他们的妹子名叫<mark class=\"pn\">哈悉勒玻尼</mark>。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">基多</mark>之祖是<mark class=\"pn\">毗努伊勒</mark>。<mark class=\"pn\">户沙</mark>之祖是<mark class=\"pn\">以谢珥</mark>。这都是<mark class=\"pn\">伯利恒</mark>之祖<mark class=\"pn\">以法他</mark>的长子<mark class=\"pn\">户珥</mark>所生的。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">提哥亚</mark>之祖<mark class=\"pn\">亚施户</mark>有两个妻子：一名<mark class=\"pn\">希拉</mark>，一名<mark class=\"pn\">拿拉</mark>。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">拿拉</mark>给<mark class=\"pn\">亚施户</mark>生<mark class=\"pn\">亚户撒</mark>、<mark class=\"pn\">希弗</mark>、<mark class=\"pn\">提米尼</mark>、<mark class=\"pn\">哈辖斯他利</mark>。这都是<mark class=\"pn\">拿拉</mark>的儿子。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">希拉</mark>的儿子是<mark class=\"pn\">洗列</mark>、<mark class=\"pn\">琐辖</mark>、<mark class=\"pn\">伊提南</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">哥斯</mark>生<mark class=\"pn\">亚诺</mark>、<mark class=\"pn\">琐比巴</mark>，并<mark class=\"pn\">哈仑</mark>儿子<mark class=\"pn\">亚哈黑</mark>的诸族。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">雅比斯</mark>比他众弟兄更尊贵，他母亲给他起名叫<mark class=\"pn\">雅比斯</mark>，意思说：我生他甚是痛苦。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">雅比斯</mark>求告<mark class=\"pn\">以色列</mark>的　神说：“甚愿你赐福与我，扩张我的境界，常与我同在，保佑我不遭患难，不受艰苦。”　神就应允他所求的。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">书哈</mark>的弟兄<mark class=\"pn\">基绿</mark>生<mark class=\"pn\">米黑</mark>，<mark class=\"pn\">米黑</mark>是<mark class=\"pn\">伊施屯</mark>之祖。",
+          "heading": "其他的家族"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">伊施屯</mark>生<mark class=\"pn\">伯拉巴</mark>、<mark class=\"pn\">巴西亚</mark>，并<mark class=\"pn\">珥拿辖</mark>之祖<mark class=\"pn\">提欣拿</mark>，这都是<mark class=\"pn\">利迦</mark>人。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">基纳斯</mark>的儿子是<mark class=\"pn\">俄陀聂</mark>、<mark class=\"pn\">西莱雅</mark>。<mark class=\"pn\">俄陀聂</mark>的儿子是<mark class=\"pn\">哈塔</mark>。"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">悯挪太</mark>生<mark class=\"pn\">俄弗拉</mark>；<mark class=\"pn\">西莱雅</mark>生<mark class=\"pn\">革夏纳欣</mark>人之祖<mark class=\"pn\">约押</mark>。他们都是匠人。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">耶孚尼</mark>的儿子是<mark class=\"pn\">迦勒</mark>；<mark class=\"pn\">迦勒</mark>的儿子是<mark class=\"pn\">以路</mark>、<mark class=\"pn\">以拉</mark>、<mark class=\"pn\">拿安</mark>。<mark class=\"pn\">以拉</mark>的儿子是<mark class=\"pn\">基纳斯</mark>。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">耶哈利勒</mark>的儿子是<mark class=\"pn\">西弗</mark>、<mark class=\"pn\">西法</mark>、<mark class=\"pn\">提利</mark>、<mark class=\"pn\">亚撒列</mark>。"
+        },
+        {
+          "verse": "17-18",
+          "text": "<mark class=\"pn\">以斯拉</mark>的儿子是<mark class=\"pn\">益帖</mark>、<mark class=\"pn\">米列</mark>、<mark class=\"pn\">以弗</mark>、<mark class=\"pn\">雅伦</mark>。<mark class=\"pn\">米列</mark>娶法老女儿<mark class=\"pn\">比提雅</mark>为妻，生<mark class=\"pn\">米利暗</mark>、<mark class=\"pn\">沙买</mark>，和<mark class=\"pn\">以实提摩</mark>之祖<mark class=\"pn\">益巴</mark>。<mark class=\"pn\">米列</mark>又娶<mark class=\"pn\">犹大</mark>女子为妻，生<mark class=\"pn\">基多</mark>之祖<mark class=\"pn\">雅列</mark>，<mark class=\"pn\">梭哥</mark>之祖<mark class=\"pn\">希伯</mark>，和<mark class=\"pn\">撒挪亚</mark>之祖<mark class=\"pn\">耶古铁</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">荷第雅</mark>的妻是<mark class=\"pn\">拿含</mark>的妹子，她所生的儿子是<mark class=\"pn\">迦米</mark>人<mark class=\"pn\">基伊拉</mark>和<mark class=\"pn\">玛迦</mark>人<mark class=\"pn\">以实提摩</mark>之祖。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">示门</mark>的儿子是<mark class=\"pn\">暗嫩</mark>、<mark class=\"pn\">林拿</mark>、<mark class=\"pn\">便哈南</mark>、<mark class=\"pn\">提伦</mark>。<mark class=\"pn\">以示</mark>的儿子是<mark class=\"pn\">梭黑</mark>与<mark class=\"pn\">便梭黑</mark>。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">犹大</mark>的儿子是<mark class=\"pn\">示拉</mark>；<mark class=\"pn\">示拉</mark>的儿子是<mark class=\"pn\">利迦</mark>之祖<mark class=\"pn\">珥</mark>，<mark class=\"pn\">玛利沙</mark>之祖<mark class=\"pn\">拉大</mark>，和属<mark class=\"pn\">亚实比</mark>族织细麻布的各家。",
+          "heading": "示拉的后裔"
+        },
+        {
+          "verse": 22,
+          "text": "还有<mark class=\"pn\">约敬</mark>、<mark class=\"pn\">哥西巴</mark>人、<mark class=\"pn\">约阿施</mark>、<mark class=\"pn\">萨拉</mark>，就是在<mark class=\"pn\">摩押</mark>地掌权的，又有<mark class=\"pn\">雅叔比利恒</mark>。这都是古时所记载的。"
+        },
+        {
+          "verse": 23,
+          "text": "这些人都是窑匠，是<mark class=\"pn\">尼他应</mark>和<mark class=\"pn\">基低拉</mark>的居民；与王同处，为王做工。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">西缅</mark>的儿子是<mark class=\"pn\">尼母利</mark>、<mark class=\"pn\">雅悯</mark>、<mark class=\"pn\">雅立</mark>、<mark class=\"pn\">谢拉</mark>、<mark class=\"pn\">扫罗</mark>。",
+          "heading": "西缅的后裔"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">扫罗</mark>的儿子是<mark class=\"pn\">沙龙</mark>；<mark class=\"pn\">沙龙</mark>的儿子是<mark class=\"pn\">米比衫</mark>；<mark class=\"pn\">米比衫</mark>的儿子是<mark class=\"pn\">米施玛</mark>；"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">米施玛</mark>的儿子是<mark class=\"pn\">哈母利</mark>；<mark class=\"pn\">哈母利</mark>的儿子是<mark class=\"pn\">撒刻</mark>；<mark class=\"pn\">撒刻</mark>的儿子是<mark class=\"pn\">示每</mark>。"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">示每</mark>有十六个儿子，六个女儿，他弟兄的儿女不多，他们各家不如<mark class=\"pn\">犹大</mark>族的人丁增多。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">西缅</mark>人住在<mark class=\"pn\">别是巴</mark>、<mark class=\"pn\">摩拉大</mark>、<mark class=\"pn\">哈萨书亚</mark>、"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">辟拉</mark>、<mark class=\"pn\">以森</mark>、<mark class=\"pn\">陀腊</mark>、"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">彼土利</mark>、<mark class=\"pn\">何珥玛</mark>、<mark class=\"pn\">洗革拉</mark>、"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">伯玛嘉博</mark>、<mark class=\"pn\">哈萨苏撒</mark>、<mark class=\"pn\">伯比利</mark>、<mark class=\"pn\">沙拉音</mark>，这些城邑直到<mark class=\"pn\">大卫</mark>作王的时候都是属<mark class=\"pn\">西缅</mark>人的。"
+        },
+        {
+          "verse": 32,
+          "text": "他们的五个城邑是<mark class=\"pn\">以坦</mark>、<mark class=\"pn\">亚因</mark>、<mark class=\"pn\">临门</mark>、<mark class=\"pn\">陀健</mark>、<mark class=\"pn\">亚珊</mark>；"
+        },
+        {
+          "verse": 33,
+          "text": "还有属城的乡村，直到<mark class=\"pn\">巴力</mark>。这是他们的住处，他们都有家谱。"
+        },
+        {
+          "verse": 34,
+          "text": "还有<mark class=\"pn\">米所巴</mark>、<mark class=\"pn\">雅米勒</mark>、<mark class=\"pn\">亚玛谢</mark>的儿子<mark class=\"pn\">约沙</mark>、"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">约珥</mark>、<mark class=\"pn\">约示比</mark>的儿子<mark class=\"pn\">耶户</mark>；<mark class=\"pn\">约示比</mark>是<mark class=\"pn\">西莱雅</mark>的儿子；<mark class=\"pn\">西莱雅</mark>是<mark class=\"pn\">亚薛</mark>的儿子。"
+        },
+        {
+          "verse": 36,
+          "text": "还有<mark class=\"pn\">以利约乃</mark>、<mark class=\"pn\">雅哥巴</mark>、<mark class=\"pn\">约朔海</mark>、<mark class=\"pn\">亚帅雅</mark>、<mark class=\"pn\">亚底业</mark>、<mark class=\"pn\">耶西篾</mark>、<mark class=\"pn\">比拿雅</mark>、"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">示非</mark>的儿子<mark class=\"pn\">细撒</mark>。<mark class=\"pn\">示非</mark>是<mark class=\"pn\">亚龙</mark>的儿子；<mark class=\"pn\">亚龙</mark>是<mark class=\"pn\">耶大雅</mark>的儿子；<mark class=\"pn\">耶大雅</mark>是<mark class=\"pn\">申利</mark>的儿子；<mark class=\"pn\">申利</mark>是<mark class=\"pn\">示玛雅</mark>的儿子。"
+        },
+        {
+          "verse": 38,
+          "text": "以上所记的人名都是作族长的，他们宗族的人数增多。"
+        },
+        {
+          "verse": 39,
+          "text": "他们往平原东边<mark class=\"pn\">基多</mark>口去，寻找牧放羊群的草场，"
+        },
+        {
+          "verse": 40,
+          "text": "寻得肥美的草场地，又宽阔又平静。从前住那里的是<mark class=\"pn\">含</mark>族的人。"
+        },
+        {
+          "verse": 41,
+          "text": "以上录名的人，在<mark class=\"pn\">犹大</mark>王<mark class=\"pn\">希西家</mark>年间，来攻击<mark class=\"pn\">含</mark>族人的帐棚和那里所有的<mark class=\"pn\">米乌尼</mark>人，将他们灭尽，就住在他们的地方，直到今日，因为那里有草场可以牧放羊群。"
+        },
+        {
+          "verse": 42,
+          "text": "这<mark class=\"pn\">西缅</mark>人中，有五百人上<mark class=\"pn\">西珥山</mark>，率领他们的是<mark class=\"pn\">以示</mark>的儿子<mark class=\"pn\">毗拉提</mark>、<mark class=\"pn\">尼利雅</mark>、<mark class=\"pn\">利法雅</mark>，和<mark class=\"pn\">乌薛</mark>，"
+        },
+        {
+          "verse": 43,
+          "text": "杀了逃脱剩下的<mark class=\"pn\">亚玛力</mark>人，就住在那里直到今日。"
+        }
+      ]
+    },
+    {
+      "chapter": 5,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以色列</mark>的长子原是<mark class=\"pn\">流便</mark>；因他污秽了父亲的床，他长子的名分就归了<mark class=\"pn\">约瑟</mark>。只是按家谱他不算长子。",
+          "heading": "流便的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">犹大</mark>胜过一切弟兄，君王也是从他而出；长子的名分却归<mark class=\"pn\">约瑟</mark>。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">以色列</mark>长子<mark class=\"pn\">流便</mark>的儿子是<mark class=\"pn\">哈诺</mark>、<mark class=\"pn\">法路</mark>、<mark class=\"pn\">希斯伦</mark>、<mark class=\"pn\">迦米</mark>。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">约珥</mark>的儿子是<mark class=\"pn\">示玛雅</mark>；<mark class=\"pn\">示玛雅</mark>的儿子是<mark class=\"pn\">歌革</mark>；<mark class=\"pn\">歌革</mark>的儿子是<mark class=\"pn\">示每</mark>；"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">示每</mark>的儿子是<mark class=\"pn\">米迦</mark>；<mark class=\"pn\">米迦</mark>的儿子是<mark class=\"pn\">利亚雅</mark>；<mark class=\"pn\">利亚雅</mark>的儿子是<mark class=\"pn\">巴力</mark>；"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">巴力</mark>的儿子是<mark class=\"pn\">备拉</mark>。这<mark class=\"pn\">备拉</mark>作<mark class=\"pn\">流便</mark>支派的首领，被<mark class=\"pn\">亚述</mark>王<mark class=\"pn\">提革拉毗列色</mark>掳去。"
+        },
+        {
+          "verse": 7,
+          "text": "他的弟兄照着宗族，按着家谱作族长的是<mark class=\"pn\">耶利</mark>、<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">比拉</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">比拉</mark>是<mark class=\"pn\">亚撒</mark>的儿子；<mark class=\"pn\">亚撒</mark>是<mark class=\"pn\">示玛</mark>的儿子；<mark class=\"pn\">示玛</mark>是<mark class=\"pn\">约珥</mark>的儿子；<mark class=\"pn\">约珥</mark>所住的地方是从<mark class=\"pn\">亚罗珥</mark>直到<mark class=\"pn\">尼波</mark>和<mark class=\"pn\">巴力免</mark>，"
+        },
+        {
+          "verse": 9,
+          "text": "又向东延到<mark class=\"pn\">幼发拉底河</mark>这边的旷野，因为他们在<mark class=\"pn\">基列</mark>地牲畜增多。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">扫罗</mark>年间，他们与<mark class=\"pn\">夏甲</mark>人争战，<mark class=\"pn\">夏甲</mark>人倒在他们手下，他们就在<mark class=\"pn\">基列</mark>东边的全地，住在<mark class=\"pn\">夏甲</mark>人的帐棚里。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">迦得</mark>的子孙在<mark class=\"pn\">流便</mark>对面，住在<mark class=\"pn\">巴珊</mark>地，延到<mark class=\"pn\">撒迦</mark>。",
+          "heading": "迦得的后裔"
+        },
+        {
+          "verse": 12,
+          "text": "他们中间有作族长的<mark class=\"pn\">约珥</mark>，有作副族长的<mark class=\"pn\">沙番</mark>，还有<mark class=\"pn\">雅乃</mark>和住在<mark class=\"pn\">巴珊</mark>的<mark class=\"pn\">沙法</mark>。"
+        },
+        {
+          "verse": 13,
+          "text": "他们族弟兄是<mark class=\"pn\">米迦勒</mark>、<mark class=\"pn\">米书兰</mark>、<mark class=\"pn\">示巴</mark>、<mark class=\"pn\">约赖</mark>、<mark class=\"pn\">雅干</mark>、<mark class=\"pn\">细亚</mark>、<mark class=\"pn\">希伯</mark>，共七人。"
+        },
+        {
+          "verse": 14,
+          "text": "这都是<mark class=\"pn\">亚比孩</mark>的儿子。<mark class=\"pn\">亚比孩</mark>是<mark class=\"pn\">户利</mark>的儿子；<mark class=\"pn\">户利</mark>是<mark class=\"pn\">耶罗亚</mark>的儿子；<mark class=\"pn\">耶罗亚</mark>是<mark class=\"pn\">基列</mark>的儿子；<mark class=\"pn\">基列</mark>是<mark class=\"pn\">米迦勒</mark>的儿子；<mark class=\"pn\">米迦勒</mark>是<mark class=\"pn\">耶示筛</mark>的儿子；<mark class=\"pn\">耶示筛</mark>是<mark class=\"pn\">耶哈多</mark>的儿子；<mark class=\"pn\">耶哈多</mark>是<mark class=\"pn\">布斯</mark>的儿子。"
+        },
+        {
+          "verse": 15,
+          "text": "还有<mark class=\"pn\">古尼</mark>的孙子、<mark class=\"pn\">押比叠</mark>的儿子<mark class=\"pn\">亚希</mark>。这都是作族长的。"
+        },
+        {
+          "verse": 16,
+          "text": "他们住在<mark class=\"pn\">基列</mark>与<mark class=\"pn\">巴珊</mark>和<mark class=\"pn\">巴珊</mark>的乡村，并<mark class=\"pn\">沙仑</mark>的郊野，直到四围的交界。"
+        },
+        {
+          "verse": 17,
+          "text": "这些人在<mark class=\"pn\">犹大</mark>王<mark class=\"pn\">约坦</mark>并在<mark class=\"pn\">以色列</mark>王<mark class=\"pn\">耶罗波安</mark>年间，都载入家谱。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">流便</mark>人、<mark class=\"pn\">迦得</mark>人，和<mark class=\"pn\">玛拿西</mark>半支派的人，能拿盾牌和刀剑、拉弓射箭、出征善战的勇士共有四万四千七百六十名。",
+          "heading": "流便迦得玛拿西族的军队"
+        },
+        {
+          "verse": 19,
+          "text": "他们与<mark class=\"pn\">夏甲</mark>人、<mark class=\"pn\">伊突</mark>人、<mark class=\"pn\">拿非施</mark>人、<mark class=\"pn\">挪答</mark>人争战。"
+        },
+        {
+          "verse": 20,
+          "text": "他们得了　神的帮助，<mark class=\"pn\">夏甲</mark>人和跟随<mark class=\"pn\">夏甲</mark>的人都交在他们手中；因为他们在阵上呼求　神，倚赖　神，　神就应允他们。"
+        },
+        {
+          "verse": 21,
+          "text": "他们掳掠了<mark class=\"pn\">夏甲</mark>人的牲畜，有骆驼五万，羊二十五万，驴二千；又有人十万。"
+        },
+        {
+          "verse": 22,
+          "text": "敌人被杀仆倒的甚多，因为这争战是出乎　神。他们就住在敌人的地上，直到被掳的时候。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">玛拿西</mark>半支派的人住在那地。从<mark class=\"pn\">巴珊</mark>延到<mark class=\"pn\">巴力黑们</mark>、<mark class=\"pn\">示尼珥</mark>与<mark class=\"pn\">黑门山</mark>。",
+          "heading": "玛拿西半支派"
+        },
+        {
+          "verse": 24,
+          "text": "他们的族长是<mark class=\"pn\">以弗</mark>、<mark class=\"pn\">以示</mark>、<mark class=\"pn\">以列</mark>、<mark class=\"pn\">亚斯列</mark>、<mark class=\"pn\">耶利米</mark>、<mark class=\"pn\">何达威雅</mark>、<mark class=\"pn\">雅叠</mark>，都是大能的勇士，是有名的人，也是作族长的。"
+        },
+        {
+          "verse": 25,
+          "text": "他们得罪了他们列祖的　神，随从那地之民的神行邪淫；这民就是　神在他们面前所除灭的。",
+          "heading": "二支派半人叛逆　神"
+        },
+        {
+          "verse": 26,
+          "text": "故此，<mark class=\"pn\">以色列</mark>的　神激动<mark class=\"pn\">亚述</mark>王<mark class=\"pn\">普勒</mark>和<mark class=\"pn\">亚述</mark>王<mark class=\"pn\">提革拉毗列色</mark>的心，他们就把<mark class=\"pn\">流便</mark>人、<mark class=\"pn\">迦得</mark>人、<mark class=\"pn\">玛拿西</mark>半支派的人掳到<mark class=\"pn\">哈腊</mark>、<mark class=\"pn\">哈博</mark>、<mark class=\"pn\">哈拉</mark>与<mark class=\"pn\">歌散河</mark>边，直到今日还在那里。"
+        }
+      ]
+    },
+    {
+      "chapter": 6,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">利未</mark>的儿子是<mark class=\"pn\">革顺</mark>、<mark class=\"pn\">哥辖</mark>、<mark class=\"pn\">米拉利</mark>。",
+          "heading": "利未的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">哥辖</mark>的儿子是<mark class=\"pn\">暗兰</mark>、<mark class=\"pn\">以斯哈</mark>、<mark class=\"pn\">希伯伦</mark>、<mark class=\"pn\">乌薛</mark>。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">暗兰</mark>的儿子是<mark class=\"pn\">亚伦</mark>、<mark class=\"pn\">摩西</mark>，还有女儿<mark class=\"pn\">米利暗</mark>。<mark class=\"pn\">亚伦</mark>的儿子是<mark class=\"pn\">拿答</mark>、<mark class=\"pn\">亚比户</mark>、<mark class=\"pn\">以利亚撒</mark>、<mark class=\"pn\">以他玛</mark>。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">以利亚撒</mark>生<mark class=\"pn\">非尼哈</mark>；<mark class=\"pn\">非尼哈</mark>生<mark class=\"pn\">亚比书</mark>；"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">亚比书</mark>生<mark class=\"pn\">布基</mark>；<mark class=\"pn\">布基</mark>生<mark class=\"pn\">乌西</mark>；"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">乌西</mark>生<mark class=\"pn\">西拉希雅</mark>；<mark class=\"pn\">西拉希雅</mark>生<mark class=\"pn\">米拉约</mark>；"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">米拉约</mark>生<mark class=\"pn\">亚玛利雅</mark>；<mark class=\"pn\">亚玛利雅</mark>生<mark class=\"pn\">亚希突</mark>；"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">亚希突</mark>生<mark class=\"pn\">撒督</mark>；<mark class=\"pn\">撒督</mark>生<mark class=\"pn\">亚希玛斯</mark>；"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">亚希玛斯</mark>生<mark class=\"pn\">亚撒利雅</mark>；<mark class=\"pn\">亚撒利雅</mark>生<mark class=\"pn\">约哈难</mark>；"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">约哈难</mark>生<mark class=\"pn\">亚撒利雅</mark>（这<mark class=\"pn\">亚撒利雅</mark>在<mark class=\"pn\">所罗门</mark>于<mark class=\"pn\">耶路撒冷</mark>所建造的殿中，供祭司的职分）；"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">亚撒利雅</mark>生<mark class=\"pn\">亚玛利雅</mark>；<mark class=\"pn\">亚玛利雅</mark>生<mark class=\"pn\">亚希突</mark>；"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">亚希突</mark>生<mark class=\"pn\">撒督</mark>；<mark class=\"pn\">撒督</mark>生<mark class=\"pn\">沙龙</mark>；"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">沙龙</mark>生<mark class=\"pn\">希勒家</mark>；<mark class=\"pn\">希勒家</mark>生<mark class=\"pn\">亚撒利雅</mark>；"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">亚撒利雅</mark>生<mark class=\"pn\">西莱雅</mark>；<mark class=\"pn\">西莱雅</mark>生<mark class=\"pn\">约萨答</mark>。"
+        },
+        {
+          "verse": 15,
+          "text": "当耶和华藉<mark class=\"pn\">尼布甲尼撒</mark>的手掳掠<mark class=\"pn\">犹大</mark>和<mark class=\"pn\">耶路撒冷</mark>人的时候，这<mark class=\"pn\">约萨答</mark>也被掳去。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">利未</mark>的儿子是<mark class=\"pn\">革顺</mark>、<mark class=\"pn\">哥辖</mark>、<mark class=\"pn\">米拉利</mark>。",
+          "heading": "利未的其余后裔"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">革顺</mark>的儿子名叫<mark class=\"pn\">立尼</mark>、<mark class=\"pn\">示每</mark>。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">哥辖</mark>的儿子是<mark class=\"pn\">暗兰</mark>、<mark class=\"pn\">以斯哈</mark>、<mark class=\"pn\">希伯伦</mark>、<mark class=\"pn\">乌薛</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">米拉利</mark>的儿子是<mark class=\"pn\">抹利</mark>、<mark class=\"pn\">母示</mark>。这是按着<mark class=\"pn\">利未</mark>人宗族分的各家。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">革顺</mark>的儿子是<mark class=\"pn\">立尼</mark>；<mark class=\"pn\">立尼</mark>的儿子是<mark class=\"pn\">雅哈</mark>；<mark class=\"pn\">雅哈</mark>的儿子是<mark class=\"pn\">薪玛</mark>；"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">薪玛</mark>的儿子是<mark class=\"pn\">约亚</mark>；<mark class=\"pn\">约亚</mark>的儿子是<mark class=\"pn\">易多</mark>；<mark class=\"pn\">易多</mark>的儿子是<mark class=\"pn\">谢拉</mark>；<mark class=\"pn\">谢拉</mark>的儿子是<mark class=\"pn\">耶特赖</mark>。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">哥辖</mark>的儿子是<mark class=\"pn\">亚米拿达</mark>；<mark class=\"pn\">亚米拿达</mark>的儿子是<mark class=\"pn\">可拉</mark>；<mark class=\"pn\">可拉</mark>的儿子是<mark class=\"pn\">亚惜</mark>；"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">亚惜</mark>的儿子是<mark class=\"pn\">以利加拿</mark>；<mark class=\"pn\">以利加拿</mark>的儿子是<mark class=\"pn\">以比雅撒</mark>；<mark class=\"pn\">以比雅撒</mark>的儿子是<mark class=\"pn\">亚惜</mark>；"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">亚惜</mark>的儿子是<mark class=\"pn\">他哈</mark>；<mark class=\"pn\">他哈</mark>的儿子是<mark class=\"pn\">乌列</mark>；<mark class=\"pn\">乌列</mark>的儿子是<mark class=\"pn\">乌西雅</mark>；<mark class=\"pn\">乌西雅</mark>的儿子是<mark class=\"pn\">少罗</mark>。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">以利加拿</mark>的儿子是<mark class=\"pn\">亚玛赛</mark>和<mark class=\"pn\">亚希摩</mark>。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">亚希摩</mark>的儿子是<mark class=\"pn\">以利加拿</mark>；<mark class=\"pn\">以利加拿</mark>的儿子是<mark class=\"pn\">琐菲</mark>；<mark class=\"pn\">琐菲</mark>的儿子是<mark class=\"pn\">拿哈</mark>；"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">拿哈</mark>的儿子是<mark class=\"pn\">以利押</mark>；<mark class=\"pn\">以利押</mark>的儿子是<mark class=\"pn\">耶罗罕</mark>；<mark class=\"pn\">耶罗罕</mark>的儿子是<mark class=\"pn\">以利加拿</mark>；<mark class=\"pn\">以利加拿</mark>的儿子是<mark class=\"pn\">撒母耳</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">撒母耳</mark>的长子是<mark class=\"pn\">约珥</mark>，次子是<mark class=\"pn\">亚比亚</mark>。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">米拉利</mark>的儿子是<mark class=\"pn\">抹利</mark>；<mark class=\"pn\">抹利</mark>的儿子是<mark class=\"pn\">立尼</mark>；<mark class=\"pn\">立尼</mark>的儿子是<mark class=\"pn\">示每</mark>；<mark class=\"pn\">示每</mark>的儿子是<mark class=\"pn\">乌撒</mark>；"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">乌撒</mark>的儿子是<mark class=\"pn\">示米亚</mark>；<mark class=\"pn\">示米亚</mark>的儿子是<mark class=\"pn\">哈基雅</mark>；<mark class=\"pn\">哈基雅</mark>的儿子是<mark class=\"pn\">亚帅雅</mark>。"
+        },
+        {
+          "verse": 31,
+          "text": "约柜安设之后，<mark class=\"pn\">大卫</mark>派人在耶和华殿中管理歌唱的事。",
+          "heading": "圣殿中的歌者"
+        },
+        {
+          "verse": 32,
+          "text": "他们就在会幕前当歌唱的差，及至<mark class=\"pn\">所罗门</mark>在<mark class=\"pn\">耶路撒冷</mark>建造了耶和华的殿，他们便按着班次供职。"
+        },
+        {
+          "verse": 33,
+          "text": "供职的人和他们的子孙记在下面："
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">哥辖</mark>的子孙中有歌唱的<mark class=\"pn\">希幔</mark>。<mark class=\"pn\">希幔</mark>是<mark class=\"pn\">约珥</mark>的儿子；<mark class=\"pn\">约珥</mark>是<mark class=\"pn\">撒母耳</mark>的儿子；<mark class=\"pn\">撒母耳</mark>是<mark class=\"pn\">以利加拿</mark>的儿子；<mark class=\"pn\">以利加拿</mark>是<mark class=\"pn\">耶罗罕</mark>的儿子；<mark class=\"pn\">耶罗罕</mark>是<mark class=\"pn\">以列</mark>的儿子；<mark class=\"pn\">以列</mark>是<mark class=\"pn\">陀亚</mark>的儿子；"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">陀亚</mark>是<mark class=\"pn\">苏弗</mark>的儿子；<mark class=\"pn\">苏弗</mark>是<mark class=\"pn\">以利加拿</mark>的儿子；<mark class=\"pn\">以利加拿</mark>是<mark class=\"pn\">玛哈</mark>的儿子；<mark class=\"pn\">玛哈</mark>是<mark class=\"pn\">亚玛赛</mark>的儿子；"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">亚玛赛</mark>是<mark class=\"pn\">以利加拿</mark>的儿子；<mark class=\"pn\">以利加拿</mark>是<mark class=\"pn\">约珥</mark>的儿子；<mark class=\"pn\">约珥</mark>是<mark class=\"pn\">亚撒利雅</mark>的儿子；<mark class=\"pn\">亚撒利雅</mark>是<mark class=\"pn\">西番雅</mark>的儿子；"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">西番雅</mark>是<mark class=\"pn\">他哈</mark>的儿子；<mark class=\"pn\">他哈</mark>是<mark class=\"pn\">亚惜</mark>的儿子；<mark class=\"pn\">亚惜</mark>是<mark class=\"pn\">以比雅撒</mark>的儿子；<mark class=\"pn\">以比雅撒</mark>是<mark class=\"pn\">可拉</mark>的儿子；"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">可拉</mark>是<mark class=\"pn\">以斯哈</mark>的儿子；<mark class=\"pn\">以斯哈</mark>是<mark class=\"pn\">哥辖</mark>的儿子；<mark class=\"pn\">哥辖</mark>是<mark class=\"pn\">利未</mark>的儿子；<mark class=\"pn\">利未</mark>是<mark class=\"pn\">以色列</mark>的儿子。"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">希幔</mark>的族兄<mark class=\"pn\">亚萨</mark>是<mark class=\"pn\">比利家</mark>的儿子，<mark class=\"pn\">亚萨</mark>在<mark class=\"pn\">希幔</mark>右边供职。<mark class=\"pn\">比利家</mark>是<mark class=\"pn\">示米亚</mark>的儿子；"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">示米亚</mark>是<mark class=\"pn\">米迦勒</mark>的儿子；<mark class=\"pn\">米迦勒</mark>是<mark class=\"pn\">巴西雅</mark>的儿子；<mark class=\"pn\">巴西雅</mark>是<mark class=\"pn\">玛基雅</mark>的儿子；"
+        },
+        {
+          "verse": 41,
+          "text": "<mark class=\"pn\">玛基雅</mark>是<mark class=\"pn\">伊特尼</mark>的儿子；<mark class=\"pn\">伊特尼</mark>是<mark class=\"pn\">谢拉</mark>的儿子；<mark class=\"pn\">谢拉</mark>是<mark class=\"pn\">亚大雅</mark>的儿子；"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">亚大雅</mark>是<mark class=\"pn\">以探</mark>的儿子；<mark class=\"pn\">以探</mark>是<mark class=\"pn\">薪玛</mark>的儿子；<mark class=\"pn\">薪玛</mark>是<mark class=\"pn\">示每</mark>的儿子；"
+        },
+        {
+          "verse": 43,
+          "text": "<mark class=\"pn\">示每</mark>是<mark class=\"pn\">雅哈</mark>的儿子；<mark class=\"pn\">雅哈</mark>是<mark class=\"pn\">革顺</mark>的儿子。<mark class=\"pn\">革顺</mark>是<mark class=\"pn\">利未</mark>的儿子。"
+        },
+        {
+          "verse": 44,
+          "text": "他们的族弟兄<mark class=\"pn\">米拉利</mark>的子孙，在他们左边供职的有<mark class=\"pn\">以探</mark>。<mark class=\"pn\">以探</mark>是<mark class=\"pn\">基示</mark>的儿子；<mark class=\"pn\">基示</mark>是<mark class=\"pn\">亚伯底</mark>的儿子；<mark class=\"pn\">亚伯底</mark>是<mark class=\"pn\">玛鹿</mark>的儿子；"
+        },
+        {
+          "verse": 45,
+          "text": "<mark class=\"pn\">玛鹿</mark>是<mark class=\"pn\">哈沙比雅</mark>的儿子；<mark class=\"pn\">哈沙比雅</mark>是<mark class=\"pn\">亚玛谢</mark>的儿子；<mark class=\"pn\">亚玛谢</mark>是<mark class=\"pn\">希勒家</mark>的儿子；"
+        },
+        {
+          "verse": 46,
+          "text": "<mark class=\"pn\">希勒家</mark>是<mark class=\"pn\">暗西</mark>的儿子；<mark class=\"pn\">暗西</mark>是<mark class=\"pn\">巴尼</mark>的儿子；<mark class=\"pn\">巴尼</mark>是<mark class=\"pn\">沙麦</mark>的儿子；"
+        },
+        {
+          "verse": 47,
+          "text": "<mark class=\"pn\">沙麦</mark>是<mark class=\"pn\">末力</mark>的儿子；<mark class=\"pn\">末力</mark>是<mark class=\"pn\">母示</mark>的儿子；<mark class=\"pn\">母示</mark>是<mark class=\"pn\">米拉利</mark>的儿子；<mark class=\"pn\">米拉利</mark>是<mark class=\"pn\">利未</mark>的儿子。"
+        },
+        {
+          "verse": 48,
+          "text": "他们的族弟兄<mark class=\"pn\">利未</mark>人也被派办　神殿中的一切事。"
+        },
+        {
+          "verse": 49,
+          "text": "<mark class=\"pn\">亚伦</mark>和他的子孙在燔祭坛和香坛上献祭烧香，又在至圣所办理一切的事，为<mark class=\"pn\">以色列</mark>人赎罪，是照　神仆人<mark class=\"pn\">摩西</mark>所吩咐的。",
+          "heading": "亚伦的后裔"
+        },
+        {
+          "verse": 50,
+          "text": "<mark class=\"pn\">亚伦</mark>的儿子是<mark class=\"pn\">以利亚撒</mark>；<mark class=\"pn\">以利亚撒</mark>的儿子是<mark class=\"pn\">非尼哈</mark>；<mark class=\"pn\">非尼哈</mark>的儿子是<mark class=\"pn\">亚比书</mark>；"
+        },
+        {
+          "verse": 51,
+          "text": "<mark class=\"pn\">亚比书</mark>的儿子是<mark class=\"pn\">布基</mark>；<mark class=\"pn\">布基</mark>的儿子是<mark class=\"pn\">乌西</mark>；<mark class=\"pn\">乌西</mark>的儿子是<mark class=\"pn\">西拉希雅</mark>；"
+        },
+        {
+          "verse": 52,
+          "text": "<mark class=\"pn\">西拉希雅</mark>的儿子是<mark class=\"pn\">米拉约</mark>；<mark class=\"pn\">米拉约</mark>的儿子是<mark class=\"pn\">亚玛利雅</mark>；<mark class=\"pn\">亚玛利雅</mark>的儿子是<mark class=\"pn\">亚希突</mark>；"
+        },
+        {
+          "verse": 53,
+          "text": "<mark class=\"pn\">亚希突</mark>的儿子是<mark class=\"pn\">撒督</mark>；<mark class=\"pn\">撒督</mark>的儿子是<mark class=\"pn\">亚希玛斯</mark>。"
+        },
+        {
+          "verse": 54,
+          "text": "他们的住处按着境内的营寨，记在下面：<mark class=\"pn\">哥辖</mark>族<mark class=\"pn\">亚伦</mark>的子孙先拈阄得地，",
+          "heading": "利未支派的居地"
+        },
+        {
+          "verse": 55,
+          "text": "在<mark class=\"pn\">犹大</mark>地中得了<mark class=\"pn\">希伯仑</mark>和四围的郊野；"
+        },
+        {
+          "verse": 56,
+          "text": "只是属城的田地和村庄都为<mark class=\"pn\">耶孚尼</mark>的儿子<mark class=\"pn\">迦勒</mark>所得。"
+        },
+        {
+          "verse": 57,
+          "text": "<mark class=\"pn\">亚伦</mark>的子孙得了逃城<mark class=\"pn\">希伯仑</mark>，又得了<mark class=\"pn\">立拿</mark>与其郊野，<mark class=\"pn\">雅提珥</mark>、<mark class=\"pn\">以实提莫</mark>与其郊野；"
+        },
+        {
+          "verse": 58,
+          "text": "<mark class=\"pn\">希仑</mark>与其郊野，<mark class=\"pn\">底璧</mark>与其郊野，"
+        },
+        {
+          "verse": 59,
+          "text": "<mark class=\"pn\">亚珊</mark>与其郊野，<mark class=\"pn\">伯示麦</mark>与其郊野。"
+        },
+        {
+          "verse": 60,
+          "text": "在<mark class=\"pn\">便雅悯</mark>支派的地中，得了<mark class=\"pn\">迦巴</mark>与其郊野，<mark class=\"pn\">阿勒篾</mark>与其郊野，<mark class=\"pn\">亚拿突</mark>与其郊野。他们诸家所得的城共十三座。"
+        },
+        {
+          "verse": 61,
+          "text": "<mark class=\"pn\">哥辖</mark>族其余的人又拈阄，在<mark class=\"pn\">玛拿西</mark>半支派的地中得了十座城。"
+        },
+        {
+          "verse": 62,
+          "text": "<mark class=\"pn\">革顺</mark>族按着宗族，在<mark class=\"pn\">以萨迦</mark>支派的地中，<mark class=\"pn\">亚设</mark>支派的地中，<mark class=\"pn\">拿弗他利</mark>支派的地中，<mark class=\"pn\">巴珊</mark>内<mark class=\"pn\">玛拿西</mark>支派的地中，得了十三座城。"
+        },
+        {
+          "verse": 63,
+          "text": "<mark class=\"pn\">米拉利</mark>族按着宗族拈阄，在<mark class=\"pn\">流便</mark>支派的地中，<mark class=\"pn\">迦得</mark>支派的地中，<mark class=\"pn\">西布伦</mark>支派的地中，得了十二座城。"
+        },
+        {
+          "verse": 64,
+          "text": "<mark class=\"pn\">以色列</mark>人将这些城与其郊野给了<mark class=\"pn\">利未</mark>人。"
+        },
+        {
+          "verse": 65,
+          "text": "这以上录名的城，在<mark class=\"pn\">犹大</mark>、<mark class=\"pn\">西缅</mark>、<mark class=\"pn\">便雅悯</mark>三支派的地中，<mark class=\"pn\">以色列</mark>人拈阄给了他们。"
+        },
+        {
+          "verse": 66,
+          "text": "<mark class=\"pn\">哥辖</mark>族中有几家在<mark class=\"pn\">以法莲</mark>支派的地中也得了城邑，"
+        },
+        {
+          "verse": 67,
+          "text": "在<mark class=\"pn\">以法莲</mark>山地得了逃城<mark class=\"pn\">示剑</mark>与其郊野，又得了<mark class=\"pn\">基色</mark>与其郊野，"
+        },
+        {
+          "verse": 68,
+          "text": "<mark class=\"pn\">约缅</mark>与其郊野，<mark class=\"pn\">伯和仑</mark>与其郊野，"
+        },
+        {
+          "verse": 69,
+          "text": "<mark class=\"pn\">亚雅仑</mark>与其郊野，<mark class=\"pn\">迦特临门</mark>与其郊野。"
+        },
+        {
+          "verse": 70,
+          "text": "<mark class=\"pn\">哥辖</mark>族其余的人在<mark class=\"pn\">玛拿西</mark>半支派的地中得了<mark class=\"pn\">亚乃</mark>与其郊野，<mark class=\"pn\">比连</mark>与其郊野。"
+        },
+        {
+          "verse": 71,
+          "text": "<mark class=\"pn\">革顺</mark>族在<mark class=\"pn\">玛拿西</mark>半支派的地中得了<mark class=\"pn\">巴珊</mark>的<mark class=\"pn\">哥兰</mark>与其郊野，<mark class=\"pn\">亚斯他录</mark>与其郊野；"
+        },
+        {
+          "verse": 72,
+          "text": "又在<mark class=\"pn\">以萨迦</mark>支派的地中得了<mark class=\"pn\">基低斯</mark>与其郊野，<mark class=\"pn\">大比拉</mark>与其郊野，"
+        },
+        {
+          "verse": 73,
+          "text": "<mark class=\"pn\">拉末</mark>与其郊野，<mark class=\"pn\">亚年</mark>与其郊野；"
+        },
+        {
+          "verse": 74,
+          "text": "在<mark class=\"pn\">亚设</mark>支派的地中得了<mark class=\"pn\">玛沙</mark>与其郊野，<mark class=\"pn\">押顿</mark>与其郊野，"
+        },
+        {
+          "verse": 75,
+          "text": "<mark class=\"pn\">户割</mark>与其郊野，<mark class=\"pn\">利合</mark>与其郊野；"
+        },
+        {
+          "verse": 76,
+          "text": "在<mark class=\"pn\">拿弗他利</mark>支派的地中得了<mark class=\"pn\">加利利</mark>的<mark class=\"pn\">基低斯</mark>与其郊野，<mark class=\"pn\">哈们</mark>与其郊野，<mark class=\"pn\">基列亭</mark>与其郊野。"
+        },
+        {
+          "verse": 77,
+          "text": "还有<mark class=\"pn\">米拉利</mark>族的人在<mark class=\"pn\">西布伦</mark>支派的地中得了<mark class=\"pn\">临摩挪</mark>与其郊野，<mark class=\"pn\">他泊</mark>与其郊野；"
+        },
+        {
+          "verse": 78,
+          "text": "又在<mark class=\"pn\">耶利哥</mark>的<mark class=\"pn\">约旦河</mark>东，在<mark class=\"pn\">流便</mark>支派的地中得了旷野的<mark class=\"pn\">比悉</mark>与其郊野，<mark class=\"pn\">雅哈撒</mark>与其郊野，"
+        },
+        {
+          "verse": 79,
+          "text": "<mark class=\"pn\">基底莫</mark>与其郊野，<mark class=\"pn\">米法押</mark>与其郊野；"
+        },
+        {
+          "verse": 80,
+          "text": "又在<mark class=\"pn\">迦得</mark>支派的地中得了<mark class=\"pn\">基列</mark>的<mark class=\"pn\">拉末</mark>与其郊野，<mark class=\"pn\">玛哈念</mark>与其郊野，"
+        },
+        {
+          "verse": 81,
+          "text": "<mark class=\"pn\">希实本</mark>与其郊野，<mark class=\"pn\">雅谢</mark>与其郊野。"
+        }
+      ]
+    },
+    {
+      "chapter": 7,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以萨迦</mark>的儿子是<mark class=\"pn\">陀拉</mark>、<mark class=\"pn\">普瓦</mark>、<mark class=\"pn\">雅述</mark>（“雅述”在创世记第46章13节作“约伯”）、<mark class=\"pn\">伸仑</mark>，共四人。",
+          "heading": "以萨迦的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">陀拉</mark>的儿子是<mark class=\"pn\">乌西</mark>、<mark class=\"pn\">利法雅</mark>、<mark class=\"pn\">耶勒</mark>、<mark class=\"pn\">雅买</mark>、<mark class=\"pn\">易伯散</mark>、<mark class=\"pn\">示母利</mark>，都是<mark class=\"pn\">陀拉</mark>的族长，是大能的勇士。到<mark class=\"pn\">大卫</mark>年间，他们的人数共有二万二千六百名。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">乌西</mark>的儿子是<mark class=\"pn\">伊斯拉希</mark>；<mark class=\"pn\">伊斯拉希</mark>的儿子是<mark class=\"pn\">米迦勒</mark>、<mark class=\"pn\">俄巴底亚</mark>、<mark class=\"pn\">约珥</mark>、<mark class=\"pn\">伊示雅</mark>，共五人，都是族长。"
+        },
+        {
+          "verse": 4,
+          "text": "他们所率领的，按着宗族出战的军队，共有三万六千人，因为他们的妻和子众多。"
+        },
+        {
+          "verse": 5,
+          "text": "他们的族弟兄在<mark class=\"pn\">以萨迦</mark>各族中都是大能的勇士，按着家谱计算共有八万七千人。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">便雅悯</mark> 的儿子是<mark class=\"pn\">比拉</mark>、<mark class=\"pn\">比结</mark>、<mark class=\"pn\">耶叠</mark>，共三人。",
+          "heading": "便雅悯和但的后裔"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">比拉</mark>的儿子是<mark class=\"pn\">以斯本</mark>、<mark class=\"pn\">乌西</mark>、<mark class=\"pn\">乌薛</mark>、<mark class=\"pn\">耶利摩</mark>、<mark class=\"pn\">以利</mark>，共五人，都是族长，是大能的勇士。按着家谱计算，他们的子孙共有二万二千零三十四人。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">比结</mark>的儿子是<mark class=\"pn\">细米拉</mark>、<mark class=\"pn\">约阿施</mark>、<mark class=\"pn\">以利以谢</mark>、<mark class=\"pn\">以利约乃</mark>、<mark class=\"pn\">暗利</mark>、<mark class=\"pn\">耶利摩</mark>、<mark class=\"pn\">亚比雅</mark>、<mark class=\"pn\">亚拿突</mark>、<mark class=\"pn\">亚拉篾</mark>。这都是<mark class=\"pn\">比结</mark>的儿子。"
+        },
+        {
+          "verse": 9,
+          "text": "他们都是族长，是大能的勇士。按着家谱计算，他们的子孙共有二万零二百人。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">耶叠</mark>的儿子是<mark class=\"pn\">比勒罕</mark>；<mark class=\"pn\">比勒罕</mark>的儿子是<mark class=\"pn\">耶乌施</mark>、<mark class=\"pn\">便雅悯</mark>、<mark class=\"pn\">以忽</mark>、<mark class=\"pn\">基拿拿</mark>、<mark class=\"pn\">细坦</mark>、<mark class=\"pn\">他施</mark>、<mark class=\"pn\">亚希沙哈</mark>。"
+        },
+        {
+          "verse": 11,
+          "text": "这都是<mark class=\"pn\">耶叠</mark>的儿子，都是族长，是大能的勇士；他们的子孙能上阵打仗的，共有一万七千二百人。"
+        },
+        {
+          "verse": 12,
+          "text": "还有<mark class=\"pn\">以珥</mark>的儿子<mark class=\"pn\">书品</mark>、<mark class=\"pn\">户品</mark>，并<mark class=\"pn\">亚黑</mark>的儿子<mark class=\"pn\">户伸</mark>。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">拿弗他利</mark>的儿子是<mark class=\"pn\">雅薛</mark>、<mark class=\"pn\">沽尼</mark>、<mark class=\"pn\">耶色</mark>、<mark class=\"pn\">沙龙</mark>。这都是<mark class=\"pn\">辟拉</mark>的子孙。",
+          "heading": "拿弗他利的后裔"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">玛拿西</mark>的儿子<mark class=\"pn\">亚斯列</mark>是他妾<mark class=\"pn\">亚兰</mark>人所生的，又生了<mark class=\"pn\">基列</mark>之父<mark class=\"pn\">玛吉</mark>。",
+          "heading": "玛拿西的后裔"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">玛吉</mark>娶的妻是<mark class=\"pn\">户品</mark>、<mark class=\"pn\">书品</mark>的妹子，名叫<mark class=\"pn\">玛迦</mark>。<mark class=\"pn\">玛拿西</mark>的次子名叫<mark class=\"pn\">西罗非哈</mark>；<mark class=\"pn\">西罗非哈</mark>但有几个女儿。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">玛吉</mark>的妻<mark class=\"pn\">玛迦</mark>生了一个儿子，起名叫<mark class=\"pn\">毗利施</mark>。<mark class=\"pn\">毗利施</mark>的兄弟名叫<mark class=\"pn\">示利施</mark>；<mark class=\"pn\">示利施</mark>的儿子是<mark class=\"pn\">乌兰</mark>和<mark class=\"pn\">利金</mark>。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">乌兰</mark>的儿子是<mark class=\"pn\">比但</mark>。这都是<mark class=\"pn\">基列</mark>的子孙。<mark class=\"pn\">基列</mark>是<mark class=\"pn\">玛吉</mark>的儿子，<mark class=\"pn\">玛吉</mark>是<mark class=\"pn\">玛拿西</mark>的儿子。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">基列</mark>的妹子<mark class=\"pn\">哈摩利吉</mark>生了<mark class=\"pn\">伊施荷</mark>、<mark class=\"pn\">亚比以谢</mark>、<mark class=\"pn\">玛拉</mark>。（"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">示米大</mark>的儿子是<mark class=\"pn\">亚现</mark>、<mark class=\"pn\">示剑</mark>、<mark class=\"pn\">利克希</mark>、<mark class=\"pn\">阿尼安</mark>。）"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">以法莲</mark>的儿子是<mark class=\"pn\">书提拉</mark>；<mark class=\"pn\">书提拉</mark>的儿子是<mark class=\"pn\">比列</mark>；<mark class=\"pn\">比列</mark>的儿子是<mark class=\"pn\">他哈</mark>；<mark class=\"pn\">他哈</mark>的儿子是<mark class=\"pn\">以拉大</mark>；<mark class=\"pn\">以拉大</mark>的儿子是<mark class=\"pn\">他哈</mark>；",
+          "heading": "以法莲的后裔"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">他哈</mark>的儿子是<mark class=\"pn\">撒拔</mark>；<mark class=\"pn\">撒拔</mark>的儿子是<mark class=\"pn\">书提拉</mark>。<mark class=\"pn\">以法莲</mark>又生<mark class=\"pn\">以谢</mark>、<mark class=\"pn\">以列</mark>；这二人因为下去夺取<mark class=\"pn\">迦特</mark>人的牲畜，被本地的<mark class=\"pn\">迦特</mark>人杀了。"
+        },
+        {
+          "verse": 22,
+          "text": "他们的父亲<mark class=\"pn\">以法莲</mark>为他们悲哀了多日，他的弟兄都来安慰他。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">以法莲</mark>与妻同房，他妻就怀孕生了一子，<mark class=\"pn\">以法莲</mark>因为家里遭祸，就给这儿子起名叫<mark class=\"pn\">比利亚</mark>。"
+        },
+        {
+          "verse": 24,
+          "text": "他的女儿名叫<mark class=\"pn\">舍伊拉</mark>，就是建筑上<mark class=\"pn\">伯和仑</mark>、下<mark class=\"pn\">伯和仑</mark>与<mark class=\"pn\">乌羡舍伊拉</mark>的。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">比利亚</mark>的儿子是<mark class=\"pn\">利法</mark>和<mark class=\"pn\">利悉</mark>。<mark class=\"pn\">利悉</mark>的儿子是<mark class=\"pn\">他拉</mark>；<mark class=\"pn\">他拉</mark>的儿子是<mark class=\"pn\">他罕</mark>；"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">他罕</mark>的儿子是<mark class=\"pn\">拉但</mark>；<mark class=\"pn\">拉但</mark>的儿子是<mark class=\"pn\">亚米忽</mark>；<mark class=\"pn\">亚米忽</mark>的儿子是<mark class=\"pn\">以利沙玛</mark>；"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">以利沙玛</mark>的儿子是<mark class=\"pn\">嫩</mark>；<mark class=\"pn\">嫩</mark>的儿子是<mark class=\"pn\">约书亚</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">以法莲</mark>人的地业和住处是<mark class=\"pn\">伯特利</mark>与其村庄；东边<mark class=\"pn\">拿兰</mark>，西边<mark class=\"pn\">基色</mark>与其村庄；<mark class=\"pn\">示剑</mark>与其村庄，直到<mark class=\"pn\">迦萨</mark>与其村庄；"
+        },
+        {
+          "verse": 29,
+          "text": "还有靠近<mark class=\"pn\">玛拿西</mark>人的境界，<mark class=\"pn\">伯善</mark>与其村庄；<mark class=\"pn\">他纳</mark>与其村庄；<mark class=\"pn\">米吉多</mark>与其村庄；<mark class=\"pn\">多珥</mark>与其村庄。<mark class=\"pn\">以色列</mark>儿子<mark class=\"pn\">约瑟</mark>的子孙住在这些地方。"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">亚设</mark>的儿子是<mark class=\"pn\">音拿</mark>、<mark class=\"pn\">亦施瓦</mark>、<mark class=\"pn\">亦施韦</mark>、<mark class=\"pn\">比利亚</mark>，还有他们的妹子<mark class=\"pn\">西</mark> <mark class=\"pn\">拉</mark>。",
+          "heading": "亚设的后裔"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">比利亚</mark>的儿子是<mark class=\"pn\">希别</mark>、<mark class=\"pn\">玛结</mark>；<mark class=\"pn\">玛结</mark>是<mark class=\"pn\">比撒威</mark>的父亲。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">希别</mark>生<mark class=\"pn\">雅弗勒</mark>、<mark class=\"pn\">朔默</mark>、<mark class=\"pn\">何坦</mark>，和他们的妹子<mark class=\"pn\">书雅</mark>。"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">雅弗勒</mark>的儿子是<mark class=\"pn\">巴萨</mark>、<mark class=\"pn\">宾哈</mark>、<mark class=\"pn\">亚施法</mark>。这都是<mark class=\"pn\">雅弗勒</mark>的儿子。"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">朔默</mark>的儿子是<mark class=\"pn\">亚希</mark>、<mark class=\"pn\">罗迦</mark>、<mark class=\"pn\">耶户巴</mark>、<mark class=\"pn\">亚兰</mark>。"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">朔默</mark>兄弟<mark class=\"pn\">希连</mark>的儿子是<mark class=\"pn\">琐法</mark>、<mark class=\"pn\">音那</mark>、<mark class=\"pn\">示利斯</mark>、<mark class=\"pn\">亚抹</mark>。"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">琐法</mark>的儿子是<mark class=\"pn\">书亚</mark>、<mark class=\"pn\">哈尼弗</mark>、<mark class=\"pn\">书阿勒</mark>、<mark class=\"pn\">比利</mark>、<mark class=\"pn\">音拉</mark>、"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">比悉</mark>、<mark class=\"pn\">河得</mark>、<mark class=\"pn\">珊玛</mark>、<mark class=\"pn\">施沙</mark>、<mark class=\"pn\">益兰</mark>、<mark class=\"pn\">比拉</mark>。"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">益帖</mark>的儿子是<mark class=\"pn\">耶孚尼</mark>、<mark class=\"pn\">毗斯巴</mark>、<mark class=\"pn\">亚拉</mark>。"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">乌拉</mark>的儿子是<mark class=\"pn\">亚拉</mark>、<mark class=\"pn\">汉尼业</mark>、<mark class=\"pn\">利写</mark>。"
+        },
+        {
+          "verse": 40,
+          "text": "这都是<mark class=\"pn\">亚设</mark>的子孙，都是族长，是精壮大能的勇士，也是首领中的头目，按着家谱计算，他们的子孙能出战的共有二万六千人。"
+        }
+      ]
+    },
+    {
+      "chapter": 8,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">便雅悯</mark>的长子<mark class=\"pn\">比拉</mark>，次子<mark class=\"pn\">亚实别</mark>，三子<mark class=\"pn\">亚哈拉</mark>，",
+          "heading": "便雅悯的后裔"
+        },
+        {
+          "verse": 2,
+          "text": "四子<mark class=\"pn\">挪哈</mark>，五子<mark class=\"pn\">拉法</mark>。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">比拉</mark>的儿子是<mark class=\"pn\">亚大</mark>、<mark class=\"pn\">基拉</mark>、<mark class=\"pn\">亚比忽</mark>、"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">亚比书</mark>、<mark class=\"pn\">乃幔</mark>、<mark class=\"pn\">亚何亚</mark>、"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">基拉</mark>、<mark class=\"pn\">示孚汛</mark>、<mark class=\"pn\">户兰</mark>。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">以忽</mark>的儿子作<mark class=\"pn\">迦巴</mark>居民的族长，被掳到<mark class=\"pn\">玛拿辖</mark>；"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">以忽</mark>的儿子<mark class=\"pn\">乃幔</mark>、<mark class=\"pn\">亚希亚</mark>、<mark class=\"pn\">基拉</mark>也被掳去。<mark class=\"pn\">基拉</mark>生<mark class=\"pn\">乌撒</mark>、<mark class=\"pn\">亚希忽</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">沙哈连</mark>休他二妻<mark class=\"pn\">户伸</mark>和<mark class=\"pn\">巴拉</mark>之后，在<mark class=\"pn\">摩押</mark>地生了儿子。"
+        },
+        {
+          "verse": 9,
+          "text": "他与妻<mark class=\"pn\">贺得</mark>同房，生了<mark class=\"pn\">约巴</mark>、<mark class=\"pn\">洗比雅</mark>、<mark class=\"pn\">米沙</mark>、<mark class=\"pn\">玛拉干</mark>、"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">耶乌斯</mark>、<mark class=\"pn\">沙迦</mark>、<mark class=\"pn\">米玛</mark>。他这些儿子都是族长。"
+        },
+        {
+          "verse": 11,
+          "text": "他的妻<mark class=\"pn\">户伸</mark>给他生的儿子有<mark class=\"pn\">亚比突</mark>、<mark class=\"pn\">以利巴力</mark>。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">以利巴力</mark>的儿子是<mark class=\"pn\">希伯</mark>、<mark class=\"pn\">米珊</mark>、<mark class=\"pn\">沙麦</mark>。<mark class=\"pn\">沙麦</mark>建立<mark class=\"pn\">阿挪</mark>和<mark class=\"pn\">罗德</mark>二城与其村庄。"
+        },
+        {
+          "verse": 13,
+          "text": "又有<mark class=\"pn\">比利亚</mark>和<mark class=\"pn\">示玛</mark>是<mark class=\"pn\">亚雅仑</mark>居民的族长，是驱逐<mark class=\"pn\">迦特</mark>人的。",
+          "heading": "在亚雅仑的便雅悯人"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">亚希约</mark>、<mark class=\"pn\">沙煞</mark>、<mark class=\"pn\">耶利末</mark>、"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">西巴第雅</mark>、<mark class=\"pn\">亚拉得</mark>、<mark class=\"pn\">亚得</mark>、"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">米迦勒</mark>、<mark class=\"pn\">伊施巴</mark>、<mark class=\"pn\">约哈</mark>都是<mark class=\"pn\">比利亚</mark>的儿子。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">西巴第雅</mark>、<mark class=\"pn\">米书兰</mark>、<mark class=\"pn\">希西基</mark>、<mark class=\"pn\">希伯</mark>、",
+          "heading": "在耶路撒冷的便雅悯人"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">伊施米莱</mark>、<mark class=\"pn\">伊斯利亚</mark>、<mark class=\"pn\">约巴</mark>都是<mark class=\"pn\">以利巴力</mark>的儿子。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">雅金</mark>、<mark class=\"pn\">细基</mark> <mark class=\"pn\">利</mark>、<mark class=\"pn\">撒底</mark>、"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">以利乃</mark>、<mark class=\"pn\">洗勒太</mark>、<mark class=\"pn\">以列</mark>、"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">亚大雅</mark>、<mark class=\"pn\">比拉雅</mark>、<mark class=\"pn\">申拉</mark>都是<mark class=\"pn\">示每</mark>的儿子。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">伊施班</mark>、<mark class=\"pn\">希伯</mark>、<mark class=\"pn\">以列</mark>、"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">亚伯顿</mark>、<mark class=\"pn\">细基利</mark>、<mark class=\"pn\">哈难</mark>、"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">哈拿尼雅</mark>、<mark class=\"pn\">以拦</mark>、<mark class=\"pn\">安陀提雅</mark>、"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">伊弗底雅</mark>、<mark class=\"pn\">毗努伊勒</mark>都是<mark class=\"pn\">沙煞</mark>的儿子。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">珊示莱</mark>、<mark class=\"pn\">示哈利</mark>、<mark class=\"pn\">亚他利雅</mark>、"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">雅利西</mark>、<mark class=\"pn\">以利亚</mark>、<mark class=\"pn\">细基利</mark>都是<mark class=\"pn\">耶罗罕</mark>的儿子。"
+        },
+        {
+          "verse": 28,
+          "text": "这些人都是著名的族长，住在<mark class=\"pn\">耶路撒冷</mark>。"
+        },
+        {
+          "verse": 29,
+          "text": "在<mark class=\"pn\">基遍</mark>住的有<mark class=\"pn\">基遍</mark>的父亲<mark class=\"pn\">耶利</mark>。他的妻名叫<mark class=\"pn\">玛迦</mark>；",
+          "heading": "在基遍和耶路撒冷的便雅悯人"
+        },
+        {
+          "verse": 30,
+          "text": "他长子是<mark class=\"pn\">亚伯顿</mark>。他又生<mark class=\"pn\">苏珥</mark>、<mark class=\"pn\">基士</mark>、<mark class=\"pn\">巴力</mark>、<mark class=\"pn\">拿答</mark>、"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">基多</mark>、<mark class=\"pn\">亚希约</mark>、<mark class=\"pn\">撒迦</mark>、<mark class=\"pn\">米基罗</mark>。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">米基罗</mark>生<mark class=\"pn\">示米暗</mark>。这些人和他们的弟兄在<mark class=\"pn\">耶路撒冷</mark>对面居住。"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">尼珥</mark>生<mark class=\"pn\">基士</mark>；<mark class=\"pn\">基士</mark>生<mark class=\"pn\">扫罗</mark>；<mark class=\"pn\">扫罗</mark>生<mark class=\"pn\">约拿单</mark>、<mark class=\"pn\">麦基舒亚</mark>、<mark class=\"pn\">亚比拿达</mark>、<mark class=\"pn\">伊施巴力</mark>。",
+          "heading": "扫罗王的家族"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">约拿单</mark>的儿子是<mark class=\"pn\">米力巴力</mark>（“米力巴力”在撒母耳下4章4节作“米非波设”）；<mark class=\"pn\">米力巴力</mark>生<mark class=\"pn\">米迦</mark>。"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">米迦</mark>的儿子是<mark class=\"pn\">毗敦</mark>、<mark class=\"pn\">米勒</mark>、<mark class=\"pn\">他利亚</mark>、<mark class=\"pn\">亚哈斯</mark>；"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">亚哈斯</mark>生<mark class=\"pn\">耶何阿达</mark>；<mark class=\"pn\">耶何阿达</mark>生<mark class=\"pn\">亚拉篾</mark>、<mark class=\"pn\">亚斯玛威</mark>、<mark class=\"pn\">心利</mark>；<mark class=\"pn\">心利</mark>生<mark class=\"pn\">摩撒</mark>；"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">摩撒</mark>生<mark class=\"pn\">比尼亚</mark>；<mark class=\"pn\">比尼亚</mark>的儿子是<mark class=\"pn\">拉法</mark>；<mark class=\"pn\">拉法</mark>的儿子是<mark class=\"pn\">以利亚萨</mark>；<mark class=\"pn\">以利亚萨</mark>的儿子是<mark class=\"pn\">亚悉</mark>。"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">亚悉</mark>有六个儿子，他们的名字是<mark class=\"pn\">亚斯利干</mark>、<mark class=\"pn\">波基路</mark>、<mark class=\"pn\">以实玛利</mark>、<mark class=\"pn\">示亚利雅</mark>、<mark class=\"pn\">俄巴底雅</mark>、<mark class=\"pn\">哈难</mark>。这都是<mark class=\"pn\">亚悉</mark>的儿子。"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">亚悉</mark>兄弟<mark class=\"pn\">以设</mark>的长子是<mark class=\"pn\">乌兰</mark>，次子<mark class=\"pn\">耶乌施</mark>，三子是<mark class=\"pn\">以利法列</mark>。"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">乌兰</mark>的儿子都是大能的勇士，是弓箭手，他们有许多的子孙，共一百五十名，都是<mark class=\"pn\">便雅悯</mark>人。"
+        }
+      ]
+    },
+    {
+      "chapter": 9,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以色列</mark>人都按家谱计算，写在<mark class=\"pn\">以色列</mark>诸王记上。<mark class=\"pn\">犹大</mark>人因犯罪就被掳到<mark class=\"pn\">巴比伦</mark>。",
+          "heading": "被掳归回的人"
+        },
+        {
+          "verse": 2,
+          "text": "先从<mark class=\"pn\">巴比伦</mark>回来，住在自己地业城邑中的有<mark class=\"pn\">以色列</mark>人、祭司、<mark class=\"pn\">利未</mark>人、尼提宁的首领。"
+        },
+        {
+          "verse": 3,
+          "text": "住在<mark class=\"pn\">耶路撒冷</mark>的有<mark class=\"pn\">犹大</mark>人、<mark class=\"pn\">便雅悯</mark>人、<mark class=\"pn\">以法莲</mark>人、<mark class=\"pn\">玛拿西</mark>人。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">犹大</mark>儿子<mark class=\"pn\">法勒斯</mark>的子孙中有<mark class=\"pn\">乌太</mark>。<mark class=\"pn\">乌太</mark>是<mark class=\"pn\">亚米忽</mark>的儿子；<mark class=\"pn\">亚米忽</mark>是<mark class=\"pn\">暗利</mark>的儿子；<mark class=\"pn\">暗利</mark>是<mark class=\"pn\">音利</mark>的儿子；<mark class=\"pn\">音利</mark>是<mark class=\"pn\">巴尼</mark>的儿子。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">示罗</mark>的子孙中有长子<mark class=\"pn\">亚帅雅</mark>和他的众子。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">谢拉</mark>的子孙中有<mark class=\"pn\">耶乌利</mark>和他的弟兄，共六百九十人。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">便雅悯</mark>人中有<mark class=\"pn\">哈西努</mark>的曾孙、<mark class=\"pn\">何达威雅</mark>的孙子、<mark class=\"pn\">米书兰</mark>的儿子<mark class=\"pn\">撒路</mark>，"
+        },
+        {
+          "verse": 8,
+          "text": "又有<mark class=\"pn\">耶罗罕</mark>的儿子<mark class=\"pn\">伊比尼雅</mark>，<mark class=\"pn\">米基立</mark>的孙子、<mark class=\"pn\">乌西</mark>的儿子<mark class=\"pn\">以拉</mark>，<mark class=\"pn\">伊比尼雅</mark>的曾孙、<mark class=\"pn\">流珥</mark>的孙子、<mark class=\"pn\">示法提雅</mark>的儿子<mark class=\"pn\">米书兰</mark>，"
+        },
+        {
+          "verse": 9,
+          "text": "和他们的族弟兄，按着家谱计算共有九百五十六名。这些人都是他们的族长。"
+        },
+        {
+          "verse": 10,
+          "text": "祭司中有<mark class=\"pn\">耶大雅</mark>、<mark class=\"pn\">耶何雅立</mark>、<mark class=\"pn\">雅斤</mark>，",
+          "heading": "住在耶路撒冷的祭司"
+        },
+        {
+          "verse": 11,
+          "text": "还有管理　神殿<mark class=\"pn\">希勒家</mark>的儿子<mark class=\"pn\">亚萨利雅</mark>。<mark class=\"pn\">希勒家</mark>是<mark class=\"pn\">米书兰</mark>的儿子；<mark class=\"pn\">米书兰</mark>是<mark class=\"pn\">撒督</mark>的儿子；<mark class=\"pn\">撒督</mark>是<mark class=\"pn\">米拉约</mark>的儿子；<mark class=\"pn\">米拉约</mark>是<mark class=\"pn\">亚希突</mark>的儿子。"
+        },
+        {
+          "verse": 12,
+          "text": "有<mark class=\"pn\">玛基雅</mark>的曾孙、<mark class=\"pn\">巴施户珥</mark>的孙子、<mark class=\"pn\">耶罗罕</mark>的儿子<mark class=\"pn\">亚大雅</mark>，又有<mark class=\"pn\">亚第业</mark>的儿子<mark class=\"pn\">玛赛</mark>；<mark class=\"pn\">亚第业</mark>是<mark class=\"pn\">雅希细拉</mark>的儿子；<mark class=\"pn\">雅希细拉</mark>是<mark class=\"pn\">米书兰</mark>的儿子；<mark class=\"pn\">米书兰</mark>是<mark class=\"pn\">米实利密</mark>的儿子；<mark class=\"pn\">米实利密</mark>是<mark class=\"pn\">音麦</mark>的儿子。"
+        },
+        {
+          "verse": 13,
+          "text": "他们和众弟兄都是族长，共有一千七百六十人，是善于做　神殿使用之工的。"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">利未</mark>人<mark class=\"pn\">米拉利</mark>的子孙中，有<mark class=\"pn\">哈沙比雅</mark>的曾孙、<mark class=\"pn\">押利甘</mark>的孙子、<mark class=\"pn\">哈述</mark>的儿子<mark class=\"pn\">示玛雅</mark>。",
+          "heading": "住在耶路撒冷的利未人"
+        },
+        {
+          "verse": 15,
+          "text": "有<mark class=\"pn\">拔巴甲</mark>、<mark class=\"pn\">黑勒施</mark>、<mark class=\"pn\">迦拉</mark>，并<mark class=\"pn\">亚萨</mark>的曾孙、<mark class=\"pn\">细基利</mark>的孙子、<mark class=\"pn\">米迦</mark>的儿子<mark class=\"pn\">玛探雅</mark>，"
+        },
+        {
+          "verse": 16,
+          "text": "又有<mark class=\"pn\">耶杜顿</mark>的曾孙、<mark class=\"pn\">迦拉</mark>的孙子、<mark class=\"pn\">示玛雅</mark>的儿子<mark class=\"pn\">俄巴底</mark>，还有<mark class=\"pn\">以利加拿</mark>的孙子、<mark class=\"pn\">亚撒</mark>的儿子<mark class=\"pn\">比利家</mark>。他们都住在<mark class=\"pn\">尼陀法</mark>人的村庄。"
+        },
+        {
+          "verse": 17,
+          "text": "守门的是<mark class=\"pn\">沙龙</mark>、<mark class=\"pn\">亚谷</mark>、<mark class=\"pn\">达们</mark>、<mark class=\"pn\">亚希幔</mark>，和他们的弟兄；<mark class=\"pn\">沙龙</mark>为长。",
+          "heading": "住在耶路撒冷的圣殿守卫"
+        },
+        {
+          "verse": 18,
+          "text": "从前这些人看守朝东的王门，如今是<mark class=\"pn\">利未</mark>营中守门的。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">可拉</mark>的曾孙、<mark class=\"pn\">以比雅撒</mark>的孙子、<mark class=\"pn\">可利</mark>的儿子<mark class=\"pn\">沙龙</mark>，和他的族弟兄<mark class=\"pn\">可拉</mark>人都管理使用之工，并守会幕的门。他们的祖宗曾管理耶和华的营盘，又把守营门。"
+        },
+        {
+          "verse": 20,
+          "text": "从前<mark class=\"pn\">以利亚撒</mark>的儿子<mark class=\"pn\">非尼哈</mark>管理他们，耶和华也与他同在。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">米施利米雅</mark>的儿子<mark class=\"pn\">撒迦利雅</mark>是看守会幕之门的。"
+        },
+        {
+          "verse": 22,
+          "text": "被选守门的人共有二百一十二名。他们在自己的村庄，按着家谱计算，是<mark class=\"pn\">大卫</mark>和先见<mark class=\"pn\">撒母耳</mark>所派当这紧要职任的。"
+        },
+        {
+          "verse": 23,
+          "text": "他们和他们的子孙按着班次看守耶和华殿的门，就是会幕的门。"
+        },
+        {
+          "verse": 24,
+          "text": "在东西南北，四方都有守门的。"
+        },
+        {
+          "verse": 25,
+          "text": "他们的族弟兄住在村庄，每七日来与他们换班。"
+        },
+        {
+          "verse": 26,
+          "text": "这四个门领都是<mark class=\"pn\">利未</mark>人，各有紧要的职任，看守　神殿的仓库。"
+        },
+        {
+          "verse": 27,
+          "text": "他们住在　神殿的四围，是因委托他们守殿，要每日早晨开门。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">利未</mark>人中有管理使用器皿的，按着数目拿出拿入；",
+          "heading": "其余的利未人"
+        },
+        {
+          "verse": 29,
+          "text": "又有人管理器具和圣所的器皿，并细面、酒、油、乳香、香料。"
+        },
+        {
+          "verse": 30,
+          "text": "祭司中有人用香料做膏油。"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">利未</mark>人<mark class=\"pn\">玛他提雅</mark>是<mark class=\"pn\">可拉</mark>族<mark class=\"pn\">沙龙</mark>的长子，他紧要的职任是管理盘中烤的物。"
+        },
+        {
+          "verse": 32,
+          "text": "他们族弟兄<mark class=\"pn\">哥辖</mark>子孙中，有管理陈设饼的，每安息日预备摆列。"
+        },
+        {
+          "verse": 33,
+          "text": "歌唱的有<mark class=\"pn\">利未</mark>人的族长，住在属殿的房屋，昼夜供职，不做别样的工。"
+        },
+        {
+          "verse": 34,
+          "text": "以上都是<mark class=\"pn\">利未</mark>人著名的族长，住在<mark class=\"pn\">耶路撒冷</mark>。"
+        },
+        {
+          "verse": 35,
+          "text": "在<mark class=\"pn\">基遍</mark>住的有<mark class=\"pn\">基遍</mark>的父亲<mark class=\"pn\">耶利</mark>。他的妻名叫<mark class=\"pn\">玛迦</mark>；",
+          "heading": "扫罗王的祖先和后代"
+        },
+        {
+          "verse": 36,
+          "text": "他长子是<mark class=\"pn\">亚伯顿</mark>。他又生<mark class=\"pn\">苏珥</mark>、<mark class=\"pn\">基士</mark>、<mark class=\"pn\">巴力</mark>、<mark class=\"pn\">尼珥</mark>、<mark class=\"pn\">拿答</mark>、"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">基多</mark>、<mark class=\"pn\">亚希约</mark>、<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">米基罗</mark>。"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">米基罗</mark>生<mark class=\"pn\">示米暗</mark>。这些人和他们的弟兄在<mark class=\"pn\">耶路撒冷</mark>对面居住。"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">尼珥</mark>生<mark class=\"pn\">基士</mark>；<mark class=\"pn\">基士</mark>生<mark class=\"pn\">扫罗</mark>；<mark class=\"pn\">扫罗</mark>生<mark class=\"pn\">约拿单</mark>、<mark class=\"pn\">麦基舒亚</mark>、<mark class=\"pn\">亚比拿达</mark>、<mark class=\"pn\">伊施巴力</mark>。"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">约拿单</mark>的儿子是<mark class=\"pn\">米力巴力</mark>（“米力巴力”即“米非波设”）；<mark class=\"pn\">米力巴力</mark>生<mark class=\"pn\">米迦</mark>。"
+        },
+        {
+          "verse": 41,
+          "text": "<mark class=\"pn\">米迦</mark>的儿子是<mark class=\"pn\">毗敦</mark>、<mark class=\"pn\">米勒</mark>、<mark class=\"pn\">他利亚</mark>、<mark class=\"pn\">亚哈斯</mark>。"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">亚哈斯</mark>生<mark class=\"pn\">雅拉</mark>；<mark class=\"pn\">雅拉</mark>生<mark class=\"pn\">亚拉篾</mark>、<mark class=\"pn\">亚斯玛威</mark>、<mark class=\"pn\">心利</mark>；<mark class=\"pn\">心利</mark>生<mark class=\"pn\">摩撒</mark>；"
+        },
+        {
+          "verse": 43,
+          "text": "<mark class=\"pn\">摩撒</mark>生<mark class=\"pn\">比尼亚</mark>；<mark class=\"pn\">比尼亚</mark>生<mark class=\"pn\">利法雅</mark>；<mark class=\"pn\">利法雅</mark>的儿子是<mark class=\"pn\">以利亚萨</mark>；<mark class=\"pn\">以利亚萨</mark>的儿子是<mark class=\"pn\">亚悉</mark>。"
+        },
+        {
+          "verse": 44,
+          "text": "<mark class=\"pn\">亚悉</mark>有六个儿子，他们的名字是<mark class=\"pn\">亚斯利干</mark>、<mark class=\"pn\">波基路</mark>、<mark class=\"pn\">以实玛利</mark>、<mark class=\"pn\">示亚利雅</mark>、<mark class=\"pn\">俄巴底雅</mark>、<mark class=\"pn\">哈难</mark>。这都是<mark class=\"pn\">亚悉</mark>的儿子。"
+        }
+      ]
+    },
+    {
+      "chapter": 10,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">非利士</mark>人与<mark class=\"pn\">以色列</mark>人争战，<mark class=\"pn\">以色列</mark>人在<mark class=\"pn\">非利士</mark>人面前逃跑，在<mark class=\"pn\">基利波山</mark>有被杀仆倒的。",
+          "heading": "扫罗逝世"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">非利士</mark>人紧追<mark class=\"pn\">扫罗</mark>和他儿子们，就杀了<mark class=\"pn\">扫罗</mark>的儿子<mark class=\"pn\">约拿单</mark>、<mark class=\"pn\">亚比拿达</mark>、<mark class=\"pn\">麦基舒亚</mark>。"
+        },
+        {
+          "verse": 3,
+          "text": "势派甚大，<mark class=\"pn\">扫罗</mark>被弓箭手追上，射伤甚重，"
+        },
+        {
+          "verse": 4,
+          "text": "就吩咐拿他兵器的人说：“你拔出刀来，将我刺死，免得那些未受割礼的人来凌辱我。”但拿兵器的人甚惧怕，不肯刺他；"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">扫罗</mark>就自己伏在刀上死了。拿兵器的人见<mark class=\"pn\">扫罗</mark>已死，也伏在刀上死了。"
+        },
+        {
+          "verse": 6,
+          "text": "这样，<mark class=\"pn\">扫罗</mark>和他三个儿子，并他的全家都一同死亡。"
+        },
+        {
+          "verse": 7,
+          "text": "住平原的<mark class=\"pn\">以色列</mark>众人见<mark class=\"pn\">以色列</mark>军兵逃跑，<mark class=\"pn\">扫罗</mark>和他儿子都死了，也就弃城逃跑，<mark class=\"pn\">非利士</mark>人便来住在其中。"
+        },
+        {
+          "verse": 8,
+          "text": "次日，<mark class=\"pn\">非利士</mark>人来剥那被杀之人的衣服，看见<mark class=\"pn\">扫罗</mark>和他儿子仆倒在<mark class=\"pn\">基利波山</mark>，"
+        },
+        {
+          "verse": 9,
+          "text": "就剥了他的军装，割下他的首级，打发人到（“到”或作“送到”）<mark class=\"pn\">非利士</mark>地的四境报信与他们的偶像和众民，"
+        },
+        {
+          "verse": 10,
+          "text": "又将<mark class=\"pn\">扫罗</mark>的军装放在他们神的庙里，将他的首级钉在<mark class=\"pn\">大衮</mark>庙中。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">基列雅比</mark>人听见<mark class=\"pn\">非利士</mark>人向<mark class=\"pn\">扫罗</mark>所行的一切事，"
+        },
+        {
+          "verse": 12,
+          "text": "他们中间所有的勇士就起身前去，将<mark class=\"pn\">扫罗</mark>和他儿子的尸身送到<mark class=\"pn\">雅比</mark>，将他们的尸骨葬在<mark class=\"pn\">雅比</mark>的橡树下，就禁食七日。"
+        },
+        {
+          "verse": 13,
+          "text": "这样，<mark class=\"pn\">扫罗</mark>死了。因为他干犯耶和华，没有遵守耶和华的命；又因他求问交鬼的妇人，"
+        },
+        {
+          "verse": 14,
+          "text": "没有求问耶和华，所以耶和华使他被杀，把国归于<mark class=\"pn\">耶西</mark>的儿子<mark class=\"pn\">大卫</mark>。"
+        }
+      ]
+    },
+    {
+      "chapter": 11,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以色列</mark>众人聚集到<mark class=\"pn\">希伯仑</mark>见<mark class=\"pn\">大卫</mark>，说：“我们原是你的骨肉。",
+          "heading": "大卫作以色列和犹大的王"
+        },
+        {
+          "verse": 2,
+          "text": "从前<mark class=\"pn\">扫罗</mark>作王的时候，率领<mark class=\"pn\">以色列</mark>人出入的是你；耶和华你的　神也曾应许你说：‘你必牧养我的民<mark class=\"pn\">以色列</mark>，作<mark class=\"pn\">以色列</mark>的君。’”"
+        },
+        {
+          "verse": 3,
+          "text": "于是<mark class=\"pn\">以色列</mark>的长老都来到<mark class=\"pn\">希伯仑</mark>见<mark class=\"pn\">大卫</mark>王。<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">希伯仑</mark>耶和华面前与他们立约，他们就膏<mark class=\"pn\">大卫</mark>作<mark class=\"pn\">以色列</mark>的王，是照耶和华藉<mark class=\"pn\">撒母耳</mark>所说的话。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">大卫</mark>和<mark class=\"pn\">以色列</mark>众人到了<mark class=\"pn\">耶路撒冷</mark>，就是<mark class=\"pn\">耶布斯</mark>；那时<mark class=\"pn\">耶布斯</mark>人住在那里。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">耶布斯</mark>人对<mark class=\"pn\">大卫</mark>说：“你决不能进这地方。”然而<mark class=\"pn\">大卫</mark>攻取<mark class=\"pn\">锡安</mark>的保障，就是<mark class=\"pn\">大卫</mark>的城。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">大卫</mark>说：“谁先攻打<mark class=\"pn\">耶布斯</mark>人，必作首领元帅。”<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">约押</mark>先上去，就作了元帅。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">大卫</mark>住在保障里，所以那保障叫作<mark class=\"pn\">大卫城</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">大卫</mark>又从<mark class=\"pn\">米罗</mark>起，四围建筑城墙，其余的是<mark class=\"pn\">约押</mark>修理。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">大卫</mark>日见强盛，因为万军之耶和华与他同在。"
+        },
+        {
+          "verse": 10,
+          "text": "以下记录跟随<mark class=\"pn\">大卫</mark>勇士的首领，就是奋勇帮助他得国、照着耶和华吩咐<mark class=\"pn\">以色列</mark>人的话、与<mark class=\"pn\">以色列</mark>人一同立他作王的。",
+          "heading": "大卫的有名将领"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">大卫</mark>勇士的数目记在下面：<mark class=\"pn\">哈革摩尼</mark>的儿子<mark class=\"pn\">雅朔班</mark>，他是军长的统领，一时举枪杀了三百人。"
+        },
+        {
+          "verse": 12,
+          "text": "其次是<mark class=\"pn\">亚合</mark>人<mark class=\"pn\">朵多</mark>的儿子<mark class=\"pn\">以利亚撒</mark>，他是三个勇士里的一个。"
+        },
+        {
+          "verse": 13,
+          "text": "他从前与<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">巴斯达闵</mark>，<mark class=\"pn\">非利士</mark>人聚集要打仗。那里有一块长满大麦的田，众民就在<mark class=\"pn\">非利士</mark>人面前逃跑；"
+        },
+        {
+          "verse": 14,
+          "text": "这勇士便站在那田间击杀<mark class=\"pn\">非利士</mark>人，救护了那田。耶和华使<mark class=\"pn\">以色列</mark>人大获全胜。"
+        },
+        {
+          "verse": 15,
+          "text": "三十个勇士中的三个人下到磐石那里，进了<mark class=\"pn\">亚杜兰洞</mark>见<mark class=\"pn\">大卫</mark>；<mark class=\"pn\">非利士</mark>的军队在<mark class=\"pn\">利乏音谷</mark>安营。"
+        },
+        {
+          "verse": 16,
+          "text": "那时<mark class=\"pn\">大卫</mark>在山寨，<mark class=\"pn\">非利士</mark>人的防营在<mark class=\"pn\">伯利恒</mark>。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">大卫</mark>渴想，说：“甚愿有人将<mark class=\"pn\">伯利恒</mark>城门旁井里的水打来给我喝！”"
+        },
+        {
+          "verse": 18,
+          "text": "这三个勇士就闯过<mark class=\"pn\">非利士</mark>人的营盘，从<mark class=\"pn\">伯利恒</mark>城门旁的井里打水，拿来奉给<mark class=\"pn\">大卫</mark>。他却不肯喝，将水奠在耶和华面前，"
+        },
+        {
+          "verse": 19,
+          "text": "说：“我的　神啊，这三个人冒死去打水，这水好像他们的血一般，我断不敢喝！”如此，<mark class=\"pn\">大卫</mark>不肯喝。这是三个勇士所做的事。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">约押</mark>的兄弟<mark class=\"pn\">亚比筛</mark>是这三个勇士的首领；他举枪杀了三百人，就在三个勇士里得了名。"
+        },
+        {
+          "verse": 21,
+          "text": "他在这三个勇士里是最尊贵的，所以作他们的首领；只是不及前三个勇士。"
+        },
+        {
+          "verse": 22,
+          "text": "有<mark class=\"pn\">甲薛</mark>勇士<mark class=\"pn\">耶何耶大</mark>的儿子<mark class=\"pn\">比拿雅</mark>行过大能的事：他杀了<mark class=\"pn\">摩押</mark>人<mark class=\"pn\">亚利伊勒</mark>的两个儿子，又在下雪的时候下坑里去杀了一个狮子，"
+        },
+        {
+          "verse": 23,
+          "text": "又杀了一个<mark class=\"pn\">埃及</mark>人。<mark class=\"pn\">埃及</mark>人身高五肘，手里拿着枪，枪杆粗如织布的机轴；<mark class=\"pn\">比拿雅</mark>只拿着棍子下去，从<mark class=\"pn\">埃及</mark>人手里夺过枪来，用那枪将他刺死。"
+        },
+        {
+          "verse": 24,
+          "text": "这是<mark class=\"pn\">耶何耶大</mark>的儿子<mark class=\"pn\">比拿雅</mark>所行的事，就在三个勇士里得了名。"
+        },
+        {
+          "verse": 25,
+          "text": "他比那三十个勇士都尊贵，只是不及前三个勇士。<mark class=\"pn\">大卫</mark>立他作护卫长。"
+        },
+        {
+          "verse": 26,
+          "text": "军中的勇士有<mark class=\"pn\">约押</mark>的兄弟<mark class=\"pn\">亚撒黑</mark>，<mark class=\"pn\">伯利恒</mark>人<mark class=\"pn\">朵多</mark>的儿子<mark class=\"pn\">伊勒哈难</mark>，"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">哈律</mark>人<mark class=\"pn\">沙玛</mark>，<mark class=\"pn\">比伦</mark>人<mark class=\"pn\">希利斯</mark>，"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">提哥亚</mark>人<mark class=\"pn\">益吉</mark>的儿子<mark class=\"pn\">以拉</mark>，<mark class=\"pn\">亚拿突</mark>人<mark class=\"pn\">亚比以谢</mark>，"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">户沙</mark>人<mark class=\"pn\">西比该</mark>，<mark class=\"pn\">亚合</mark>人<mark class=\"pn\">以来</mark>，"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">尼陀法</mark>人<mark class=\"pn\">玛哈莱</mark>，<mark class=\"pn\">尼陀法</mark>人<mark class=\"pn\">巴拿</mark>的儿子<mark class=\"pn\">希立</mark>，"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">便雅悯</mark>族<mark class=\"pn\">基比亚</mark>人<mark class=\"pn\">利拜</mark>的儿子<mark class=\"pn\">以太</mark>，<mark class=\"pn\">比拉顿</mark>人<mark class=\"pn\">比拿雅</mark>，"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">迦实溪</mark>人<mark class=\"pn\">户莱</mark>，<mark class=\"pn\">亚拉巴</mark>人<mark class=\"pn\">亚比</mark>，"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">巴路米</mark>人<mark class=\"pn\">押斯玛弗</mark>，<mark class=\"pn\">沙本</mark>人<mark class=\"pn\">以利雅哈巴</mark>，"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">基孙</mark>人<mark class=\"pn\">哈深</mark>的众子，<mark class=\"pn\">哈拉</mark>人<mark class=\"pn\">沙基</mark>的儿子<mark class=\"pn\">约拿单</mark>，"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">哈拉</mark>人<mark class=\"pn\">沙甲</mark>的儿子<mark class=\"pn\">亚希暗</mark>，<mark class=\"pn\">吾珥</mark>的儿子<mark class=\"pn\">以利法勒</mark>，"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">米基拉</mark>人<mark class=\"pn\">希弗</mark>，<mark class=\"pn\">比伦</mark>人<mark class=\"pn\">亚希雅</mark>，"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">迦密</mark>人<mark class=\"pn\">希斯罗</mark>，<mark class=\"pn\">伊斯拜</mark>的儿子<mark class=\"pn\">拿莱</mark>，"
+        },
+        {
+          "verse": 38,
+          "text": "<mark class=\"pn\">拿单</mark>的兄弟<mark class=\"pn\">约珥</mark>，<mark class=\"pn\">哈基利</mark>的儿子<mark class=\"pn\">弥伯哈</mark>，"
+        },
+        {
+          "verse": 39,
+          "text": "<mark class=\"pn\">亚扪</mark>人<mark class=\"pn\">洗勒</mark>，<mark class=\"pn\">比录</mark>人<mark class=\"pn\">拿哈莱</mark>，<mark class=\"pn\">拿哈莱</mark>是给<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">约押</mark>拿兵器的；"
+        },
+        {
+          "verse": 40,
+          "text": "<mark class=\"pn\">以帖</mark>人<mark class=\"pn\">以拉</mark>，<mark class=\"pn\">以帖</mark>人<mark class=\"pn\">迦立</mark>，"
+        },
+        {
+          "verse": 41,
+          "text": "<mark class=\"pn\">赫</mark>人<mark class=\"pn\">乌利亚</mark>，<mark class=\"pn\">亚莱</mark>的儿子<mark class=\"pn\">撒拔</mark>，"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">流便</mark>人<mark class=\"pn\">示撒</mark>的儿子<mark class=\"pn\">亚第拿</mark>（他是<mark class=\"pn\">流便</mark>支派中的一个族长，率领三十人），"
+        },
+        {
+          "verse": 43,
+          "text": "<mark class=\"pn\">玛迦</mark>的儿子<mark class=\"pn\">哈难</mark>，<mark class=\"pn\">弥特尼</mark>人<mark class=\"pn\">约沙法</mark>，"
+        },
+        {
+          "verse": 44,
+          "text": "<mark class=\"pn\">亚施他拉</mark>人<mark class=\"pn\">乌西亚</mark>，<mark class=\"pn\">亚罗珥</mark>人<mark class=\"pn\">何坦</mark>的儿子<mark class=\"pn\">沙玛</mark>、<mark class=\"pn\">耶利</mark>，"
+        },
+        {
+          "verse": 45,
+          "text": "<mark class=\"pn\">提洗</mark>人<mark class=\"pn\">申利</mark>的儿子<mark class=\"pn\">耶叠</mark>和他的兄弟<mark class=\"pn\">约哈</mark>，"
+        },
+        {
+          "verse": 46,
+          "text": "<mark class=\"pn\">玛哈未</mark>人<mark class=\"pn\">以利业</mark>，<mark class=\"pn\">伊利拿安</mark>的儿子<mark class=\"pn\">耶利拜</mark>、<mark class=\"pn\">约沙未雅</mark>，<mark class=\"pn\">摩押</mark>人<mark class=\"pn\">伊特玛</mark>、"
+        },
+        {
+          "verse": 47,
+          "text": "<mark class=\"pn\">以利业</mark>、<mark class=\"pn\">俄备得</mark>，并<mark class=\"pn\">米琐八</mark>人<mark class=\"pn\">雅西业</mark>。"
+        }
+      ]
+    },
+    {
+      "chapter": 12,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>因怕<mark class=\"pn\">基士</mark>的儿子<mark class=\"pn\">扫罗</mark>，躲在<mark class=\"pn\">洗革拉</mark>的时候，有勇士到他那里帮助他打仗。",
+          "heading": "早期跟随大卫的便雅悯人"
+        },
+        {
+          "verse": 2,
+          "text": "他们善于拉弓，能用左右两手甩石射箭，都是<mark class=\"pn\">便雅悯</mark>人<mark class=\"pn\">扫罗</mark>的族弟兄。"
+        },
+        {
+          "verse": 3,
+          "text": "为首的是<mark class=\"pn\">亚希以谢</mark>，其次是<mark class=\"pn\">约阿施</mark>，都是<mark class=\"pn\">基比亚</mark>人<mark class=\"pn\">示玛</mark>的儿子。还有<mark class=\"pn\">亚斯玛威</mark>的儿子<mark class=\"pn\">耶薛</mark>和<mark class=\"pn\">毗力</mark>，又有<mark class=\"pn\">比拉迦</mark>，并<mark class=\"pn\">亚拿突</mark>人<mark class=\"pn\">耶户</mark>，"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">基遍</mark>人<mark class=\"pn\">以实买雅</mark>，他在三十人中是勇士，管理他们，且有<mark class=\"pn\">耶利米</mark>、<mark class=\"pn\">雅哈悉</mark>、<mark class=\"pn\">约哈难</mark>，和<mark class=\"pn\">基得拉</mark>人<mark class=\"pn\">约撒拔</mark>、"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">伊利乌赛</mark>、<mark class=\"pn\">耶利摩</mark>、<mark class=\"pn\">比亚利雅</mark>、<mark class=\"pn\">示玛利雅</mark>，<mark class=\"pn\">哈律弗</mark>人<mark class=\"pn\">示法提雅</mark>，"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">可拉</mark>人<mark class=\"pn\">以利加拿</mark>、<mark class=\"pn\">耶西亚</mark>、<mark class=\"pn\">亚萨列</mark>、<mark class=\"pn\">约以谢</mark>、<mark class=\"pn\">雅朔班</mark>，"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">基多</mark>人<mark class=\"pn\">耶罗罕</mark>的儿子<mark class=\"pn\">犹拉</mark>和<mark class=\"pn\">西巴第雅</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">迦得</mark>支派中有人到旷野的山寨投奔<mark class=\"pn\">大卫</mark>，都是大能的勇士，能拿盾牌和枪的战士。他们的面貌好像狮子，快跑如同山上的鹿。",
+          "heading": "跟随大卫的迦得人"
+        },
+        {
+          "verse": 9,
+          "text": "第一<mark class=\"pn\">以薛</mark>，第二<mark class=\"pn\">俄巴底雅</mark>，第三<mark class=\"pn\">以利押</mark>，"
+        },
+        {
+          "verse": 10,
+          "text": "第四<mark class=\"pn\">弥施玛拿</mark>，第五<mark class=\"pn\">耶利米</mark>，"
+        },
+        {
+          "verse": 11,
+          "text": "第六<mark class=\"pn\">亚太</mark>，第七<mark class=\"pn\">以利业</mark>，"
+        },
+        {
+          "verse": 12,
+          "text": "第八<mark class=\"pn\">约哈难</mark>，第九<mark class=\"pn\">以利萨巴</mark>，"
+        },
+        {
+          "verse": 13,
+          "text": "第十<mark class=\"pn\">耶利米</mark>，第十一<mark class=\"pn\">末巴奈</mark>。"
+        },
+        {
+          "verse": 14,
+          "text": "这都是<mark class=\"pn\">迦得</mark>人中的军长，至小的能抵一百人，至大的能抵一千人。"
+        },
+        {
+          "verse": 15,
+          "text": "正月，<mark class=\"pn\">约旦河</mark>水涨过两岸的时候，他们过河，使一切住平原的人东奔西逃。"
+        },
+        {
+          "verse": 16,
+          "text": "又有<mark class=\"pn\">便雅悯</mark>和<mark class=\"pn\">犹大</mark>人到山寨<mark class=\"pn\">大卫</mark>那里。",
+          "heading": "跟随大卫的便雅悯人和犹大人"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">大卫</mark>出去迎接他们，对他们说：“你们若是和和平平地来帮助我，我心就与你们相契；你们若是将我这无罪的人卖在敌人手里，愿我们列祖的　神察看责罚。”"
+        },
+        {
+          "verse": 18,
+          "text": "那时　神的灵感动那三十个勇士的首领<mark class=\"pn\">亚玛撒</mark>，他就说：“<mark class=\"pn\">大卫</mark>啊，我们是归于你的！<mark class=\"pn\">耶西</mark>的儿子啊，我们是帮助你的！愿你平平安安，愿帮助你的也都平安！因为你的　神帮助你。”<mark class=\"pn\">大卫</mark>就收留他们，立他们作军长。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">大卫</mark>从前与<mark class=\"pn\">非利士</mark>人同去，要与<mark class=\"pn\">扫罗</mark>争战，有些<mark class=\"pn\">玛拿西</mark>人来投奔<mark class=\"pn\">大卫</mark>，他们却没有帮助<mark class=\"pn\">非利士</mark>人；因为<mark class=\"pn\">非利士</mark>人的首领商议，打发他们回去，说：“恐怕<mark class=\"pn\">大卫</mark>拿我们的首级，归降他的主人<mark class=\"pn\">扫罗</mark>。”",
+          "heading": "跟随大卫的玛拿西人"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">大卫</mark>往<mark class=\"pn\">洗革拉</mark>去的时候，有<mark class=\"pn\">玛拿西</mark>人的千夫长<mark class=\"pn\">押拿</mark>、<mark class=\"pn\">约撒拔</mark>、<mark class=\"pn\">耶叠</mark>、<mark class=\"pn\">米迦勒</mark>、<mark class=\"pn\">约撒拔</mark>、<mark class=\"pn\">以利户</mark>、<mark class=\"pn\">洗勒太</mark>都来投奔他。"
+        },
+        {
+          "verse": 21,
+          "text": "这些人帮助<mark class=\"pn\">大卫</mark>攻击群贼；他们都是大能的勇士，且作军长。"
+        },
+        {
+          "verse": 22,
+          "text": "那时天天有人来帮助<mark class=\"pn\">大卫</mark>，以致成了大军，如　神的军一样。"
+        },
+        {
+          "verse": 23,
+          "text": "预备打仗的兵来到<mark class=\"pn\">希伯仑</mark>见<mark class=\"pn\">大卫</mark>，要照着耶和华的话将<mark class=\"pn\">扫罗</mark>的国位归与<mark class=\"pn\">大卫</mark>。他们的数目如下：",
+          "heading": "大卫的军力"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">犹大</mark>支派，拿盾牌和枪预备打仗的有六千八百人。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">西缅</mark>支派，能上阵大能的勇士有七千一百人。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">利未</mark>支派有四千六百人。"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">耶何耶大</mark>是<mark class=\"pn\">亚伦</mark>家的首领，跟从他的有三千七百人。"
+        },
+        {
+          "verse": 28,
+          "text": "还有少年大能的勇士<mark class=\"pn\">撒督</mark>，同着他的有族长二十二人。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">便雅悯</mark>支派，<mark class=\"pn\">扫罗</mark>的族弟兄也有三千人，他们向来大半归顺<mark class=\"pn\">扫罗</mark>家。"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">以法莲</mark>支派大能的勇士，在本族著名的有二万零八百人。"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">玛拿西</mark>半支派，册上有名的共一万八千人，都来立<mark class=\"pn\">大卫</mark>作王。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">以萨迦</mark>支派，有二百族长都通达时务，知道<mark class=\"pn\">以色列</mark>人所当行的；他们族弟兄都听从他们的命令。"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">西布伦</mark>支派，能上阵用各样兵器打仗、行伍整齐、不生二心的有五万人。"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">拿弗他利</mark>支派，有一千军长；跟从他们、拿盾牌和枪的有三万七千人。"
+        },
+        {
+          "verse": 35,
+          "text": "<mark class=\"pn\">但</mark>支派，能摆阵的有二万八千六百人。"
+        },
+        {
+          "verse": 36,
+          "text": "<mark class=\"pn\">亚设</mark>支派，能上阵打仗的有四万人。"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">约旦河</mark>东的<mark class=\"pn\">流便</mark>支派、<mark class=\"pn\">迦得</mark>支派、<mark class=\"pn\">玛拿西</mark>半支派，拿着各样兵器打仗的有十二万人。"
+        },
+        {
+          "verse": 38,
+          "text": "以上都是能守行伍的战士，他们都诚心来到<mark class=\"pn\">希伯仑</mark>，要立<mark class=\"pn\">大卫</mark>作<mark class=\"pn\">以色列</mark>的王。<mark class=\"pn\">以色列</mark>其余的人也都一心要立<mark class=\"pn\">大卫</mark>作王。"
+        },
+        {
+          "verse": 39,
+          "text": "他们在那里三日，与<mark class=\"pn\">大卫</mark>一同吃喝，因为他们的族弟兄给他们预备了。"
+        },
+        {
+          "verse": 40,
+          "text": "靠近他们的人以及<mark class=\"pn\">以萨迦</mark>、<mark class=\"pn\">西布伦</mark>、<mark class=\"pn\">拿弗他利</mark>人将许多面饼、无花果饼、干葡萄、酒、油，用驴、骆驼、骡子、牛驮来，又带了许多的牛和羊来，因为<mark class=\"pn\">以色列</mark>人甚是欢乐。"
+        }
+      ]
+    },
+    {
+      "chapter": 13,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>与千夫长、百夫长，就是一切首领商议。",
+          "heading": "约柜迁出基列耶琳"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>对<mark class=\"pn\">以色列</mark>全会众说：“你们若以为美，见这事是出于耶和华我们的　神，我们就差遣人走遍<mark class=\"pn\">以色列</mark>地，见我们未来的弟兄，又见住在有郊野之城的祭司<mark class=\"pn\">利未</mark>人，使他们都到这里来聚集。"
+        },
+        {
+          "verse": 3,
+          "text": "我们要把　神的约柜运到我们这里来；因为在<mark class=\"pn\">扫罗</mark>年间，我们没有在约柜前求问　神。”"
+        },
+        {
+          "verse": 4,
+          "text": "全会众都说可以如此行；这事在众民眼中都看为好。"
+        },
+        {
+          "verse": 5,
+          "text": "于是，<mark class=\"pn\">大卫</mark>将<mark class=\"pn\">以色列</mark>人从<mark class=\"pn\">埃及</mark>的<mark class=\"pn\">西曷河</mark>直到<mark class=\"pn\">哈马口</mark>都招聚了来，要从<mark class=\"pn\">基列耶琳</mark>将　神的约柜运来。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">大卫</mark>率领<mark class=\"pn\">以色列</mark>众人上到<mark class=\"pn\">巴拉</mark>，就是属<mark class=\"pn\">犹大</mark>的<mark class=\"pn\">基列耶琳</mark>，要从那里将约柜运来。这约柜就是坐在二基路伯上耶和华　神留名的约柜。"
+        },
+        {
+          "verse": 7,
+          "text": "他们将　神的约柜从<mark class=\"pn\">亚比拿达</mark>的家里抬出来，放在新车上。<mark class=\"pn\">乌撒</mark>和<mark class=\"pn\">亚希约</mark>赶车。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">大卫</mark>和<mark class=\"pn\">以色列</mark>众人在　神前用琴、瑟、锣、鼓、号作乐，极力跳舞歌唱。"
+        },
+        {
+          "verse": 9,
+          "text": "到了<mark class=\"pn\">基顿</mark>（“基顿”撒母耳下6章6节作“拿艮”）的禾场；因为牛失前蹄（或作“惊跳”），<mark class=\"pn\">乌撒</mark>就伸手扶住约柜。"
+        },
+        {
+          "verse": 10,
+          "text": "耶和华向他发怒，因他伸手扶住约柜击杀他，他就死在　神面前。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">大卫</mark>因耶和华击杀（原文作“闯杀”）<mark class=\"pn\">乌撒</mark>，心里愁烦，就称那地方为<mark class=\"pn\">毗列斯乌撒</mark>，直到今日。"
+        },
+        {
+          "verse": 12,
+          "text": "那日，<mark class=\"pn\">大卫</mark>惧怕　神，说：“　神的约柜怎可运到我这里来？”"
+        },
+        {
+          "verse": 13,
+          "text": "于是<mark class=\"pn\">大卫</mark>不将约柜运进<mark class=\"pn\">大卫</mark>的城，却运到<mark class=\"pn\">迦特</mark>人<mark class=\"pn\">俄别以东</mark>的家中。"
+        },
+        {
+          "verse": 14,
+          "text": "神的约柜在<mark class=\"pn\">俄别以东</mark>家中三个月，耶和华赐福给<mark class=\"pn\">俄别以东</mark>的家和他一切所有的。"
+        }
+      ]
+    },
+    {
+      "chapter": 14,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">推罗</mark>王<mark class=\"pn\">希兰</mark>将香柏木运到<mark class=\"pn\">大卫</mark>那里，又差遣使者和石匠、木匠给<mark class=\"pn\">大卫</mark>建造宫殿。",
+          "heading": "大卫在耶路撒冷的活动"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>就知道耶和华坚立他作<mark class=\"pn\">以色列</mark>王，又为自己的民<mark class=\"pn\">以色列</mark>，使他的国兴旺。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">耶路撒冷</mark>又立后妃，又生儿女。"
+        },
+        {
+          "verse": 4,
+          "text": "在<mark class=\"pn\">耶路撒冷</mark>所生的众子是<mark class=\"pn\">沙母亚</mark>、<mark class=\"pn\">朔罢</mark>、<mark class=\"pn\">拿单</mark>、<mark class=\"pn\">所罗门</mark>、"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">益辖</mark>、<mark class=\"pn\">以利书亚</mark>、<mark class=\"pn\">以法列</mark>、"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">挪迦</mark>、<mark class=\"pn\">尼斐</mark>、<mark class=\"pn\">雅非亚</mark>、"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">以利沙玛</mark>、<mark class=\"pn\">比利雅大</mark>、<mark class=\"pn\">以利法列</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">非利士</mark>人听见<mark class=\"pn\">大卫</mark>受膏作<mark class=\"pn\">以色列</mark>众人的王，<mark class=\"pn\">非利士</mark>众人就上来寻索<mark class=\"pn\">大卫</mark>。<mark class=\"pn\">大卫</mark>听见，就出去迎敌。",
+          "heading": "战胜非利士人"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">非利士</mark>人来了，布散在<mark class=\"pn\">利乏音谷</mark>。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">大卫</mark>求问　神，说：“我可以上去攻打<mark class=\"pn\">非利士</mark>人吗？你将他们交在我手里吗？”耶和华说：“你可以上去，我必将他们交在你手里。”"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">非利士</mark>人来到<mark class=\"pn\">巴力毗拉心</mark>，<mark class=\"pn\">大卫</mark>在那里杀败他们。<mark class=\"pn\">大卫</mark>说：“　神藉我的手冲破敌人，如同水冲去一般”；因此称那地方为<mark class=\"pn\">巴力毗拉心</mark>。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">非利士</mark>人将神像撇在那里，<mark class=\"pn\">大卫</mark>吩咐人用火焚烧了。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">非利士</mark>人又布散在<mark class=\"pn\">利乏音谷</mark>。"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">大卫</mark>又求问　神。　神说：“不要一直地上去，要转到他们后头，从桑林对面攻打他们。"
+        },
+        {
+          "verse": 15,
+          "text": "你听见桑树梢上有脚步的声音，就要出战，因为　神已经在你前头去攻打<mark class=\"pn\">非利士</mark>人的军队。”"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">大卫</mark>就遵着　神所吩咐的，攻打<mark class=\"pn\">非利士</mark>人的军队，从<mark class=\"pn\">基遍</mark>直到<mark class=\"pn\">基色</mark>。"
+        },
+        {
+          "verse": 17,
+          "text": "于是<mark class=\"pn\">大卫</mark>的名传扬到列国，耶和华使列国都惧怕他。"
+        }
+      ]
+    },
+    {
+      "chapter": 15,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">大卫城</mark>为自己建造宫殿，又为　神的约柜预备地方，支搭帐幕。",
+          "heading": "准备搬运约柜"
+        },
+        {
+          "verse": 2,
+          "text": "那时<mark class=\"pn\">大卫</mark>说：“除了<mark class=\"pn\">利未</mark>人之外，无人可抬　神的约柜；因为耶和华拣选他们抬　神的约柜，且永远侍奉他。”"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">大卫</mark>招聚<mark class=\"pn\">以色列</mark>众人到<mark class=\"pn\">耶路撒冷</mark>，要将耶和华的约柜抬到他所预备的地方。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">大卫</mark>又聚集<mark class=\"pn\">亚伦</mark>的子孙和<mark class=\"pn\">利未</mark>人。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">哥辖</mark>子孙中有族长<mark class=\"pn\">乌列</mark>和他的弟兄一百二十人。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">米拉利</mark>子孙中有族长<mark class=\"pn\">亚帅雅</mark>和他的弟兄二百二十人。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">革顺</mark>子孙中有族长<mark class=\"pn\">约珥</mark>和他的弟兄一百三十人。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">以利撒反</mark>子孙中有族长<mark class=\"pn\">示玛雅</mark>和他的弟兄二百人。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">希伯仑</mark>子孙中有族长<mark class=\"pn\">以列</mark>和他的弟兄八十人。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">乌薛</mark>子孙中有族长<mark class=\"pn\">亚米拿达</mark>和他的弟兄一百一十二人。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">大卫</mark>将祭司<mark class=\"pn\">撒督</mark>和<mark class=\"pn\">亚比亚他</mark>，并<mark class=\"pn\">利未</mark>人<mark class=\"pn\">乌列</mark>、<mark class=\"pn\">亚帅雅</mark>、<mark class=\"pn\">约珥</mark>、<mark class=\"pn\">示玛雅</mark>、<mark class=\"pn\">以列</mark>、<mark class=\"pn\">亚米拿达</mark>召来，"
+        },
+        {
+          "verse": 12,
+          "text": "对他们说：“你们是<mark class=\"pn\">利未</mark>人的族长，你们和你们的弟兄应当自洁，好将耶和华<mark class=\"pn\">以色列</mark>　神的约柜抬到我所预备的地方。"
+        },
+        {
+          "verse": 13,
+          "text": "因你们先前没有抬这约柜，按定例求问耶和华我们的　神，所以他刑罚（原文作“闯杀”）我们。”"
+        },
+        {
+          "verse": 14,
+          "text": "于是祭司<mark class=\"pn\">利未</mark>人自洁，好将耶和华<mark class=\"pn\">以色列</mark>　神的约柜抬上来。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">利未</mark>子孙就用杠，肩抬　神的约柜，是照耶和华藉<mark class=\"pn\">摩西</mark>所吩咐的。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">大卫</mark>吩咐<mark class=\"pn\">利未</mark>人的族长，派他们歌唱的弟兄用琴瑟和钹作乐，欢欢喜喜地大声歌颂。"
+        },
+        {
+          "verse": 17,
+          "text": "于是<mark class=\"pn\">利未</mark>人派<mark class=\"pn\">约珥</mark>的儿子<mark class=\"pn\">希幔</mark>和他弟兄中<mark class=\"pn\">比利家</mark>的儿子<mark class=\"pn\">亚萨</mark>，并他们族弟兄<mark class=\"pn\">米拉利</mark>子孙里<mark class=\"pn\">古沙雅</mark>的儿子<mark class=\"pn\">以探</mark>。"
+        },
+        {
+          "verse": 18,
+          "text": "其次还有他们的弟兄<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">便雅薛</mark>、<mark class=\"pn\">示米拉末</mark>、<mark class=\"pn\">耶歇</mark>、<mark class=\"pn\">乌尼</mark>、<mark class=\"pn\">以利押</mark>、<mark class=\"pn\">比拿雅</mark>、<mark class=\"pn\">玛西雅</mark>、<mark class=\"pn\">玛他提雅</mark>、<mark class=\"pn\">以利斐利户</mark>、<mark class=\"pn\">弥克尼雅</mark>，并守门的<mark class=\"pn\">俄别以东</mark>和<mark class=\"pn\">耶利</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "这样，派歌唱的<mark class=\"pn\">希幔</mark>、<mark class=\"pn\">亚萨</mark>、<mark class=\"pn\">以探</mark>敲铜钹，大发响声；"
+        },
+        {
+          "verse": 20,
+          "text": "派<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">雅薛</mark>、<mark class=\"pn\">示米拉末</mark>、<mark class=\"pn\">耶歇</mark>、<mark class=\"pn\">乌尼</mark>、<mark class=\"pn\">以利押</mark>、<mark class=\"pn\">玛西雅</mark>、<mark class=\"pn\">比拿雅</mark>鼓瑟，调用女音；"
+        },
+        {
+          "verse": 21,
+          "text": "又派<mark class=\"pn\">玛他提雅</mark>、<mark class=\"pn\">以利斐利户</mark>、<mark class=\"pn\">弥克尼雅</mark>、<mark class=\"pn\">俄别以东</mark>、<mark class=\"pn\">耶利</mark>、<mark class=\"pn\">亚撒西雅</mark>领首弹琴，调用第八。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">利未</mark>人的族长<mark class=\"pn\">基拿尼雅</mark>是歌唱人的首领，又教训人歌唱，因为他精通此事。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">比利家</mark>、<mark class=\"pn\">以利加拿</mark>是约柜前守门的。"
+        },
+        {
+          "verse": 24,
+          "text": "祭司<mark class=\"pn\">示巴尼</mark>、<mark class=\"pn\">约沙法</mark>、<mark class=\"pn\">拿坦业</mark>、<mark class=\"pn\">亚玛赛</mark>、<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">比拿亚</mark>、<mark class=\"pn\">以利以谢</mark>在　神的约柜前吹号。<mark class=\"pn\">俄别以东</mark>和<mark class=\"pn\">耶希亚</mark>也是约柜前守门的。"
+        },
+        {
+          "verse": 25,
+          "text": "于是，<mark class=\"pn\">大卫</mark>和<mark class=\"pn\">以色列</mark>的长老，并千夫长都去从<mark class=\"pn\">俄别以东</mark>的家欢欢喜喜地将耶和华的约柜抬上来。",
+          "heading": "约柜迁入耶路撒冷"
+        },
+        {
+          "verse": 26,
+          "text": "神赐恩与抬耶和华约柜的<mark class=\"pn\">利未</mark>人，他们就献上七只公牛，七只公羊。"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">大卫</mark>和抬约柜的<mark class=\"pn\">利未</mark>人，并歌唱人的首领<mark class=\"pn\">基拿尼雅</mark>，以及歌唱的人，都穿着细麻布的外袍；<mark class=\"pn\">大卫</mark>另外穿着细麻布的以弗得。"
+        },
+        {
+          "verse": 28,
+          "text": "这样，<mark class=\"pn\">以色列</mark>众人欢呼吹角、吹号、敲钹、鼓瑟、弹琴，大发响声，将耶和华的约柜抬上来。"
+        },
+        {
+          "verse": 29,
+          "text": "耶和华的约柜进了<mark class=\"pn\">大卫城</mark>的时候，<mark class=\"pn\">扫罗</mark>的女儿<mark class=\"pn\">米甲</mark>从窗户里观看，见<mark class=\"pn\">大卫</mark>王踊跃跳舞，心里就轻视他。"
+        }
+      ]
+    },
+    {
+      "chapter": 16,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "众人将　神的约柜请进去，安放在<mark class=\"pn\">大卫</mark>所搭的帐幕里，就在　神面前献燔祭和平安祭。"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>献完了燔祭和平安祭，就奉耶和华的名给民祝福，"
+        },
+        {
+          "verse": 3,
+          "text": "并且分给<mark class=\"pn\">以色列</mark>人，无论男女，每人一个饼，一块肉，一个葡萄饼。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">大卫</mark>派几个<mark class=\"pn\">利未</mark>人在耶和华的约柜前侍奉，颂扬，称谢，赞美耶和华<mark class=\"pn\">以色列</mark>的　神："
+        },
+        {
+          "verse": 5,
+          "text": "为首的是<mark class=\"pn\">亚萨</mark>，其次是<mark class=\"pn\">撒迦利雅</mark>、<mark class=\"pn\">雅薛</mark>、<mark class=\"pn\">示米拉末</mark>、<mark class=\"pn\">耶歇</mark>、<mark class=\"pn\">玛他提雅</mark>、<mark class=\"pn\">以利押</mark>、<mark class=\"pn\">比拿雅</mark>、<mark class=\"pn\">俄别以东</mark>、<mark class=\"pn\">耶利</mark>，鼓瑟弹琴；惟有<mark class=\"pn\">亚萨</mark>敲钹，大发响声；"
+        },
+        {
+          "verse": 6,
+          "text": "祭司<mark class=\"pn\">比拿雅</mark>和<mark class=\"pn\">雅哈悉</mark>常在　神的约柜前吹号。"
+        },
+        {
+          "verse": 7,
+          "text": "那日，<mark class=\"pn\">大卫</mark>初次藉<mark class=\"pn\">亚萨</mark>和他的弟兄以诗歌称颂耶和华，说："
+        },
+        {
+          "verse": 8,
+          "text": "“你们要称谢耶和华，求告他的名，在万民中传扬他的作为！",
+          "heading": "颂赞之歌"
+        },
+        {
+          "verse": 9,
+          "text": "要向他唱诗、歌颂，谈论他一切奇妙的作为。"
+        },
+        {
+          "verse": 10,
+          "text": "要以他的圣名夸耀；寻求耶和华的人，心中应当欢喜。"
+        },
+        {
+          "verse": 11,
+          "text": "要寻求耶和华与他的能力，时常寻求他的面。"
+        },
+        {
+          "verse": "12-13",
+          "text": "他仆人<mark class=\"pn\">以色列</mark>的后裔，他所拣选<mark class=\"pn\">雅各</mark>的子孙哪，你们要记念他奇妙的作为和他的奇事，并他口中的判语。"
+        },
+        {
+          "verse": 14,
+          "text": "“他是耶和华我们的　神，全地都有他的判断。"
+        },
+        {
+          "verse": 15,
+          "text": "你们要记念他的约，直到永远；他所吩咐的话，直到千代，"
+        },
+        {
+          "verse": 16,
+          "text": "就是与<mark class=\"pn\">亚伯拉罕</mark>所立的约，向<mark class=\"pn\">以撒</mark>所起的誓。"
+        },
+        {
+          "verse": 17,
+          "text": "他又将这约向<mark class=\"pn\">雅各</mark>定为律例，向<mark class=\"pn\">以色列</mark>定为永远的约，"
+        },
+        {
+          "verse": 18,
+          "text": "说：‘我必将<mark class=\"pn\">迦南</mark>地赐给你，作你产业的份。’"
+        },
+        {
+          "verse": 19,
+          "text": "“当时你们人丁有限，数目稀少，并且在那地为寄居的；"
+        },
+        {
+          "verse": 20,
+          "text": "他们从这邦游到那邦，从这国行到那国。"
+        },
+        {
+          "verse": 21,
+          "text": "耶和华不容什么人欺负他们，为他们的缘故责备君王，"
+        },
+        {
+          "verse": 22,
+          "text": "说：‘不可难为我受膏的人，也不可恶待我的先知。’"
+        },
+        {
+          "verse": 23,
+          "text": "“全地都要向耶和华歌唱！天天传扬他的救恩，"
+        },
+        {
+          "verse": 24,
+          "text": "在列邦中述说他的荣耀，在万民中述说他的奇事。"
+        },
+        {
+          "verse": 25,
+          "text": "因耶和华为大，当受极大的赞美；他在万神之上，当受敬畏。"
+        },
+        {
+          "verse": 26,
+          "text": "外邦的神都属虚无，惟独耶和华创造诸天。"
+        },
+        {
+          "verse": 27,
+          "text": "有尊荣和威严在他面前，有能力和喜乐在他圣所。"
+        },
+        {
+          "verse": 28,
+          "text": "“民中的万族啊，你们要将荣耀能力归给耶和华，都归给耶和华！"
+        },
+        {
+          "verse": 29,
+          "text": "要将耶和华的名所当得的荣耀归给他，拿供物来奉到他面前；当以圣洁的（“的”或作“为”）妆饰敬拜耶和华。"
+        },
+        {
+          "verse": 30,
+          "text": "全地要在他面前战抖，世界也坚定不得动摇。"
+        },
+        {
+          "verse": 31,
+          "text": "愿天欢喜，愿地快乐；愿人在列邦中说：‘耶和华作王了！’"
+        },
+        {
+          "verse": 32,
+          "text": "愿海和其中所充满的澎湃；愿田和其中所有的都欢乐。"
+        },
+        {
+          "verse": 33,
+          "text": "那时，林中的树木都要在耶和华面前欢呼，因为他来要审判全地。"
+        },
+        {
+          "verse": 34,
+          "text": "应当称谢耶和华；因他本为善，他的慈爱永远长存！"
+        },
+        {
+          "verse": 35,
+          "text": "“要说：‘拯救我们的　神啊，求你救我们，聚集我们，使我们脱离外邦，我们好称赞你的圣名，以赞美你为夸胜。’"
+        },
+        {
+          "verse": 36,
+          "text": "耶和华<mark class=\"pn\">以色列</mark>的　神，从亘古直到永远，是应当称颂的！”众民都说：“阿们！”并且赞美耶和华。"
+        },
+        {
+          "verse": 37,
+          "text": "<mark class=\"pn\">大卫</mark>派<mark class=\"pn\">亚萨</mark>和他的弟兄在约柜前常常侍奉耶和华，一日尽一日的职分；",
+          "heading": "在耶路撒冷和基遍的敬拜"
+        },
+        {
+          "verse": 38,
+          "text": "又派<mark class=\"pn\">俄别以东</mark>和他的弟兄六十八人，与<mark class=\"pn\">耶杜顿</mark>的儿子<mark class=\"pn\">俄别以东</mark>，并<mark class=\"pn\">何萨</mark>作守门的；"
+        },
+        {
+          "verse": "39-40",
+          "text": "且派祭司<mark class=\"pn\">撒督</mark>和他弟兄众祭司在<mark class=\"pn\">基遍</mark>的邱坛、耶和华的帐幕前燔祭坛上，每日早晚，照着耶和华律法书上所吩咐<mark class=\"pn\">以色列</mark>人的，常给耶和华献燔祭。"
+        },
+        {
+          "verse": 41,
+          "text": "与他们一同被派的有<mark class=\"pn\">希幔</mark>、<mark class=\"pn\">耶杜顿</mark>，和其余被选名字录在册上的，称谢耶和华，因他的慈爱永远长存。"
+        },
+        {
+          "verse": 42,
+          "text": "<mark class=\"pn\">希幔</mark>、<mark class=\"pn\">耶杜顿</mark>同着他们吹号、敲钹，大发响声，并用别的乐器随着歌颂　神。<mark class=\"pn\">耶杜顿</mark>的子孙作守门的。"
+        },
+        {
+          "verse": 43,
+          "text": "于是众民各归各家；<mark class=\"pn\">大卫</mark>也回去为家眷祝福。"
+        }
+      ]
+    },
+    {
+      "chapter": 17,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>住在自己宫中，对先知<mark class=\"pn\">拿单</mark>说：“看哪，我住在香柏木的宫中，耶和华的约柜反在幔子里。”",
+          "heading": "拿单传给大卫的信息"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">拿单</mark>对<mark class=\"pn\">大卫</mark>说：“你可以照你的心意而行，因为　神与你同在。”"
+        },
+        {
+          "verse": 3,
+          "text": "当夜，　神的话临到<mark class=\"pn\">拿单</mark>，说："
+        },
+        {
+          "verse": 4,
+          "text": "“你去告诉我仆人<mark class=\"pn\">大卫</mark>，说耶和华如此说：‘你不可建造殿宇给我居住。"
+        },
+        {
+          "verse": 5,
+          "text": "自从我领<mark class=\"pn\">以色列</mark>人出<mark class=\"pn\">埃及</mark>，直到今日，我未曾住过殿宇，乃从这会幕到那会幕，从这帐幕到那帐幕。"
+        },
+        {
+          "verse": 6,
+          "text": "凡我同<mark class=\"pn\">以色列</mark>人所走的地方，我何曾向<mark class=\"pn\">以色列</mark>的一个士师，就是我吩咐牧养我民的说：你为何不给我建造香柏木的殿宇呢？’"
+        },
+        {
+          "verse": 7,
+          "text": "现在你要告诉我仆人<mark class=\"pn\">大卫</mark>，说万军之耶和华如此说：‘我从羊圈中将你召来，叫你不再跟从羊群，立你作我民<mark class=\"pn\">以色列</mark>的君。"
+        },
+        {
+          "verse": 8,
+          "text": "你无论往哪里去，我常与你同在，剪除你的一切仇敌；我必使你得大名，好像世上大大有名的人一样。"
+        },
+        {
+          "verse": 9,
+          "text": "我必为我民<mark class=\"pn\">以色列</mark>选定一个地方，栽培他们，使他们住自己的地方，不再迁移；凶恶之子也不像从前扰害他们，"
+        },
+        {
+          "verse": 10,
+          "text": "并不像我命士师治理我民<mark class=\"pn\">以色列</mark>的时候一样。我必治服你的一切仇敌，并且我耶和华应许你，必为你建立家室。"
+        },
+        {
+          "verse": 11,
+          "text": "你寿数满足归你列祖的时候，我必使你的后裔接续你的位，我也必坚定他的国。"
+        },
+        {
+          "verse": 12,
+          "text": "他必为我建造殿宇；我必坚定他的国位直到永远。"
+        },
+        {
+          "verse": 13,
+          "text": "我要作他的父，他要作我的子；并不使我的慈爱离开他，像离开在你以前的<mark class=\"pn\">扫罗</mark>一样。"
+        },
+        {
+          "verse": 14,
+          "text": "我却要将他永远坚立在我家里和我国里；他的国位也必坚定，直到永远。’”"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">拿单</mark>就按这一切话，照这默示告诉<mark class=\"pn\">大卫</mark>。"
+        },
+        {
+          "verse": 16,
+          "text": "于是<mark class=\"pn\">大卫</mark>王进去，坐在耶和华面前，说：“耶和华　神啊，我是谁，我的家算什么，你竟使我到这地步呢？",
+          "heading": "感恩的祷告"
+        },
+        {
+          "verse": 17,
+          "text": "神啊，这在你眼中还看为小，又应许你仆人的家至于久远。耶和华　神啊，你看顾我好像看顾高贵的人。"
+        },
+        {
+          "verse": 18,
+          "text": "你加于仆人的尊荣，我还有何言可说呢？因为你知道你的仆人。"
+        },
+        {
+          "verse": 19,
+          "text": "耶和华啊，你行了这大事，并且显明出来，是因你仆人的缘故，也是照你的心意。"
+        },
+        {
+          "verse": 20,
+          "text": "耶和华啊，照我们耳中听见，没有可比你的，除你以外再无　神。"
+        },
+        {
+          "verse": 21,
+          "text": "世上有何民能比你的民<mark class=\"pn\">以色列</mark>呢？你　神从<mark class=\"pn\">埃及</mark>救赎他们作自己的子民，又在你赎出来的民面前行大而可畏的事，驱逐列邦人，显出你的大名。"
+        },
+        {
+          "verse": 22,
+          "text": "你使<mark class=\"pn\">以色列</mark>人作你的子民，直到永远；你耶和华也作他们的　神。"
+        },
+        {
+          "verse": 23,
+          "text": "耶和华啊，你所应许仆人和仆人家的话，求你坚定，直到永远，照你所说的而行。"
+        },
+        {
+          "verse": 24,
+          "text": "愿你的名永远坚立，被尊为大，说：‘万军之耶和华是<mark class=\"pn\">以色列</mark>的　神，是治理<mark class=\"pn\">以色列</mark>的　神。’这样，你仆人<mark class=\"pn\">大卫</mark>的家必在你面前坚立。"
+        },
+        {
+          "verse": 25,
+          "text": "我的　神啊，因你启示仆人说：‘我必为你建立家室。’所以仆人大胆在你面前祈祷。"
+        },
+        {
+          "verse": 26,
+          "text": "耶和华啊，惟有你是　神，你也应许将这福气赐给仆人。"
+        },
+        {
+          "verse": 27,
+          "text": "现在你喜悦赐福与仆人的家，可以永存在你面前。耶和华啊，你已经赐福，还要赐福到永远。”"
+        }
+      ]
+    },
+    {
+      "chapter": 18,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "此后，<mark class=\"pn\">大卫</mark>攻打<mark class=\"pn\">非利士</mark>人，把他们治服，从他们手下夺取了<mark class=\"pn\">迦特</mark>和属<mark class=\"pn\">迦特</mark>的村庄；",
+          "heading": "在军事上的胜利"
+        },
+        {
+          "verse": 2,
+          "text": "又攻打<mark class=\"pn\">摩押</mark>，<mark class=\"pn\">摩押</mark>人就归服<mark class=\"pn\">大卫</mark>，给他进贡。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">琐巴</mark>王<mark class=\"pn\">哈大利谢</mark>（在撒母耳下8章3节是“哈大底谢”）往<mark class=\"pn\">幼发拉底河</mark>去，要坚定自己的国权，<mark class=\"pn\">大卫</mark>就攻打他，直到<mark class=\"pn\">哈马</mark>，"
+        },
+        {
+          "verse": 4,
+          "text": "夺了他的战车一千，马兵七千，步兵二万，将拉战车的马砍断蹄筋，但留下一百辆车的马。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">大马士革</mark>的<mark class=\"pn\">亚兰</mark>人来帮助<mark class=\"pn\">琐巴</mark>王<mark class=\"pn\">哈大利谢</mark>，<mark class=\"pn\">大卫</mark>就杀了<mark class=\"pn\">亚兰</mark>人二万二千。"
+        },
+        {
+          "verse": 6,
+          "text": "于是<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">大马士革</mark>的<mark class=\"pn\">亚兰</mark>地设立防营，<mark class=\"pn\">亚兰</mark>人就归服他，给他进贡。<mark class=\"pn\">大卫</mark>无论往哪里去，耶和华都使他得胜。"
+        },
+        {
+          "verse": 7,
+          "text": "他夺了<mark class=\"pn\">哈大利谢</mark>臣仆所拿的金盾牌带到<mark class=\"pn\">耶路撒冷</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">大卫</mark>又从属<mark class=\"pn\">哈大利谢</mark>的<mark class=\"pn\">提巴</mark>（“提巴”或作“比他”）和<mark class=\"pn\">均</mark>二城中夺取了许多的铜。后来<mark class=\"pn\">所罗门</mark>用此制造铜海、铜柱，和一切的铜器。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">哈马</mark>王<mark class=\"pn\">陀乌</mark>听见<mark class=\"pn\">大卫</mark>杀败<mark class=\"pn\">琐巴</mark>王<mark class=\"pn\">哈大利谢</mark>的全军，"
+        },
+        {
+          "verse": 10,
+          "text": "就打发他儿子<mark class=\"pn\">哈多兰</mark>去见<mark class=\"pn\">大卫</mark>王，问他的安，为他祝福，因为他杀败了<mark class=\"pn\">哈大利谢</mark>。原来<mark class=\"pn\">陀乌</mark>与<mark class=\"pn\">哈大利谢</mark>常常争战。<mark class=\"pn\">哈多兰</mark>带了金银铜的各样器皿来。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">大卫</mark>王将这些器皿，并从各国夺来的金银，就是从<mark class=\"pn\">以东</mark>、<mark class=\"pn\">摩押</mark>、<mark class=\"pn\">亚扪</mark>、<mark class=\"pn\">非利士</mark>、<mark class=\"pn\">亚玛力</mark>人所夺来的，都分别为圣献给耶和华。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">亚比筛</mark>在<mark class=\"pn\">盐谷</mark>击杀了<mark class=\"pn\">以东</mark>一万八千人。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">大卫</mark>在<mark class=\"pn\">以东</mark>地设立防营，<mark class=\"pn\">以东</mark>人就都归服他。<mark class=\"pn\">大卫</mark>无论往哪里去，耶和华都使他得胜。"
+        },
+        {
+          "verse": 14,
+          "text": "<mark class=\"pn\">大卫</mark>作<mark class=\"pn\">以色列</mark>众人的王，又向众民秉公行义。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">约押</mark>作元帅；<mark class=\"pn\">亚希律</mark>的儿子<mark class=\"pn\">约沙法</mark>作史官；"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">亚希突</mark>的儿子<mark class=\"pn\">撒督</mark>和<mark class=\"pn\">亚比亚他</mark>的儿子<mark class=\"pn\">亚希米勒</mark>作祭司长；<mark class=\"pn\">沙威沙</mark>作书记；"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">耶何耶大</mark>的儿子<mark class=\"pn\">比拿雅</mark>统辖<mark class=\"pn\">基利提</mark>人和<mark class=\"pn\">比利提</mark>人。<mark class=\"pn\">大卫</mark>的众子都在王的左右作领袖。"
+        }
+      ]
+    },
+    {
+      "chapter": 19,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "此后，<mark class=\"pn\">亚扪</mark>人的王<mark class=\"pn\">拿辖</mark>死了，他儿子接续他作王。",
+          "heading": "大卫击败亚扪人和亚兰人"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>说：“我要照<mark class=\"pn\">哈嫩</mark>的父亲<mark class=\"pn\">拿辖</mark>厚待我的恩典厚待<mark class=\"pn\">哈嫩</mark>。”于是<mark class=\"pn\">大卫</mark>差遣使者为他丧父安慰他。<mark class=\"pn\">大卫</mark>的臣仆到了<mark class=\"pn\">亚扪</mark>人的境内见<mark class=\"pn\">哈嫩</mark>，要安慰他，"
+        },
+        {
+          "verse": 3,
+          "text": "但<mark class=\"pn\">亚扪</mark>人的首领对<mark class=\"pn\">哈嫩</mark>说：“<mark class=\"pn\">大卫</mark>差人来安慰你，你想他是尊敬你父亲吗？他的臣仆来见你不是为详察窥探、倾覆这地吗？”"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">哈嫩</mark>便将<mark class=\"pn\">大卫</mark>臣仆的胡须剃去一半，又割断他们下半截的衣服，使他们露出下体，打发他们回去。"
+        },
+        {
+          "verse": 5,
+          "text": "有人将臣仆所遇的事告诉<mark class=\"pn\">大卫</mark>，他就差人去迎接他们，因为他们甚觉羞耻；告诉他们说：“可以住在<mark class=\"pn\">耶利哥</mark>，等到胡须长起再回来。”"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">亚扪</mark>人知道<mark class=\"pn\">大卫</mark>憎恶他们，<mark class=\"pn\">哈嫩</mark>和<mark class=\"pn\">亚扪</mark>人就打发人拿一千他连得银子，从<mark class=\"pn\">美索不达米亚</mark>、<mark class=\"pn\">亚兰</mark>、<mark class=\"pn\">玛迦</mark>、<mark class=\"pn\">琐巴</mark>雇战车和马兵，"
+        },
+        {
+          "verse": 7,
+          "text": "于是雇了三万二千辆战车和<mark class=\"pn\">玛迦</mark>王并他的军兵；他们来安营在<mark class=\"pn\">米底巴</mark>前。<mark class=\"pn\">亚扪</mark>人也从他们的城里出来，聚集交战。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">大卫</mark>听见了，就差派<mark class=\"pn\">约押</mark>统带勇猛的全军出去。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">亚扪</mark>人出来在城门前摆阵，所来的诸王另在郊野摆阵。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">约押</mark>看见敌人在他前后摆阵，就从<mark class=\"pn\">以色列</mark>军中挑选精兵，使他们对着<mark class=\"pn\">亚兰</mark>人摆阵；"
+        },
+        {
+          "verse": 11,
+          "text": "其余的兵交与他兄弟<mark class=\"pn\">亚比筛</mark>，对着<mark class=\"pn\">亚扪</mark>人摆阵。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">约押</mark>对<mark class=\"pn\">亚比筛</mark>说：“<mark class=\"pn\">亚兰</mark>人若强过我，你就来帮助我；<mark class=\"pn\">亚扪</mark>人若强过你，我就去帮助你。"
+        },
+        {
+          "verse": 13,
+          "text": "我们都当刚强，为本国的民和　神的城邑作大丈夫，愿耶和华凭他的意旨而行。”"
+        },
+        {
+          "verse": 14,
+          "text": "于是<mark class=\"pn\">约押</mark>和跟随他的人前进攻打<mark class=\"pn\">亚兰</mark>人；<mark class=\"pn\">亚兰</mark>人在<mark class=\"pn\">约押</mark>面前逃跑。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">亚扪</mark>人见<mark class=\"pn\">亚兰</mark>人逃跑，他们也在<mark class=\"pn\">约押</mark>的兄弟<mark class=\"pn\">亚比筛</mark>面前逃跑进城。<mark class=\"pn\">约押</mark>就回<mark class=\"pn\">耶路撒冷</mark>去了。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">亚兰</mark>人见自己被<mark class=\"pn\">以色列</mark>人打败，就打发使者将大河那边的<mark class=\"pn\">亚兰</mark>人调来，<mark class=\"pn\">哈大利谢</mark>的将军<mark class=\"pn\">朔法</mark>率领他们。"
+        },
+        {
+          "verse": 17,
+          "text": "有人告诉<mark class=\"pn\">大卫</mark>，他就聚集<mark class=\"pn\">以色列</mark>众人过<mark class=\"pn\">约旦河</mark>，来到<mark class=\"pn\">亚兰</mark>人那里，迎着他们摆阵。<mark class=\"pn\">大卫</mark>既摆阵攻击<mark class=\"pn\">亚兰</mark>人，<mark class=\"pn\">亚兰</mark>人就与他打仗。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">亚兰</mark>人在<mark class=\"pn\">以色列</mark>人面前逃跑。<mark class=\"pn\">大卫</mark>杀了<mark class=\"pn\">亚兰</mark>七千辆战车的人，四万步兵，又杀了<mark class=\"pn\">亚兰</mark>的将军<mark class=\"pn\">朔法</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "属<mark class=\"pn\">哈大利谢</mark>的诸王见自己被<mark class=\"pn\">以色列</mark>人打败，就与<mark class=\"pn\">大卫</mark>和好，归服他。于是<mark class=\"pn\">亚兰</mark>人不敢再帮助<mark class=\"pn\">亚扪</mark>人了。"
+        }
+      ]
+    },
+    {
+      "chapter": 20,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "过了一年，到列王出战的时候，<mark class=\"pn\">约押</mark>率领军兵毁坏<mark class=\"pn\">亚扪</mark>人的地，围攻<mark class=\"pn\">拉巴</mark>；<mark class=\"pn\">大卫</mark>仍住在<mark class=\"pn\">耶路撒冷</mark>。<mark class=\"pn\">约押</mark>攻打<mark class=\"pn\">拉巴</mark>，将城倾覆。",
+          "heading": "大卫攻取拉巴城"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>夺了<mark class=\"pn\">亚扪</mark>人之王所戴的金冠冕（“王”或作“玛勒堪”，“玛勒堪”即“米勒公”，是亚扪族之神名），其上的金子重一他连得，又嵌着宝石；人将这冠冕戴在<mark class=\"pn\">大卫</mark>头上。<mark class=\"pn\">大卫</mark>从城里夺了许多财物，"
+        },
+        {
+          "verse": 3,
+          "text": "将城里的人拉出来，放在锯下，或铁耙下，或铁斧下（或作“强他们用锯，或用打粮食的铁器，或用铁斧做工”），<mark class=\"pn\">大卫</mark>待<mark class=\"pn\">亚扪</mark>各城的居民都是如此。其后<mark class=\"pn\">大卫</mark>和众军都回<mark class=\"pn\">耶路撒冷</mark>去了。"
+        },
+        {
+          "verse": 4,
+          "text": "后来，<mark class=\"pn\">以色列</mark>人在<mark class=\"pn\">基色</mark>与<mark class=\"pn\">非利士</mark>人打仗。<mark class=\"pn\">户沙</mark>人<mark class=\"pn\">西比该</mark>杀了伟人的一个儿子<mark class=\"pn\">细派</mark>，<mark class=\"pn\">非利士</mark>人就被制伏了。",
+          "heading": "与非利士巨人争战"
+        },
+        {
+          "verse": 5,
+          "text": "又与<mark class=\"pn\">非利士</mark>人打仗。<mark class=\"pn\">睚珥</mark>的儿子<mark class=\"pn\">伊勒哈难</mark>杀了<mark class=\"pn\">迦特</mark>人<mark class=\"pn\">歌利亚</mark>的兄弟<mark class=\"pn\">拉哈米</mark>；这人的枪杆粗如织布的机轴。"
+        },
+        {
+          "verse": 6,
+          "text": "又在<mark class=\"pn\">迦特</mark>打仗。那里有一个身量高大的人，手脚都是六指，共有二十四个指头，他也是伟人的儿子。"
+        },
+        {
+          "verse": 7,
+          "text": "这人向<mark class=\"pn\">以色列</mark>人骂阵，<mark class=\"pn\">大卫</mark>的哥哥<mark class=\"pn\">示米亚</mark>的儿子<mark class=\"pn\">约拿单</mark>就杀了他。"
+        },
+        {
+          "verse": 8,
+          "text": "这三个人是<mark class=\"pn\">迦特</mark>伟人的儿子，都死在<mark class=\"pn\">大卫</mark>和他仆人的手下。"
+        }
+      ]
+    },
+    {
+      "chapter": 21,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "撒但起来攻击<mark class=\"pn\">以色列</mark>人，激动<mark class=\"pn\">大卫</mark>数点他们。",
+          "heading": "大卫数点以色列民"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>就吩咐<mark class=\"pn\">约押</mark>和民中的首领说：“你们去数点<mark class=\"pn\">以色列</mark>人，从<mark class=\"pn\">别是巴</mark>直到<mark class=\"pn\">但</mark>，回来告诉我，我好知道他们的数目。”"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">约押</mark>说：“愿耶和华使他的百姓比现在加增百倍。我主我王啊，他们不都是你的仆人吗？我主为何吩咐行这事，为何使<mark class=\"pn\">以色列</mark>人陷在罪里呢？”"
+        },
+        {
+          "verse": 4,
+          "text": "但王的命令胜过<mark class=\"pn\">约押</mark>。<mark class=\"pn\">约押</mark>就出去，走遍<mark class=\"pn\">以色列</mark>地，回到<mark class=\"pn\">耶路撒冷</mark>，"
+        },
+        {
+          "verse": 5,
+          "text": "将百姓的总数奏告<mark class=\"pn\">大卫</mark>：<mark class=\"pn\">以色列</mark>人拿刀的有一百一十万；<mark class=\"pn\">犹大</mark>人拿刀的有四十七万。"
+        },
+        {
+          "verse": 6,
+          "text": "惟有<mark class=\"pn\">利未</mark>人和<mark class=\"pn\">便雅悯</mark>人没有数在其中，因为<mark class=\"pn\">约押</mark>厌恶王的这命令。"
+        },
+        {
+          "verse": 7,
+          "text": "神不喜悦这数点百姓的事，便降灾给<mark class=\"pn\">以色列</mark>人。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">大卫</mark>祷告　神说：“我行这事大有罪了！现在求你除掉仆人的罪孽，因我所行的甚是愚昧。”"
+        },
+        {
+          "verse": 9,
+          "text": "耶和华吩咐<mark class=\"pn\">大卫</mark>的先见<mark class=\"pn\">迦得</mark>说："
+        },
+        {
+          "verse": 10,
+          "text": "“你去告诉<mark class=\"pn\">大卫</mark>说，耶和华如此说：我有三样灾，随你选择一样，我好降与你。”"
+        },
+        {
+          "verse": 11,
+          "text": "于是，<mark class=\"pn\">迦得</mark>来见<mark class=\"pn\">大卫</mark>，对他说：“耶和华如此说：‘你可以随意选择："
+        },
+        {
+          "verse": 12,
+          "text": "或三年的饥荒；或败在你敌人面前，被敌人的刀追杀三个月；或在你国中有耶和华的刀，就是三日的瘟疫，耶和华的使者在<mark class=\"pn\">以色列</mark>的四境施行毁灭。’现在你要想一想，我好回复那差我来的。”"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">大卫</mark>对<mark class=\"pn\">迦得</mark>说：“我甚为难。我愿落在耶和华的手里，因为他有丰盛的怜悯；我不愿落在人的手里。”"
+        },
+        {
+          "verse": 14,
+          "text": "于是，耶和华降瘟疫与<mark class=\"pn\">以色列</mark>人，<mark class=\"pn\">以色列</mark>人就死了七万。"
+        },
+        {
+          "verse": 15,
+          "text": "神差遣使者去灭<mark class=\"pn\">耶路撒冷</mark>，刚要灭的时候，耶和华看见后悔，就不降这灾了，吩咐灭城的天使说：“够了，住手吧！”那时，耶和华的使者站在<mark class=\"pn\">耶布斯</mark>人<mark class=\"pn\">阿珥楠</mark>的禾场那里。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">大卫</mark>举目，看见耶和华的使者站在天地间，手里有拔出来的刀，伸在<mark class=\"pn\">耶路撒冷</mark>以上。<mark class=\"pn\">大卫</mark>和长老都身穿麻衣，面伏于地。"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">大卫</mark>祷告　神说：“吩咐数点百姓的不是我吗？我犯了罪，行了恶，但这群羊做了什么呢？愿耶和华我　神的手攻击我和我的父家，不要攻击你的民，降瘟疫与他们。”"
+        },
+        {
+          "verse": 18,
+          "text": "耶和华的使者吩咐<mark class=\"pn\">迦得</mark>去告诉<mark class=\"pn\">大卫</mark>，叫他上去，在<mark class=\"pn\">耶布斯</mark>人<mark class=\"pn\">阿珥楠</mark>的禾场上为耶和华筑一座坛；"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">大卫</mark>就照着<mark class=\"pn\">迦得</mark>奉耶和华名所说的话上去了。"
+        },
+        {
+          "verse": 20,
+          "text": "那时<mark class=\"pn\">阿珥楠</mark>正打麦子，回头看见天使，就和他四个儿子都藏起来了。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">大卫</mark>到了<mark class=\"pn\">阿珥楠</mark>那里，<mark class=\"pn\">阿珥楠</mark>看见<mark class=\"pn\">大卫</mark>，就从禾场上出去，脸伏于地，向他下拜。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">大卫</mark>对<mark class=\"pn\">阿珥楠</mark>说：“你将这禾场与相连之地卖给我，我必给你足价，我好在其上为耶和华筑一座坛，使民间的瘟疫止住。”"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">阿珥楠</mark>对<mark class=\"pn\">大卫</mark>说：“你可以用这禾场，愿我主我王照你所喜悦的去行。我也将牛给你作燔祭，把打粮的器具当柴烧，拿麦子作素祭。这些我都送给你。”"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">大卫</mark>王对<mark class=\"pn\">阿珥楠</mark>说：“不然！我必要用足价向你买。我不用你的物献给耶和华，也不用白得之物献为燔祭。”"
+        },
+        {
+          "verse": 25,
+          "text": "于是<mark class=\"pn\">大卫</mark>为那块地平了六百舍客勒金子给<mark class=\"pn\">阿珥楠</mark>。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">大卫</mark>在那里为耶和华筑了一座坛，献燔祭和平安祭，求告耶和华。耶和华就应允他，使火从天降在燔祭坛上。"
+        },
+        {
+          "verse": 27,
+          "text": "耶和华吩咐使者，他就收刀入鞘。"
+        },
+        {
+          "verse": 28,
+          "text": "那时，<mark class=\"pn\">大卫</mark>见耶和华在<mark class=\"pn\">耶布斯</mark>人<mark class=\"pn\">阿珥楠</mark>的禾场上应允了他，就在那里献祭。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">摩西</mark>在旷野所造之耶和华的帐幕和燔祭坛都在<mark class=\"pn\">基遍</mark>的高处；"
+        },
+        {
+          "verse": 30,
+          "text": "只是<mark class=\"pn\">大卫</mark>不敢前去求问　神，因为惧怕耶和华使者的刀。"
+        }
+      ]
+    },
+    {
+      "chapter": 22,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "大卫说：“这就是耶和华　神的殿，为<mark class=\"pn\">以色列</mark>人献燔祭的坛。”"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>吩咐聚集住<mark class=\"pn\">以色列</mark>地的外邦人，从其中派石匠凿石头，要建造　神的殿。",
+          "heading": "筹备建殿"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">大卫</mark>预备许多铁做门上的钉子和钩子，又预备许多铜，多得无法可称；"
+        },
+        {
+          "verse": 4,
+          "text": "又预备无数的香柏木，因为<mark class=\"pn\">西顿</mark>人和<mark class=\"pn\">推罗</mark>人给<mark class=\"pn\">大卫</mark>运了许多香柏木来。"
+        },
+        {
+          "verse": 5,
+          "text": "<mark class=\"pn\">大卫</mark>说：“我儿子<mark class=\"pn\">所罗门</mark>还年幼娇嫩，要为耶和华建造的殿宇必须高大辉煌，使名誉荣耀传遍万国；所以我要为殿预备材料。”于是，<mark class=\"pn\">大卫</mark>在未死之先预备的材料甚多。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">大卫</mark>召了他儿子<mark class=\"pn\">所罗门</mark>来，嘱咐他给耶和华<mark class=\"pn\">以色列</mark>的　神建造殿宇，"
+        },
+        {
+          "verse": 7,
+          "text": "对<mark class=\"pn\">所罗门</mark>说：“我儿啊，我心里本想为耶和华我　神的名建造殿宇，"
+        },
+        {
+          "verse": 8,
+          "text": "只是耶和华的话临到我说：‘你流了多人的血，打了多次大仗，你不可为我的名建造殿宇，因为你在我眼前使多人的血流在地上。"
+        },
+        {
+          "verse": 9,
+          "text": "你要生一个儿子，他必作太平的人；我必使他安静，不被四围的仇敌扰乱。他的名要叫<mark class=\"pn\">所罗门</mark>（即“太平”之意）。他在位的日子，我必使<mark class=\"pn\">以色列</mark>人平安康泰。"
+        },
+        {
+          "verse": 10,
+          "text": "他必为我的名建造殿宇。他要作我的子；我要作他的父。他作<mark class=\"pn\">以色列</mark>王；我必坚定他的国位，直到永远。’"
+        },
+        {
+          "verse": 11,
+          "text": "我儿啊，现今愿耶和华与你同在，使你亨通，照他指着你说的话，建造耶和华你　神的殿。"
+        },
+        {
+          "verse": 12,
+          "text": "但愿耶和华赐你聪明智慧，好治理<mark class=\"pn\">以色列</mark>国，遵行耶和华你　神的律法。"
+        },
+        {
+          "verse": 13,
+          "text": "你若谨守遵行耶和华藉<mark class=\"pn\">摩西</mark>吩咐<mark class=\"pn\">以色列</mark>的律例典章，就得亨通。你当刚强壮胆，不要惧怕，也不要惊惶。"
+        },
+        {
+          "verse": 14,
+          "text": "我在困难之中为耶和华的殿预备了金子十万他连得，银子一百万他连得，铜和铁多得无法可称；我也预备了木头、石头，你还可以增添。"
+        },
+        {
+          "verse": 15,
+          "text": "你有许多匠人，就是石匠、木匠，和一切能做各样工的巧匠，"
+        },
+        {
+          "verse": 16,
+          "text": "并有无数的金银铜铁。你当起来办事，愿耶和华与你同在。”"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">大卫</mark>又吩咐<mark class=\"pn\">以色列</mark>的众首领帮助他儿子<mark class=\"pn\">所罗门</mark>，说："
+        },
+        {
+          "verse": 18,
+          "text": "“耶和华你们的　神不是与你们同在吗？不是叫你们四围都平安吗？因他已将这地的居民交在我手中，这地就在耶和华与他百姓面前制伏了。"
+        },
+        {
+          "verse": 19,
+          "text": "现在你们应当立定心意，寻求耶和华你们的　神；也当起来建造耶和华　神的圣所，好将耶和华的约柜和供奉　神的圣器皿都搬进为耶和华名建造的殿里。”"
+        }
+      ]
+    },
+    {
+      "chapter": 23,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>年纪老迈，日子满足，就立他儿子<mark class=\"pn\">所罗门</mark>作<mark class=\"pn\">以色列</mark>的王。"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>招聚<mark class=\"pn\">以色列</mark>的众首领和祭司<mark class=\"pn\">利未</mark>人。",
+          "heading": "利未人的职务"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">利未</mark>人从三十岁以外的都被数点，他们男丁的数目共有三万八千；"
+        },
+        {
+          "verse": 4,
+          "text": "其中有二万四千人管理耶和华殿的事，有六千人作官长和士师，"
+        },
+        {
+          "verse": 5,
+          "text": "有四千人作守门的，又有四千人用<mark class=\"pn\">大卫</mark>所做的乐器颂赞耶和华。"
+        },
+        {
+          "verse": 6,
+          "text": "<mark class=\"pn\">大卫</mark>将<mark class=\"pn\">利未</mark>人<mark class=\"pn\">革顺</mark>、<mark class=\"pn\">哥辖</mark>、<mark class=\"pn\">米拉利</mark>的子孙分了班次。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">革顺</mark>的子孙有<mark class=\"pn\">拉但</mark>和<mark class=\"pn\">示每</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "<mark class=\"pn\">拉但</mark>的长子是<mark class=\"pn\">耶歇</mark>，还有<mark class=\"pn\">细坦</mark>和<mark class=\"pn\">约珥</mark>，共三人。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">示每</mark>的儿子是<mark class=\"pn\">示罗密</mark>、<mark class=\"pn\">哈薛</mark>、<mark class=\"pn\">哈兰</mark>三人。这是<mark class=\"pn\">拉但</mark>族的族长。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">示每</mark>的儿子是<mark class=\"pn\">雅哈</mark>、<mark class=\"pn\">细拿</mark>、<mark class=\"pn\">耶乌施</mark>、<mark class=\"pn\">比利亚</mark>共四人。"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">雅哈</mark>是长子，<mark class=\"pn\">细撒</mark>是次子。但<mark class=\"pn\">耶乌施</mark>和<mark class=\"pn\">比利亚</mark>的子孙不多，所以算为一族。"
+        },
+        {
+          "verse": 12,
+          "text": "<mark class=\"pn\">哥辖</mark>的儿子是<mark class=\"pn\">暗兰</mark>、<mark class=\"pn\">以斯哈</mark>、<mark class=\"pn\">希伯伦</mark>、<mark class=\"pn\">乌薛</mark>共四人。"
+        },
+        {
+          "verse": 13,
+          "text": "<mark class=\"pn\">暗兰</mark>的儿子是<mark class=\"pn\">亚伦</mark>、<mark class=\"pn\">摩西</mark>。<mark class=\"pn\">亚伦</mark>和他的子孙分出来，好分别至圣的物，在耶和华面前烧香、侍奉他，奉他的名祝福，直到永远。"
+        },
+        {
+          "verse": 14,
+          "text": "至于神人<mark class=\"pn\">摩西</mark>，他的子孙名字记在<mark class=\"pn\">利未</mark>支派的册上。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">摩西</mark>的儿子是<mark class=\"pn\">革舜</mark>和<mark class=\"pn\">以利以谢</mark>。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">革舜</mark>的长子是<mark class=\"pn\">细布业</mark>；"
+        },
+        {
+          "verse": 17,
+          "text": "<mark class=\"pn\">以利以谢</mark>的儿子是<mark class=\"pn\">利哈比雅</mark>。<mark class=\"pn\">以利以谢</mark>没有别的儿子，但<mark class=\"pn\">利哈比雅</mark>的子孙甚多。"
+        },
+        {
+          "verse": 18,
+          "text": "<mark class=\"pn\">以斯哈</mark>的长子是<mark class=\"pn\">示罗密</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "<mark class=\"pn\">希伯伦</mark>的长子是<mark class=\"pn\">耶利雅</mark>，次子是<mark class=\"pn\">亚玛利亚</mark>，三子是<mark class=\"pn\">雅哈悉</mark>，四子是<mark class=\"pn\">耶加面</mark>。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">乌薛</mark>的长子是<mark class=\"pn\">米迦</mark>，次子是<mark class=\"pn\">耶西雅</mark>。"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">米拉利</mark>的儿子是<mark class=\"pn\">抹利</mark>、<mark class=\"pn\">母示</mark>。<mark class=\"pn\">抹利</mark>的儿子是<mark class=\"pn\">以利亚撒</mark>、<mark class=\"pn\">基士</mark>。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">以利亚撒</mark>死了，没有儿子，只有女儿，他们本族<mark class=\"pn\">基士</mark>的儿子娶了她们为妻。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">母示</mark>的儿子是<mark class=\"pn\">末力</mark>、<mark class=\"pn\">以得</mark>、<mark class=\"pn\">耶利摩</mark>共三人。"
+        },
+        {
+          "verse": 24,
+          "text": "以上<mark class=\"pn\">利未</mark>子孙作族长的，照着男丁的数目，从二十岁以外，都办耶和华殿的事务。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">大卫</mark>说：“耶和华<mark class=\"pn\">以色列</mark>的　神已经使他的百姓平安，他永远住在<mark class=\"pn\">耶路撒冷</mark>。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">利未</mark>人不必再抬帐幕和其中所用的一切器皿了。”"
+        },
+        {
+          "verse": 27,
+          "text": "照着<mark class=\"pn\">大卫</mark>临终所吩咐的，<mark class=\"pn\">利未</mark>人从二十岁以外的都被数点。"
+        },
+        {
+          "verse": 28,
+          "text": "他们的职任是服侍<mark class=\"pn\">亚伦</mark>的子孙，在耶和华的殿和院子，并屋中办事，洁净一切圣物，就是办　神殿的事务，"
+        },
+        {
+          "verse": 29,
+          "text": "并管理陈设饼，素祭的细面，或无酵薄饼，或用盘烤，或用油调和的物，又管理各样的升斗尺度；"
+        },
+        {
+          "verse": 30,
+          "text": "每日早晚，站立称谢赞美耶和华，"
+        },
+        {
+          "verse": 31,
+          "text": "又在安息日、月朔，并节期，按数照例，将燔祭常常献给耶和华；"
+        },
+        {
+          "verse": 32,
+          "text": "又看守会幕和圣所，并守耶和华吩咐他们弟兄<mark class=\"pn\">亚伦</mark>子孙的，办耶和华殿的事。"
+        }
+      ]
+    },
+    {
+      "chapter": 24,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">亚伦</mark>子孙的班次记在下面：<mark class=\"pn\">亚伦</mark>的儿子是<mark class=\"pn\">拿答</mark>、<mark class=\"pn\">亚比户</mark>、<mark class=\"pn\">以利亚撒</mark>、<mark class=\"pn\">以他玛</mark>。",
+          "heading": "祭司的职务"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">拿答</mark>、<mark class=\"pn\">亚比户</mark>死在他们父亲之先，没有留下儿子；故此，<mark class=\"pn\">以利亚撒</mark>、<mark class=\"pn\">以他玛</mark>供祭司的职分。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">以利亚撒</mark>的子孙<mark class=\"pn\">撒督</mark>和<mark class=\"pn\">以他玛</mark>的子孙<mark class=\"pn\">亚希米勒</mark>，同着<mark class=\"pn\">大卫</mark>将他们的族弟兄分成班次。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">以利亚撒</mark>子孙中为首的比<mark class=\"pn\">以他玛</mark>子孙中为首的更多，分班如下：<mark class=\"pn\">以利亚撒</mark>的子孙中有十六个族长，<mark class=\"pn\">以他玛</mark>的子孙中有八个族长；"
+        },
+        {
+          "verse": 5,
+          "text": "都掣签分立，彼此一样。在圣所和　神面前作首领的有<mark class=\"pn\">以利亚撒</mark>的子孙，也有<mark class=\"pn\">以他玛</mark>的子孙。"
+        },
+        {
+          "verse": 6,
+          "text": "作书记的<mark class=\"pn\">利未</mark>人<mark class=\"pn\">拿坦业</mark>的儿子<mark class=\"pn\">示玛雅</mark>在王和首领，与祭司<mark class=\"pn\">撒督</mark>、<mark class=\"pn\">亚比亚他</mark>的儿子<mark class=\"pn\">亚希米勒</mark>，并祭司<mark class=\"pn\">利未</mark>人的族长面前记录他们的名字。在<mark class=\"pn\">以利亚撒</mark>的子孙中取一族，在<mark class=\"pn\">以他玛</mark>的子孙中取一族。"
+        },
+        {
+          "verse": 7,
+          "text": "掣签的时候，第一掣出来的是<mark class=\"pn\">耶何雅立</mark>，第二是<mark class=\"pn\">耶大雅</mark>，"
+        },
+        {
+          "verse": 8,
+          "text": "第三是<mark class=\"pn\">哈琳</mark>，第四是<mark class=\"pn\">梭琳</mark>，"
+        },
+        {
+          "verse": 9,
+          "text": "第五是<mark class=\"pn\">玛基雅</mark>，第六是<mark class=\"pn\">米雅民</mark>，"
+        },
+        {
+          "verse": 10,
+          "text": "第七是<mark class=\"pn\">哈歌斯</mark>，第八是<mark class=\"pn\">亚比雅</mark>，"
+        },
+        {
+          "verse": 11,
+          "text": "第九是<mark class=\"pn\">耶书亚</mark>，第十是<mark class=\"pn\">示迦尼</mark>，"
+        },
+        {
+          "verse": 12,
+          "text": "第十一是<mark class=\"pn\">以利亚实</mark>，第十二是<mark class=\"pn\">雅金</mark>，"
+        },
+        {
+          "verse": 13,
+          "text": "第十三是<mark class=\"pn\">胡巴</mark>，第十四是<mark class=\"pn\">耶是比押</mark>，"
+        },
+        {
+          "verse": 14,
+          "text": "第十五是<mark class=\"pn\">璧迦</mark>，第十六是<mark class=\"pn\">音麦</mark>，"
+        },
+        {
+          "verse": 15,
+          "text": "第十七是<mark class=\"pn\">希悉</mark>，第十八是<mark class=\"pn\">哈辟悉</mark>，"
+        },
+        {
+          "verse": 16,
+          "text": "第十九是<mark class=\"pn\">毗他希雅</mark>，第二十是<mark class=\"pn\">以西结</mark>，"
+        },
+        {
+          "verse": 17,
+          "text": "第二十一是<mark class=\"pn\">雅斤</mark>，第二十二是<mark class=\"pn\">迦末</mark>，"
+        },
+        {
+          "verse": 18,
+          "text": "第二十三是<mark class=\"pn\">第来雅</mark>，第二十四是<mark class=\"pn\">玛西亚</mark>。"
+        },
+        {
+          "verse": 19,
+          "text": "这就是他们的班次，要照耶和华<mark class=\"pn\">以色列</mark>的　神藉他们祖宗<mark class=\"pn\">亚伦</mark>所吩咐的条例进入耶和华的殿办理事务。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">利未</mark>其余的子孙如下：<mark class=\"pn\">暗兰</mark>的子孙里有<mark class=\"pn\">书巴业</mark>；<mark class=\"pn\">书巴业</mark>的子孙里有<mark class=\"pn\">耶希底亚</mark>。",
+          "heading": "利未人名单"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">利哈比雅</mark>的子孙里有长子<mark class=\"pn\">伊示雅</mark>。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">以斯哈</mark>的子孙里有<mark class=\"pn\">示罗摩</mark>；<mark class=\"pn\">示罗摩</mark>的子孙里有<mark class=\"pn\">雅哈</mark>。"
+        },
+        {
+          "verse": 23,
+          "text": "希伯伦的子孙里有长子<mark class=\"pn\">耶利雅</mark>，次子<mark class=\"pn\">亚玛利亚</mark>，三子<mark class=\"pn\">雅哈悉</mark>，四子<mark class=\"pn\">耶加面</mark>。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">乌薛</mark>的子孙里有<mark class=\"pn\">米迦</mark>；<mark class=\"pn\">米迦</mark>的子孙里有<mark class=\"pn\">沙密</mark>。"
+        },
+        {
+          "verse": 25,
+          "text": "<mark class=\"pn\">米迦</mark>的兄弟是<mark class=\"pn\">伊示雅</mark>；<mark class=\"pn\">伊示雅</mark>的子孙里有<mark class=\"pn\">撒迦利雅</mark>。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">米拉利</mark>的儿子是<mark class=\"pn\">抹利</mark>、<mark class=\"pn\">母示</mark>、雅西雅；<mark class=\"pn\">雅西雅</mark>的儿子有<mark class=\"pn\">比挪</mark>；"
+        },
+        {
+          "verse": 27,
+          "text": "<mark class=\"pn\">米拉利</mark>的子孙里有<mark class=\"pn\">雅西雅</mark>的儿子<mark class=\"pn\">比挪</mark>、<mark class=\"pn\">朔含</mark>、<mark class=\"pn\">撒刻</mark>、<mark class=\"pn\">伊比利</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "<mark class=\"pn\">抹利</mark>的儿子是<mark class=\"pn\">以利亚撒</mark>；<mark class=\"pn\">以利亚撒</mark>没有儿子。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">基士</mark>的子孙里有<mark class=\"pn\">耶拉篾</mark>。"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">母示</mark>的儿子是<mark class=\"pn\">末力</mark>、<mark class=\"pn\">以得</mark>、<mark class=\"pn\">耶利摩</mark>。按着宗族这都是<mark class=\"pn\">利未</mark>的子孙。"
+        },
+        {
+          "verse": 31,
+          "text": "他们在<mark class=\"pn\">大卫</mark>王和<mark class=\"pn\">撒督</mark>，并<mark class=\"pn\">亚希米勒</mark>与祭司<mark class=\"pn\">利未</mark>人的族长面前掣签，正如他们弟兄<mark class=\"pn\">亚伦</mark>的子孙一般。各族的长者与兄弟没有分别。"
+        }
+      ]
+    },
+    {
+      "chapter": 25,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>和众首领分派<mark class=\"pn\">亚萨</mark>、<mark class=\"pn\">希幔</mark>，并<mark class=\"pn\">耶杜顿</mark>的子孙弹琴、鼓瑟、敲钹、唱歌（“唱歌”原文作“说预言”。本章同）。他们供职的人数记在下面：",
+          "heading": "圣殿中的圣乐人员"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">亚萨</mark>的儿子<mark class=\"pn\">撒刻</mark>、<mark class=\"pn\">约瑟</mark>、<mark class=\"pn\">尼探雅</mark>、<mark class=\"pn\">亚萨利拉</mark>都归<mark class=\"pn\">亚萨</mark>指教，遵王的旨意唱歌。"
+        },
+        {
+          "verse": 3,
+          "text": "<mark class=\"pn\">耶杜顿</mark>的儿子<mark class=\"pn\">基大利</mark>、<mark class=\"pn\">西利</mark>、<mark class=\"pn\">耶筛亚</mark>、<mark class=\"pn\">哈沙比雅</mark>、<mark class=\"pn\">玛他提雅</mark>、<mark class=\"pn\">示每</mark>共六人，都归他们父亲<mark class=\"pn\">耶杜顿</mark>指教，弹琴，唱歌，称谢，颂赞耶和华。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">希幔</mark>的儿子<mark class=\"pn\">布基雅</mark>、<mark class=\"pn\">玛探雅</mark>、<mark class=\"pn\">乌薛</mark>、<mark class=\"pn\">细布业</mark>、<mark class=\"pn\">耶利摩</mark>、<mark class=\"pn\">哈拿尼雅</mark>、<mark class=\"pn\">哈拿尼</mark>、<mark class=\"pn\">以利亚他</mark>、<mark class=\"pn\">基大利提</mark>、<mark class=\"pn\">罗幔提以谢</mark>、<mark class=\"pn\">约施比加沙</mark>、<mark class=\"pn\">玛罗提</mark>、<mark class=\"pn\">何提</mark>、<mark class=\"pn\">玛哈秀</mark>；"
+        },
+        {
+          "verse": 5,
+          "text": "这都是<mark class=\"pn\">希幔</mark>的儿子，吹角颂赞。<mark class=\"pn\">希幔</mark>奉　神之命作王的先见。　神赐给<mark class=\"pn\">希幔</mark>十四个儿子，三个女儿，"
+        },
+        {
+          "verse": 6,
+          "text": "都归他们父亲指教，在耶和华的殿唱歌、敲钹、弹琴、鼓瑟，办　神殿的事务。<mark class=\"pn\">亚萨</mark>、<mark class=\"pn\">耶杜顿</mark>、<mark class=\"pn\">希幔</mark>都是王所命定的。"
+        },
+        {
+          "verse": 7,
+          "text": "他们和他们的弟兄学习颂赞耶和华；善于歌唱的共有二百八十八人。"
+        },
+        {
+          "verse": 8,
+          "text": "这些人无论大小，为师的、为徒的，都一同掣签分了班次。"
+        },
+        {
+          "verse": 9,
+          "text": "掣签的时候，第一掣出来的是<mark class=\"pn\">亚萨</mark>的儿子<mark class=\"pn\">约瑟</mark>。第二是<mark class=\"pn\">基大利</mark>；他和他弟兄并儿子共十二人。"
+        },
+        {
+          "verse": 10,
+          "text": "第三是<mark class=\"pn\">撒刻</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 11,
+          "text": "第四是<mark class=\"pn\">伊洗利</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 12,
+          "text": "第五是<mark class=\"pn\">尼探雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 13,
+          "text": "第六是<mark class=\"pn\">布基雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 14,
+          "text": "第七是<mark class=\"pn\">耶萨利拉</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 15,
+          "text": "第八是<mark class=\"pn\">耶筛亚</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 16,
+          "text": "第九是<mark class=\"pn\">玛探雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 17,
+          "text": "第十是<mark class=\"pn\">示每</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 18,
+          "text": "第十一是<mark class=\"pn\">亚萨烈</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 19,
+          "text": "第十二是<mark class=\"pn\">哈沙比雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 20,
+          "text": "第十三是<mark class=\"pn\">书巴业</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 21,
+          "text": "第十四是<mark class=\"pn\">玛他提雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 22,
+          "text": "第十五是<mark class=\"pn\">耶利摩</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 23,
+          "text": "第十六是<mark class=\"pn\">哈拿尼雅</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 24,
+          "text": "第十七是<mark class=\"pn\">约施比加沙</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 25,
+          "text": "第十八是<mark class=\"pn\">哈拿尼</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 26,
+          "text": "第十九是<mark class=\"pn\">玛罗提</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 27,
+          "text": "第二十是<mark class=\"pn\">以利亚他</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 28,
+          "text": "第二十一是<mark class=\"pn\">何提</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 29,
+          "text": "第二十二是<mark class=\"pn\">基大利提</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 30,
+          "text": "第二十三是<mark class=\"pn\">玛哈秀</mark>；他和他儿子并弟兄共十二人。"
+        },
+        {
+          "verse": 31,
+          "text": "第二十四是<mark class=\"pn\">罗幔提以谢</mark>，他和他儿子并弟兄共十二人。"
+        }
+      ]
+    },
+    {
+      "chapter": 26,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "守门的班次记在下面：<mark class=\"pn\">可拉</mark>族<mark class=\"pn\">亚萨</mark>的子孙中，有<mark class=\"pn\">可利</mark>的儿子<mark class=\"pn\">米施利米雅</mark>。",
+          "heading": "圣殿的卫队"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">米施利米雅</mark>的长子是<mark class=\"pn\">撒迦利亚</mark>，次子是<mark class=\"pn\">耶叠</mark>，三子是<mark class=\"pn\">西巴第雅</mark>，四子是<mark class=\"pn\">耶提聂</mark>，"
+        },
+        {
+          "verse": 3,
+          "text": "五子是<mark class=\"pn\">以拦</mark>，六子是<mark class=\"pn\">约哈难</mark>，七子是<mark class=\"pn\">以利约乃</mark>。"
+        },
+        {
+          "verse": 4,
+          "text": "<mark class=\"pn\">俄别以东</mark>的长子是<mark class=\"pn\">示玛雅</mark>，次子是<mark class=\"pn\">约萨拔</mark>，三子是<mark class=\"pn\">约亚</mark>，四子是<mark class=\"pn\">沙甲</mark>，五子是<mark class=\"pn\">拿坦业</mark>，"
+        },
+        {
+          "verse": 5,
+          "text": "六子是<mark class=\"pn\">亚米利</mark>，七子是<mark class=\"pn\">以萨迦</mark>，八子是<mark class=\"pn\">毗乌利太</mark>，因为　神赐福与<mark class=\"pn\">俄别以东</mark>。"
+        },
+        {
+          "verse": 6,
+          "text": "他的儿子<mark class=\"pn\">示玛雅</mark>有几个儿子，都是大能的壮士，掌管父亲的家。"
+        },
+        {
+          "verse": 7,
+          "text": "<mark class=\"pn\">示玛雅</mark>的儿子是<mark class=\"pn\">俄得尼</mark>、<mark class=\"pn\">利法益</mark>、<mark class=\"pn\">俄备得</mark>、<mark class=\"pn\">以利萨巴</mark>。<mark class=\"pn\">以利萨巴</mark>的弟兄是壮士，还有<mark class=\"pn\">以利户</mark>和<mark class=\"pn\">西玛迦</mark>。"
+        },
+        {
+          "verse": 8,
+          "text": "这都是<mark class=\"pn\">俄别以东</mark>的子孙，他们和他们的儿子并弟兄，都是善于办事的壮士。<mark class=\"pn\">俄别以东</mark>的子孙共六十二人。"
+        },
+        {
+          "verse": 9,
+          "text": "<mark class=\"pn\">米施利米雅</mark>的儿子和弟兄都是壮士，共十八人。"
+        },
+        {
+          "verse": 10,
+          "text": "<mark class=\"pn\">米拉利</mark>子孙<mark class=\"pn\">何萨</mark>有几个儿子：长子是<mark class=\"pn\">申利</mark>，他原不是长子，是他父亲立他作长子。"
+        },
+        {
+          "verse": 11,
+          "text": "次子是<mark class=\"pn\">希勒家</mark>，三子是<mark class=\"pn\">底巴利雅</mark>，四子是<mark class=\"pn\">撒迦利亚</mark>。<mark class=\"pn\">何萨</mark>的儿子并弟兄共十三人。"
+        },
+        {
+          "verse": 12,
+          "text": "这些人都是守门的班长，与他们的弟兄一同在耶和华殿里按班供职。"
+        },
+        {
+          "verse": 13,
+          "text": "他们无论大小，都按着宗族掣签分守各门。"
+        },
+        {
+          "verse": 14,
+          "text": "掣签守东门的是<mark class=\"pn\">示利米雅</mark>；他的儿子<mark class=\"pn\">撒迦利亚</mark>是精明的谋士，掣签守北门。"
+        },
+        {
+          "verse": 15,
+          "text": "<mark class=\"pn\">俄别以东</mark>守南门，他的儿子守库房。"
+        },
+        {
+          "verse": 16,
+          "text": "<mark class=\"pn\">书聘</mark>与<mark class=\"pn\">何萨</mark>守西门，在靠近<mark class=\"pn\">沙利基</mark>门、通着往上去的街道上，班与班相对。"
+        },
+        {
+          "verse": 17,
+          "text": "每日东门有六个<mark class=\"pn\">利未</mark>人，北门有四个，南门有四个，库房有两个，又有两个轮班替换。"
+        },
+        {
+          "verse": 18,
+          "text": "在西面街道上有四个，在游廊上有两个。"
+        },
+        {
+          "verse": 19,
+          "text": "以上是<mark class=\"pn\">可拉</mark>子孙和<mark class=\"pn\">米拉利</mark>子孙守门的班次。"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">利未</mark>子孙中有<mark class=\"pn\">亚希雅</mark>掌管　神殿的府库和圣物的府库。",
+          "heading": "其他职守"
+        },
+        {
+          "verse": 21,
+          "text": "<mark class=\"pn\">革顺</mark>族、<mark class=\"pn\">拉但</mark>子孙里，作族长的是<mark class=\"pn\">革顺</mark>族<mark class=\"pn\">拉但</mark>的子孙<mark class=\"pn\">耶希伊利</mark>。"
+        },
+        {
+          "verse": 22,
+          "text": "<mark class=\"pn\">耶希伊利</mark>的儿子<mark class=\"pn\">西坦</mark>和他兄弟<mark class=\"pn\">约珥</mark>掌管耶和华殿里的府库。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">暗兰</mark>族、<mark class=\"pn\">以斯哈</mark>族、<mark class=\"pn\">希伯伦</mark>族、<mark class=\"pn\">乌泄</mark>族也有职分。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">摩西</mark>的孙子、<mark class=\"pn\">革舜</mark>的儿子<mark class=\"pn\">细布业</mark>掌管府库。"
+        },
+        {
+          "verse": 25,
+          "text": "还有他的弟兄<mark class=\"pn\">以利以谢</mark>。<mark class=\"pn\">以利以谢</mark>的儿子是<mark class=\"pn\">利哈比雅</mark>；<mark class=\"pn\">利哈比雅</mark>的儿子是<mark class=\"pn\">耶筛亚</mark>；<mark class=\"pn\">耶筛亚</mark>的儿子是<mark class=\"pn\">约兰</mark>；<mark class=\"pn\">约兰</mark>的儿子是<mark class=\"pn\">细基利</mark>；<mark class=\"pn\">细基利</mark>的儿子是<mark class=\"pn\">示罗密</mark>。"
+        },
+        {
+          "verse": 26,
+          "text": "这<mark class=\"pn\">示罗密</mark>和他的弟兄掌管府库的圣物，就是<mark class=\"pn\">大卫</mark>王和众族长、千夫长、百夫长，并军长所分别为圣的物。"
+        },
+        {
+          "verse": 27,
+          "text": "他们将争战时所夺的财物分别为圣，以备修造耶和华的殿。"
+        },
+        {
+          "verse": 28,
+          "text": "先见<mark class=\"pn\">撒母耳</mark>、<mark class=\"pn\">基士</mark>的儿子<mark class=\"pn\">扫罗</mark>、<mark class=\"pn\">尼珥</mark>的儿子<mark class=\"pn\">押尼珥</mark>、<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">约押</mark>所分别为圣的物都归<mark class=\"pn\">示罗密</mark>和他的弟兄掌管。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">以斯哈</mark>族有<mark class=\"pn\">基拿尼雅</mark>和他众子作官长和士师，管理<mark class=\"pn\">以色列</mark>的外事。",
+          "heading": "其余利未人的职守"
+        },
+        {
+          "verse": 30,
+          "text": "<mark class=\"pn\">希伯伦</mark>族有<mark class=\"pn\">哈沙比雅</mark>和他弟兄一千七百人，都是壮士，在<mark class=\"pn\">约旦河</mark>西、<mark class=\"pn\">以色列</mark>地办理耶和华与王的事。"
+        },
+        {
+          "verse": 31,
+          "text": "<mark class=\"pn\">希伯伦</mark>族中有<mark class=\"pn\">耶利雅</mark>作族长。<mark class=\"pn\">大卫</mark>作王第四十年，在<mark class=\"pn\">基列</mark>的<mark class=\"pn\">雅谢</mark>，从这族中寻得大能的勇士。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">耶利雅</mark>的弟兄有二千七百人，都是壮士，且作族长；<mark class=\"pn\">大卫</mark>王派他们在<mark class=\"pn\">流便</mark>支派、<mark class=\"pn\">迦得</mark>支派、<mark class=\"pn\">玛拿西</mark>半支派中办理　神和王的事。"
+        }
+      ]
+    },
+    {
+      "chapter": 27,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">以色列</mark>人的族长、千夫长、百夫长，和官长都分定班次，每班是二万四千人，周年按月轮流，替换出入服侍王。",
+          "heading": "军事长官名单"
+        },
+        {
+          "verse": 2,
+          "text": "正月第一班的班长是<mark class=\"pn\">撒巴第业</mark>的儿子<mark class=\"pn\">雅朔班</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 3,
+          "text": "他是<mark class=\"pn\">法勒斯</mark>的子孙，统管正月班的一切军长。"
+        },
+        {
+          "verse": 4,
+          "text": "二月的班长是<mark class=\"pn\">亚哈希</mark>人<mark class=\"pn\">朵代</mark>，还有副官<mark class=\"pn\">密基罗</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 5,
+          "text": "三月第三班的班长（原文作“军长”。下同）是祭司<mark class=\"pn\">耶何耶大</mark>的儿子<mark class=\"pn\">比拿雅</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 6,
+          "text": "这<mark class=\"pn\">比拿雅</mark>是那三十人中的勇士，管理那三十人；他班内又有他儿子<mark class=\"pn\">暗米萨拔</mark>。"
+        },
+        {
+          "verse": 7,
+          "text": "四月第四班的班长是<mark class=\"pn\">约押</mark>的兄弟<mark class=\"pn\">亚撒黑</mark>。接续他的是他儿子<mark class=\"pn\">西巴第雅</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 8,
+          "text": "五月第五班的班长是<mark class=\"pn\">伊斯拉</mark>人<mark class=\"pn\">珊合</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 9,
+          "text": "六月第六班的班长是<mark class=\"pn\">提哥亚</mark>人<mark class=\"pn\">益吉</mark>的儿子<mark class=\"pn\">以拉</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 10,
+          "text": "七月第七班的班长是<mark class=\"pn\">以法莲</mark>族<mark class=\"pn\">比伦</mark>人<mark class=\"pn\">希利斯</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 11,
+          "text": "八月第八班的班长是<mark class=\"pn\">谢拉</mark>族<mark class=\"pn\">户沙</mark>人<mark class=\"pn\">西比该</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 12,
+          "text": "九月第九班的班长是<mark class=\"pn\">便雅悯</mark>族<mark class=\"pn\">亚拿突</mark>人<mark class=\"pn\">亚比以谢</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 13,
+          "text": "十月第十班的班长是<mark class=\"pn\">谢拉</mark>族<mark class=\"pn\">尼陀法</mark>人<mark class=\"pn\">玛哈莱</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 14,
+          "text": "十一月第十一班的班长是<mark class=\"pn\">以法莲</mark>族<mark class=\"pn\">比拉顿</mark>人<mark class=\"pn\">比拿雅</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 15,
+          "text": "十二月第十二班的班长是<mark class=\"pn\">俄陀聂</mark>族<mark class=\"pn\">尼陀法</mark>人<mark class=\"pn\">黑玳</mark>；他班内有二万四千人。"
+        },
+        {
+          "verse": 16,
+          "text": "管理<mark class=\"pn\">以色列</mark>众支派的记在下面：管<mark class=\"pn\">流便</mark>人的是<mark class=\"pn\">细基利</mark>的儿子<mark class=\"pn\">以利以谢</mark>；管<mark class=\"pn\">西缅</mark>人的是<mark class=\"pn\">玛迦</mark>的儿子<mark class=\"pn\">示法提雅</mark>；",
+          "heading": "以色列各支派的行政长官"
+        },
+        {
+          "verse": 17,
+          "text": "管<mark class=\"pn\">利未</mark>人的是<mark class=\"pn\">基母利</mark>的儿子<mark class=\"pn\">哈沙比雅</mark>；管<mark class=\"pn\">亚伦</mark>子孙的是<mark class=\"pn\">撒督</mark>；"
+        },
+        {
+          "verse": 18,
+          "text": "管<mark class=\"pn\">犹大</mark>人的是<mark class=\"pn\">大卫</mark>的一个哥哥<mark class=\"pn\">以利户</mark>；管<mark class=\"pn\">以萨迦</mark>人的是<mark class=\"pn\">米迦勒</mark>的儿子<mark class=\"pn\">暗利</mark>；"
+        },
+        {
+          "verse": 19,
+          "text": "管<mark class=\"pn\">西布伦</mark>人的是<mark class=\"pn\">俄巴第雅</mark>的儿子<mark class=\"pn\">伊施玛雅</mark>；管<mark class=\"pn\">拿弗他利</mark>人的是<mark class=\"pn\">亚斯列</mark>的儿子<mark class=\"pn\">耶利摩</mark>；"
+        },
+        {
+          "verse": 20,
+          "text": "管<mark class=\"pn\">以法莲</mark>人的是<mark class=\"pn\">阿撒细雅</mark>的儿子<mark class=\"pn\">何细亚</mark>；管<mark class=\"pn\">玛拿西</mark>半支派的是<mark class=\"pn\">毗大雅</mark>的儿子<mark class=\"pn\">约珥</mark>；"
+        },
+        {
+          "verse": 21,
+          "text": "管<mark class=\"pn\">基列</mark>地<mark class=\"pn\">玛拿西</mark>那半支派的是<mark class=\"pn\">撒迦利亚</mark>的儿子<mark class=\"pn\">易多</mark>；管<mark class=\"pn\">便雅悯</mark>人的是<mark class=\"pn\">押尼珥</mark>的儿子<mark class=\"pn\">雅西业</mark>；"
+        },
+        {
+          "verse": 22,
+          "text": "管<mark class=\"pn\">但</mark>人的是<mark class=\"pn\">耶罗罕</mark>的儿子<mark class=\"pn\">亚萨列</mark>。以上是<mark class=\"pn\">以色列</mark>众支派的首领。"
+        },
+        {
+          "verse": 23,
+          "text": "<mark class=\"pn\">以色列</mark>人二十岁以内的，<mark class=\"pn\">大卫</mark>没有记其数目；因耶和华曾应许说，必加增<mark class=\"pn\">以色列</mark>人如天上的星那样多。"
+        },
+        {
+          "verse": 24,
+          "text": "<mark class=\"pn\">洗鲁雅</mark>的儿子<mark class=\"pn\">约押</mark>动手数点，当时耶和华的烈怒临到<mark class=\"pn\">以色列</mark>人；因此，没有点完，数目也没有写在<mark class=\"pn\">大卫</mark>王记上。"
+        },
+        {
+          "verse": 25,
+          "text": "掌管王府库的是<mark class=\"pn\">亚叠</mark>的儿子<mark class=\"pn\">押斯马威</mark>。掌管田野城邑村庄保障之仓库的是<mark class=\"pn\">乌西雅</mark>的儿子<mark class=\"pn\">约拿单</mark>。",
+          "heading": "管理王产的官员"
+        },
+        {
+          "verse": 26,
+          "text": "掌管耕田种地的是<mark class=\"pn\">基绿</mark>的儿子<mark class=\"pn\">以斯利</mark>。"
+        },
+        {
+          "verse": 27,
+          "text": "掌管葡萄园的是<mark class=\"pn\">拉玛</mark>人<mark class=\"pn\">示每</mark>。掌管葡萄园酒窖的是<mark class=\"pn\">实弗米</mark>人<mark class=\"pn\">撒巴底</mark>。"
+        },
+        {
+          "verse": 28,
+          "text": "掌管高原橄榄树和桑树的是<mark class=\"pn\">基第利</mark>人<mark class=\"pn\">巴勒哈南</mark>。掌管油库的是<mark class=\"pn\">约阿施</mark>。"
+        },
+        {
+          "verse": 29,
+          "text": "掌管<mark class=\"pn\">沙仑</mark>牧放牛群的是<mark class=\"pn\">沙仑</mark>人<mark class=\"pn\">施提赉</mark>。掌管山谷牧养牛群的是<mark class=\"pn\">亚第赉</mark>的儿子<mark class=\"pn\">沙法</mark>。"
+        },
+        {
+          "verse": 30,
+          "text": "掌管驼群的是<mark class=\"pn\">以实玛利</mark>人<mark class=\"pn\">阿比勒</mark>。掌管驴群的是<mark class=\"pn\">米仑</mark>人<mark class=\"pn\">耶希底亚</mark>。掌管羊群的是<mark class=\"pn\">夏甲</mark>人<mark class=\"pn\">雅悉</mark>。"
+        },
+        {
+          "verse": 31,
+          "text": "这都是给<mark class=\"pn\">大卫</mark>王掌管产业的。"
+        },
+        {
+          "verse": 32,
+          "text": "<mark class=\"pn\">大卫</mark>的叔叔<mark class=\"pn\">约拿单</mark>作谋士；这人有智慧，又作书记。<mark class=\"pn\">哈摩尼</mark>的儿子<mark class=\"pn\">耶歇</mark>作王众子的师傅。",
+          "heading": "大卫的谋士"
+        },
+        {
+          "verse": 33,
+          "text": "<mark class=\"pn\">亚希多弗</mark>也作王的谋士。<mark class=\"pn\">亚基</mark>人<mark class=\"pn\">户筛</mark>作王的陪伴。"
+        },
+        {
+          "verse": 34,
+          "text": "<mark class=\"pn\">亚希多弗</mark>之后，有<mark class=\"pn\">比拿雅</mark>的儿子<mark class=\"pn\">耶何耶大</mark>和<mark class=\"pn\">亚比亚他</mark>接续他作谋士。<mark class=\"pn\">约押</mark>作王的元帅。"
+        }
+      ]
+    },
+    {
+      "chapter": 28,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>招聚<mark class=\"pn\">以色列</mark>各支派的首领和轮班服侍王的军长，与千夫长、百夫长，掌管王和王子产业牲畜的，并太监，以及大能的勇士，都到<mark class=\"pn\">耶路撒冷</mark>来。",
+          "heading": "大卫对建殿的指示"
+        },
+        {
+          "verse": 2,
+          "text": "<mark class=\"pn\">大卫</mark>王就站起来，说：“我的弟兄，我的百姓啊，你们当听我言，我心里本想建造殿宇，安放耶和华的约柜，作为我　神的脚凳；我已经预备建造的材料。"
+        },
+        {
+          "verse": 3,
+          "text": "只是　神对我说：‘你不可为我的名建造殿宇；因你是战士，流了人的血。’"
+        },
+        {
+          "verse": 4,
+          "text": "然而，耶和华<mark class=\"pn\">以色列</mark>的　神在我父的全家拣选我作<mark class=\"pn\">以色列</mark>的王，直到永远。因他拣选<mark class=\"pn\">犹大</mark>为首领；在<mark class=\"pn\">犹大</mark>支派中拣选我父家，在我父的众子里喜悦我，立我作<mark class=\"pn\">以色列</mark>众人的王。"
+        },
+        {
+          "verse": 5,
+          "text": "耶和华赐我许多儿子，在我儿子中拣选<mark class=\"pn\">所罗门</mark>坐耶和华的国位，治理<mark class=\"pn\">以色列</mark>人。"
+        },
+        {
+          "verse": 6,
+          "text": "耶和华对我说：‘你儿子<mark class=\"pn\">所罗门</mark>必建造我的殿和院宇；因为我拣选他作我的子，我也必作他的父。"
+        },
+        {
+          "verse": 7,
+          "text": "他若恒久遵行我的诫命典章如今日一样，我就必坚定他的国位，直到永远。’"
+        },
+        {
+          "verse": 8,
+          "text": "现今在耶和华的会中，<mark class=\"pn\">以色列</mark>众人眼前所说的，我们的　神也听见了。你们应当寻求耶和华你们　神的一切诫命，谨守遵行，如此你们可以承受这美地，遗留给你们的子孙，永远为业。"
+        },
+        {
+          "verse": 9,
+          "text": "“我儿<mark class=\"pn\">所罗门</mark>哪，你当认识耶和华你父的　神，诚心乐意地侍奉他；因为他鉴察众人的心，知道一切心思意念。你若寻求他，他必使你寻见；你若离弃他，他必永远丢弃你。"
+        },
+        {
+          "verse": 10,
+          "text": "你当谨慎，因耶和华拣选你建造殿宇作为圣所。你当刚强去行。”"
+        },
+        {
+          "verse": 11,
+          "text": "<mark class=\"pn\">大卫</mark>将殿的游廊、旁屋、府库、楼房、内殿，和施恩所的样式指示他儿子<mark class=\"pn\">所罗门</mark>，"
+        },
+        {
+          "verse": 12,
+          "text": "又将被灵感动所得的样式，就是耶和华　神殿的院子、周围的房屋、殿的府库，和圣物府库的一切样式都指示他；"
+        },
+        {
+          "verse": 13,
+          "text": "又指示他祭司和<mark class=\"pn\">利未</mark>人的班次与耶和华殿里各样的工作，并耶和华殿里一切器皿的样式，"
+        },
+        {
+          "verse": 14,
+          "text": "以及各样应用金器的分量和各样应用银器的分量，"
+        },
+        {
+          "verse": 15,
+          "text": "金灯台和金灯的分量，银灯台和银灯的分量，轻重各都合宜；"
+        },
+        {
+          "verse": 16,
+          "text": "陈设饼金桌子的分量，银桌子的分量，"
+        },
+        {
+          "verse": 17,
+          "text": "精金的肉叉子、盘子，和爵的分量，各金碗与各银碗的分两，"
+        },
+        {
+          "verse": 18,
+          "text": "精金香坛的分量，并用金子做基路伯（原文作“用金子做车式的基路伯”）；基路伯张开翅膀，遮掩耶和华的约柜。"
+        },
+        {
+          "verse": 19,
+          "text": "大卫说：“这一切工作的样式都是耶和华用手划出来使我明白的。”"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">大卫</mark>又对他儿子<mark class=\"pn\">所罗门</mark>说：“你当刚强壮胆去行！不要惧怕，也不要惊惶。因为耶和华　神就是我的　神，与你同在；他必不撇下你，也不丢弃你，直到耶和华殿的工作都完毕了。"
+        },
+        {
+          "verse": 21,
+          "text": "有祭司和<mark class=\"pn\">利未</mark>人的各班，为要办理　神殿各样的事，又有灵巧的人在各样的工作上乐意帮助你；并有众首领和众民一心听从你的命令。”"
+        }
+      ]
+    },
+    {
+      "chapter": 29,
+      "verses": [
+        {
+          "verse": 1,
+          "text": "<mark class=\"pn\">大卫</mark>王对会众说：“我儿子<mark class=\"pn\">所罗门</mark>是　神特选的，还年幼娇嫩；这工程甚大，因这殿不是为人，乃是为耶和华　神建造的。",
+          "heading": "为建殿而献的礼物"
+        },
+        {
+          "verse": 2,
+          "text": "我为我　神的殿已经尽力，预备金子做金器，银子做银器，铜做铜器，铁做铁器，木做木器，还有红玛瑙可镶嵌的宝石，彩石和一切的宝石，并许多汉白玉。"
+        },
+        {
+          "verse": 3,
+          "text": "且因我心中爱慕我　神的殿，就在预备建造圣殿的材料之外，又将我自己积蓄的金银献上，建造我　神的殿，"
+        },
+        {
+          "verse": 4,
+          "text": "就是<mark class=\"pn\">俄斐</mark>金三千他连得、精炼的银子七千他连得，以贴殿墙。"
+        },
+        {
+          "verse": 5,
+          "text": "金子做金器，银子做银器，并藉匠人的手制造一切。今日有谁乐意将自己献给耶和华呢？”"
+        },
+        {
+          "verse": 6,
+          "text": "于是，众族长和<mark class=\"pn\">以色列</mark>各支派的首领、千夫长、百夫长，并监管王工的官长，都乐意献上。"
+        },
+        {
+          "verse": 7,
+          "text": "他们为　神殿的使用献上金子五千他连得零一万达利克，银子一万他连得，铜一万八千他连得，铁十万他连得。"
+        },
+        {
+          "verse": 8,
+          "text": "凡有宝石的都交给<mark class=\"pn\">革顺</mark>人<mark class=\"pn\">耶歇</mark>，送入耶和华殿的府库。"
+        },
+        {
+          "verse": 9,
+          "text": "因这些人诚心乐意献给耶和华，百姓就欢喜，<mark class=\"pn\">大卫</mark>王也大大欢喜。"
+        },
+        {
+          "verse": 10,
+          "text": "所以，<mark class=\"pn\">大卫</mark>在会众面前称颂耶和华说：“耶和华我们的父，<mark class=\"pn\">以色列</mark>的　神是应当称颂，直到永永远远的！",
+          "heading": "大卫称颂耶和华"
+        },
+        {
+          "verse": 11,
+          "text": "耶和华啊，尊大、能力、荣耀、强胜、威严都是你的；凡天上地下的都是你的；国度也是你的，并且你为至高，为万有之首。"
+        },
+        {
+          "verse": 12,
+          "text": "丰富尊荣都从你而来，你也治理万物。在你手里有大能大力，使人尊大强盛都出于你。"
+        },
+        {
+          "verse": 13,
+          "text": "我们的　神啊，现在我们称谢你，赞美你荣耀之名！"
+        },
+        {
+          "verse": 14,
+          "text": "“我算什么，我的民算什么，竟能如此乐意奉献？因为万物都从你而来，我们把从你而得的献给你。"
+        },
+        {
+          "verse": 15,
+          "text": "我们在你面前是客旅，是寄居的，与我们列祖一样。我们在世的日子如影儿，不能长存（或作“没有长存的指望”）。"
+        },
+        {
+          "verse": 16,
+          "text": "耶和华我们的　神啊，我们预备这许多材料，要为你的圣名建造殿宇，都是从你而来，都是属你的。"
+        },
+        {
+          "verse": 17,
+          "text": "我的　神啊，我知道你察验人心，喜悦正直；我以正直的心乐意献上这一切物。现在我喜欢见你的民在这里都乐意奉献与你。"
+        },
+        {
+          "verse": 18,
+          "text": "耶和华我们列祖<mark class=\"pn\">亚伯拉罕</mark>、<mark class=\"pn\">以撒</mark>、<mark class=\"pn\">以色列</mark>的　神啊，求你使你的民常存这样的心思意念，坚定他们的心归向你，"
+        },
+        {
+          "verse": 19,
+          "text": "又求你赐我儿子<mark class=\"pn\">所罗门</mark>诚实的心，遵守你的命令、法度、律例，成就这一切的事，用我所预备的建造殿宇。”"
+        },
+        {
+          "verse": 20,
+          "text": "<mark class=\"pn\">大卫</mark>对全会众说：“你们应当称颂耶和华你们的　神。”于是会众称颂耶和华他们列祖的　神，低头拜耶和华与王。"
+        },
+        {
+          "verse": 21,
+          "text": "次日，他们向耶和华献平安祭和燔祭，就是献公牛一千只，公绵羊一千只，羊羔一千只，并同献的奠祭；又为<mark class=\"pn\">以色列</mark>众人献许多的祭。那日，他们在耶和华面前吃喝，大大欢乐。"
+        },
+        {
+          "verse": 22,
+          "text": "他们奉耶和华的命再膏<mark class=\"pn\">大卫</mark>的儿子<mark class=\"pn\">所罗门</mark>作王，又膏<mark class=\"pn\">撒督</mark>作祭司。"
+        },
+        {
+          "verse": 23,
+          "text": "于是<mark class=\"pn\">所罗门</mark>坐在耶和华所赐的位上，接续他父亲<mark class=\"pn\">大卫</mark>作王，万事亨通；<mark class=\"pn\">以色列</mark>众人也都听从他。"
+        },
+        {
+          "verse": 24,
+          "text": "众首领和勇士，并<mark class=\"pn\">大卫</mark>王的众子，都顺服<mark class=\"pn\">所罗门</mark>王。"
+        },
+        {
+          "verse": 25,
+          "text": "耶和华使<mark class=\"pn\">所罗门</mark>在<mark class=\"pn\">以色列</mark>众人眼前甚为尊大，极其威严，胜过在他以前的<mark class=\"pn\">以色列</mark>王。"
+        },
+        {
+          "verse": 26,
+          "text": "<mark class=\"pn\">耶西</mark>的儿子<mark class=\"pn\">大卫</mark>作<mark class=\"pn\">以色列</mark>众人的王，",
+          "heading": "大卫政绩简述"
+        },
+        {
+          "verse": 27,
+          "text": "作王共四十年：在<mark class=\"pn\">希伯仑</mark>作王七年，在<mark class=\"pn\">耶路撒冷</mark>作王三十三年。"
+        },
+        {
+          "verse": 28,
+          "text": "他年纪老迈，日子满足，享受丰富、尊荣，就死了。他儿子<mark class=\"pn\">所罗门</mark>接续他作王。"
+        },
+        {
+          "verse": 29,
+          "text": "<mark class=\"pn\">大卫</mark>王始终的事都写在先见<mark class=\"pn\">撒母耳</mark>的书上和先知<mark class=\"pn\">拿单</mark>并先见<mark class=\"pn\">迦得</mark>的书上。"
+        },
+        {
+          "verse": 30,
+          "text": "他的国事和他的勇力，以及他和<mark class=\"pn\">以色列</mark>并列国所经过的事都写在这书上。"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="startup_background">#F4F5F7</color>
+    <color name="startup_gold">#E89A2C</color>
+    <color name="startup_ink">#18191F</color>
+    <color name="startup_body">#474A57</color>
+</resources>

@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- 窄屏 / 手机设备跳到 App 端页面（/app 由 admin-app 托管 mobile-app 构建产物），
+         让手机用户拿到原生感界面而不是压缩版的桌面布局。 -->
+    <script>
+        (function () {
+            var MOBILE_BP = 768;
+            var isMobileUA = /Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Mobile/i.test(navigator.userAgent);
+            // 用户手动选择「继续用网页版」后，本次会话内不再自动跳转
+            var stay = sessionStorage.getItem('ob_stay_web') === '1';
+
+            function goApp() {
+                if (stay) return;
+                if (location.pathname === '/app') return;
+                // 用 assign 而非 replace：保留历史记录，用户可以按返回键回到网页版
+                location.assign('/app');
+            }
+
+            if (isMobileUA || window.innerWidth < MOBILE_BP) goApp();
+
+            var timer;
+            window.addEventListener('resize', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    if (window.innerWidth < MOBILE_BP) goApp();
+                }, 250);
+            });
+        })();
+    </script>
+    <title>慧读圣经</title>
+    <meta name="description" content="慧读圣经 — AI 驱动的圣经研读平台，含 AI 解析、注释、笔记、读经计划、音视频">
+    <!-- PWA / App meta -->
+    <meta name="theme-color" content="#8250ab" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#17191f" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="慧读圣经">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <!-- Open Graph -->
+    <meta property="og:title" content="慧读圣经 — AI 智能研经平台">
+    <meta property="og:description" content="AI 驱动的圣经研读平台，支持选节解析、注释、笔记、读经计划">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="images/favicon.svg">
+    <!-- 字体与图标全部本地化：与 App 一致的系统字体栈，Font Awesome 自托管（vendor/），
+         不再依赖 Google Fonts / cdnjs 外链，弱网与离线场景可用 -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css?v=51">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <script>
+        (function () {
+            // 在页面首次渲染前，立即应用用户保存的主题，防止深色模式下白屏闪烁
+            const savedTheme = localStorage.getItem('ob_theme');
+            const theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    <!-- ======================================================
+     APP SHELL: fixed 3-column layout
+  ====================================================== -->
+    <div id="app" class="app-shell nav-hidden">
+
+        <!-- ── LEFT NAV ── -->
+        <aside id="left-nav" class="left-nav">
+            <!-- Brand -->
+            <div class="nav-brand">
+                <!-- 品牌标识：图标用矢量 logo（随主题变色），文字走 i18n，
+                     不再依赖 logo-zh/en/ko 六张位图 -->
+                <a href="/" class="brand-lockup" aria-label="慧读圣经">
+                    <span class="brand-mark-box">
+                    <svg class="brand-mark" viewBox="16 8 88 88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C"/>
+                        <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor"/>
+                        <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor"/>
+                        <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+                        <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+                        <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" stroke-width="4"/>
+                    </svg>
+                    </span>
+                    <span class="brand-wordmark">
+                        <b data-i18n="brand.huidu">慧读</b><span data-i18n="brand.bible">圣经</span>
+                    </span>
+                </a>
+                <button id="nav-collapse-btn" class="icon-btn" title="折叠侧栏" data-i18n="tooltip.collapse"
+                    data-i18n-attr="title" aria-label="折叠侧栏">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+            </div>
+
+            <!-- View switcher -->
+            <nav class="nav-views">
+                <button class="nav-item active" data-view="reading"><i class="fa-solid fa-book-bible"></i><span
+                        data-i18n="nav.reading">圣经阅读</span></button>
+                <button class="nav-item" data-view="plan"><i class="fa-solid fa-calendar-check"></i><span
+                        data-i18n="nav.plan">读经计划</span></button>
+                <button class="nav-item" data-view="video"><i class="fa-solid fa-circle-play"></i><span
+                        data-i18n="nav.video">视频</span></button>
+                <button class="nav-item" data-view="audio"><i class="fa-solid fa-headphones"></i><span
+                        data-i18n="nav.audio">音频</span></button>
+            </nav>
+
+            <div class="nav-divider"></div>
+
+            <!-- Bible navigator (only shown in reading view) -->
+            <div id="bible-nav" class="bible-nav">
+                <!-- Testament toggle -->
+                <div class="testament-toggle">
+                    <button class="testament-btn active" data-testament="ot" data-i18n="nav.ot">旧约</button>
+                    <button class="testament-btn" data-testament="nt" data-i18n="nav.nt">新约</button>
+                </div>
+                <!-- Book list -->
+                <div id="book-list" class="book-list"></div>
+            </div>
+
+            <!-- Bottom -->
+            <div class="nav-bottom">
+                <button class="nav-item" data-view="notes"><i class="fa-solid fa-note-sticky"></i><span
+                        data-i18n="nav.notes">笔记</span></button>
+                <button class="nav-item" data-view="profile"><i class="fa-solid fa-user-circle"></i><span
+                        data-i18n="nav.profile">我的</span></button>
+                <button class="nav-item" data-view="settings"><i class="fa-solid fa-gear"></i><span
+                        data-i18n="nav.settings">设置</span></button>
+                <button id="theme-btn" class="nav-item" title="切换主题" data-i18n="tooltip.theme" data-i18n-attr="title" aria-label="切换主题"><i class="fa-solid fa-moon"></i><span
+                        data-i18n="nav.dark">深色模式</span></button>
+
+            </div>
+        </aside>
+
+        <!-- ── CENTER COLUMN ── -->
+        <main class="center-col">
+
+            <!-- Top header bar -->
+            <header class="top-bar" id="top-bar">
+                <!-- Mobile nav toggle -->
+                <button id="mobile-nav-btn" class="icon-btn mobile-only" title="导航" data-i18n="tooltip.nav"
+                    data-i18n-attr="title" aria-label="导航">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <!-- Desktop nav toggle (always visible) -->
+                <button id="nav-toggle-btn" class="icon-btn desktop-nav-toggle" title="展开/折叠侧栏"
+                    data-i18n="tooltip.toggle-nav" data-i18n-attr="title" aria-label="展开/折叠侧栏">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <!-- Breadcrumb / chapter info (reading view) -->
+                <div id="reading-breadcrumb" class="breadcrumb-area">
+                    <button id="prev-ch" class="ch-nav-text-btn" disabled title="上一章" data-i18n="nav.prevCh" data-i18n-attr="title" aria-label="上一章">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button id="book-btn-top" class="breadcrumb-btn breadcrumb-book-btn">
+                        <span id="breadcrumb-book">创世记</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.65rem;opacity:0.4;margin-left:3px;"></i>
+                    </button>
+
+                    <button id="ch-btn-top" class="breadcrumb-btn breadcrumb-ch-btn">
+                        <span id="breadcrumb-ch" data-i18n-dynamic="chapter">第1章</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.65rem;opacity:0.4;margin-left:3px;"></i>
+                    </button>
+                    <button id="next-ch" class="ch-nav-text-btn" title="下一章" data-i18n="nav.nextCh" data-i18n-attr="title" aria-label="下一章">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <div class="breadcrumb-sep"></div>
+                    <select id="version-select" class="version-pill">
+                        <option value="cuv">和合本 CUV</option>
+                        <option value="cnvs">新译本 CNV</option>
+                        <option value="kjv">KJV</option>
+                        <option value="keb">쉬운성경</option>
+                        <option value="krv">개역한글성경</option>
+                        <option value="snr">새누리 SNR</option>
+                    </select>
+                </div>
+
+
+
+                <!-- Header right actions -->
+                <div class="top-actions">
+                    <!-- Prominent language switcher - always visible -->
+                    <div class="lang-switcher-pill" title="Language / 语言 / 언어">
+                        <button class="lang-btn active" data-lang="zh">中</button>
+                        <button class="lang-btn" data-lang="en">EN</button>
+                        <button class="lang-btn" data-lang="ko">한</button>
+                    </div>
+                    <button id="listen-btn" class="pill-action-btn" title="收听本章" data-i18n="tooltip.listen" data-i18n-attr="title"
+                        onclick="window._openAudioPlayer && window._openAudioPlayer()" aria-label="收听本章">
+                        <i class="fa-solid fa-headphones"></i> <span data-i18n="topbar.listen">收听</span>
+                    </button>
+                    <button id="search-btn" class="icon-btn" title="搜索" data-i18n="tooltip.search"
+                        data-i18n-attr="title" aria-label="搜索">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <button id="compare-btn" class="icon-btn" title="经文对照" data-i18n="tooltip.compare"
+                        data-i18n-attr="title" aria-label="经文对照">
+                        <i class="fa-solid fa-book-open-reader"></i>
+                    </button>
+                    <!-- Auth / user area -->
+                    <button id="auth-login-btn" class="pill-action-btn auth-login-pill" title="登录" data-i18n="tooltip.login" data-i18n-attr="title" aria-label="登录">
+                        <i class="fa-solid fa-user"></i> <span data-i18n="auth.login">登录</span>
+                    </button>
+                    <div id="auth-user-area" class="auth-user-area hidden" style="position: relative; z-index: 100;">
+                        <span id="auth-avatar" class="auth-avatar" style="cursor: pointer;">U</span>
+                        
+                        <!-- 下拉菜单弹窗 -->
+                        <div id="user-dropdown" class="user-dropdown hidden">
+                            <!-- 用户信息 -->
+                            <div class="ud-user-info">
+                                <div class="ud-avatar" id="ud-avatar">U</div>
+                                <div class="ud-details">
+                                    <span class="ud-name" id="ud-name">用户名</span>
+                                    <span class="ud-badge" id="ud-badge" data-i18n="profile.free_plan">免费计划</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 计划卡片 -->
+                            <div class="ud-plan-card">
+                                <div class="ud-plan-header">
+                                    <span class="ud-plan-title"><i class="fa-solid fa-sparkles"></i> <span id="ud-plan-title-text" data-i18n="profile.free_plan">免费计划</span></span>
+                                    <button class="ud-support-btn" id="ud-support-btn" data-i18n="profile.support_us">立即支持</button>
+                                </div>
+                                <div class="ud-quota-box">
+                                    <div class="ud-quota-text">
+                                        <span data-i18n="profile.remaining_quota">剩余额度</span> 
+                                        <span class="ud-quota-val" id="ud-quota-val">20/20 条</span>
+                                        <i class="fa-regular fa-circle-question" id="ud-quota-info" title="本月剩余的 AI 智能解析额度" data-i18n="tooltip.quota-info" data-i18n-attr="title"></i>
+                                    </div>
+                                    <div class="ud-progress-bar">
+                                        <div class="ud-progress-fill" id="ud-progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 列表菜单 -->
+                            <div class="ud-menu-list">
+                                <div class="ud-menu-item" id="ud-menu-notes">
+                                    <i class="fa-solid fa-pen-to-square ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.my_notes">我的笔记</span>
+                                    <span class="ud-notes-count" id="ud-notes-count">0</span>
+                                    <i class="fa-solid fa-chevron-right ud-arrow"></i>
+                                </div>
+                                <div class="ud-menu-item" id="ud-menu-orders">
+                                    <i class="fa-solid fa-file-invoice-dollar ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.my_orders">我的订单</span>
+                                </div>
+                                <div class="ud-menu-item" id="ud-menu-bookmarks">
+                                    <i class="fa-solid fa-bookmark ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.my_collections">我的收藏</span>
+                                </div>
+                                
+                                <div class="ud-divider"></div>
+                                
+                                <div class="ud-menu-item" id="ud-menu-settings">
+                                    <i class="fa-solid fa-gear ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.settings">账号设置</span>
+                                </div>
+                                <div class="ud-menu-item" id="ud-menu-feedback">
+                                    <i class="fa-solid fa-envelope ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.feedback">我要反馈</span>
+                                </div>
+                                
+                                <div class="ud-divider"></div>
+                                
+                                <div class="ud-menu-item logout" id="ud-menu-logout">
+                                    <i class="fa-solid fa-right-from-bracket ud-item-icon"></i>
+                                    <span class="ud-item-text" data-i18n="profile.logout">退出登录</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- In-page Audio Player Bar (hidden until Listen clicked) -->
+            <div id="audio-player-bar" class="audio-player-bar hidden">
+                <audio id="main-audio-player" class="hidden"></audio>
+                <div class="apb-left">
+                    <button id="apb-play" class="apb-btn apb-play-btn" aria-label="播放/暂停">
+                        <i class="fa-solid fa-play" id="apb-play-icon"></i>
+                    </button>
+                    <div class="apb-info">
+                        <span id="apb-title" class="apb-title">创世记 第1章</span>
+                        <span id="apb-time" class="apb-time">0:00 / 0:00</span>
+                    </div>
+                </div>
+                <div class="apb-center">
+                    <input type="range" id="apb-progress" class="apb-progress" value="0" min="0" max="100">
+                </div>
+                <div class="apb-right">
+                    <span class="apb-label" data-i18n="audio.speed">语速</span>
+                    <select id="apb-speed" class="apb-speed">
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                    <!-- NOTE: 声音切换按钮已移除——新约使用声音由后台「设置」页面统一配置，前端不再提供切换入口 -->
+                    <button id="apb-voice-toggle" class="apb-btn apb-toggle hidden" style="display:none!important" title="切换声音" data-i18n="tooltip.voice" data-i18n-attr="title" aria-hidden="true" aria-label="切换声音">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span id="apb-voice-label">女声</span>
+                    </button>
+                    <button id="apb-follow" class="apb-btn apb-toggle" title="跟读模式" data-i18n="tooltip.follow" data-i18n-attr="title" aria-label="跟读模式">
+                        <i class="fa-solid fa-person-walking"></i>
+                        <span data-i18n="audio.follow">跟读</span>
+                    </button>
+                    <button id="apb-close" class="apb-btn apb-close-btn" title="关闭" data-i18n="tooltip.close" data-i18n-attr="title" aria-label="关闭">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <!-- Hidden HTML5 audio element -->
+                <audio id="apb-audio"></audio>
+            </div>
+
+            <div class="content-area" id="content-area">
+
+
+                <!-- ===== READING VIEW ===== -->
+                <div id="view-reading" class="view active-view">
+                    <!-- Selection toolbar (shows when verses selected, beside ch-heading) -->
+
+                    <div id="selection-bar" class="selection-bar hidden">
+                        <div class="sel-group sel-count-group">
+                            <span id="sel-count-label" class="sel-count">已选 <span id="sel-count">0</span> 节</span>
+                        </div>
+                        <div class="sel-divider"></div>
+                        <div class="sel-group sel-colors-group">
+                            <span class="sel-dot" data-color="#FBE59A" style="background:#fbe59a" title="黄色" data-i18n="tooltip.color-yellow" data-i18n-attr="title"></span>
+                            <span class="sel-dot" data-color="#BFE6CF" style="background:#bfe6cf" title="绿色" data-i18n="tooltip.color-green" data-i18n-attr="title"></span>
+                            <span class="sel-dot" data-color="#C7DCF4" style="background:#c7dcf4" title="蓝色" data-i18n="tooltip.color-blue" data-i18n-attr="title"></span>
+                            <span class="sel-dot" data-color="#F3CAD8" style="background:#f3cad8" title="粉色" data-i18n="tooltip.color-pink" data-i18n-attr="title"></span>
+                            <span class="sel-dot" data-color="#DDCCF1" style="background:#ddccf1" title="紫色" data-i18n="tooltip.color-purple" data-i18n-attr="title"></span>
+                        </div>
+                        <div class="sel-divider"></div>
+                        <div class="sel-group sel-actions">
+                            <button class="sel-btn-icon" id="sel-copy-btn" title="复制" data-i18n="tooltip.copy" data-i18n-attr="title" aria-label="复制">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button class="sel-btn-pill btn-ai" id="sel-ai-btn"
+                                onclick="document.querySelector('.panel-tab[data-tab=\'ai\']') && document.querySelector('.panel-tab[data-tab=\'ai\']').click(); document.getElementById('run-ai-btn') && document.getElementById('run-ai-btn').click();"
+                                title="AI 解析" data-i18n="tooltip.ai-analyze" data-i18n-attr="title" aria-label="AI 解析">
+                                <i class="fa-solid fa-sparkles"></i> AI
+                            </button>
+                            <button class="sel-btn-pill btn-note" id="sel-note-btn" title="添加笔记" data-i18n="tooltip.add-note" data-i18n-attr="title" aria-label="添加笔记">
+                                <i class="fa-solid fa-pen"></i> 笔记
+                            </button>
+                        </div>
+                        <button class="sel-close-btn" id="sel-clear-btn" title="取消选择" data-i18n="tooltip.clear-sel" data-i18n-attr="title" aria-label="取消选择">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div id="bible-text" class="bible-text">
+                        <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> 加载中...</div>
+                    </div>
+                </div>
+
+                <!-- ===== PLAN VIEW ===== -->
+                <div id="view-plan" class="view hidden-view">
+                    <div class="view-header-title"><i class="fa-solid fa-calendar-check"></i> <span
+                            data-i18n="nav.plan">读经计划</span></div>
+                    <div id="plan-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== VIDEO VIEW ===== -->
+                <div id="view-video" class="view hidden-view">
+                    <div class="view-header-title"><i class="fa-solid fa-circle-play"></i> <span
+                            data-i18n="nav.video">视频</span></div>
+                    <div id="video-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== AUDIO VIEW ===== -->
+                <div id="view-audio" class="view hidden-view">
+                    <div class="view-header-title"><i class="fa-solid fa-headphones"></i> <span
+                            data-i18n="nav.audio">音频</span></div>
+                    <div id="audio-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== NOTES VIEW ===== -->
+                <!-- 笔记原本是右栏第四个页签，移到左侧成为独立视图；
+                     选中经文后点选区/右键的「笔记」会切到这里并带上引用。 -->
+                <div id="view-notes" class="view hidden-view">
+                    <div class="view-header-title"><i class="fa-solid fa-note-sticky"></i> <span
+                            data-i18n="nav.notes">笔记</span></div>
+                    <div id="notes-render" class="view-content notes-view">
+                <!-- No selection prompt -->
+                <div class="study-tab-no-selection" id="notes-tab-no-sel">
+                    <div class="no-sel-icon"><i class="fa-solid fa-note-sticky"></i></div>
+                    <p data-i18n="notes.tab.nosel">点击左侧经文<br>为所选经文添加笔记</p>
+                </div>
+                <div id="notes-tab-content" class="hidden">
+                    <!-- Verse ref pill (synced from selection) -->
+                    <div class="tab-ref-pill-wrap" id="notes-tab-ref-wrap">
+                        <div class="study-ref-pill tab-ref-pill" id="notes-tab-ref-pill">
+                            <i class="fa-solid fa-book-bible"></i>
+                            <span class="tab-ref-text">—</span>
+                        </div>
+                    </div>
+                    <div class="panel-section">
+                        <div class="note-context" id="note-context-label"></div>
+                        <div class="note-input-area">
+                            <textarea id="note-input" class="note-textarea" placeholder="添加笔记..."
+                                data-i18n="notes.placeholder" data-i18n-attr="placeholder"></textarea>
+                            <button id="save-note-btn" class="save-note-btn">
+                                <i class="fa-solid fa-save"></i> <span data-i18n="notes.save">保存笔记</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- 历史笔记工具栏：搜索 / 类型筛选 / 经卷筛选 / 排序 / 分组 -->
+                    <div class="notes-toolbar" id="notes-toolbar">
+                        <div class="notes-toolbar-head">
+                            <div class="section-label" style="padding:0;">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <span id="notes-history-title">历史笔记</span>
+                            </div>
+                            <span class="notes-count-badge" id="notes-count-badge"></span>
+                        </div>
+                        <div class="notes-search-wrap">
+                            <i class="fa-solid fa-magnifying-glass notes-search-icon"></i>
+                            <input type="text" id="notes-search-input" class="notes-search-input"
+                                name="notes-search" autocomplete="off" autocorrect="off" autocapitalize="off"
+                                spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other"
+                                placeholder="搜索笔记…">
+                            <button type="button" class="notes-search-clear hidden" id="notes-search-clear"
+                                title="清除" data-i18n="tooltip.clear" data-i18n-attr="title" aria-label="清除"><i class="fa-solid fa-circle-xmark"></i></button>
+                        </div>
+                        <div class="notes-controls">
+                            <div class="notes-chips" id="notes-type-chips">
+                                <button type="button" class="notes-chip active" data-type="all">全部</button>
+                                <button type="button" class="notes-chip" data-type="note">手写</button>
+                                <button type="button" class="notes-chip" data-type="ai_qa">AI</button>
+                            </div>
+                            <div class="notes-controls-right">
+                                <select id="notes-book-filter" class="notes-book-select" title="按书卷筛选" data-i18n="tooltip.filter-book" data-i18n-attr="title"></select>
+                                <button type="button" class="notes-icon-btn" id="notes-sort-btn"
+                                    title="排序" data-i18n="tooltip.sort" data-i18n-attr="title" aria-label="排序"><i class="fa-solid fa-arrow-down-wide-short"></i></button>
+                                <button type="button" class="notes-icon-btn" id="notes-group-btn"
+                                    title="按书卷分组" data-i18n="tooltip.group-book" data-i18n-attr="title" aria-label="按书卷分组"><i class="fa-solid fa-layer-group"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="notes-list" class="notes-list"></div>
+                </div>
+            </div>
+                </div>
+
+                <!-- ===== SETTINGS VIEW ===== -->
+                <div id="view-settings" class="view hidden-view">
+                    <div class="view-header-title"><i class="fa-solid fa-gear"></i> <span
+                            data-i18n="nav.settings">设置</span></div>
+                    <div id="settings-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== PROFILE VIEW (My Page) ===== -->
+                <div id="view-profile" class="view hidden-view">
+                    <div id="profile-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== ABOUT US VIEW ===== -->
+                <div id="view-about" class="view hidden-view">
+                    <div id="about-render" class="view-content"></div>
+                </div>
+
+                <!-- ===== PRIVACY POLICY VIEW ===== -->
+                <div id="view-privacy" class="view hidden-view">
+                    <div id="privacy-render" class="view-content"></div>
+                </div>
+
+            </div><!-- /content-area -->
+        </main>
+
+        <!-- ── RESIZE HANDLE (between center and right panel) ── -->
+        <div id="panel-resize-handle" class="panel-resize-handle"></div>
+
+        <!-- ── RIGHT STUDY PANEL ── -->
+        <aside id="study-panel" class="study-panel">
+            <!-- Panel tabs -->
+            <div class="panel-tab-bar">
+                <button class="panel-tab active" data-tab="ai"><i class="fa-solid fa-wand-magic-sparkles"></i> <span
+                        data-i18n="tab.ai">慧读</span></button>
+                <button class="panel-tab" data-tab="study"><i class="fa-solid fa-scroll"></i> <span
+                        data-i18n="tab.study">精读</span></button>
+                <button class="panel-tab" data-tab="community"><i class="fa-solid fa-user-group"></i> <span
+                        data-i18n="tab.community">社群</span></button>
+                <button class="panel-tab" data-tab="bookmarks"><i class="fa-solid fa-book"></i> <span
+                        data-i18n="tab.bookmarks">百科</span></button>
+            </div>
+
+            <!-- ── AI SEARCH tab ── -->
+            <div id="tab-ai" class="tab-content">
+                <!-- NOTE: 整个面板用一个可滚动容器包裹，速览 + 选节结果上下堆叠 -->
+                <div id="ai-panel-scroll" class="ai-panel-scroll">
+
+                    <!-- Chapter Overview (始终显示，不随选节消失) -->
+                    <div class="panel-section verse-ref-section" id="study-ref-section">
+                        <!-- Default state: Chapter overview + exploration (no verse selected) -->
+                        <div class="study-no-selection" id="ai-default-state">
+                            <!-- Chapter Overview Card -->
+                            <div class="ch-overview-card" id="ch-overview-card">
+                                <div class="ch-overview-header">
+                                    <div class="ch-overview-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+                                    <div class="ch-overview-label" data-i18n="ch.overview">本章速览</div>
+                                    <div class="ch-overview-ref" id="ch-overview-ref"></div>
+                                </div>
+                                <div class="ch-overview-body" id="ch-overview-body">
+                                    <div class="ch-overview-skeleton">
+                                        <div class="skeleton-line" style="width:100%"></div>
+                                        <div class="skeleton-line" style="width:92%"></div>
+                                        <div class="skeleton-line" style="width:80%"></div>
+                                    </div>
+                                </div>
+                                <div class="ch-overview-themes" id="ch-overview-themes"></div>
+                            </div>
+
+                            <!-- Exploration Section -->
+                            <div class="ch-explore-section">
+                                <div class="ch-explore-label">
+                                    <i class="fa-solid fa-compass"></i> <span data-i18n="ch.explore">启发探索</span>
+                                </div>
+                                <div class="ch-explore-chips" id="ch-explore-chips">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+
+                            <!-- Hint to select verse -->
+                            <div class="ch-select-hint">
+                                <i class="fa-solid fa-hand-pointer"></i>
+                                <span data-i18n="ch.select-hint">点击左侧经文可获取逐节深度解析</span>
+                            </div>
+                        </div>
+
+                        <!-- NOTE: 选节内容区——追加在速览下方，不再与速览互斥 -->
+                        <div id="study-selection-display" class="study-selection-display hidden">
+                            <div class="verse-selection-divider">
+                                <i class="fa-solid fa-chevron-down"></i>
+                                <span>已选节</span>
+                            </div>
+                            <div class="study-ref-pill" id="study-ref-pill">
+                                <i class="fa-solid fa-book-bible"></i>
+                                <span id="study-ref-text">—</span>
+                            </div>
+                            <div class="study-verse-block" id="study-verse-block" style="display:none;"></div>
+
+                        </div>
+                    </div>
+                    <!-- AI summary (analysis results) -->
+                    <div class="panel-section" id="study-ai-section" style="display:none;">
+                        <div class="section-label"><i class="fa-solid fa-sparkles"></i> <span
+                                data-i18n="study.ai.title">AI
+                                经文解析</span></div>
+                        <div class="ai-summary-card" id="ai-summary-card">
+                            <div class="ai-loading" id="ai-loading"><span></span><span></span><span></span></div>
+                            <div id="ai-summary-text" class="ai-summary-text"></div>
+                        </div>
+                    </div>
+
+                    <div id="ai-messages" class="ai-messages" style="padding-top: 16px;">
+                    </div>
+
+                </div><!-- /ai-panel-scroll -->
+
+                <!-- NOTE: 输入框固定在底部，不参与滚动 -->
+                <div class="panel-section ai-input-footer"
+                    style="position: sticky; bottom: 0; background: var(--bg-panel); z-index: 10; padding-bottom: 16px;">
+                    <div class="ai-quota-bar hidden" id="ai-quota-bar">
+                        <div class="ai-quota-count">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span data-i18n="ai.quota">今日剩余</span> <span class="count-num"
+                                id="ai-quota-remaining">5</span> <span data-i18n="ai.quota.free">次免费 AI 解析</span>
+                        </div>
+                        <div class="ai-quota-upgrade" onclick="showToast('VIP 功能即将上线，敬请期待！')">
+                            <i class="fa-solid fa-crown"></i> <span data-i18n="ai.quota.upgrade">升级</span>
+                        </div>
+                    </div>
+                    <!-- 与 App 端慧读输入框一致：灰底胶囊内含输入框 + 语音键，外置圆形发送键 -->
+                    <div class="ai-search-box" style="margin-bottom: 0;">
+                        <div id="ai-voice-status" class="ai-composer-status hidden" role="status"></div>
+                        <div id="ai-attach-chip" class="ai-attach-chip hidden"></div>
+                        <div class="ai-composer-row">
+                            <span class="ai-chat-field">
+                                <button id="ai-attach-btn" type="button" class="ai-attach-btn"
+                                    aria-label="上传附件" title="上传附件">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                </button>
+                                <input id="ai-attach-input" type="file" class="hidden"
+                                    accept=".txt,.md,.markdown,.json,.csv,text/plain">
+                                <input id="ai-search-input" type="text" class="ai-search-input"
+                                    name="ai-question" autocomplete="off" autocorrect="off" autocapitalize="off"
+                                    spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other"
+                                    placeholder="输入你的疑问，或点击上方问题开始探讨..." data-i18n="ai.placeholder" data-i18n-attr="placeholder">
+                                <button id="ai-voice-btn" type="button" class="ai-voice-btn hidden"
+                                    aria-pressed="false" aria-label="开始语音输入" title="开始语音输入">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                            </span>
+                            <button id="ai-search-btn" class="ai-search-submit" aria-label="发送问题" disabled><i
+                                    class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ── STUDY tab ── -->
+            <div id="tab-study" class="tab-content hidden">
+                <!-- No selection prompt -->
+                <div class="study-tab-no-selection" id="study-tab-no-sel">
+                    <div class="no-sel-icon"><i class="fa-solid fa-scroll"></i></div>
+                    <p data-i18n="study.tab.nosel">点击左侧经文<br>查看注释与解析</p>
+                </div>
+                <!-- Verse ref pill (synced from selection) -->
+                <div id="study-tab-content" class="hidden">
+                    <div class="tab-ref-pill-wrap" id="study-tab-ref-wrap">
+                        <div class="study-ref-pill tab-ref-pill" id="study-tab-ref-pill">
+                            <i class="fa-solid fa-book-bible"></i>
+                            <span class="tab-ref-text">—</span>
+                        </div>
+                    </div>
+                    <!-- Commentary section -->
+                    <div class="panel-section" id="study-tab-comm-section">
+
+                        <div id="study-tab-commentary-content">
+                            <p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">暂无注释数据</p>
+                        </div>
+                    </div>
+
+                    <!-- Cross references section -->
+                    <div class="panel-section" id="study-tab-cross-section" style="display:none;">
+                        <div id="study-tab-cross-content">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── NOTES tab ── -->
+            
+
+            <!-- ── 百科 (ENCYCLOPEDIA) tab ── -->
+            <div id="tab-community" class="tab-content hidden">
+                <div id="community-render" class="community-panel"></div>
+            </div>
+
+            <div id="tab-bookmarks" class="tab-content hidden">
+                <div id="encyclopedia-render" class="encyclopedia-panel"></div>
+            </div>
+        </aside>
+
+    </div><!-- /app-shell -->
+
+    <!-- ── OVERLAYS ── -->
+
+    <!-- Compare overlay -->
+    <div id="compare-overlay" class="overlay hidden">
+        <div class="overlay-backdrop" id="compare-backdrop"></div>
+        <div class="compare-modal">
+            <div class="compare-modal-header">
+                <div class="compare-modal-title">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                    <span id="compare-title" data-i18n="compare.title">经文对照</span>
+                    <span id="compare-ref" class="compare-ref-badge"></span>
+                </div>
+                <button id="compare-close" class="icon-btn" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="compare-version-bar" id="compare-version-bar"></div>
+            <div class="compare-scroll" id="compare-scroll"></div>
+        </div>
+    </div>
+
+    <!-- Search overlay — Smart Search -->
+    <div id="search-overlay" class="overlay hidden">
+        <div class="overlay-backdrop" id="search-backdrop"></div>
+        <div class="search-modal">
+            <div class="search-header">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input id="search-input" type="text" class="search-modal-input" placeholder="搜索经文、书卷名..."
+                        name="bible-search" autocomplete="off" autocorrect="off" autocapitalize="off"
+                        spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+                    <span id="search-shortcut-hint" class="search-shortcut-hint">
+                        <kbd>ESC</kbd> 关闭
+                    </span>
+                    <button id="search-clear-btn" class="search-clear-btn hidden" title="清除" data-i18n="tooltip.clear" data-i18n-attr="title" aria-label="清除">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <button id="search-close" class="icon-btn search-close-btn" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- 搜索范围筛选：全部 / 旧约 / 新约 -->
+            <div class="search-scope-bar" id="search-scope-bar">
+                <button class="search-scope-chip active" data-scope="all" data-i18n="search.scope.all">全部</button>
+                <button class="search-scope-chip" data-scope="ot" data-i18n="search.scope.ot">旧约</button>
+                <button class="search-scope-chip" data-scope="nt" data-i18n="search.scope.nt">新约</button>
+            </div>
+            <!-- Smart suggestion layer (books, history, semantic) -->
+            <div id="search-suggestions" class="search-suggestions">
+                <!-- Filled dynamically by JS -->
+            </div>
+            <!-- Search results -->
+            <div id="search-results" class="search-results"></div>
+            <!-- Footer tips -->
+            <div class="search-footer" id="search-footer">
+                <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+                <span><kbd>Enter</kbd> 跳转</span>
+                <span><kbd>/</kbd> 快捷搜索</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chapter picker overlay -->
+    <div id="chapter-overlay" class="overlay hidden">
+        <div class="overlay-backdrop" id="chapter-backdrop"></div>
+        <div class="chapter-picker-modal">
+            <div class="picker-header">
+                <button id="picker-back-btn" class="icon-btn" aria-label="返回"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2 id="picker-title">选择书卷</h2>
+                <button id="picker-close" class="icon-btn" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Book grid -->
+            <div id="picker-books" class="picker-books">
+                <div class="picker-testament-label" data-i18n="nav.ot">旧约</div>
+                <div id="picker-ot" class="book-grid"></div>
+                <div class="picker-testament-label" data-i18n="nav.nt">新约</div>
+                <div id="picker-nt" class="book-grid"></div>
+            </div>
+            <!-- Chapter grid -->
+            <div id="picker-chapters" class="picker-chapters hidden">
+                <div id="chapter-grid" class="chapter-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context menu -->
+    <div id="ctx-menu" class="ctx-menu hidden">
+        <button class="ctx-item" id="ctx-copy"><i class="fa-solid fa-copy"></i> <span
+                data-i18n="ctx.copy">复制经文</span></button>
+        <button class="ctx-item" id="ctx-note"><i class="fa-solid fa-note-sticky"></i> <span
+                data-i18n="ctx.note">添加笔记</span></button>
+        <button class="ctx-item" id="ctx-bookmark"><i class="fa-solid fa-bookmark"></i> <span
+                data-i18n="ctx.bookmark">添加书签</span></button>
+        <div class="ctx-sep"></div>
+        <div class="ctx-colors">
+            <span class="ctx-color" data-color="#FBE59A" style="background:#fbe59a" title="黄" data-i18n="tooltip.color-yellow" data-i18n-attr="title"></span>
+            <span class="ctx-color" data-color="#BFE6CF" style="background:#bfe6cf" title="绿" data-i18n="tooltip.color-green" data-i18n-attr="title"></span>
+            <span class="ctx-color" data-color="#C7DCF4" style="background:#c7dcf4" title="蓝" data-i18n="tooltip.color-blue" data-i18n-attr="title"></span>
+            <span class="ctx-color" data-color="#F3CAD8" style="background:#f3cad8" title="粉" data-i18n="tooltip.color-pink" data-i18n-attr="title"></span>
+            <span class="ctx-color" data-color="#DDCCF1" style="background:#ddccf1" title="紫" data-i18n="tooltip.color-purple" data-i18n-attr="title"></span>
+            <span class="ctx-color ctx-clear" data-color="" title="清除" data-i18n="tooltip.clear" data-i18n-attr="title"><i class="fa-solid fa-xmark"
+                    style="font-size:0.6rem;"></i></span>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"><i class="fa-solid fa-check"></i> <span id="toast-msg"></span></div>
+
+    <!-- Mobile bottom nav bar (only visible on mobile via CSS) -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button class="bottom-nav-btn active" data-view="reading">
+            <i class="fa-solid fa-book-bible"></i>
+            <span>圣经</span>
+        </button>
+        <button class="bottom-nav-btn" data-view="plan">
+            <i class="fa-solid fa-calendar-check"></i>
+            <span data-i18n="nav.plan">计划</span>
+        </button>
+        <button class="bottom-nav-btn" id="bottom-study-btn">
+            <i class="fa-solid fa-sparkles"></i>
+            <span id="bottom-sel-badge"></span>
+            <span data-i18n="topbar.panel">研经</span>
+        </button>
+        <button class="bottom-nav-btn" data-view="audio">
+            <i class="fa-solid fa-headphones"></i>
+            <span>音频</span>
+        </button>
+        <button class="bottom-nav-btn" id="bottom-search-btn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span data-i18n="topbar.search2">搜索</span>
+        </button>
+    </nav>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="mobile-overlay" class="mobile-overlay hidden"></div>
+
+    <!-- ════════════════════════════════════════
+         AUTH MODAL
+    ════════════════════════════════════════ -->
+        <div id="auth-modal" class="overlay hidden">
+        <div id="auth-modal-backdrop" class="overlay-backdrop"></div>
+        <!-- 布局与 App 端登录页（LoginPage.tsx）一致：品牌区 → 邮箱 → 验证码+获取 → 登录/注册 → 第三方 -->
+        <div class="auth-modal-box auth-app">
+            <button id="auth-modal-close" class="auth-modal-close" aria-label="关闭">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="auth-brand">
+                <span class="auth-brand-box">
+                <svg viewBox="16 8 88 88" xmlns="http://www.w3.org/2000/svg" width="52" height="52" role="img" aria-label="OpenBible" style="overflow:visible">
+                    <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C" />
+                    <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor" />
+                    <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor" />
+                    <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                    <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                    <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" stroke-width="4" />
+                </svg>
+                </span>
+                <div class="auth-brand-name"><span class="auth-brand-accent" data-i18n="brand.huidu">慧读</span><span data-i18n="brand.bible">圣经</span></div>
+                <div class="auth-brand-tagline" data-i18n="brand.tagline">智慧 · 读经 · 社群 · 共勉</div>
+            </div>
+
+            <div class="auth-card">
+                <div class="auth-input-row">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input id="auth-email" type="email" autocomplete="email" placeholder="邮箱地址" data-i18n-ph="auth.emailPh">
+                </div>
+                <div class="auth-code-row">
+                    <div class="auth-input-row">
+                        <i class="fa-solid fa-lock"></i>
+                        <input id="auth-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 位验证码" data-i18n-ph="auth.code-ph">
+                    </div>
+                    <button id="auth-send-code" class="auth-code-btn" data-i18n="auth.send-code">获取验证码</button>
+                </div>
+                <p id="auth-error" class="auth-error"></p>
+                <p id="auth-notice" class="auth-notice"></p>
+                <button id="auth-verify" class="auth-primary-btn" data-i18n="auth.loginRegister">登录 / 注册</button>
+                <div class="auth-hint" data-i18n="auth.first-login-hint">首次使用同一邮箱登录将自动注册</div>
+            </div>
+
+            <div class="auth-divider"><span data-i18n="auth.or">或</span></div>
+
+            <div class="auth-oauth">
+                <button id="auth-apple" type="button" class="auth-oauth-btn" data-i18n="auth.apple">通过 Apple 登录</button>
+                <div id="google-btn-container" class="auth-google-slot"></div>
+            </div>
+
+            <div class="auth-terms">
+                <span data-i18n="auth.termsPrefix">登录即表示同意</span>
+                <a href="#" data-view="about" class="auth-term-link" data-i18n="auth.terms">《用户协议》</a>
+                <span data-i18n="auth.and">与</span>
+                <a href="#" data-view="privacy" class="auth-term-link" data-i18n="auth.privacy">《隐私政策》</a>
+            </div>
+
+            <div class="auth-lang-row">
+                <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中文</button>
+                <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+                <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         TAG EXPLAIN MODAL
+    ════════════════════════════════════════ -->
+    <div id="tag-explain-overlay" class="overlay hidden">
+        <div id="tag-explain-backdrop" class="overlay-backdrop"></div>
+        <div class="tag-explain-modal" style="margin: auto; margin-top: 10vh;">
+            <!-- Header -->
+            <div class="tag-explain-header">
+                <div>
+                    <div class="tag-explain-subtitle">关键词深度解读</div>
+                    <h3 class="tag-explain-title">「<span id="tag-explain-keyword"></span>」</h3>
+                    <div class="tag-explain-meta">
+                        <span class="tag-explain-dot"></span>
+                        <span id="tag-explain-ref"></span>
+                    </div>
+                </div>
+                <button id="tag-explain-close" class="tag-explain-close" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="tag-explain-body" id="tag-explain-body">
+                <!-- Loading State -->
+                <div id="tag-explain-loading" class="tag-explain-loading hidden">
+                     <div class="ai-loading" style="transform:scale(1.5);"><span></span><span></span><span></span></div>
+                     <p>AI 正在深度思考...</p>
+                     <p style="font-size:0.75rem;color:var(--text-tertiary);margin-top:4px;">从三个维度解读关键词</p>
+                </div>
+                <!-- Error State -->
+                <div id="tag-explain-error" class="tag-explain-error hidden"></div>
+                <!-- Answer State -->
+                <div id="tag-explain-content" class="tag-explain-content hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         SHARE CARD PREVIEW MODAL
+    ════════════════════════════════════════ -->
+    <div id="share-overlay" class="overlay hidden">
+        <div class="overlay-backdrop" onclick="document.getElementById('share-overlay').classList.add('hidden')"></div>
+        <div class="share-modal">
+            <div class="share-modal-header">
+                <div class="share-modal-title-group">
+                    <span class="share-modal-title"><i class="fa-solid fa-share-from-square"></i> <span data-i18n="share.preview-title">分享卡片预览</span></span>
+                    <span class="share-modal-subtitle" data-i18n="share.preview-subtitle">保存精美卡片，留存属灵感悟</span>
+                </div>
+                <button class="icon-btn share-modal-close-btn" aria-label="关闭" onclick="document.getElementById('share-overlay').classList.add('hidden')"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="share-canvas-wrap">
+                <canvas id="share-canvas"></canvas>
+            </div>
+            <div class="share-actions">
+                <button onclick="saveShareCard()">
+                    <i class="fa-solid fa-download"></i> <span data-i18n="share.save-image">保存图片</span>
+                </button>
+                <button class="primary" onclick="copyShareCard()">
+                    <i class="fa-solid fa-copy"></i> <span data-i18n="share.copy-clipboard">复制到剪贴板</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         ONBOARDING MODAL (3-step new user guide)
+    ════════════════════════════════════════ -->
+    <div id="onboarding-modal" class="overlay hidden">
+        <div class="overlay-backdrop onboarding-backdrop"></div>
+        <div class="onboarding-box">
+            <!-- Progress indicator -->
+            <div class="ob-progress">
+                <div class="ob-dot active" data-step="1"><span>1</span></div>
+                <div class="ob-connector"></div>
+                <div class="ob-dot" data-step="2"><span>2</span></div>
+                <div class="ob-connector"></div>
+                <div class="ob-dot" data-step="3"><span>3</span></div>
+            </div>
+
+            <!-- Skip button -->
+            <button class="ob-skip-btn" id="ob-skip-btn">跳过 <i class="fa-solid fa-forward"></i></button>
+
+            <!-- Step 1: 灵命阶段 -->
+            <div class="ob-step active-step" data-step="1">
+                <div class="ob-icon-wrap"><span class="ob-icon-emoji">🙏</span></div>
+                <h2 class="ob-title">你好！欢迎来到慧读圣经</h2>
+                <p class="ob-subtitle">告诉我们你的信仰阶段，以便提供最适合的内容</p>
+                <div class="ob-options" id="ob-stage-options">
+                    <button class="ob-option-card" data-value="seeker">
+                        <span class="ob-opt-icon">🌱</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">慕道友 / 探索者</span>
+                            <span class="ob-opt-desc">对基督信仰感兴趣，想了解更多</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button class="ob-option-card" data-value="beginner">
+                        <span class="ob-opt-icon">✝️</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">初信者</span>
+                            <span class="ob-opt-desc">刚接受信仰，渴望扎根圣经</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button class="ob-option-card" data-value="regular">
+                        <span class="ob-opt-icon">📖</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">稳定读经者</span>
+                            <span class="ob-opt-desc">有一定读经习惯，希望更深入</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button class="ob-option-card" data-value="advanced">
+                        <span class="ob-opt-icon">🎓</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">资深信徒 / 同工</span>
+                            <span class="ob-opt-desc">多年信仰经验，追求深度研经</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: 时间偏好 -->
+            <div class="ob-step" data-step="2">
+                <div class="ob-icon-wrap"><span class="ob-icon-emoji">⏰</span></div>
+                <h2 class="ob-title">你希望每天花多少时间？</h2>
+                <p class="ob-subtitle">我们会根据你的时间安排推荐合适的计划</p>
+                <div class="ob-options" id="ob-time-options">
+                    <button class="ob-option-card" data-value="5">
+                        <span class="ob-opt-icon">⚡</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">5 分钟</span>
+                            <span class="ob-opt-desc">碎片时间，轻松开始</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button class="ob-option-card" data-value="15">
+                        <span class="ob-opt-icon">☀️</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">15 分钟</span>
+                            <span class="ob-opt-desc">适合日常灵修，推荐选择</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                        <span class="ob-badge">推荐</span>
+                    </button>
+                    <button class="ob-option-card" data-value="30">
+                        <span class="ob-opt-icon">📚</span>
+                        <div class="ob-opt-body">
+                            <span class="ob-opt-title">30 分钟以上</span>
+                            <span class="ob-opt-desc">深度研读，系统学习</span>
+                        </div>
+                        <span class="ob-opt-check"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                </div>
+                <button class="ob-nav-btn ob-back" id="ob-back-1"><i class="fa-solid fa-arrow-left"></i> 上一步</button>
+            </div>
+
+            <!-- Step 3: 推荐计划 + AI 演示 -->
+            <div class="ob-step" data-step="3">
+                <div class="ob-icon-wrap"><span class="ob-icon-emoji">🎉</span></div>
+                <h2 class="ob-title">为你定制的读经计划</h2>
+                <p class="ob-subtitle">根据你的选择，我们推荐以下计划</p>
+                <div class="ob-recommendation" id="ob-recommendation">
+                    <!-- Dynamically populated by JS -->
+                </div>
+                <div class="ob-ai-demo" id="ob-ai-demo">
+                    <div class="ob-ai-header">
+                        <i class="fa-solid fa-sparkles"></i> AI 智能助手演示
+                    </div>
+                    <div class="ob-ai-chat">
+                        <div class="ob-ai-msg user">
+                            <div class="ob-ai-bubble">"约翰福音1:1 的'道'是什么意思？"</div>
+                        </div>
+                        <div class="ob-ai-msg bot" id="ob-ai-typing">
+                            <div class="ob-ai-avatar"><img src="images/logo-mark.svg" alt="AI"></div>
+                            <div class="ob-ai-bubble">
+                                <span class="ob-typing-dots"><span></span><span></span><span></span></span>
+                            </div>
+                        </div>
+                        <div class="ob-ai-msg bot hidden" id="ob-ai-answer">
+                            <div class="ob-ai-avatar"><img src="images/logo-mark.svg" alt="AI"></div>
+                            <div class="ob-ai-bubble" id="ob-ai-answer-text"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ob-final-row">
+                    <button class="ob-nav-btn ob-back" id="ob-back-2"><i class="fa-solid fa-arrow-left"></i>
+                        上一步</button>
+                    <button class="ob-start-btn" id="ob-start-btn">
+                        <i class="fa-solid fa-rocket"></i> 开始我的旅程
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveShareCard() {
+            const canvas = document.getElementById('share-canvas');
+            const link = document.createElement('a');
+            link.download = '慧读圣经-分享卡片.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            if (typeof showToast === 'function') showToast('图片已保存');
+        }
+        async function copyShareCard() {
+            try {
+                const canvas = document.getElementById('share-canvas');
+                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                if (typeof showToast === 'function') showToast('已复制到剪贴板');
+            } catch (e) {
+                if (typeof showToast === 'function') showToast('复制失败，请使用保存图片');
+            }
+        }
+    </script>
+
+    <!-- ── GLOBAL CONFIRM MODAL ── -->
+    <div id="confirm-modal" class="overlay hidden">
+        <div class="overlay-backdrop" id="confirm-modal-backdrop"></div>
+        <div class="confirm-modal-box">
+            <div class="confirm-modal-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="confirm-modal-title" id="confirm-modal-title">确认操作</h3>
+            <p class="confirm-modal-desc" id="confirm-modal-desc">您确定要删除此条记录吗？</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-modal-btn cancel-btn" id="confirm-modal-cancel">取消</button>
+                <button class="confirm-modal-btn confirm-btn" id="confirm-modal-confirm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── GLOBAL SUPPORT MODAL ── -->
+    <div id="support-modal" class="overlay hidden">
+        <div class="overlay-backdrop" id="support-modal-backdrop"></div>
+        <div class="support-modal-box">
+            <button id="support-modal-close" class="support-modal-close" aria-label="关闭">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="sm-header">
+                <h2 class="sm-title" data-i18n="support.modal_title">我们需要您的支持</h2>
+                <p class="sm-subtitle" data-i18n="support.modal_subtitle">您的支持承担关键技术成本，使我们能服务更多人</p>
+                
+                <!-- 切换药丸 -->
+                <div class="sm-toggle-container">
+                    <button class="sm-toggle-btn active" id="sm-toggle-monthly" data-i18n="support.toggle_monthly">连续每月</button>
+                    <button class="sm-toggle-btn" id="sm-toggle-once" data-i18n="support.toggle_once">单月支持</button>
+                </div>
+            </div>
+            
+            <!-- 卡片列表 -->
+            <div class="sm-cards-container">
+                <!-- 免费计划 -->
+                <div class="sm-card">
+                    <div class="sm-card-body">
+                        <h3 class="sm-card-title">免费计划</h3>
+                        <div class="sm-card-price">
+                            <span class="sm-currency">$</span><span class="sm-price-val">0</span><span class="sm-period">/月</span>
+                        </div>
+                        <button class="sm-card-btn disabled" data-plan="free" disabled>当前支持</button>
+                        
+                        <div class="sm-features-list">
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>感谢众多支持者的支持，使我们能向所有人开放这份免费资源</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>每月 20 次体验对话</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 基础计划 -->
+                <div class="sm-card">
+                    <div class="sm-card-body">
+                        <h3 class="sm-card-title"><i class="fa-solid fa-sparkle" style="color:var(--accent); font-size:0.85rem;"></i> 基础计划</h3>
+                        <div class="sm-card-price">
+                            <span class="sm-currency">$</span><span class="sm-price-val" id="sm-price-basic">4.99</span><span class="sm-period" id="sm-period-basic">/月</span>
+                        </div>
+                        <button class="sm-card-btn sm-action-btn" data-plan="basic">立即支持</button>
+                        
+                        <div class="sm-features-list">
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>以简单方式托住事工</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>每月 100 次对话</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>适合轻量级每周使用</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 进阶计划 -->
+                <div class="sm-card popular">
+                    <div class="sm-card-badge">热门</div>
+                    <div class="sm-card-body">
+                        <h3 class="sm-card-title"><i class="fa-solid fa-sparkles" style="color:var(--accent); font-size:0.85rem;"></i> 进阶计划</h3>
+                        <div class="sm-card-price">
+                            <span class="sm-currency">$</span><span class="sm-price-val" id="sm-price-pro">9.99</span><span class="sm-period" id="sm-period-pro">/月</span>
+                        </div>
+                        <button class="sm-card-btn sm-action-btn" data-plan="pro">立即支持</button>
+                        
+                        <div class="sm-features-list">
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>您的支持帮助我们持续提升工具的质量与深度</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>每月 300 次对话</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>适合经常研经的读者</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 支持者计划 -->
+                <div class="sm-card supporter">
+                    <div class="sm-card-body">
+                        <h3 class="sm-card-title"><i class="fa-solid fa-sparkles" style="color:var(--accent); font-size:0.85rem;"></i> 支持者计划</h3>
+                        <div class="sm-card-price">
+                            <span class="sm-currency">$</span><span class="sm-price-val" id="sm-price-supporter">14.99</span><span class="sm-period" id="sm-period-supporter">/月</span>
+                        </div>
+                        <button class="sm-card-btn sm-action-btn highlight" data-plan="supporter">立即支持</button>
+                        
+                        <div class="sm-features-list">
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>适合牧师、小组带领人或每天使用</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>您的支持将代赠一份给有需要的人 — 既滋养自己，也祝福他人</span>
+                            </div>
+                            <div class="sm-feature-item">
+                                <i class="fa-regular fa-circle-check"></i>
+                                <span>每月 400 次对话</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部脚注 -->
+            <div class="sm-footer">
+                <p class="sm-footer-note">
+                    <i class="fa-solid fa-circle-info"></i> <span data-i18n="support.footer_note">您的支持将全部用于维持服务器、技术、安全与经文资料品质，若你正面临经济压力，我们亦提供资助选项</span>
+                </p>
+                <div class="sm-footer-links">
+                    <span>
+                        <i class="fa-regular fa-circle-check"></i>
+                        <span data-i18n="support.text_sponsor_prefix">可选择</span>
+                        <a href="#" id="sm-apply-sponsor" data-i18n="support.link_apply_sponsor">申请赞助</a>
+                        <span data-i18n="support.text_sponsor_or">或</span>
+                        <a href="#" id="sm-promo-code" data-i18n="support.link_promo_code">推荐码</a>
+                        <span data-i18n="support.text_sponsor_suffix"></span>
+                    </span>
+                    <span class="divider">|</span>
+                    <span>
+                        <i class="fa-regular fa-circle-question"></i>
+                        <span data-i18n="support.text_rules_prefix">关于计划的</span>
+                        <a href="#" id="sm-rules" data-i18n="support.link_rules">使用规则</a>
+                    </span>
+                    <span class="divider">|</span>
+                    <span>
+                        <i class="fa-regular fa-envelope"></i>
+                        <span data-i18n="support.text_contact_prefix">如有疑问可联系我们</span>
+                        <a href="mailto:info@openbible.live">info@openbible.live</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── GLOBAL SUBSCRIPTION MANAGEMENT MODAL ── -->
+    <div id="manage-sub-modal" class="overlay hidden">
+        <div class="overlay-backdrop" id="manage-sub-backdrop"></div>
+        <div class="support-modal-box subscription-manage-box">
+            <button id="manage-sub-close" class="support-modal-close" aria-label="关闭">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="sm-header">
+                <h2 class="sm-title">管理我的支持</h2>
+                <p class="sm-subtitle">感谢您对 OpenBible 的支持与奉献</p>
+            </div>
+            
+            <div class="manage-sub-content">
+                <div class="current-plan-card">
+                    <div class="current-plan-icon">
+                        <i class="fa-solid fa-gem"></i>
+                    </div>
+                    <div class="current-plan-info">
+                        <div class="current-plan-label">当前方案</div>
+                        <h3 class="current-plan-name" id="ms-plan-name">基础计划</h3>
+                        <div class="current-plan-desc" id="ms-plan-desc">每月 100 次 AI 研经对话</div>
+                    </div>
+                </div>
+                
+                <div class="subscription-status-list">
+                    <div class="status-item">
+                        <span class="status-label">支付通道</span>
+                        <span class="status-value" id="ms-channel">Stripe / 本地 Mock</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">有效期至</span>
+                        <span class="status-value" id="ms-expires-at">2026-06-27</span>
+                    </div>
+                </div>
+                
+                <div class="manage-sub-actions">
+                    <button class="manage-action-btn primary" id="ms-upgrade-btn">
+                        <i class="fa-solid fa-angles-up"></i> 升级支持套餐
+                    </button>
+                    <button class="manage-action-btn danger" id="ms-cancel-btn">
+                        <i class="fa-solid fa-circle-minus"></i> 取消支持
+                    </button>
+                </div>
+            </div>
+            
+            <div class="sm-footer">
+                <p class="sm-footer-note">
+                    <i class="fa-solid fa-circle-info"></i> 取消自动续费后，您在当前的计费周期结束前仍可继续享受当前计划的权益。
+                </p>
+                <div class="sm-footer-links">
+                    <span><i class="fa-regular fa-envelope"></i> 如有疑问可联系我们 <a href="mailto:info@openbible.live">info@openbible.live</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── GLOBAL COLLECTIONS (我的收藏) MODAL ── -->
+    <div id="collections-modal" class="overlay hidden">
+        <div class="overlay-backdrop" id="collections-backdrop"></div>
+        <div class="support-modal-box collections-modal-box">
+            <button id="collections-close" class="support-modal-close" aria-label="关闭">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="sm-header">
+                <h2 class="sm-title">
+                    <i class="fa-solid fa-bookmark" style="color:var(--accent); margin-right:8px;"></i>
+                    <span data-i18n="profile.my_collections">我的收藏</span>
+                </h2>
+                <p class="sm-subtitle">您收藏的圣经经文与书签记录</p>
+            </div>
+            
+            <div class="collections-modal-content">
+                <div id="bookmarks-list" class="collections-list"></div>
+            </div>
+            
+            <div class="sm-footer">
+                <p class="sm-footer-note">
+                    <i class="fa-solid fa-lightbulb" style="color:var(--accent);"></i> 在左侧经文长按或右键，点击“添加书签”即可将经文收藏至此。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── GLOBAL ORDERS (我的订单) MODAL ── -->
+    <div id="orders-modal" class="overlay hidden">
+        <div class="overlay-backdrop" id="orders-backdrop"></div>
+        <div class="support-modal-box orders-modal-box">
+            <button id="orders-close" class="support-modal-close" aria-label="关闭">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="sm-header">
+                <h2 class="sm-title">
+                    <i class="fa-solid fa-file-invoice-dollar" style="color:var(--accent); margin-right:8px;"></i>
+                    <span data-i18n="profile.my_orders">我的订单</span>
+                </h2>
+                <p class="sm-subtitle">您的支持与奉献历史订单记录</p>
+            </div>
+            
+            <div class="orders-modal-content">
+                <div id="orders-list" class="orders-list"></div>
+            </div>
+            
+            <div class="sm-footer">
+                <p class="sm-footer-note">
+                    <i class="fa-solid fa-shield-halved" style="color:var(--accent);"></i> 您的所有订单及资金支付均符合高等级安全数据传输保障。
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/i18n.js?v=21"></script>
+    <script src="js/auth.js?v=5"></script>
+    <script src="js/data.js"></script>
+    <script src="js/mccheyne.js?v=2"></script>
+    <script src="js/plan_manager.js?v=1"></script>
+    <script src="js/app.js?v=59"></script>
+</body>
+
+</html>

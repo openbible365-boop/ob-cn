@@ -1,0 +1,17 @@
+.DS_Store
+.tools/
+.claude/settings.local.json
+*.p8
+deploy/secrets/
+mobile-app/build/
+mobile-app/releases/
+
+# 构建产物与打包文件（不应进版本库）
+*.tar.gz
+dist/
+.next/
+node_modules/
+uploads/
+
+# 网页版迁移遗留的圣经数据副本（实际服务走根目录 data/，见 admin-app/public/data 符号链接）
+web-app/data/
