@@ -302,6 +302,39 @@ export async function GET(_request: Request, { params }: RouteParams) {
     await countCommunityPlanResources(billingCommunityId),
   ];
 
+  // 共读进度：把本群读经计划的参与情况带到社群首屏。
+  // 「今天已读」按 lastReadAt 是否落在服务器当天算——够用了，无需精确到用户时区。
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const communityPlans = await db.readingPlan.findMany({
+    where: { communityId: community.id },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+    select: {
+      id: true,
+      title: true,
+      totalDays: true,
+      enrollments: {
+        select: { userId: true, completedDays: true, lastReadAt: true, completedAt: true },
+      },
+    },
+  });
+  const readingPlans = communityPlans.map((plan) => {
+    const mine = viewerId ? plan.enrollments.find((e) => e.userId === viewerId) : undefined;
+    return {
+      id: plan.id,
+      title: plan.title,
+      totalDays: plan.totalDays,
+      enrolledCount: plan.enrollments.length,
+      readTodayCount: plan.enrollments.filter(
+        (e) => e.lastReadAt && e.lastReadAt.getTime() >= todayStart.getTime(),
+      ).length,
+      completedCount: plan.enrollments.filter((e) => e.completedAt).length,
+      myCompletedDays: mine?.completedDays ?? null,
+      myReadToday: Boolean(mine?.lastReadAt && mine.lastReadAt.getTime() >= todayStart.getTime()),
+    };
+  });
+
   return NextResponse.json({
     ok: true,
     community: {
@@ -336,6 +369,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       groups: community.isOfficial ? 0 : counts[1],
       resources: community.isOfficial ? 0 : counts[2],
     },
+    readingPlans,
     posts: posts.map(serializeCommunityPost),
     postsNextCursor:
       posts.length === COMMUNITY_POST_PAGE_SIZE ? posts[posts.length - 1].id : null,
@@ -397,7 +431,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     const mediaType = valueString(body.mediaType);
     const mediaUrl = valueString(body.mediaUrl);
     const visibility = valueString(body.visibility) || (community.isOfficial ? "PUBLIC" : "MEMBERS");
-    if (!["POST", "ARTICLE", "NOTICE", "MEDIA"].includes(postType)) return error("动态类型不正确");
+    if (!["POST", "ARTICLE", "NOTICE", "MEDIA", "PRAYER"].includes(postType)) return error("动态类型不正确");
     if (postType === "NOTICE" && !isAdmin) return error("只有群主或管理员可以发布通知", 403);
     const contentLimit = postType === "ARTICLE" ? 10_000 : 2_000;
     if (!content || textLength(content) > contentLimit) return error(`内容须为 1 到 ${contentLimit} 个字`);

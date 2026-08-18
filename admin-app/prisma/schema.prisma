@@ -320,6 +320,8 @@ enum CommunityPostType {
   ARTICLE
   NOTICE
   MEDIA
+  // 代祷请求：教会社群的核心互动类型，点赞在此类型上语义为「我为你祷告」
+  PRAYER
 }
 
 enum CommunityPostMediaType {

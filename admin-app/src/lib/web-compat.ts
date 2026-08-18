@@ -53,6 +53,11 @@ export async function loadBookJson(version: string, book: string) {
   const filePath = path.join(bibleDataRoot(), "bible", safeVersion, `${safeBook}.json`);
   try {
     const parsed = JSON.parse(await readFile(filePath, "utf8")) as RawBook;
+    // 拼音版的 chapters 是对象（键为下标），其余版本是数组；统一成数组，
+    // 章号一律以每项的 chapter 字段为准（拼音版的键是 0 基的，不可当章号用）
+    if (parsed?.chapters && !Array.isArray(parsed.chapters)) {
+      parsed.chapters = Object.values(parsed.chapters);
+    }
     bookCache.set(cacheKey, parsed);
     return parsed;
   } catch {

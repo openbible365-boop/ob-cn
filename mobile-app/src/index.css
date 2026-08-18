@@ -7,6 +7,10 @@
   --muted: #6f7681;
   --line: #e0e3e8;
   --surface: #f6f7f8;
+  /* 补齐被引用但未定义的令牌：不接上会静默继承 */
+  --surface-soft: #fafbfc;
+  --danger: var(--pink);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --surface-2: #eef0f3;
   --white: #fffefc;
 
@@ -6201,6 +6205,25 @@ body.dark .notification-daily-verse-action {
   color: #36744f;
 }
 
+.community-post-kind.is-prayer {
+  background: rgba(130, 80, 171, 0.12);
+  color: var(--purple);
+}
+
+/* 代祷卡：淡紫底与「我为你祷告」按钮 */
+.community-post-card.is-prayer {
+  border-color: rgba(130, 80, 171, 0.35);
+  background: linear-gradient(145deg, #fdfbff, #f7f2fb);
+}
+
+.community-pray-btn {
+  font-weight: 700;
+}
+
+.community-pray-btn.is-active {
+  color: var(--purple);
+}
+
 .community-post-title {
   margin: 11px 0 -3px;
   font-size: 16px;
@@ -7394,6 +7417,8 @@ body.dark {
   --muted: #9297a2;
   --line: #343740;
   --surface: #101116;
+  --surface-soft: #16171d;
+  --danger: var(--pink);
   --surface-2: #1e2027;
   --white: #17191f;
   --yellow: #f1c662;
@@ -7840,6 +7865,11 @@ body.dark .community-feedback {
 body.dark .community-post-card.is-notice {
   border-color: rgba(241, 198, 98, 0.28);
   background: linear-gradient(145deg, #282418, #211f19);
+}
+
+body.dark .community-post-card.is-prayer {
+  border-color: rgba(188, 148, 226, 0.28);
+  background: linear-gradient(145deg, #241f2a, #1f1c24);
 }
 
 body.dark .community-pinned-label,

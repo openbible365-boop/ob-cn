@@ -205,7 +205,7 @@
 
 
     // ── Content language: derived from Bible version (for book names, chapter labels) ──
-    const VERSION_LANG_MAP = { cuv: 'zh', cnvs: 'zh', kjv: 'en', niv: 'en', krv: 'ko', keb: 'ko', snr: 'ko' };
+    const VERSION_LANG_MAP = { cuv: 'zh', cnvs: 'zh', pinyin: 'zh' };
     function getContentLang() {
         return VERSION_LANG_MAP[S.version] || (typeof getLang === 'function' ? getLang() : 'zh');
     }
@@ -444,6 +444,8 @@
     async function renderBibleText(force = false) {
         const container = $('bible-text');
         if (!container) return;
+        // 拼音版：注音 ruby 需要更大的行距与更小的注音字号
+        container.classList.toggle('is-pinyin', S.version === 'pinyin');
 
         const currentKey = `${S.version}-${S.book}-${S.chapter}`;
         if (!force && _lastRenderedKey === currentKey && container.children.length > 0) {
@@ -532,7 +534,8 @@
             }
 
             // Main verse
-            html += `<span class="verse${isSelected ? ' selected' : ''}" data-ref="${ref}" data-verse="${v.verse}" data-text="${v.text.replace(/"/g, '&quot;')}"${hl}><span class="verse-num">${v.verse}</span><span class="verse-content">${v.text}${noteIcon}</span> </span>`;
+            const plainText = v.text.replace(/<rt[^>]*>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '');
+            html += `<span class="verse${isSelected ? ' selected' : ''}" data-ref="${ref}" data-verse="${v.verse}" data-text="${plainText.replace(/"/g, '&quot;')}"${hl}><span class="verse-num">${v.verse}</span><span class="verse-content">${v.text}${noteIcon}</span> </span>`;
 
             // Inline compare blocks (rendered below each verse)
             if (_compareMode) {
@@ -3140,6 +3143,7 @@
         } else {
             if (bibleNav) bibleNav.style.display = 'none';
             if (view === 'plan') renderPlanView();
+            else if (view === 'donate') renderDonateView();
             else if (view === 'video') renderVideoView();
             else if (view === 'audio') renderAudioView();
             else if (view === 'notes') renderNotesView();
@@ -3160,6 +3164,69 @@
     // comments：按 postId 缓存「查看全部」展开后的完整评论，
     // { items: [], nextCursor: string|null, loading: bool }。未展开的帖子不在表里。
     const _cmty = { view: 'list', list: null, activeId: null, workspace: null, loading: false, error: '', composerOpen: false, comments: {}, morePosts: false };
+
+    // 经文引用解析：把 "约翰福音 3:16-18"、"创世记 1章"、"John 3:16" 这类
+    // 引用文本还原成 { book, chapter }，供点击跳转阅读器。
+    // 反查表懒构建：三种语言的书名都收进来，按名字长度降序匹配（先试长名，
+    // 避免「约翰福音」被「约翰一书」之类的短前缀截胡）。
+    // 和合本通用缩写（"约 3:16" 这类手写引用的主要形态）。
+    // 注意几个易混条目的归属：约=约翰福音（约一/约二/约三是书信）、
+    // 书=约书亚记、伯=约伯记、歌=雅歌、西=歌罗西书。
+    const _refAbbr = {
+        '创': 'gen', '出': 'exo', '利': 'lev', '民': 'num', '申': 'deu',
+        '书': 'jos', '士': 'jdg', '得': 'rut', '撒上': '1sa', '撒下': '2sa',
+        '王上': '1ki', '王下': '2ki', '代上': '1ch', '代下': '2ch',
+        '拉': 'ezr', '尼': 'neh', '斯': 'est', '伯': 'job', '诗': 'psa',
+        '箴': 'pro', '传': 'ecc', '歌': 'sng', '赛': 'isa', '耶': 'jer',
+        '哀': 'lam', '结': 'ezk', '但': 'dan', '何': 'hos', '珥': 'jol',
+        '摩': 'amo', '俄': 'oba', '拿': 'jon', '弥': 'mic', '鸿': 'nah',
+        '哈': 'hab', '番': 'zep', '该': 'hag', '亚': 'zec', '玛': 'mal',
+        '太': 'mat', '可': 'mrk', '路': 'luk', '约': 'jhn', '徒': 'act',
+        '罗': 'rom', '林前': '1co', '林后': '2co', '加': 'gal', '弗': 'eph',
+        '腓': 'php', '西': 'col', '帖前': '1th', '帖后': '2th',
+        '提前': '1ti', '提后': '2ti', '多': 'tit', '门': 'phm', '来': 'heb',
+        '雅': 'jas', '彼前': '1pe', '彼后': '2pe',
+        '约一': '1jn', '约二': '2jn', '约三': '3jn',
+        '约壹': '1jn', '约贰': '2jn', '约叁': '3jn',
+        '犹': 'jud', '启': 'rev',
+    };
+
+    let _refBookIndex = null;
+    function _refParse(refText) {
+        if (!refText) return null;
+        if (!_refBookIndex) {
+            const names = [];
+            const tables = (typeof bookNames !== 'undefined') ? Object.values(bookNames) : [BOOK_NAME];
+            for (const table of tables) {
+                for (const [code, name] of Object.entries(table)) {
+                    if (name) names.push([String(name), code, false]);
+                }
+            }
+            for (const [abbr, code] of Object.entries(_refAbbr)) names.push([abbr, code, true]);
+            names.sort((a, b) => b[0].length - a[0].length);
+            _refBookIndex = names;
+        }
+        const text = String(refText).trim();
+        const lower = text.toLowerCase();
+        for (const [name, code, isAbbr] of _refBookIndex) {
+            if (!lower.startsWith(name.toLowerCase())) continue;
+            const rest = text.slice(name.length);
+            // 缩写后面必须紧跟数字/空格/标点：避免「约翰一书」被缩写「约」抢先命中
+            if (isAbbr && rest && /[一-鿿]/.test(rest[0])) continue;
+            const m = rest.match(/(\d+)/);   // 第一个数字就是章号；没有数字则跳到第 1 章
+            return { book: code, chapter: m ? parseInt(m[1], 10) : 1 };
+        }
+        return null;
+    }
+
+    // 点社群动态里的经文引用 → 左侧阅读器直接翻到那一章
+    function _refJump(refText) {
+        const target = _refParse(refText);
+        if (!target) return;
+        if (typeof switchView === 'function') switchView('bible');
+        navigateTo(target.book, target.chapter);
+        showToast(`${bookDisplayName(target.book)} ${getChLabel(target.chapter)}`);
+    }
 
     // 面板里所有内容都来自用户输入（社群名、动态正文、评论），必须转义后再拼进 HTML
     function _escapeHtml(str) {
@@ -3326,12 +3393,17 @@
                 ${canPublish ? `<button class="cmty-new" aria-label="${t('cmty.newPost') || '发布动态'}"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
             </div>
             <div class="cmty-feed-scroll">
+                ${_cmtyPlansHtml(ws.readingPlans)}
             ${_cmty.composerOpen ? `
             <div class="cmty-composer">
                 <textarea id="cmty-composer-text" rows="3" placeholder="${t('cmty.composerPh') || '分享你的思考…'}"></textarea>
                 <label class="cmty-composer-ref">
                     <input type="checkbox" id="cmty-attach-ref" ${refLabelNow ? 'checked' : 'disabled'}>
                     <span>${t('cmty.attachRef') || '附上当前经文'}${refLabelNow ? ` · ${_escapeHtml(refLabelNow)}` : ''}</span>
+                </label>
+                <label class="cmty-composer-ref">
+                    <input type="checkbox" id="cmty-as-prayer">
+                    <span>🙏 ${t('cmty.asPrayer') || '作为代祷请求发布'}</span>
                 </label>
                 <div class="cmty-composer-actions">
                     <button class="cmty-composer-cancel">${t('cmty.cancel') || '取消'}</button>
@@ -3362,7 +3434,8 @@
         c.querySelector('.cmty-composer-submit')?.addEventListener('click', () => {
             const text = $('cmty-composer-text')?.value.trim();
             const attach = $('cmty-attach-ref')?.checked;
-            _cmtyPublish(text, attach ? refLabelNow : '');
+            const asPrayer = $('cmty-as-prayer')?.checked;
+            _cmtyPublish(text, attach ? refLabelNow : '', asPrayer ? 'PRAYER' : 'POST');
         });
         c.querySelectorAll('.cmty-like').forEach(btn => {
             btn.addEventListener('click', () => _cmtyToggleLike(btn.dataset.pid));
@@ -3374,6 +3447,14 @@
             });
         });
         _asstBind(c);
+        c.querySelectorAll('.cmty-post-ref.is-link').forEach(btn => {
+            btn.addEventListener('click', () => _refJump(btn.dataset.ref));
+        });
+        c.querySelectorAll('.cmty-plan-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (typeof switchView === 'function') switchView('plan');
+            });
+        });
         c.querySelector('.cmty-more-posts')?.addEventListener('click', _cmtyLoadMorePosts);
         c.querySelectorAll('.cmty-more-comments').forEach(btn => {
             btn.addEventListener('click', () => _cmtyLoadComments(btn.dataset.pid));
@@ -3425,8 +3506,37 @@
         }
     }
 
+    // 共读进度卡：社群首屏第一眼看到「今天群里有多少人读了」。
+    // 点击整卡跳到读经计划视图（打卡在那边完成，这里只做召唤）。
+    function _cmtyPlansHtml(plans) {
+        if (!Array.isArray(plans) || plans.length === 0) return '';
+        return plans.map(pl => {
+            const pct = pl.enrolledCount > 0 ? Math.round(pl.readTodayCount / pl.enrolledCount * 100) : 0;
+            const mine = pl.myCompletedDays !== null
+                ? (pl.myReadToday
+                    ? `<span class="cmty-plan-mine is-done">✓ ${t('cmty.planReadToday') || '今日已读'}</span>`
+                    : `<span class="cmty-plan-mine">${t('cmty.planMyProgress') || '我的进度'} ${pl.myCompletedDays}/${pl.totalDays}</span>`)
+                : `<span class="cmty-plan-mine">${t('cmty.planJoin') || '去参加'} ›</span>`;
+            return `<button class="cmty-plan-card" data-plan="${_escapeHtml(pl.id)}">
+                <span class="cmty-plan-head">
+                    <i class="fa-solid fa-book-bible"></i>
+                    <b>${_escapeHtml(pl.title)}</b>
+                    <small>${pl.totalDays} ${t('cmty.planDays') || '天'}</small>
+                </span>
+                <span class="cmty-plan-stats">
+                    <span class="cmty-plan-bar"><span style="width:${pct}%"></span></span>
+                    <small>${(t('cmty.planToday') || '今天已读')} ${pl.readTodayCount}/${pl.enrolledCount}${pl.completedCount ? ` · ${t('cmty.planDone') || '已完成'} ${pl.completedCount}` : ''}</small>
+                </span>
+                ${mine}
+            </button>`;
+        }).join('');
+    }
+
     function _cmtyPostHtml(p) {
         const author = p.author || {};
+        const isPrayer = p.postType === 'PRAYER';
+        // 引用解析得出来才渲染成按钮；解析不了就保持纯文本，不给一个点了没反应的入口
+        const refClickable = p.verseRef && _refParse(p.verseRef);
         // 未展开时用 workspace 带的预览（每帖最新两条），展开后用完整列表。
         const expanded = _cmty.comments[p.id];
         const comments = expanded ? expanded.items : (p.comments || []);
@@ -3436,18 +3546,23 @@
         const moreLabel = expanded
             ? (t('cmty.moreComments') || '加载更多评论')
             : `${t('cmty.viewAllComments') || '查看全部'} ${total} ${t('cmty.commentsUnit') || '条评论'}`;
-        return `<article class="cmty-post">
+        return `<article class="cmty-post${isPrayer ? ' is-prayer' : ''}">
             <div class="cmty-post-head">
                 ${_cmtyAvatar(author.name, author.avatarColor)}
                 <span class="cmty-post-meta"><b>${_escapeHtml(author.name || '')}</b><small>${_cmtyTime(p.createdAt)}</small></span>
+                ${isPrayer ? `<span class="cmty-post-kind">🙏 ${t('cmty.prayer') || '代祷'}</span>` : ''}
             </div>
             ${p.title ? `<h4 class="cmty-post-title">${_escapeHtml(p.title)}</h4>` : ''}
-            ${p.verseRef ? `<span class="cmty-post-ref">${_escapeHtml(p.verseRef)}</span>` : ''}
+            ${p.verseRef ? (refClickable
+                ? `<button class="cmty-post-ref is-link" data-ref="${_escapeHtml(p.verseRef)}" title="${t('cmty.refJump') || '在阅读器中打开'}"><i class="fa-solid fa-book-open"></i> ${_escapeHtml(p.verseRef)}</button>`
+                : `<span class="cmty-post-ref">${_escapeHtml(p.verseRef)}</span>`) : ''}
             <p class="cmty-post-body">${_escapeHtml(p.content || '').replace(/\n/g, '<br>')}</p>
             <div class="cmty-post-actions">
-                <button class="cmty-like${p.likedByMe ? ' is-on' : ''}" data-pid="${_escapeHtml(p.id)}">
+                ${isPrayer ? `<button class="cmty-like cmty-pray${p.likedByMe ? ' is-on' : ''}" data-pid="${_escapeHtml(p.id)}">
+                    🙏 ${p.likedByMe ? (t('cmty.prayed') || '已为你祷告') : (t('cmty.prayFor') || '我为你祷告')}${p.likeCount > 0 ? ` · ${p.likeCount}` : ''}
+                </button>` : `<button class="cmty-like${p.likedByMe ? ' is-on' : ''}" data-pid="${_escapeHtml(p.id)}">
                     <i class="fa-solid fa-heart"></i> ${p.likeCount || 0}
-                </button>
+                </button>`}
                 <span class="cmty-count"><i class="fa-solid fa-comment"></i> ${total}</span>
             </div>
             ${comments.length ? `<div class="cmty-comments">
@@ -3765,10 +3880,10 @@
         });
     }
 
-    async function _cmtyPublish(content, verseRef) {
+    async function _cmtyPublish(content, verseRef, postType) {
         if (!content) { showToast(t('cmty.needContent') || '请输入内容'); return; }
         try {
-            await _cmtyAction({ action: 'CREATE_POST', postType: 'POST', content, verseRef: verseRef || '' });
+            await _cmtyAction({ action: 'CREATE_POST', postType: postType || 'POST', content, verseRef: verseRef || '' });
             _cmty.composerOpen = false;
             showToast(t('cmty.published') || '已发布');
             await _cmtyOpen(_cmty.activeId);
@@ -3801,6 +3916,70 @@
         } catch (e) {
             showToast(e.message || (t('cmty.commentFail') || '评论失败'));
         }
+    }
+
+    // ── 奉献 ──
+    // 布局参考微读圣经的奉献页：致辞 + 金额格 + 自定义金额 + 支付方式 + 登录门槛。
+    // 支付通道尚未接入商户凭据，提交时如实告知，不伪造成功状态。
+    const _donate = { amount: 20, custom: '', method: 'wechat' };
+
+    function renderDonateView() {
+        const c = $('donate-render'); if (!c) return;
+        const amounts = [5, 10, 20, 50, 100, 200];
+        const logged = typeof Auth !== 'undefined' && Auth.getUser();
+        const methods = [
+            ['wechat', '<i class="fa-brands fa-weixin" style="color:#2aae67"></i> ' + (t('donate.wechat') || '微信')],
+            ['paypal', '<i class="fa-brands fa-paypal" style="color:#0070ba"></i> PayPal'],
+            ['card', '<i class="fa-solid fa-credit-card"></i> ' + (t('donate.card') || '信用卡')],
+        ];
+        c.innerHTML = `
+        <div class="donate-hero">
+            <h2>${t('donate.heroTitle') || '支持慧读圣经'}</h2>
+            <p>${t('donate.p1') || '亲爱的弟兄姊妹，'}</p>
+            <p>${t('donate.p2') || '慧读圣经致力于帮助人们随时随地阅读、聆听、默想、查考并活出上帝的话语。如果您有感动参与这项事工，可以奉献支持我们——也许一顿午餐的费用，就能帮助更多人接触到上帝的话语。'}</p>
+            <p>${t('donate.p3') || '这是一项长期需要，我们期待与您建立稳固的支持伙伴关系。'}</p>
+        </div>
+        <div class="donate-card">
+            <div class="settings-section-title">${t('donate.amount') || '奉献金额'}</div>
+            <div class="donate-amounts">
+                ${amounts.map(a => `<button class="donate-amt${_donate.amount === a && !_donate.custom ? ' selected' : ''}" data-amt="${a}">${a} USD</button>`).join('')}
+            </div>
+            <div class="donate-custom">
+                <input id="donate-custom-input" type="number" min="2" max="10000" placeholder="${t('donate.customPh') || '2 ≤ 金额 ≤ 10000'}" value="${_escapeHtml(_donate.custom)}">
+                <span>USD</span>
+            </div>
+            <div class="settings-section-title" style="margin-top:18px;">${t('donate.method') || '支付方式'}</div>
+            <div class="donate-methods">
+                ${methods.map(([k, label]) => `<button class="donate-method${_donate.method === k ? ' selected' : ''}" data-method="${k}">${label}</button>`).join('')}
+            </div>
+            <button class="primary-btn donate-submit">${logged ? (t('donate.submit') || '确认奉献') : (t('auth.login') || '请登录')}</button>
+            <p class="donate-note">${t('donate.note') || '奉献不购买任何数字商品或特权，属自愿支持事工。'}</p>
+        </div>`;
+
+        c.querySelectorAll('.donate-amt').forEach(b => {
+            b.addEventListener('click', () => {
+                _donate.amount = parseInt(b.dataset.amt, 10);
+                _donate.custom = '';
+                renderDonateView();
+            });
+        });
+        $('donate-custom-input')?.addEventListener('input', e => {
+            _donate.custom = e.target.value;
+            c.querySelectorAll('.donate-amt').forEach(b => b.classList.remove('selected'));
+        });
+        c.querySelectorAll('.donate-method').forEach(b => {
+            b.addEventListener('click', () => { _donate.method = b.dataset.method; renderDonateView(); });
+        });
+        c.querySelector('.donate-submit')?.addEventListener('click', () => {
+            if (!logged) { Auth.showModal(); return; }
+            const val = _donate.custom ? Number(_donate.custom) : _donate.amount;
+            if (!Number.isFinite(val) || val < 2 || val > 10000) {
+                showToast(t('donate.badAmount') || '请输入 2–10000 之间的金额');
+                return;
+            }
+            // 商户支付尚未开通：如实告知，不做假支付
+            showToast(t('donate.comingSoon') || '支付通道即将开通，感谢您的心意 🙏');
+        });
     }
 
     // ── Plan View — Dynamic Reading Plans ──
@@ -3836,27 +4015,77 @@
         };
     }
 
-    let _activePlan = null; // track which plan is selected
+    let _activePlan = null; // 旧详情视图的遗留状态，新视图不再使用
     let _planViewLoaded = false;
-    
+    let _serverPlans = [];   // 来自 /api/mobile/reading-plans：公共 + 我的社群 + 我创建的
+
+    // 与 App 共用同一套读经计划接口（同一个会话 Cookie），
+    // 进度存在服务端 enrollment 上，两端打卡互通。
+    // 旧版计划页调用的 /api/web/reading-plans 从未实现过，整页一直是空的；
+    // 这里直接重接到真实接口，社群共读计划也从这里出现。
     async function fetchPlansFromBackend() {
         try {
-            const res = await fetch(`${S.apiBase}/reading-plans`);
-            if (res.ok) {
-                const data = await res.json();
-                _fetchedPlans = data.plans || [];
-            }
-            if (window.Auth && Auth.getUser()) {
-                const uRes = await fetch(`${S.apiBase}/user/reading-plans`, {
-                    credentials: 'same-origin'
-                });
-                if (uRes.ok) {
-                    const uData = await uRes.json();
-                    _fetchedUserPlans = uData.user_plans || [];
-                }
-            }
-        } catch(e) { console.error('Error fetching plans', e); }
+            const res = await fetch('/api/mobile/reading-plans', { credentials: 'same-origin' });
+            const data = res.ok ? await res.json() : null;
+            _serverPlans = (data && data.plans) || [];
+        } catch (e) { console.error('Error fetching plans', e); _serverPlans = []; }
         _planViewLoaded = true;
+    }
+
+    async function _planAction(body, doneMsg) {
+        try {
+            const res = await fetch('/api/mobile/reading-plans', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok || !data || data.ok === false) throw new Error((data && data.message) || `HTTP ${res.status}`);
+            showToast(data.message || doneMsg);
+            _planViewLoaded = false;   // 动作成功后重新拉取，进度以服务端为准
+            renderPlanView();
+        } catch (e) {
+            showToast(e.message || (t('plan.actionFail') || '操作失败，请重试'));
+        }
+    }
+
+    function _planCardHtml(p, lang) {
+        const pct = p.totalDays > 0 ? Math.min(100, Math.round((p.completedDays / p.totalDays) * 100)) : 0;
+        const t_days = lang === 'en' ? 'days' : lang === 'ko' ? '일' : '天';
+        const communityBadge = p.community
+            ? `<span class="plan-card-badge is-community">${_escapeHtml(p.community.abbreviation || p.community.name)}</span>` : '';
+        const finished = Boolean(p.completedAt);
+        // 今日读段：已加入且未完成时给出直达阅读器的入口
+        let todayHtml = '';
+        if (p.enrolled && !finished && p.today) {
+            const bookName = bookDisplayName(p.today.book);
+            const range = p.today.verseStart === p.today.verseEnd ? p.today.verseStart : `${p.today.verseStart}-${p.today.verseEnd}`;
+            todayHtml = `<button class="plan-today" data-book="${_escapeHtml(p.today.book)}" data-ch="${p.today.chapter}">
+                <i class="fa-solid fa-book-open"></i>
+                <span>${lang === 'en' ? 'Today' : lang === 'ko' ? '오늘' : '今日'} · ${p.today.title ? _escapeHtml(p.today.title) + ' · ' : ''}${_escapeHtml(bookName)} ${p.today.chapter}:${range}</span>
+            </button>`;
+        }
+        let actionHtml;
+        if (finished) {
+            actionHtml = `<span class="plan-card-done">✓ ${lang === 'en' ? 'Finished' : lang === 'ko' ? '완료' : '已完成'}</span>`;
+        } else if (p.enrolled) {
+            actionHtml = `<button class="primary-btn plan-complete-btn" data-plan="${_escapeHtml(p.id)}">${lang === 'en' ? 'Mark today done' : lang === 'ko' ? '오늘 완료' : '完成今天阅读'}</button>`;
+        } else {
+            actionHtml = `<button class="primary-btn plan-enroll-btn" data-plan="${_escapeHtml(p.id)}">${lang === 'en' ? 'Join' : lang === 'ko' ? '참여' : '加入计划'}</button>`;
+        }
+        return `<div class="plan-scard${finished ? ' is-finished' : ''}">
+            <div class="plan-scard-head">
+                <b>${_escapeHtml(p.title)}</b>
+                ${communityBadge}
+                <small>${p.totalDays} ${t_days}</small>
+            </div>
+            ${p.description ? `<p class="plan-scard-desc">${_escapeHtml(p.description)}</p>` : ''}
+            ${p.enrolled ? `<div class="plan-card-progress"><div class="plan-card-progress-bar" style="width:${pct}%"></div></div>
+            <span class="plan-card-progress-text">${p.completedDays}/${p.totalDays}${pct >= 100 ? '' : ` · ${pct}%`}</span>` : ''}
+            ${todayHtml}
+            <div class="plan-scard-actions">${actionHtml}</div>
+        </div>`;
     }
 
     async function renderPlanView() {
@@ -3886,69 +4115,33 @@
             await fetchPlansFromBackend();
         }
 
-        // If a plan is active, show its detail view
-        if (_activePlan) {
-            renderGenericPlanDetail(c, lang);
-            return;
-        }
+        const groups = [
+            { key: 'COMMUNITY', title: lang === 'en' ? 'Group reading' : lang === 'ko' ? '커뮤니티 통독' : '社群共读', icon: 'fa-user-group' },
+            { key: 'PUBLIC', title: lang === 'en' ? 'Public plans' : lang === 'ko' ? '공개 계획' : '公共计划', icon: 'fa-book-bible' },
+            { key: 'PERSONAL', title: lang === 'en' ? 'My plans' : lang === 'ko' ? '내 계획' : '我创建的', icon: 'fa-user-pen' },
+        ];
+        const sections = groups.map(g => {
+            const list = _serverPlans.filter(p => p.scope === g.key);
+            if (!list.length) return '';
+            return `<section class="plan-section">
+                <div class="settings-section-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</div>
+                ${list.map(p => _planCardHtml(p, lang)).join('')}
+            </section>`;
+        }).join('');
 
-        // ── Show plan selection card grid ──
-        const t_subtitle = lang === 'en' ? 'Choose a plan and start your Bible journey' : lang === 'ko' ? '계획을 선택하고 성경 여정을 시작하세요' : '选择适合你的读经计划，开启灵修旅程';
-        const t_days = lang === 'en' ? 'days' : lang === 'ko' ? '일' : '天';
-        const t_coming = lang === 'en' ? 'Coming Soon' : lang === 'ko' ? '준비 중' : '即将推出';
-        const t_start = lang === 'en' ? 'Start' : lang === 'ko' ? '시작' : '开始';
+        c.innerHTML = sections || `<div class="no-data-state"><i class="fa-solid fa-calendar-check"></i>
+            <p>${lang === 'en' ? 'No reading plan data available' : lang === 'ko' ? '읽기 계획 데이터가 없습니다' : '暂无相关读经计划数据'}</p></div>`;
 
-        // Check if McCheyne has an active plan
-        const mActive = window.McCheyne && window.McCheyne.getStartDate();
-
-        c.innerHTML = `
-        <div class="plan-card-grid">
-            ${_fetchedPlans.map(p => {
-                const info = getPlanI18n(p, lang);
-                const planImpl = getPlanImpl(p.slug);
-                const isAvailable = planImpl !== null;
-                let userPlan = _fetchedUserPlans.find(up => up.plan_id === p.id);
-                const mLocalActive = planImpl && planImpl.getStartDate();
-                const hasProgress = userPlan || mLocalActive;
-                let progressHtml = '';
-                if (hasProgress) {
-                    let completed = userPlan ? (typeof userPlan.current_day === 'number' ? userPlan.current_day : 0) : 0;
-                    if (planImpl) {
-                        completed = Math.max(completed, planImpl.countCompletedDays());
-                    }
-                    const totalD = p.days || 365;
-                    const pct = Math.min(100, Math.round((completed / totalD) * 100));
-                    const t_prog = lang === 'en' ? `${pct}% done` : lang === 'ko' ? `${pct}% 완료` : `已完成 ${pct}%`;
-                    progressHtml = `<div class="plan-card-progress"><div class="plan-card-progress-bar" style="width:${pct}%"></div></div><span class="plan-card-progress-text">${t_prog}</span>`;
-                }
-                return `<div class="plan-card ${isAvailable ? 'plan-card-active' : 'plan-card-disabled'}" data-plan="${p.slug}" data-planid="${p.id}">
-                    <div class="plan-card-icon-wrap" style="background:${p.gradient};">
-                        <i class="fa-solid ${p.icon}"></i>
-                    </div>
-                    <div class="plan-card-body">
-                        <div class="plan-card-name">${p.emoji} ${info.name}</div>
-                        <div class="plan-card-desc">${info.desc}</div>
-                        <div class="plan-card-footer">
-                            <span class="plan-card-days"><i class="fa-regular fa-calendar"></i> ${p.days} ${t_days}</span>
-                            ${hasProgress ? progressHtml : ''}
-                            ${!isAvailable ? `<span class="plan-card-badge">${t_coming}</span>` : `<span class="plan-card-go"><i class="fa-solid fa-arrow-right"></i></span>`}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('')}
-            ${_fetchedPlans.length === 0 ? `<div class="no-data-state" style="grid-column:1/-1;"><p>${lang === 'en' ? 'No reading plan data available' : lang === 'ko' ? '읽기 계획 데이터가 없습니다' : '暂无相关读经计划数据'}</p></div>` : ''}
-        </div>`;
-
-        c.querySelectorAll('.plan-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const planSlug = card.dataset.plan;
-                if (!card.classList.contains('plan-card-disabled')) {
-                    _activePlan = planSlug;
-                    renderPlanView();
-                } else {
-                    const msg = lang === 'en' ? 'This plan is coming soon!' : lang === 'ko' ? '이 계획은 준비 중입니다!' : '该计划即将推出！';
-                    showToast(msg);
-                }
+        c.querySelectorAll('.plan-enroll-btn').forEach(b => {
+            b.addEventListener('click', () => _planAction({ action: 'ENROLL', planId: b.dataset.plan }, '已加入读经计划'));
+        });
+        c.querySelectorAll('.plan-complete-btn').forEach(b => {
+            b.addEventListener('click', () => _planAction({ action: 'COMPLETE_TODAY', planId: b.dataset.plan }, '今天的阅读已完成'));
+        });
+        c.querySelectorAll('.plan-today').forEach(b => {
+            b.addEventListener('click', () => {
+                if (typeof switchView === 'function') switchView('bible');
+                navigateTo(b.dataset.book, parseInt(b.dataset.ch, 10) || 1);
             });
         });
     }
@@ -5227,11 +5420,10 @@
         <div class="settings-section-title">${t('settings.language') || '语言'}</div>
         <div class="settings-card">
             <div class="settings-row">
-                <div class="settings-label">${t('settings.ui-lang') || '界面语言'}</div>
+                <div class="settings-label">${t('settings.ui-lang') || '文字'}</div>
                 <div class="lang-selector">
-                    <button class="lang-btn${_currentLang === 'zh' ? ' active' : ''}" data-lang="zh">中文</button>
-                    <button class="lang-btn${_currentLang === 'en' ? ' active' : ''}" data-lang="en">English</button>
-                    <button class="lang-btn${_currentLang === 'ko' ? ' active' : ''}" data-lang="ko">한국어</button>
+                    <button class="lang-btn${localStorage.getItem('ob_script') !== 't' ? ' active' : ''}" data-script-set="s">简体中文</button>
+                    <button class="lang-btn${localStorage.getItem('ob_script') === 't' ? ' active' : ''}" data-script-set="t">繁體中文</button>
                 </div>
             </div>
         </div>
@@ -6293,8 +6485,13 @@
             if (collapseIcon) collapseIcon.className = `fa-solid fa-angles-${collapsed ? 'right' : 'left'}`;
         }
 
-        // In-sidebar collapse button
-        $('nav-collapse-btn')?.addEventListener('click', toggleNav);
+        // 默认不收起：无论上个会话处于什么状态，启动一律展开侧栏
+        document.getElementById('app')?.classList.remove('nav-hidden');
+        // 图标栏没有文字，悬停用 title 提示（文本取自被隐藏的 span，随语言切换过的文案）
+        document.querySelectorAll('.nav-item[data-view], #theme-btn').forEach(b => {
+            const label = b.querySelector('span')?.textContent.trim();
+            if (label) b.title = label;
+        });
         // Always-visible top-bar toggle button
         $('nav-toggle-btn')?.addEventListener('click', toggleNav);
 
@@ -6659,78 +6856,42 @@
         let audioUrl = null;
         _explicitTimestamps = null;
 
-        // 1. 优先尝试调用豆包 TTS（目前仅支持 CUV，若成功则覆盖任何旧音频）
-        if (S.version === 'cuv') {
-            const listenBtn = $('listen-btn');
-            if (listenBtn) {
-                listenBtn.disabled = true;
-                listenBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>合成中...</span>';
-            }
-
-            try {
-                // NOTE: 透传 voice 参数，由后端按声音类型返回对应 S3 URL
-                const ttsRes = await fetch(
-                    `${S.apiBase}/audio/tts?version=${S.version}&book=${S.book}&chapter=${S.chapter}&voice=${S.voice}`
-                );
-                if (ttsRes.ok) {
-                    const ttsData = await ttsRes.json();
-                    if (ttsData.supported !== false && ttsData.url) {
-                        if (ttsData.mock) {
-                            showToast(`当前书卷的${ttsData.voice_label || (S.voice === 'female' ? '女声' : '男声')}录音暂未生成。`);
-                            return; // 明确终止播放默认声音
-                        }
-                        audioUrl = ttsData.url;
-                        if (ttsData.timestamps) {
-                            _explicitTimestamps = ttsData.timestamps;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("TTS fetch failed", e);
-            } finally {
-                // 恢复收听按钮状态
-                if (listenBtn) {
-                    listenBtn.disabled = false;
-                    listenBtn.innerHTML = '<i class="fa-solid fa-headphones"></i> <span data-i18n="topbar.listen">收听</span>';
-                }
-            }
-        }
-
-        // 2. 如果非 CUV，或 TTS 获取失败（因故），则降级使用数据库中可能存在的手动上传音频
-        if (!audioUrl) {
-            if (S.version === 'cuv') {
-                showToast(`当前书卷的${S.voice === 'female' ? '女声' : '男声'}音频暂未提供。`);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${S.apiBase}/audio/public?version=${S.version}&book=${S.book}&chapter=${S.chapter}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.audio_url) {
-                        audioUrl = data.audio_url;
-                        if (data.timestamps && data.timestamps.trim() !== "") {
-                            try {
-                                _explicitTimestamps = JSON.parse(data.timestamps);
-                            } catch (e) {
-                                console.error("Failed to parse timestamps", e);
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("Audio fetch failed", e);
-            }
-            
-            if (!audioUrl) {
-                 showToast(t('toast.no-audio'));
-                 return;
-            }
-        }
-
-        if (!audioUrl) {
+        // 朗读音源与 App 共用 /api/mobile/audio（豆包 TTS 的 CDN 产物）。
+        // 旧的 /api/web/audio/* 是 FastAPI 时代的接口，后端整合时未移植，一直 404。
+        // 拼音版与和合本同一份经文，共用和合本录音；新译本暂无对应录音。
+        if (S.version === 'cnvs') {
+            showToast(t('toast.no-audio'));
             return;
         }
+        const listenBtn = $('listen-btn');
+        if (listenBtn) {
+            listenBtn.disabled = true;
+            listenBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>加载中...</span>';
+        }
+        try {
+            const res = await fetch(`/api/mobile/audio?version=cuv&book=${S.book}&chapter=${S.chapter}&voice=${S.voice}`);
+            const data = res.ok ? await res.json() : null;
+            if (data && data.ok && data.audioUrl) {
+                audioUrl = data.audioUrl;
+                if (Array.isArray(data.timestamps) && data.timestamps.length) {
+                    _explicitTimestamps = data.timestamps;
+                }
+            }
+        } catch (e) {
+            console.error('Audio fetch failed', e);
+        } finally {
+            if (listenBtn) {
+                listenBtn.disabled = false;
+                listenBtn.innerHTML = '<i class="fa-solid fa-headphones"></i> <span data-i18n="topbar.listen">收听</span>';
+            }
+        }
+
+        if (!audioUrl) {
+            showToast(t('toast.no-audio'));
+            return;
+        }
+
+        bar.classList.remove('hidden');
 
         bar.classList.remove('hidden');
         const bookName = bookDisplayName(S.book);
@@ -7279,6 +7440,8 @@
             // format: cuv/gen/1
             const parts = savedPos.split('/');
             if (parts.length >= 3) {
+                // 英/韩文版已下架：老书签或本地存档里的版本回落到和合本
+                if (!['cuv', 'cnvs', 'pinyin'].includes(parts[0])) parts[0] = 'cuv';
                 S.version = parts[0];
                 S.book = parts[1];
                 S.chapter = parts[2];
@@ -7314,11 +7477,115 @@
                 openVideoPlayer('audio', ac.querySelector('.audio-title')?.textContent || '音频');
             const lb = e.target.closest('.lang-btn');
             if (lb && lb.dataset.lang) setLang(lb.dataset.lang);
+            // 设置页的简/繁：与顶栏共用 ob_script，刷新后由启动逻辑统一应用
+            const sb = e.target.closest('[data-script-set]');
+            if (sb) {
+                const next = sb.dataset.scriptSet;
+                if ((localStorage.getItem('ob_script') === 't' ? 't' : 's') !== next) {
+                    localStorage.setItem('ob_script', next);
+                    location.reload();
+                }
+            }
         });
+
+        // ── 简/繁切换 ──
+        // 没有繁体数据源，繁体是显示层实时转换（OpenCC 词组级，
+        // 保证「王后/头发/五谷/一只」这类多对一映射不出错字）。
+        // 转换器 423KB 按需加载：只有切到繁体才拉取。
+        // 切回简体直接刷新页面——源内容本来就是简体，无需反向转换。
+        (function initScriptToggle() {
+            const KEY = 'ob_script';
+            let converter = null;
+            let observing = false;
+
+            const current = () => localStorage.getItem(KEY) === 't' ? 't' : 's';
+            const syncBtns = () => {
+                document.querySelectorAll('#script-switcher [data-script]').forEach(b => {
+                    b.classList.toggle('active', b.dataset.script === current());
+                });
+            };
+
+            const loadOpenCC = () => new Promise((resolve, reject) => {
+                if (window.OpenCC) return resolve();
+                const sc = document.createElement('script');
+                sc.src = 'js/vendor-opencc-cn2t.js?v=1';
+                sc.onload = resolve;
+                sc.onerror = () => reject(new Error('load failed'));
+                document.head.appendChild(sc);
+            });
+
+            const convertTree = (root) => {
+                if (!converter) return;
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                let n;
+                while ((n = walker.nextNode())) {
+                    const tag = n.parentNode && n.parentNode.nodeName;
+                    if (tag === 'SCRIPT' || tag === 'STYLE') continue;
+                    const out = converter(n.nodeValue);
+                    // 只在变化时写回：繁体文本幂等，这也是防观察器死循环的关键
+                    if (out !== n.nodeValue) n.nodeValue = out;
+                }
+                if (root.querySelectorAll) {
+                    root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el => {
+                        for (const a of ['placeholder', 'title', 'aria-label']) {
+                            const v = el.getAttribute(a);
+                            if (v) { const o = converter(v); if (o !== v) el.setAttribute(a, o); }
+                        }
+                    });
+                }
+            };
+
+            const startObserver = () => {
+                if (observing) return;
+                observing = true;
+                new MutationObserver(muts => {
+                    for (const m of muts) {
+                        if (m.type === 'characterData') {
+                            const out = converter(m.target.nodeValue);
+                            if (out !== m.target.nodeValue) m.target.nodeValue = out;
+                        } else {
+                            m.addedNodes.forEach(node => {
+                                if (node.nodeType === 3) {
+                                    const out = converter(node.nodeValue);
+                                    if (out !== node.nodeValue) node.nodeValue = out;
+                                } else if (node.nodeType === 1) {
+                                    convertTree(node);
+                                }
+                            });
+                        }
+                    }
+                }).observe(document.body, { subtree: true, childList: true, characterData: true });
+            };
+
+            const enableTraditional = async () => {
+                try {
+                    await loadOpenCC();
+                    converter = converter || window.OpenCC.Converter({ from: 'cn', to: 'tw' });
+                    convertTree(document.body);
+                    startObserver();
+                } catch (e) {
+                    showToast('繁体转换暂不可用，请稍后再试');
+                    localStorage.setItem(KEY, 's');
+                    syncBtns();
+                }
+            };
+
+            $('script-switcher')?.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-script]');
+                if (!btn || btn.dataset.script === current()) return;
+                localStorage.setItem(KEY, btn.dataset.script);
+                syncBtns();
+                if (btn.dataset.script === 't') enableTraditional();
+                else location.reload();
+            });
+
+            syncBtns();
+            if (current() === 't') enableTraditional();
+        })();
 
         // 恢复上次所在的页面（刷新后停留在原页，而非总跳回阅读视图）。
         // 'plan' 需登录，排除以免刷新时弹登录框；未知值回退到阅读。
-        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'profile', 'video', 'audio'];
+        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'profile', 'video', 'audio', 'donate'];
         const lastView = localStorage.getItem('ob_last_view');
         switchView(RESTORE_VIEWS.includes(lastView) ? lastView : 'reading');
         switchPanelTab('ai');
@@ -7341,12 +7608,13 @@
     // 译本标识用同一紫的深浅阶，不引入额外色相；文字标签本身已能区分译本
     const CMP_VERS = [
         { id: 'cuv', label: '和合本', color: '#4e2b6b' },
-        { id: 'kjv', label: 'KJV', color: '#663b8b' },
-        { id: 'keb', label: '쉬운성경', color: '#8250ab' },
-        { id: 'krv', label: '개역한글', color: '#a678cd' },
-        { id: 'snr', label: '새누리', color: '#c5a0df' }
+        { id: 'cnvs', label: '新译本', color: '#8250ab' },
+        { id: 'pinyin', label: '拼音和合本', color: '#a678cd' }
     ];
-    let _cmpEnabled = JSON.parse(localStorage.getItem('ob_cmp_vers') || 'null') || ['kjv'];
+    // 过滤掉本地存档里已下架的版本（如 kjv），空了回落到新译本
+    let _cmpEnabled = (JSON.parse(localStorage.getItem('ob_cmp_vers') || 'null') || ['cnvs'])
+        .filter(id => CMP_VERS.some(v => v.id === id));
+    if (_cmpEnabled.length === 0) _cmpEnabled = ['cnvs'];
     let _compareMode = false;
 
     function toggleCompareMode() {

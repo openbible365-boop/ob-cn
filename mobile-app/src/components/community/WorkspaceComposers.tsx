@@ -189,6 +189,7 @@ export function PostComposer({
 
   const typeOptions: Array<[WorkspacePostType, string]> = [
     ["POST", "动态"],
+    ["PRAYER", "代祷"],
     ["ARTICLE", "文章"],
     ["MEDIA", "影音"],
     ...(isAdmin ? ([["NOTICE", "通知"]] as Array<[WorkspacePostType, string]>) : []),

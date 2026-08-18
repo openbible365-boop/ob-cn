@@ -56,7 +56,7 @@
     --shadow-gold: 0 5px 15px rgba(172, 126, 25, 0.12);
 
     /* Layout */
-    --left-nav-w: 260px;
+    --left-nav-w: 144px;
     --right-panel-w: 340px;
     --top-bar-h: 58px;
     /* App 圆角只有 8 / 12 / 16 / 999 四档 */
@@ -70,6 +70,8 @@
     /* 与 App 一致的系统字体栈，不加载网络字体 */
     --font-ui: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
     --font-display: 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
+    /* 章标题与段落小标题引用的是这个名字；此前从未定义，一直静默回落成黑体 */
+    --font-serif: 'Songti SC', 'STSong', 'Noto Serif SC', Georgia, serif;
     --font-text: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
     --font-mono: 'SF Mono', 'Fira Mono', monospace;
 
@@ -318,7 +320,10 @@ a {
     flex-shrink: 0;
 }
 
-/* Bible navigator */
+/* 书卷列表已移除：占位元素撑开中部，把底部按钮组固定在底 */
+.nav-spacer { flex: 1; }
+
+/* Bible navigator（遗留样式，结构已不在页面中） */
 .bible-nav {
     flex: 1;
     display: flex;
@@ -511,10 +516,235 @@ a {
     background: var(--border);
 }
 
-/* Hide book/chapter breadcrumbs when left nav is open (info already visible in sidebar) */
-.app-shell:not(.nav-hidden) .breadcrumb-book-btn,
-.app-shell:not(.nav-hidden) .breadcrumb-ch-btn {
+/* 书卷/章选择在顶栏始终显示（侧栏已不含书卷列表） */
+/* 「我的」导航项的头像态：登录后替代图标，尺寸与图标区一致 */
+.nav-avatar {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    overflow: hidden;
+    line-height: 1;
+}
+.nav-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 999px; }
+
+/* ── 奉献页 ── 布局参考微读圣经；配色遵循本站令牌（金=温暖致辞，紫=交互） */
+.donate-hero {
+    margin-bottom: 16px;
+    padding: 22px 20px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(150deg, var(--accent-gold-light), #fff8e8 60%, var(--bg-card, #fff));
+    border: 1px solid var(--accent-gold);
+}
+.donate-hero h2 {
+    margin-bottom: 10px;
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--gold-ink);
+}
+.donate-hero p { margin: 6px 0; color: var(--text-secondary); font-size: 0.88rem; line-height: 1.75; }
+
+.donate-card {
+    padding: 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card, #fff);
+    box-shadow: var(--shadow-md);
+}
+.donate-amounts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.donate-amt {
+    padding: 12px 0;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card, #fff);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.donate-amt:hover { border-color: var(--accent-mid); }
+.donate-amt.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.donate-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 0 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card, #fff);
+}
+.donate-custom input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+}
+.donate-custom span { color: var(--text-secondary); font-weight: 700; }
+.donate-custom:focus-within { border-color: var(--accent); }
+.donate-methods {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.donate-method {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card, #fff);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+.donate-method:hover { border-color: var(--accent-mid); }
+.donate-method.selected { border-color: var(--accent); background: var(--accent-light); }
+.donate-method:last-child { grid-column: 1 / -1; }
+.donate-submit { width: 100%; margin-top: 16px; padding: 12px 0; font-size: 1rem; border-radius: var(--radius-md); }
+.donate-note { margin-top: 10px; color: var(--text-tertiary); font-size: 0.75rem; text-align: center; }
+
+/* 登录入口已移入左侧「我的」（未登录时该页给出登录按钮）。
+   顶栏的登录钮与头像区只做隐藏不删节点：auth.js 的 updateTopBar
+   仍要靠这两个节点走完并派发 authchange 事件 */
+#auth-login-btn, #auth-user-area { display: none !important; }
+
+/* 主操作按钮：模板里大量使用但此前从未定义过样式（一直是浏览器默认灰钮）。
+   紫=交互 的标准实心按钮：登录、发布、加入计划、完成阅读等主操作统一用它 */
+.primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    box-shadow: var(--shadow-accent);
+    transition: background 0.15s, transform 0.1s;
+}
+.primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.primary-btn:active:not(:disabled) { transform: scale(0.97); }
+.primary-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* 章翻页浮钮：悬浮在正文两侧、垂直居中，不随正文滚动。
+   只在阅读视图出现；半透明常驻，悬停实色，避免遮挡文字的压迫感 */
+.content-area { position: relative; }
+.ch-float {
+    position: absolute;
+    top: 50%;
+    z-index: 30;
     display: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card, #fff);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    opacity: 0.65;
+    transform: translateY(-50%);
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+.content-area:has(#view-reading.active-view) .ch-float { display: grid; }
+.ch-float:hover:not(:disabled) { opacity: 1; color: var(--gold-ink); border-color: var(--accent-gold); }
+.ch-float:disabled { opacity: 0.2; cursor: default; }
+.ch-float-left { left: 10px; }
+.ch-float-right { right: 10px; }
+@media (max-width: 768px) { .ch-float { display: none !important; } }
+
+/* 慧读标签的迷你 logo：描边随文字色，星与书页保持品牌色 */
+.tab-logo-mark { width: 15px; height: 15px; vertical-align: -2px; }
+
+/* 拼音版：ruby 注音排版 */
+.is-pinyin .verse { line-height: 2.35; }
+.is-pinyin ruby { ruby-align: center; }
+.is-pinyin rt {
+    color: var(--text-tertiary);
+    font-size: 0.56em;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+.is-pinyin .verse.selected rt,
+.is-pinyin .verse:hover rt { color: inherit; opacity: 0.75; }
+
+/* 侧栏为图标栏：宽度只保留 logo，一切文字隐藏（悬停有 title 提示）。
+   移动端抽屉（≤768px）不在此列，仍是带文字的完整菜单。 */
+@media (min-width: 769px) {
+    /* 窄栏：logo 与字标左右排列，导航项图标在上、小字在下 */
+    .left-nav .nav-brand { justify-content: center; padding: 6px 0; gap: 0; }
+    .left-nav .nav-item {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 56px;
+        padding: 8px 0;
+        border-radius: 10px;
+        /* 覆盖横排菜单的「左条 + 右移」动效：竖排居中版一切以对称为先 */
+        border-left: 0;
+        transform: none;
+    }
+    .left-nav .nav-item:hover { transform: none; background: var(--bg-hover); }
+    /* 激活态用金族：与正上方 logo、顶栏的金色芯片同一语系（金=阅读） */
+    .left-nav .nav-item.active {
+        background: var(--accent-gold-light);
+        color: var(--gold-ink);
+        border-left: 0;
+        transform: none;
+        font-weight: 700;
+    }
+    .left-nav .nav-item.active i { color: var(--gold-ink); }
+    .left-nav .nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .left-nav .nav-item span { display: block; font-size: 0.68rem; font-weight: 600; line-height: 1; letter-spacing: 0.02em; }
+    .left-nav .nav-item.active span { font-weight: 700; }
+    .left-nav .nav-item i { font-size: 1.1rem; width: auto; text-align: center; }
+    .left-nav .nav-views, .left-nav .nav-bottom { padding: 10px 8px; gap: 4px; }
+    .left-nav .nav-divider { margin: 2px 14px; }
+}
+/* 顶栏空间不足时逐级收缩：书卷/章芯片的优先级最高，永不隐藏。
+   ≤1280：上一章/下一章箭头隐藏（章芯片浮层里也能翻）、收听只留图标；
+   ≤1080：版本选择隐藏（宽屏可见）、语言切换与登录收紧。 */
+@media (max-width: 1280px) {
+    #listen-btn span { display: none; }
+    .breadcrumb-btn { padding: 5px 8px; }
+}
+@media (max-width: 1080px) {
+    #version-select { display: none; }
+    /* 对照是低频入口，窄屏让位给书卷/章芯片；宽屏仍在 */
+    #compare-btn { display: none; }
+    .lang-switcher-pill button { padding: 3px 6px; font-size: 0.75rem; }
+    #auth-login-btn { padding: 4px 9px; font-size: 0.8rem; }
+    .top-actions { gap: 4px; }
+    #top-bar { padding-left: 8px; padding-right: 8px; }
+    .breadcrumb-area { gap: 4px; }
 }
 
 .breadcrumb-dot {
@@ -936,12 +1166,15 @@ body[data-theme="dark"] .sel-close-btn:hover {
     display: flex;
     align-items: flex-start;
     gap: 2px;
+    /* 底色/高亮/阴影只包住文本：节框按内容收缩，不铺满整栏 */
+    width: fit-content;
+    max-width: 100%;
     cursor: pointer;
     border-radius: 8px;
-    padding: 8px 14px;
-    margin-bottom: 6px;
+    padding: 4px 14px;
+    margin-bottom: 2px;
     transition: all 0.2s ease;
-    line-height: 1.6;
+    line-height: 1.7;
     letter-spacing: -0.02em;
     font-family: var(--font-text);
     font-size: 1.22rem;
@@ -975,8 +1208,6 @@ body[data-theme="dark"] .verse-heading {
 .verse:hover {
     background: var(--bg-hover);
     border-color: var(--border);
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 body[data-theme="dark"] .verse:hover {
@@ -989,8 +1220,9 @@ body[data-theme="dark"] .verse:hover {
     background: var(--accent-light);
     border-color: var(--accent-mid);
     color: var(--text-primary);
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(130, 80, 171, 0.15);
+    /* 不位移不投影：选中靠底色+描边表达，阴影在选中行上显得拖尾 */
+    transform: none;
+    box-shadow: none;
 }
 
 .verse.in-range {
@@ -5555,9 +5787,9 @@ body[data-theme="dark"] .toast {
 }
 
 .lang-btn.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
+    background: var(--accent-gold);
+    color: #23262d;
+    border-color: var(--accent-gold);
 }
 
 /* Mobile overlay */
@@ -5585,13 +5817,13 @@ body[data-theme="dark"] .toast {
 @media (max-width: 1200px) {
     :root {
         --right-panel-w: 340px;
-        --left-nav-w: 230px;
+        --left-nav-w: 144px;
     }
 }
 
 @media (max-width: 960px) {
     :root {
-        --left-nav-w: 200px;
+        --left-nav-w: 144px;
         --right-panel-w: 310px;
     }
 
@@ -6142,7 +6374,7 @@ body[data-theme="dark"] .toast {
 /* ── Large tablets / iPads: 768–1024px in portrait ── */
 @media (min-width: 769px) and (max-width: 1024px) {
     :root {
-        --left-nav-w: 220px;
+        --left-nav-w: 144px;
         --right-panel-w: 290px;
     }
 
@@ -6726,9 +6958,9 @@ body[data-theme="dark"] .toast {
 }
 
 .lang-btn.active {
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 1px 6px rgba(130, 80, 171, 0.3);
+    background: var(--accent-gold);
+    color: #23262d;
+    box-shadow: var(--shadow-gold);
 }
 
 /* Inside auth modal lang switcher */
@@ -6742,9 +6974,9 @@ body[data-theme="dark"] .toast {
 }
 
 .auth-lang-row .lang-btn.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
+    background: var(--accent-gold);
+    color: #23262d;
+    border-color: var(--accent-gold);
 }
 
 /* Selection bar buttons with text labels */
@@ -7299,6 +7531,52 @@ body[data-theme="dark"] .toast {
 .plan-card:hover .plan-card-go {
     transform: translateX(3px);
 }
+
+/* 服务端计划卡（新版计划页：社群共读/公共/我创建的） */
+.plan-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.plan-section-title { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 0.85rem; font-weight: 800; }
+.plan-section-title i { color: var(--accent); }
+.plan-scard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card, #fff);
+    box-shadow: var(--shadow-card, 0 3px 10px rgba(35, 38, 45, 0.08));
+}
+.plan-scard.is-finished { opacity: 0.75; }
+.plan-scard-head { display: flex; align-items: center; gap: 8px; }
+.plan-scard-head b { font-size: 0.92rem; }
+.plan-scard-head small { margin-left: auto; flex: 0 0 auto; color: var(--text-tertiary); }
+.plan-card-badge.is-community {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(130, 80, 171, 0.1);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+.plan-scard-desc { color: var(--text-secondary); font-size: 0.8rem; line-height: 1.5; }
+.plan-today {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px dashed var(--accent);
+    border-radius: 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+}
+.plan-today:hover { background: var(--accent); color: #fff; }
+.plan-scard-actions { display: flex; justify-content: flex-end; }
+.plan-complete-btn, .plan-enroll-btn { padding: 6px 16px; font-size: 0.8rem; }
+.plan-card-done { color: var(--success, #2f7a50); font-size: 0.82rem; font-weight: 800; }
 
 .plan-card-progress {
     flex: 1;
@@ -7958,10 +8236,11 @@ transition: all 0.2s var(--ease-out);
 }
 
 .lang-btn.active {
-    background: var(--accent-gradient);
+    background: var(--accent-gold);
+    color: #23262d;
     border-color: transparent;
     box-shadow: var(--shadow-sm);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 /* ── Cards: Hover Lift + Shadow Cascade ── */
@@ -10908,6 +11187,13 @@ body[data-theme="light"] .confirm-modal-box {
    改为同色系深浅。经文高亮色是存量数据键，单独保留。 */
 :root {
     --gold-ink: #714a08;        /* 金色文字，浅底上保证对比 */
+    /* 旧令牌名别名：历史样式仍引用这些名字，不接上会静默失效（继承或透明） */
+    --bg-main: var(--bg-surface);
+    --bg-base: var(--bg-app);
+    --text-muted: var(--text-tertiary);
+    --primary: var(--accent);
+    --text: var(--text-primary);
+    --border-hover: var(--border-strong);
     --success: #2f7a50;
     --danger: #c93870;
     --danger-soft: #f9e3ec;
@@ -10935,7 +11221,14 @@ body[data-theme="dark"] {
 /* 2. 收听按钮：朗读属于阅读，跟随金色 */
 #listen-btn {
     background: var(--accent-gold-light);
+    /* 边框与悬停一并归入金族：基类 pill-action-btn 是紫系，不覆盖会露出紫边 */
+    border-color: var(--accent-gold);
     color: var(--gold-ink);
+}
+#listen-btn:hover:not(:disabled) {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: #23262d;
 }
 
 /* 3. 左侧导航活跃态：阅读视图切换，对应 App 底部导航的金色活跃块 */
@@ -11203,6 +11496,63 @@ select:focus-visible,
     font-size: 0.72rem;
     font-weight: 700;
 }
+/* 可点的经文引用：能跳转阅读器时才渲染成按钮态 */
+.cmty-post-ref.is-link { border: none; cursor: pointer; }
+.cmty-post-ref.is-link:hover { background: var(--accent); color: #fff; }
+
+/* 代祷卡：淡紫底 + 「我为你祷告」 */
+.cmty-post.is-prayer {
+    border-color: rgba(130, 80, 171, 0.3);
+    background: linear-gradient(150deg, rgba(130, 80, 171, 0.04), rgba(130, 80, 171, 0.09));
+}
+.cmty-post-kind {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(130, 80, 171, 0.1);
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.cmty-pray { font-weight: 700; }
+.cmty-pray.is-on { color: var(--accent); }
+
+/* 共读进度卡：置于动态流顶部，整卡可点去计划页 */
+.cmty-plan-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card, #fff);
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--shadow-card, 0 3px 10px rgba(35, 38, 45, 0.08));
+}
+.cmty-plan-card:hover { border-color: var(--accent); }
+.cmty-plan-head { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; }
+.cmty-plan-head i { color: var(--accent); }
+.cmty-plan-head b { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cmty-plan-head small { flex: 0 0 auto; margin-left: auto; color: var(--text-tertiary); }
+.cmty-plan-stats { display: flex; flex-direction: column; gap: 4px; }
+.cmty-plan-bar {
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    overflow: hidden;
+}
+.cmty-plan-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.3s;
+}
+.cmty-plan-stats small { color: var(--text-secondary); font-size: 0.72rem; }
+.cmty-plan-mine { align-self: flex-start; color: var(--accent); font-size: 0.75rem; font-weight: 700; }
+.cmty-plan-mine.is-done { color: var(--success, #2f7a50); }
 
 .cmty-post-body { color: var(--text-secondary); font-size: 0.84rem; line-height: 1.6; }
 

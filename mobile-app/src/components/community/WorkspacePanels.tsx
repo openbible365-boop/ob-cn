@@ -245,7 +245,7 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
         const isLongArticle = post.postType === "ARTICLE" && Array.from(post.content).length > 160;
         const mediaLabel = post.mediaType === "VIDEO" ? "视频" : post.mediaType === "AUDIO" ? "音频" : "图片";
         return (
-        <article key={post.id} className={`card community-post-card${post.postType === "NOTICE" ? " is-notice" : ""}${post.pinnedAt ? " is-pinned" : ""}`}>
+        <article key={post.id} className={`card community-post-card${post.postType === "NOTICE" ? " is-notice" : ""}${post.postType === "PRAYER" ? " is-prayer" : ""}${post.pinnedAt ? " is-pinned" : ""}`}>
           <div className="community-post-meta">
             <div className="community-person-row">
               {post.author.avatarUrl ? <img src={resolveAvatarUrl(post.author.avatarUrl) ?? ""} alt="" /> : <span style={{ background: post.author.avatarColor }}>{Array.from(post.author.name)[0] ?? "友"}</span>}
@@ -254,7 +254,7 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
             <div className="community-post-meta-tools">
               {post.pinnedAt && <span className="community-pinned-label"><Icon name="pin" size={12} />置顶</span>}
               <span className={`community-post-kind is-${post.postType.toLowerCase()}`}>
-                {post.postType === "NOTICE" ? "通知" : post.postType === "ARTICLE" ? "文章" : post.postType === "MEDIA" ? mediaLabel : "动态"}
+                {post.postType === "NOTICE" ? "通知" : post.postType === "ARTICLE" ? "文章" : post.postType === "MEDIA" ? mediaLabel : post.postType === "PRAYER" ? "代祷" : "动态"}
               </span>
               {post.visibility === "ADMINS" && <span className="community-post-visibility">仅管理员</span>}
               <button type="button" aria-label={`更多操作：${post.title || "动态"}`} onClick={() => setMenuPostId(menuPostId === post.id ? "" : post.id)}><Icon name="more-horizontal" size={16} /></button>
@@ -276,7 +276,9 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
           {post.mediaUrl && post.mediaType === "VIDEO" && <video className="community-post-media" controls preload="metadata" playsInline src={post.mediaUrl}>当前浏览器不支持视频播放。</video>}
           {post.verseRef && <div className="community-verse-ref"><Icon name="book" size={14} />{post.verseRef}</div>}
           <div className="community-inline-actions">
-            <button disabled={busy} aria-label={`${post.likedByMe ? "取消点赞" : "点赞"}，当前 ${post.likeCount} 个赞`} aria-pressed={post.likedByMe} className={post.likedByMe ? "is-active" : ""} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}><Icon name="heart" size={16} />{post.likeCount}</button>
+            {post.postType === "PRAYER"
+              ? <button disabled={busy} aria-label={`${post.likedByMe ? "取消代祷" : "我为你祷告"}，已有 ${post.likeCount} 人祷告`} aria-pressed={post.likedByMe} className={`community-pray-btn${post.likedByMe ? " is-active" : ""}`} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}>🙏 {post.likedByMe ? "已为你祷告" : "我为你祷告"}{post.likeCount > 0 ? ` · ${post.likeCount}` : ""}</button>
+              : <button disabled={busy} aria-label={`${post.likedByMe ? "取消点赞" : "点赞"}，当前 ${post.likeCount} 个赞`} aria-pressed={post.likedByMe} className={post.likedByMe ? "is-active" : ""} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}><Icon name="heart" size={16} />{post.likeCount}</button>}
             <button aria-label={`写评论，当前 ${post.commentCount} 条`} aria-expanded={commentPostId === post.id} onClick={() => setCommentPostId(commentPostId === post.id ? "" : post.id)}><Icon name="message-square" size={16} />{post.commentCount}</button>
             <button disabled={busy} aria-pressed={post.bookmarkedByMe} className={post.bookmarkedByMe ? "is-bookmarked" : ""} onClick={() => runAction({ action: "TOGGLE_BOOKMARK", postId: post.id })}><Icon name="bookmark" size={16} />{post.bookmarkedByMe ? "已收藏" : "收藏"}</button>
           </div>

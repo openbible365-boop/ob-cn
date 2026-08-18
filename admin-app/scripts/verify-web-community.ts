@@ -244,6 +244,22 @@ async function main() {
       "评论翻页接口能读到刚发的评论",
     );
 
+    // ── 6.5 代祷请求 ──
+    section("代祷 PRAYER");
+    const prayerContent = `${TAG}代祷 ${randomBytes(3).toString("hex")}`;
+    const prayer = await api(`/${community.id}/workspace`, {
+      method: "POST",
+      cookie: ownerCookie,
+      body: JSON.stringify({ action: "CREATE_POST", postType: "PRAYER", content: prayerContent }),
+    });
+    check(prayer.status === 200, `代祷发布返回 200（实际 ${prayer.status}）`);
+    const wsP = await api(`/${community.id}/workspace`, { cookie: ownerCookie });
+    const prayerPost = (wsP.body?.posts ?? []).find((p) => p.content === prayerContent) as
+      | (ApiPost & { postType?: string })
+      | undefined;
+    check(prayerPost?.postType === "PRAYER", `帖子类型保存为 PRAYER（实际 ${prayerPost?.postType}）`);
+    check(Array.isArray((wsP.body as { readingPlans?: unknown[] })?.readingPlans), "workspace 返回 readingPlans 数组（共读进度卡数据源）");
+
     // ── 7. 权限边界 ──
     section("权限边界（非成员）");
     const outsiderWs = await api(`/${community.id}/workspace`, { cookie: outsiderCookie });

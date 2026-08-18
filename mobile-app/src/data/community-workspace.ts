@@ -3,7 +3,7 @@ import { apiFormRequest, apiRequest } from "./api";
 const COMMUNITY_WORKSPACE_CACHE_KEY = "ob.community-workspace-session-cache";
 
 export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
-export type WorkspacePostType = "POST" | "ARTICLE" | "NOTICE" | "MEDIA";
+export type WorkspacePostType = "POST" | "ARTICLE" | "NOTICE" | "MEDIA" | "PRAYER";
 export type WorkspacePostMediaType = "IMAGE" | "AUDIO" | "VIDEO";
 export type WorkspacePostVisibility = "PUBLIC" | "MEMBERS" | "ADMINS";
 

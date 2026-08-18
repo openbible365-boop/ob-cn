@@ -259,9 +259,36 @@ const Auth = (() => {
         if (typeof showToast === 'function') showToast(window.t ? window.t('toast.logout-ok') : '已退出登录');
     }
 
+    // 左侧「我的」导航项：登录后图标换成用户头像（图片或首字母圆标）
+    function updateNavAvatar(user) {
+        const btn = document.querySelector('.nav-item[data-view="profile"]');
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        let av = btn.querySelector('.nav-avatar');
+        if (!user) {
+            if (av) av.remove();
+            if (icon) icon.style.display = '';
+            return;
+        }
+        if (!av) {
+            av = document.createElement('span');
+            av.className = 'nav-avatar';
+            btn.insertBefore(av, btn.firstChild);
+        }
+        const localProfile = JSON.parse(localStorage.getItem('ob_profile') || '{}');
+        const localAvatar = localProfile.avatar || (typeof user.avatar === 'string' && user.avatar.startsWith('/') ? user.avatar : null);
+        if (localAvatar && (localAvatar.startsWith('data:') || localAvatar.startsWith('http') || localAvatar.startsWith('/'))) {
+            av.innerHTML = `<img src="${localAvatar}" alt="">`;
+        } else {
+            av.textContent = (typeof user.avatar === 'string' && user.avatar ? user.avatar : (user.username || '?'))[0].toUpperCase();
+        }
+        if (icon) icon.style.display = 'none';
+    }
+
     // --- Update topbar UI ---
     function updateTopBar() {
         const user = getUser();
+        updateNavAvatar(user);
         const loginBtn = document.getElementById('auth-login-btn');
         const userArea = document.getElementById('auth-user-area');
         const avatar = document.getElementById('auth-avatar');
