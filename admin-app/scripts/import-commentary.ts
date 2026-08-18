@@ -31,11 +31,12 @@ export function parseRange(verses: string) {
 }
 
 function deobfuscate(text: string): string {
-  let b64 = "";
-  for (let i = 0; i < text.length; i++) {
-    b64 += String.fromCharCode(text.charCodeAt(i) ^ 0x2a);
+  const obfuscatedBytes = Buffer.from(text.trim(), "base64");
+  const rawBytes = Buffer.alloc(obfuscatedBytes.length);
+  for (let i = 0; i < obfuscatedBytes.length; i++) {
+    rawBytes[i] = obfuscatedBytes[i] ^ 0x2a;
   }
-  return Buffer.from(b64, "base64").toString("utf8");
+  return rawBytes.toString("utf8");
 }
 
 async function main() {

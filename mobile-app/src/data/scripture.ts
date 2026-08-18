@@ -129,14 +129,10 @@ type JingduEntry = { type: string; verses: string; text: string };
 const commentaryCache = new Map<number, Promise<Record<string, JingduEntry[]>>>();
 
 function deobfuscate(text: string): Record<string, JingduEntry[]> {
-  let decoded = "";
-  for (let i = 0; i < text.length; i++) {
-    decoded += String.fromCharCode(text.charCodeAt(i) ^ 0x2a);
-  }
-  const raw = atob(decoded);
+  const raw = atob(text.trim());
   const bytes = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) {
-    bytes[i] = raw.charCodeAt(i);
+    bytes[i] = raw.charCodeAt(i) ^ 0x2a;
   }
   return JSON.parse(new TextDecoder("utf-8").decode(bytes)) as Record<string, JingduEntry[]>;
 }

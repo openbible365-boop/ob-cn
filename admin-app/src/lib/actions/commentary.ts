@@ -101,12 +101,12 @@ export async function markChapterStatus(formData: FormData) {
  * 这正是方案 C 的用意：校对期间的改动不会立刻影响线上。
  */
 function obfuscate(content: string): string {
-  const b64 = Buffer.from(content, "utf8").toString("base64");
-  let result = "";
-  for (let i = 0; i < b64.length; i++) {
-    result += String.fromCharCode(b64.charCodeAt(i) ^ 0x2a);
+  const rawBytes = Buffer.from(content, "utf8");
+  const obfuscatedBytes = Buffer.alloc(rawBytes.length);
+  for (let i = 0; i < rawBytes.length; i++) {
+    obfuscatedBytes[i] = rawBytes[i] ^ 0x2a;
   }
-  return result;
+  return obfuscatedBytes.toString("base64");
 }
 
 export async function publishCommentary(formData: FormData) {

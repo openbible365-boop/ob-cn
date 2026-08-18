@@ -10,19 +10,20 @@ import json
 XOR_KEY = 0x2A
 
 def obfuscate(data_str: str) -> str:
-    # 1. Base64 encode
-    b64_bytes = base64.b64encode(data_str.encode('utf-8'))
-    b64_str = b64_bytes.decode('ascii')
-    # 2. XOR character-by-character
-    obfuscated = "".join(chr(ord(c) ^ XOR_KEY) for c in b64_str)
-    return obfuscated
+    # 1. Encode to UTF-8 bytes
+    raw_bytes = data_str.encode('utf-8')
+    # 2. XOR each byte
+    obfuscated_bytes = bytes(b ^ XOR_KEY for b in raw_bytes)
+    # 3. Base64 encode
+    b64_bytes = base64.b64encode(obfuscated_bytes)
+    return b64_bytes.decode('ascii')
 
 def deobfuscate(obfuscated_str: str) -> str:
-    # 1. XOR character-by-character back
-    b64_str = "".join(chr(ord(c) ^ XOR_KEY) for c in obfuscated_str)
-    # 2. Base64 decode
-    b64_bytes = b64_str.encode('ascii')
-    raw_bytes = base64.b64decode(b64_bytes)
+    # 1. Base64 decode
+    b64_bytes = obfuscated_str.encode('ascii')
+    obfuscated_bytes = base64.b64decode(b64_bytes)
+    # 2. XOR each byte back
+    raw_bytes = bytes(b ^ XOR_KEY for b in obfuscated_bytes)
     return raw_bytes.decode('utf-8')
 
 def main():

@@ -997,14 +997,10 @@
             const cacheKey = `${b}-${c}`;
             
     function deobfuscate(text) {
-        let decoded = '';
-        for (let i = 0; i < text.length; i++) {
-            decoded += String.fromCharCode(text.charCodeAt(i) ^ 0x2A);
-        }
-        const raw = atob(decoded);
+        const raw = atob(text.trim());
         const bytes = new Uint8Array(raw.length);
         for (let i = 0; i < raw.length; i++) {
-            bytes[i] = raw.charCodeAt(i);
+            bytes[i] = raw.charCodeAt(i) ^ 0x2A;
         }
         return JSON.parse(new TextDecoder('utf-8').decode(bytes));
     }
