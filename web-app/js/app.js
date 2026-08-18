@@ -937,6 +937,15 @@
     let jingduCache = {};
     let jingduBookFetched = new Set();
 
+    function deobfuscate(text) {
+        const raw = atob(text.trim());
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) {
+            bytes[i] = raw.charCodeAt(i) ^ 0x2A;
+        }
+        return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    }
+
     function isVerseInRef(chapter, verse, refStr) {
         // extract e.g. "1:1-2:3" or "32:3-23" from strings like "1:6-8空气:"
         let cleanRef = refStr.replace(/[^0-9:,-]/g, '').replace(/-+$/, '');
@@ -996,15 +1005,6 @@
             const [b, c, v] = ref.split('-');
             const cacheKey = `${b}-${c}`;
             
-    function deobfuscate(text) {
-        const raw = atob(text.trim());
-        const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i++) {
-            bytes[i] = raw.charCodeAt(i) ^ 0x2A;
-        }
-        return JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    }
-
             if (!jingduBookFetched.has(b) && !fetchedBooksInLoop.has(b)) {
                 fetchedBooksInLoop.add(b);
                 try {
