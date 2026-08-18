@@ -564,7 +564,18 @@
                     renderVerseStates();
                     updateSelectionBar();
                 }
-                switchPanelTab('notes');
+                // 笔记已移入左侧「笔记」视图；旧代码跳的右栏 notes 标签已不存在，
+                // 点了图标便毫无反应。现在：切视图 → 滚到那条笔记 → 闪烁提示
+                switchView('notes');
+                setTimeout(() => {
+                    const idx = S.notes.findIndex(n => Array.isArray(n.refs) && n.refs.includes(noteRef));
+                    if (idx < 0) return;
+                    const card = document.querySelector(`.note-card[data-note-idx="${idx}"]`);
+                    if (!card) return;
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.classList.add('note-card-flash');
+                    setTimeout(() => card.classList.remove('note-card-flash'), 1800);
+                }, 350);
                 return;
             }
             const vEl = e.target.closest('.verse[data-ref]');
@@ -1026,14 +1037,57 @@
         });
         
         if (allMatchedComms.length) {
-            cont.innerHTML = allMatchedComms.map(c => `
-            <div class="commentary-item">
-                <div class="commentary-author" style="margin-bottom:6px;font-weight:600;color:var(--text-secondary);"><i class="fa-solid fa-book-open"></i> 精读本注释 ${c.verses}</div>
-                <div class="commentary-text" style="line-height:1.6;">${c.html || c.text}</div>
-            </div>`).join('');
+            cont.innerHTML = allMatchedComms.map(commentaryItemHtml).join('');
+            setupCommentaryCollapse(cont);
         } else {
             cont.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">' + ((typeof getLang === 'function' ? getLang() : 'zh') === 'ko' ? '해설이 없습니다.' : (typeof getLang === 'function' ? getLang() : 'zh') === 'en' ? 'No commentary available.' : '暂无该节注释数据') + '</p>';
         }
+    }
+
+    // 注释条目渲染：节段做金色徽章（多节段实底以示覆盖范围广），
+    // 超长条目默认折叠，展开由用户决定——避免一条 1:1-2:3 的长文把面板变成文字墙。
+    // 中文标点归正：注释源数据里逗号/分号等是半角，夹在汉字中间不合排版规范。
+    // 只在前后都是 CJK 时替换，不碰 (The Source) 这类西文片段内部的标点。
+    function zhTypeset(html) {
+        if (!html) return html;
+        const CJK = '[\u4e00-\u9fff\u3000-\u303f？！；：、」』）]';
+        return html
+            .replace(new RegExp(`(${CJK}),(?=${CJK.replace(']', '「『（]')})`, 'g'), '$1，')
+            .replace(new RegExp(`(${CJK});(?=${CJK})`, 'g'), '$1；')
+            .replace(new RegExp(`(${CJK}):(?=${CJK})`, 'g'), '$1：')
+            .replace(new RegExp(`(${CJK})[?](?=${CJK})`, 'g'), '$1？')
+            .replace(new RegExp(`(${CJK})!(?=${CJK})`, 'g'), '$1！');
+    }
+
+    function commentaryItemHtml(c) {
+        const multi = /[-,–]/.test(c.verses);
+        return `<div class="commentary-item">
+            <div class="commentary-head">
+                <span class="commentary-range${multi ? ' is-multi' : ''}">${c.verses}</span>
+                <span class="commentary-source">精读本注释</span>
+            </div>
+            <div class="commentary-text">${zhTypeset(c.html || c.text)}</div>
+            <button class="commentary-expand hidden">展开全文 <i class="fa-solid fa-angle-down"></i></button>
+        </div>`;
+    }
+
+    // 折叠检测：渲染后量高度，超过阈值的条目收起并给「展开全文」
+    function setupCommentaryCollapse(cont) {
+        cont.querySelectorAll('.commentary-item').forEach(item => {
+            const text = item.querySelector('.commentary-text');
+            const btn = item.querySelector('.commentary-expand');
+            if (!text || !btn) return;
+            if (text.scrollHeight > 380) {
+                item.classList.add('is-collapsed');
+                btn.classList.remove('hidden');
+                btn.addEventListener('click', () => {
+                    const collapsed = item.classList.toggle('is-collapsed');
+                    btn.innerHTML = collapsed
+                        ? '展开全文 <i class="fa-solid fa-angle-down"></i>'
+                        : '收起 <i class="fa-solid fa-angle-up"></i>';
+                });
+            }
+        });
     }
 
     // NOTE: 全章注释模式——直接返回本章 jingduCache 里所有条目，不逐节过滤
@@ -1082,11 +1136,9 @@
         });
 
         if (sorted.length) {
-            cont.innerHTML = sorted.map(c => `
-            <div class="commentary-item">
-                <div class="commentary-author" style="margin-bottom:6px;font-weight:600;color:var(--text-secondary);"><i class="fa-solid fa-book-open"></i> 精读本注释 ${c.verses}</div>
-                <div class="commentary-text" style="line-height:1.6;">${c.html || c.text}</div>
-            </div>`).join('');
+            cont.innerHTML = `<div class="commentary-count">本章共 ${sorted.length} 条注释</div>`
+                + sorted.map(commentaryItemHtml).join('');
+            setupCommentaryCollapse(cont);
         } else {
             cont.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">本章暂无注释数据</p>';
         }
@@ -1480,7 +1532,7 @@
             const answerHtml = (n.answer || '').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
             const question = highlightMatch(escapeNoteHTML(n.question || ''), q);
             return `
-        <div class="note-card note-card-ai">
+        <div class="note-card note-card-ai" data-note-idx="${i}">
             <div class="note-card-ref" ${refClick}>
                 <i class="fa-solid fa-book-bible"></i> ${escapeNoteHTML(n.ref || '')}${linkIcon}
                 <button class="note-ai-badge" onclick="event.stopPropagation();shareNote(${i})" style="background:none; border:none; cursor:pointer;" title="${t('sel.share') || '分享'}"><i class="fa-solid fa-share-from-square"></i> <span>${t('sel.share') || '分享'}</span></button>
@@ -1494,7 +1546,7 @@
         // 普通手写笔记（内容超 3 行折叠，点击展开）
         const text = highlightMatch(escapeNoteHTML(n.text || ''), q);
         return `
-        <div class="note-card">
+        <div class="note-card" data-note-idx="${i}">
             <div class="note-card-ref" ${refClick}><i class="fa-solid fa-book-bible"></i> ${escapeNoteHTML(n.ref || '')}${linkIcon}</div>
             <div class="note-card-text clampable">${text}</div>
             <div class="note-card-date">${escapeNoteHTML(n.date || '')} <button onclick="event.stopPropagation();shareNote(${i})" class="note-share-btn" title="分享"><i class="fa-solid fa-share-from-square"></i></button> ${delBtn}</div>
@@ -7104,7 +7156,10 @@
         if (S.view === 'profile') renderProfileView();
         const user = e.detail;
         if (!user) {
-            S.notes = [];
+            // 未登录 ≠ 无笔记：游客的本地笔记要照常显示。
+            // 真正退出登录时 auth.js 的 clearUser 已删除 ob_notes，这里重载自然为空；
+            // 而游客冷启动时重载能拿回本地笔记——此前无条件清空导致游客笔记永不显示。
+            S.notes = JSON.parse(localStorage.getItem('ob_notes') || '[]');
             renderNotesList();
             renderNoteIndicators();
             $('user-dropdown')?.classList.add('hidden');

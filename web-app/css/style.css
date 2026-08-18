@@ -2033,31 +2033,90 @@ body[data-theme="dark"] .verse-note-icon:hover {
 }
 
 /* Commentary items */
+/* 从正文笔记图标跳转过来时的定位闪烁 */
+@keyframes noteCardFlash {
+    0%, 60% { border-color: var(--accent-gold); box-shadow: 0 0 0 3px var(--accent-gold-light); }
+    100% { border-color: var(--border); box-shadow: none; }
+}
+.note-card-flash { animation: noteCardFlash 1.8s ease-out; }
+
+/* 注释卡片：一条一卡，节段徽章 + 可折叠长文 */
 .commentary-item {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
+    position: relative;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card, #fff);
 }
-
-.commentary-item:last-child {
-    border-bottom: none;
+.commentary-count {
+    margin-bottom: 8px;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
 }
-
-.commentary-author {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 5px;
+.commentary-head {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+/* 节段徽章走金族（阅读语境）；多节段用实底金，一眼看出覆盖范围更广 */
+.commentary-range {
+    flex: 0 0 auto;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--accent-gold-light);
+    color: var(--gold-ink);
+    font-size: 0.75rem;
+    font-weight: 800;
     font-family: var(--font-ui);
 }
-
+.commentary-range.is-multi {
+    background: var(--accent-gold);
+    color: #23262d;
+}
+.commentary-source {
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
 .commentary-text {
     font-size: 0.9rem;
-    line-height: 1.7;
-    color: var(--text-secondary);
+    line-height: 1.8;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+    /* 中文标准排版：两端对齐 + 避头尾（标点不出现在行首） */
+    text-align: justify;
+    text-justify: inter-ideograph;
+    line-break: strict;
+    hanging-punctuation: allow-end;
 }
+/* 段落首行缩进两字符，段间距压小——缩进已承担分段职能 */
+.commentary-text p { margin: 0 0 4px; text-indent: 2em; }
+.commentary-text p:last-child { margin-bottom: 0; }
+/* 西文片段（如 The Source）保持不缩进不对齐拉伸 */
+.commentary-text span { text-indent: 0; }
+
+/* 长文折叠：收起态限高 + 渐隐遮罩，展开全文交给用户 */
+.commentary-item.is-collapsed .commentary-text {
+    max-height: 340px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+    mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+.commentary-expand {
+    display: block;
+    margin-top: 6px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.commentary-expand:hover { text-decoration: underline; }
+.commentary-expand.hidden { display: none; }
 
 /* Cross refs */
 .cross-ref-list {
@@ -11247,11 +11306,6 @@ body[data-theme="dark"] {
     background: var(--commentary-soft);
     border-color: var(--commentary);
     color: var(--commentary);
-}
-
-/* 注释条目标题（行内样式写死了 text-secondary，此处按语义覆盖） */
-.commentary-author {
-    color: var(--commentary) !important;
 }
 
 
