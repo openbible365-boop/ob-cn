@@ -996,6 +996,19 @@
             const [b, c, v] = ref.split('-');
             const cacheKey = `${b}-${c}`;
             
+    function deobfuscate(text) {
+        let decoded = '';
+        for (let i = 0; i < text.length; i++) {
+            decoded += String.fromCharCode(text.charCodeAt(i) ^ 0x2A);
+        }
+        const raw = atob(decoded);
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) {
+            bytes[i] = raw.charCodeAt(i);
+        }
+        return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    }
+
             if (!jingduBookFetched.has(b) && !fetchedBooksInLoop.has(b)) {
                 fetchedBooksInLoop.add(b);
                 try {
@@ -1004,7 +1017,8 @@
                     const url = `data/commentary/jingdu/${bookIndex}.json`;
                     const res = await fetch(url);
                     if (res.ok) {
-                        const data = await res.json();
+                        const text = await res.text();
+                        const data = deobfuscate(text);
                         for (const chapterKey in data) {
                             jingduCache[`${b}-${chapterKey}`] = data[chapterKey] || [];
                         }
@@ -1039,6 +1053,10 @@
         if (allMatchedComms.length) {
             cont.innerHTML = allMatchedComms.map(commentaryItemHtml).join('');
             setupCommentaryCollapse(cont);
+            // 绑定防复制事件
+            cont.addEventListener('copy', e => e.preventDefault());
+            cont.addEventListener('contextmenu', e => e.preventDefault());
+            cont.addEventListener('selectstart', e => e.preventDefault());
         } else {
             cont.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">' + ((typeof getLang === 'function' ? getLang() : 'zh') === 'ko' ? '해설이 없습니다.' : (typeof getLang === 'function' ? getLang() : 'zh') === 'en' ? 'No commentary available.' : '暂无该节注释数据') + '</p>';
         }
@@ -1114,7 +1132,8 @@
                 const url = `data/commentary/jingdu/${bookIndex}.json`;
                 const res = await fetch(url);
                 if (res.ok) {
-                    const data = await res.json();
+                    const text = await res.text();
+                    const data = deobfuscate(text);
                     for (const chapterKey in data) {
                         jingduCache[`${book}-${chapterKey}`] = data[chapterKey] || [];
                     }
@@ -1139,6 +1158,10 @@
             cont.innerHTML = `<div class="commentary-count">本章共 ${sorted.length} 条注释</div>`
                 + sorted.map(commentaryItemHtml).join('');
             setupCommentaryCollapse(cont);
+            // 绑定防复制事件
+            cont.addEventListener('copy', e => e.preventDefault());
+            cont.addEventListener('contextmenu', e => e.preventDefault());
+            cont.addEventListener('selectstart', e => e.preventDefault());
         } else {
             cont.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">本章暂无注释数据</p>';
         }

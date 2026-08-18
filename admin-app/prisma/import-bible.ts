@@ -27,8 +27,21 @@ type BookFile = {
 
 type JingduEntry = { type: string; verses: string; text: string };
 
-const readJson = <T>(...parts: string[]): T =>
-  JSON.parse(readFileSync(join(DATA_DIR, ...parts), "utf-8")) as T;
+function deobfuscate(text: string): string {
+  let b64 = "";
+  for (let i = 0; i < text.length; i++) {
+    b64 += String.fromCharCode(text.charCodeAt(i) ^ 0x2a);
+  }
+  return Buffer.from(b64, "base64").toString("utf8");
+}
+
+const readJson = <T>(...parts: string[]): T => {
+  const raw = readFileSync(join(DATA_DIR, ...parts), "utf-8");
+  if (parts.includes("jingdu") && !raw.trim().startsWith("{")) {
+    return JSON.parse(deobfuscate(raw)) as T;
+  }
+  return JSON.parse(raw) as T;
+};
 
 // 拼音和合本 keeps its <ruby> markup (rendered as HTML); every translation
 // drops the <mark>/<span> wrappers, which the reader UI does not use.

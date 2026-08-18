@@ -30,6 +30,14 @@ export function parseRange(verses: string) {
   return { rangeStart: startVerse, rangeEnd: Math.max(startVerse, endVerse) };
 }
 
+function deobfuscate(text: string): string {
+  let b64 = "";
+  for (let i = 0; i < text.length; i++) {
+    b64 += String.fromCharCode(text.charCodeAt(i) ^ 0x2a);
+  }
+  return Buffer.from(b64, "base64").toString("utf8");
+}
+
 async function main() {
   const force = process.argv.includes("--force");
   const existing = await db.commentaryEntry.count();
@@ -50,10 +58,13 @@ async function main() {
   let total = 0;
   for (const file of files) {
     const bookOrder = Number.parseInt(file, 10);
-    const parsed = JSON.parse(await readFile(path.join(DATA_DIR, file), "utf8")) as Record<
-      string,
-      RawEntry[]
-    >;
+    const content = await readFile(path.join(DATA_DIR, file), "utf8");
+    let parsed: Record<string, RawEntry[]> = {};
+    if (content.trim().startsWith("{")) {
+      parsed = JSON.parse(content);
+    } else {
+      parsed = JSON.parse(deobfuscate(content));
+    }
 
     const rows: {
       bookOrder: number; chapter: number; entryType: string; verses: string;

@@ -12,7 +12,10 @@ function clearOauthCookies(res: NextResponse) {
 
 // Apple redirects back via a cross-site form POST (response_mode=form_post).
 export async function POST(request: NextRequest) {
-  const base = process.env.APP_URL ?? request.nextUrl.origin;
+  let base = request.nextUrl.origin;
+  if ((base.includes("localhost") || base.includes("ob-cn-admin")) && process.env.APP_URL) {
+    base = process.env.APP_URL;
+  }
   const fail = (code: string) => {
     const res = NextResponse.redirect(new URL(`/me?error=${code}`, base), 303);
     clearOauthCookies(res);

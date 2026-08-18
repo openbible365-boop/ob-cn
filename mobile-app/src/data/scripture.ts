@@ -128,12 +128,25 @@ type JingduEntry = { type: string; verses: string; text: string };
 
 const commentaryCache = new Map<number, Promise<Record<string, JingduEntry[]>>>();
 
+function deobfuscate(text: string): Record<string, JingduEntry[]> {
+  let decoded = "";
+  for (let i = 0; i < text.length; i++) {
+    decoded += String.fromCharCode(text.charCodeAt(i) ^ 0x2a);
+  }
+  const raw = atob(decoded);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    bytes[i] = raw.charCodeAt(i);
+  }
+  return JSON.parse(new TextDecoder("utf-8").decode(bytes)) as Record<string, JingduEntry[]>;
+}
+
 function loadJingdu(bookOrder: number) {
   let promise = commentaryCache.get(bookOrder);
   if (!promise) {
     promise = fetch(`/data/commentary/jingdu/${bookOrder}.json`).then((r) => {
       if (!r.ok) throw new Error(`load jingdu ${bookOrder}: HTTP ${r.status}`);
-      return r.json() as Promise<Record<string, JingduEntry[]>>;
+      return r.text().then((text) => deobfuscate(text));
     });
     commentaryCache.set(bookOrder, promise);
     promise.catch(() => commentaryCache.delete(bookOrder));

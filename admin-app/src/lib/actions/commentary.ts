@@ -100,6 +100,15 @@ export async function markChapterStatus(formData: FormData) {
  * 前端（App 与网页版）读的仍是这些静态文件，所以编辑后必须发布才对读者生效——
  * 这正是方案 C 的用意：校对期间的改动不会立刻影响线上。
  */
+function obfuscate(content: string): string {
+  const b64 = Buffer.from(content, "utf8").toString("base64");
+  let result = "";
+  for (let i = 0; i < b64.length; i++) {
+    result += String.fromCharCode(b64.charCodeAt(i) ^ 0x2a);
+  }
+  return result;
+}
+
 export async function publishCommentary(formData: FormData) {
   const session = await requireRole(["SUPER_ADMIN"]);
   const scope = String(formData.get("bookOrder") ?? "all");
@@ -133,9 +142,10 @@ export async function publishCommentary(formData: FormData) {
       });
     }
 
+    const obfuscated = obfuscate(JSON.stringify(byChapter, null, 0));
     await writeFile(
       path.join(dir, `${bookOrder}.json`),
-      JSON.stringify(byChapter, null, 0),
+      obfuscated,
       "utf8",
     );
     written += 1;
