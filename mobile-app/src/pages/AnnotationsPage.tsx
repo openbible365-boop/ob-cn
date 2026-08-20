@@ -603,7 +603,11 @@ export function AnnotationsPage() {
               {commentary === null && !loadError && (
                 <div className="annotation-status-card">{translate("加载注释中…")}</div>
               )}
-              <div className="annotation-comparison-list">
+              <div
+                className="annotation-comparison-list"
+                onCopy={(e) => e.preventDefault()}
+                onContextMenu={(e) => e.preventDefault()}
+              >
                 {orderedSections.map((entry) => renderSection(entry))}
               </div>
               {commentary !== null && detailCount === 0 && (

@@ -8135,3 +8135,14 @@ body.dark .community-management-result button {
   font-size: 13px;
   text-align: center;
 }
+
+/* 防复制机制 */
+.annotation-comparison-list,
+.annotation-entry,
+.annotation-section-body,
+.annotation-entry-topic {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
