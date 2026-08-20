@@ -1332,9 +1332,10 @@ a {
   display: inline-block;
   margin-right: 8px;
   padding: 2px 7px;
-  border-radius: 8px;
-  background: #526f96;
-  color: #fff;
+  border-radius: 999px;
+  /* 与网页端注释一致：金族徽章（单节淡金；多节实金见 is-range 覆盖） */
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.5;
@@ -1396,7 +1397,12 @@ a {
   padding: 14px 12px 16px;
   border-top: 0;
   border-radius: 12px;
-  background: var(--commentary-soft);
+  background: rgba(244, 199, 95, 0.12);
+}
+
+.annotation-entry.is-range .annotation-reference-chip {
+  background: var(--yellow);
+  color: var(--ink);
 }
 
 .annotation-comparison-list {
@@ -1421,13 +1427,13 @@ a {
 }
 
 .annotation-entry.is-located {
-  background: #e6edf6;
-  box-shadow: 0 0 0 2px rgba(76, 111, 154, 0.25);
+  background: var(--yellow-soft);
+  box-shadow: 0 0 0 2px rgba(244, 199, 95, 0.55);
 }
 
 .annotation-entry-topic {
   margin-right: 6px;
-  color: #344861;
+  color: var(--yellow-ink);
   font-weight: 800;
 }
 
@@ -7650,12 +7656,26 @@ body.dark .annotation-intro-eyebrow,
 body.dark .annotation-intro-section h2,
 body.dark .annotation-intro-stages > div > span,
 body.dark .annotation-entry-topic {
-  color: var(--commentary);
+  color: #f1c662;
 }
 
 body.dark .annotation-entry.is-located {
-  background: #263443;
-  box-shadow: 0 0 0 2px rgba(141, 169, 201, 0.24);
+  background: rgba(241, 198, 98, 0.12);
+  box-shadow: 0 0 0 2px rgba(241, 198, 98, 0.35);
+}
+
+body.dark .annotation-reference-chip {
+  background: rgba(241, 198, 98, 0.16);
+  color: #f1c662;
+}
+
+body.dark .annotation-entry.is-range {
+  background: rgba(241, 198, 98, 0.08);
+}
+
+body.dark .annotation-entry.is-range .annotation-reference-chip {
+  background: #f1c662;
+  color: #1c1d22;
 }
 
 body.dark .annotation-intro-facts,

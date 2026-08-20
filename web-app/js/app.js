@@ -336,6 +336,22 @@
     function saveLocalHighlights() {
         try { localStorage.setItem('ob_highlights', JSON.stringify(S.highlights)); } catch (e) {}
     }
+    // 旧版 Tailwind 高亮色 → 现行 App 色值。
+    // 服务端只接受现行色值，而存量本地数据仍是旧色值（CSS 两套都渲染）。
+    // 不映射的话，老用户一登录，整批高亮会被服务端以 400 整体拒绝——
+    // 失败的不只是那几条旧的，而是全部。
+    const LEGACY_HIGHLIGHT_MAP = {
+        '#FEF08A': '#FBE59A',   // 黄
+        '#BBF7D0': '#BFE6CF',   // 绿
+        '#BAE6FD': '#C7DCF4',   // 蓝
+        '#FBCFE8': '#F3CAD8',   // 粉
+        '#DDD6FE': '#DDCCF1',   // 紫
+    };
+    function normalizeHighlightColor(c) {
+        if (typeof c !== 'string') return c;
+        return LEGACY_HIGHLIGHT_MAP[c.toUpperCase()] || c;
+    }
+
     function refToParts(ref) {
         const parts = String(ref).split('-');
         if (parts.length < 3) return null;
@@ -353,14 +369,14 @@
             pushRefs.forEach(ref => {
                 const p = refToParts(ref);
                 if (!p) return;
-                if (color) highlights.push({ ...p, color });
+                if (color) highlights.push({ ...p, color: normalizeHighlightColor(color) });
                 else deletions.push(p);
             });
         } else {
             // 登录后的全量合并：本地高亮推上云，云端结果落回本地
             Object.entries(S.highlights).forEach(([ref, c]) => {
                 const p = refToParts(ref);
-                if (p) highlights.push({ ...p, color: c });
+                if (p) highlights.push({ ...p, color: normalizeHighlightColor(c) });
             });
         }
         try {
@@ -397,6 +413,12 @@
     }
 
     // ── Copy selection ──
+    // 经文纯文本：剥掉源数据里的行内标记（人名 <mark class="pn">、拼音 <rt> 等）。
+    // 凡是把经文送出应用的出口（复制/AI/属性）都必须过这一层。
+    function plainVerseText(t) {
+        return (t || '').replace(/<rt[^>]*>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '');
+    }
+
     function copySelection() {
         if (S.selection.size === 0) return;
         const lines = [];
@@ -407,7 +429,7 @@
         }).forEach(ref => {
             const vn = ref.split('-')[2];
             const v = data.find(v => String(v.verse) === vn);
-            if (v) lines.push(`${vn} ${v.text}`);
+            if (v) lines.push(`${vn} ${plainVerseText(v.text)}`);
         });
         const refStr = refLabel(S.selection);
         navigator.clipboard.writeText(`${refStr}\n${lines.join('\n')}`).then(() => showToast(t('toast.copied')));
@@ -534,7 +556,7 @@
             }
 
             // Main verse
-            const plainText = v.text.replace(/<rt[^>]*>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '');
+            const plainText = plainVerseText(v.text);
             html += `<span class="verse${isSelected ? ' selected' : ''}" data-ref="${ref}" data-verse="${v.verse}" data-text="${plainText.replace(/"/g, '&quot;')}"${hl}><span class="verse-num">${v.verse}</span><span class="verse-content">${v.text}${noteIcon}</span> </span>`;
 
             // Inline compare blocks (rendered below each verse)
@@ -767,6 +789,11 @@
         S.selection.clear(); S.lastRef = null;
         stopBibleAudio();  // NOTE: 切换书卷时停止旧音频
         clearAIChat();     // 清空 AI 对话
+        // 选书/选章就是「我要读这段」的意图：不在阅读视图时自动切回。
+        // 否则顶栏芯片变了、页面还停在设置/笔记，用户以为没生效。
+        // 放在状态更新之后：switchView 内部的渲染直接出新章节，
+        // 后面那次 renderBibleText 会被 _lastRenderedKey 守卫跳过。
+        if (S.view !== 'reading') switchView('reading');
         renderBibleText(); updateSelectionBar(); updateStudyPanel();
         renderBookList();
         $('chapter-overlay').classList.add('hidden');
@@ -882,7 +909,7 @@
         [...S.selection].sort((a, b) => +a.split('-')[2] - +b.split('-')[2]).forEach(ref => {
             const vn = ref.split('-')[2];
             const v = data?.find(v => String(v.verse) === vn);
-            if (v) text.push(`${vn} ${v.text}`);
+            if (v) text.push(`${vn} ${plainVerseText(v.text)}`);
         });
         const refStr = refLabel(S.selection);
         const verseText = text.join('\n');
@@ -1218,7 +1245,7 @@
         // Render tab-specific content based on current selection
         if (tab === 'study') renderStudyTabContent();
         if (tab === 'community') renderCommunityPanel();
-        if (tab === 'bookmarks') renderEncyclopediaView();
+        if (tab === 'profile') { _profileSub = null; renderProfileView(); }   // 每次进入回到概览，避免停在上次的子页
     }
 
     // ── Render Study (注释) tab based on current selection ──
@@ -1514,45 +1541,38 @@
     }
 
     // 生成单张笔记卡片（i = 在 S.notes 中的原始索引，供删除/分享定位）
+    // 生成单张笔记卡片（i = 在 S.notes 中的原始索引，供删除/分享定位）
+    // 统一外壳：元信息一行（引用 + 类型 + 日期 + 操作），正文为主体。
+    // 操作按钮悬停才显现——每张卡都常驻分享/删除会让列表很吵。
     function noteCardHTML(n, i, q) {
+        const isAi = n.type === 'ai_qa';
         let refClick = '';
         if (n.refs && n.refs.length > 0) {
             const parts = n.refs[0].split('-');
-            const book = parts[0];
-            const chapter = parts[1] || '1';
-            refClick = `onclick="navigateToNoteRef('${book}','${chapter}')" style="cursor:pointer;"`;
+            refClick = `onclick="navigateToNoteRef('${parts[0]}','${parts[1] || '1'}')"`;
         }
-        const linkIcon = (n.refs && n.refs.length > 0)
-            ? ' <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;opacity:0.5;margin-left:4px;"></i>'
+        const refHtml = n.ref
+            ? `<button class="note-ref"${refClick ? ' ' + refClick : ' disabled'}>${escapeNoteHTML(n.ref)}</button>`
             : '';
-        const delBtn = `<button onclick="event.stopPropagation();deleteNote(${i})" style="background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:0.75rem;margin-left:4px;"><i class="fa-solid fa-trash"></i></button>`;
+        const body = isAi
+            ? `<p class="note-q">${highlightMatch(escapeNoteHTML(n.question || ''), q)}</p>
+               <div class="note-a clampable">${(n.answer || '').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</div>`
+            : `<div class="note-body clampable">${highlightMatch(escapeNoteHTML(n.text || ''), q)}</div>`;
 
-        // AI 问答笔记
-        if (n.type === 'ai_qa') {
-            const answerHtml = (n.answer || '').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-            const question = highlightMatch(escapeNoteHTML(n.question || ''), q);
-            return `
-        <div class="note-card note-card-ai" data-note-idx="${i}">
-            <div class="note-card-ref" ${refClick}>
-                <i class="fa-solid fa-book-bible"></i> ${escapeNoteHTML(n.ref || '')}${linkIcon}
-                <button class="note-ai-badge" onclick="event.stopPropagation();shareNote(${i})" style="background:none; border:none; cursor:pointer;" title="${t('sel.share') || '分享'}"><i class="fa-solid fa-share-from-square"></i> <span>${t('sel.share') || '分享'}</span></button>
-            </div>
-            <div class="note-ai-question"><i class="fa-solid fa-circle-question"></i> ${question}</div>
-            <div class="note-ai-answer"><p>${answerHtml}</p></div>
-            <div class="note-card-date">${escapeNoteHTML(n.date || '')} ${delBtn}</div>
-        </div>`;
-        }
-
-        // 普通手写笔记（内容超 3 行折叠，点击展开）
-        const text = highlightMatch(escapeNoteHTML(n.text || ''), q);
         return `
-        <div class="note-card" data-note-idx="${i}">
-            <div class="note-card-ref" ${refClick}><i class="fa-solid fa-book-bible"></i> ${escapeNoteHTML(n.ref || '')}${linkIcon}</div>
-            <div class="note-card-text clampable">${text}</div>
-            <div class="note-card-date">${escapeNoteHTML(n.date || '')} <button onclick="event.stopPropagation();shareNote(${i})" class="note-share-btn" title="分享"><i class="fa-solid fa-share-from-square"></i></button> ${delBtn}</div>
-        </div>`;
+        <article class="note-card${isAi ? ' is-ai' : ''}" data-note-idx="${i}">
+            <div class="note-meta">
+                ${refHtml}
+                ${isAi ? `<span class="note-kind">${t('notes.kindAi') || '慧读'}</span>` : ''}
+                <time>${escapeNoteHTML(n.date || '')}</time>
+                <span class="note-acts">
+                    <button class="note-act" onclick="event.stopPropagation();shareNote(${i})" title="${t('sel.share') || '分享'}" aria-label="${t('sel.share') || '分享'}"><i class="fa-solid fa-share-from-square"></i></button>
+                    <button class="note-act is-danger" onclick="event.stopPropagation();deleteNote(${i})" title="${t('notes.delete') || '删除'}" aria-label="${t('notes.delete') || '删除'}"><i class="fa-solid fa-trash"></i></button>
+                </span>
+            </div>
+            ${body}
+        </article>`;
     }
-
     // 按书卷分组渲染（圣经顺序，无经文组置末，组头可折叠）
     function renderGroupedNotes(items, q) {
         const L = _notesL();
@@ -1878,23 +1898,40 @@
             textBlockH = pTotalLines * 26 + Math.max(0, pLines.length - 1) * 12;
         }
 
-        const H = Math.max(440, 200 + textBlockH + 130);
+        const H = Math.max(320, 176 + textBlockH + 112);
         canvas.width = W * 2; canvas.height = H * 2;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.scale(2, 2);
 
-        // ── 背景：柔和对角渐变 ──
+        // ── 背景：暖金纸感渐变（阅读语境），角落缀品牌星 ──
         const grad = ctx.createLinearGradient(0, 0, W, H);
         if (isDark) {
-            grad.addColorStop(0, '#2f1d40'); grad.addColorStop(0.5, '#3d2752'); grad.addColorStop(1, '#4a2a63');
+            grad.addColorStop(0, '#211d17'); grad.addColorStop(0.55, '#26211a'); grad.addColorStop(1, '#2e2519');
         } else {
-            grad.addColorStop(0, '#f2ecf6'); grad.addColorStop(0.5, '#f2ecf6'); grad.addColorStop(1, '#f2ecf6');
+            grad.addColorStop(0, '#fdf6e3'); grad.addColorStop(0.55, '#faf0d8'); grad.addColorStop(1, '#f6e7c5');
         }
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+        // 右上角四芒星（logo 元素），低透明度作纹理
+        const star = (cx, cy, r, alpha) => {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#E89A2C';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - r);
+            ctx.quadraticCurveTo(cx + r * 0.12, cy - r * 0.12, cx + r, cy);
+            ctx.quadraticCurveTo(cx + r * 0.12, cy + r * 0.12, cx, cy + r);
+            ctx.quadraticCurveTo(cx - r * 0.12, cy + r * 0.12, cx - r, cy);
+            ctx.quadraticCurveTo(cx - r * 0.12, cy - r * 0.12, cx, cy - r);
+            ctx.fill();
+            ctx.restore();
+        };
+        star(W - 44, 30, 16, isDark ? 0.5 : 0.75);
+        star(W - 70, 44, 7, isDark ? 0.35 : 0.5);
+        star(28, H - 26, 9, isDark ? 0.3 : 0.45);
 
         // ── 内卡片：更大圆角 + 柔和投影 ──
         const cardX = padding - 6, cardW = W - cardX * 2;
-        const cardY = 56, cardH = H - 112;
+        const cardY = 44, cardH = H - 88;
         ctx.save();
         ctx.shadowColor = isDark ? 'rgba(0,0,0,0.35)' : 'rgba(60,60,120,0.14)';
         ctx.shadowBlur = 28; ctx.shadowOffsetY = 10;
@@ -1916,9 +1953,14 @@
         const chipLabel = brandIcon + ' ' + brandLabel;
         const chipTextW = ctx.measureText(chipLabel).width;
         const chipH = 26, chipPadX = 12, chipY = cardY + 24;
-        ctx.fillStyle = isDark ? 'rgba(129,140,248,0.18)' : 'rgba(88,101,242,0.10)';
+        const chipGold = type === 'note';
+        ctx.fillStyle = chipGold
+            ? (isDark ? 'rgba(241,198,98,0.16)' : 'rgba(244,199,95,0.22)')
+            : (isDark ? 'rgba(183,137,218,0.18)' : 'rgba(130,80,171,0.10)');
         roundRect(ctx, innerX, chipY, chipTextW + chipPadX * 2, chipH, 13); ctx.fill();
-        ctx.fillStyle = isDark ? '#cdb4de' : '#8250ab';
+        ctx.fillStyle = chipGold
+            ? (isDark ? '#f1c662' : '#714a08')
+            : (isDark ? '#cdb4de' : '#8250ab');
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillText(chipLabel, innerX + chipPadX, chipY + chipH / 2 + 1);
         ctx.textBaseline = 'alphabetic';
@@ -1926,8 +1968,8 @@
         // ── 经文引用大标题 ──
         let headY = chipY + chipH + 34;
         if (data.ref) {
-            ctx.font = '700 24px "Inter", "Noto Sans SC", sans-serif';
-            ctx.fillStyle = isDark ? '#f2ecf6' : '#2f1d40';
+            ctx.font = '700 25px "Songti SC", "Noto Serif SC", serif';
+            ctx.fillStyle = isDark ? '#f2f0eb' : '#202229';
             ctx.textAlign = 'left';
             ctx.fillText(data.ref, innerX, headY);
         }
@@ -1941,12 +1983,9 @@
         }
 
         // ── 渐变细分隔线 ──
-        const divY = headY + 18;
-        const divGrad = ctx.createLinearGradient(innerX, 0, innerR, 0);
-        if (isDark) { divGrad.addColorStop(0, 'rgba(165,180,252,0.5)'); divGrad.addColorStop(1, 'rgba(165,180,252,0)'); }
-        else { divGrad.addColorStop(0, 'rgba(88,101,242,0.45)'); divGrad.addColorStop(1, 'rgba(88,101,242,0)'); }
-        ctx.fillStyle = divGrad;
-        roundRect(ctx, innerX, divY, innerW * 0.4, 3, 1.5); ctx.fill();
+        const divY = headY + 16;
+        ctx.fillStyle = isDark ? '#f1c662' : '#f4c75f';
+        roundRect(ctx, innerX, divY, 44, 3.5, 2); ctx.fill();
 
         // Content text
         ctx.textAlign = 'left';
@@ -2038,20 +2077,44 @@
             });
         }
 
-        // ── 底部：日期 + 品牌足部 ──
+        // ── 底部：真 logo（星+金书页）+ 双色字标 + 日期 ──
         const footY = cardY + cardH - 22;
-        // 细分隔线
-        ctx.fillStyle = isDark ? 'rgba(165,180,252,0.12)' : 'rgba(88,101,242,0.10)';
-        ctx.fillRect(innerX, footY - 16, innerW, 1);
-        // 品牌名（左）
-        ctx.font = '600 12px "Inter", "Noto Sans SC", sans-serif';
-        ctx.fillStyle = isDark ? '#cdb4de' : '#8250ab';
+        ctx.fillStyle = isDark ? 'rgba(241,198,98,0.18)' : 'rgba(160,120,40,0.14)';
+        ctx.fillRect(innerX, footY - 17, innerW, 1);
+        // 迷你 logo：以 16px 高绘制（源几何 viewBox 22 5 76 88）
+        ctx.save();
+        const lh = 16, lscale = lh / 88;
+        ctx.translate(innerX, footY - 13);
+        ctx.scale(lscale, lscale);
+        ctx.translate(-22, -5);
+        const ink = isDark ? '#f2f0eb' : '#202229';
+        ctx.fillStyle = '#E89A2C';
+        ctx.beginPath();
+        [[60,9],[63.2,15.8],[72,19],[63.2,22.2],[60,31],[56.8,22.2],[48,19],[56.8,15.8]].forEach((pt,i)=> i?ctx.lineTo(pt[0],pt[1]):ctx.moveTo(pt[0],pt[1]));
+        ctx.closePath(); ctx.fill();
+        const book = (flip) => {
+            ctx.beginPath();
+            if (!flip) { ctx.moveTo(60,53); ctx.bezierCurveTo(50,45,34,45,26,52); ctx.lineTo(26,88); ctx.bezierCurveTo(34,79,50,79,60,88); }
+            else { ctx.moveTo(60,53); ctx.bezierCurveTo(70,45,86,45,94,52); ctx.lineTo(94,88); ctx.bezierCurveTo(86,79,70,79,60,88); }
+            ctx.closePath();
+            ctx.fillStyle = '#F2C96D'; ctx.fill();
+            ctx.strokeStyle = ink; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.stroke();
+        };
+        book(false); book(true);
+        ctx.beginPath(); ctx.moveTo(60,53); ctx.lineTo(60,88); ctx.strokeStyle = ink; ctx.lineWidth = 5; ctx.stroke();
+        ctx.restore();
+        // 双色字标：橙「慧读」+ 墨「圣经」
+        ctx.font = '800 13px "Noto Sans SC", sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('📖 慧读圣经', innerX, footY);
+        ctx.fillStyle = '#E89A2C';
+        ctx.fillText('慧读', innerX + 22, footY);
+        const bw = ctx.measureText('慧读').width;
+        ctx.fillStyle = ink;
+        ctx.fillText('圣经', innerX + 22 + bw + 1, footY);
         // 日期（右）
         if (data.date) {
             ctx.font = '12px "Inter", sans-serif';
-            ctx.fillStyle = isDark ? 'rgba(199,210,254,0.55)' : 'rgba(120,120,140,0.7)';
+            ctx.fillStyle = isDark ? 'rgba(242,240,235,0.5)' : 'rgba(120,110,90,0.75)';
             ctx.textAlign = 'right';
             ctx.fillText(data.date, innerR, footY);
         }
@@ -3275,8 +3338,7 @@
     function _refJump(refText) {
         const target = _refParse(refText);
         if (!target) return;
-        if (typeof switchView === 'function') switchView('bible');
-        navigateTo(target.book, target.chapter);
+        navigateTo(target.book, target.chapter);   // 内部会自动切回阅读视图
         showToast(`${bookDisplayName(target.book)} ${getChLabel(target.chapter)}`);
     }
 
@@ -4068,6 +4130,7 @@
     }
 
     let _activePlan = null; // 旧详情视图的遗留状态，新视图不再使用
+    const _planExpanded = new Set();   // 展开了日程的计划 id
     let _planViewLoaded = false;
     let _serverPlans = [];   // 来自 /api/mobile/reading-plans：公共 + 我的社群 + 我创建的
 
@@ -4126,6 +4189,29 @@
         } else {
             actionHtml = `<button class="primary-btn plan-enroll-btn" data-plan="${_escapeHtml(p.id)}">${lang === 'en' ? 'Join' : lang === 'ko' ? '참여' : '加入计划'}</button>`;
         }
+        const days = Array.isArray(p.days) ? p.days : [];
+        const expanded = _planExpanded.has(p.id);
+        const dayList = days.length ? `
+            <button class="plan-days-toggle" data-plan="${_escapeHtml(p.id)}">
+                ${expanded ? (t('plan.hideDays') || '收起日程') : `${t('plan.allDays') || '全部'} ${days.length} ${t('cmty.planDays') || '天'}`}
+                <i class="fa-solid fa-angle-${expanded ? 'up' : 'down'}"></i>
+            </button>
+            ${expanded ? `<ol class="plan-day-list">
+                ${days.map(d => {
+                    const done = p.enrolled && d.dayNumber <= p.completedDays;
+                    const range = d.verseStart === d.verseEnd ? d.verseStart : `${d.verseStart}-${d.verseEnd}`;
+                    return `<li>
+                        <button class="plan-day" data-book="${_escapeHtml(d.book)}" data-ch="${d.chapter}">
+                            <span class="plan-day-no${done ? ' is-done' : ''}">${done ? '✓' : d.dayNumber}</span>
+                            <span class="plan-day-text">
+                                ${d.title ? `<b>${_escapeHtml(d.title)}</b>` : ''}
+                                <small>${_escapeHtml(bookDisplayName(d.book))} ${d.chapter}:${range}</small>
+                            </span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </li>`;
+                }).join('')}
+            </ol>` : ''}` : '';
         return `<div class="plan-scard${finished ? ' is-finished' : ''}">
             <div class="plan-scard-head">
                 <b>${_escapeHtml(p.title)}</b>
@@ -4136,6 +4222,7 @@
             ${p.enrolled ? `<div class="plan-card-progress"><div class="plan-card-progress-bar" style="width:${pct}%"></div></div>
             <span class="plan-card-progress-text">${p.completedDays}/${p.totalDays}${pct >= 100 ? '' : ` · ${pct}%`}</span>` : ''}
             ${todayHtml}
+            ${dayList}
             <div class="plan-scard-actions">${actionHtml}</div>
         </div>`;
     }
@@ -4190,10 +4277,19 @@
         c.querySelectorAll('.plan-complete-btn').forEach(b => {
             b.addEventListener('click', () => _planAction({ action: 'COMPLETE_TODAY', planId: b.dataset.plan }, '今天的阅读已完成'));
         });
+        c.querySelectorAll('.plan-days-toggle').forEach(b => {
+            b.addEventListener('click', () => {
+                const id = b.dataset.plan;
+                if (_planExpanded.has(id)) _planExpanded.delete(id); else _planExpanded.add(id);
+                renderPlanView();
+            });
+        });
+        c.querySelectorAll('.plan-day').forEach(b => {
+            b.addEventListener('click', () => navigateTo(b.dataset.book, parseInt(b.dataset.ch, 10) || 1));
+        });
         c.querySelectorAll('.plan-today').forEach(b => {
             b.addEventListener('click', () => {
-                if (typeof switchView === 'function') switchView('bible');
-                navigateTo(b.dataset.book, parseInt(b.dataset.ch, 10) || 1);
+                navigateTo(b.dataset.book, parseInt(b.dataset.ch, 10) || 1);   // 内部会自动切回阅读视图
             });
         });
     }
@@ -5472,6 +5568,13 @@
         <div class="settings-section-title">${t('settings.language') || '语言'}</div>
         <div class="settings-card">
             <div class="settings-row">
+                <div class="settings-label">${t('settings.body-font') || '正文字体'}</div>
+                <div class="lang-selector">
+                    <button class="lang-btn${localStorage.getItem('ob_font') !== 'serif' ? ' active' : ''}" data-font-set="sans">黑体</button>
+                    <button class="lang-btn${localStorage.getItem('ob_font') === 'serif' ? ' active' : ''}" data-font-set="serif">宋体</button>
+                </div>
+            </div>
+            <div class="settings-row">
                 <div class="settings-label">${t('settings.ui-lang') || '文字'}</div>
                 <div class="lang-selector">
                     <button class="lang-btn${localStorage.getItem('ob_script') !== 't' ? ' active' : ''}" data-script-set="s">简体中文</button>
@@ -5601,191 +5704,260 @@
     }
 
     // ── Profile / My Page ──
+    // ── 「我的」面板（右栏 290–340px）──
+    // 与 App 端 MePage 同构：概览页给身份 + 记录 + 入口，详情收进子页。
+    // 窄栏平铺整套表单会堆到 900px+，两级结构才是简洁的做法。
+    let _profileSub = null;   // null=概览 | 'info' | 'notify' | 'community'
+
+    function profileStats() {
+        const notes = Array.isArray(S.notes) ? S.notes : [];
+        return [
+            { key: 'highlights', label: t('profile.stat.highlight') || '高亮', value: Object.keys(S.highlights || {}).length },
+            { key: 'notes', label: t('profile.stat.note') || '笔记', value: notes.filter(n => n.type !== 'ai_qa').length },
+            { key: 'ai', label: t('profile.stat.ai') || '慧读', value: notes.filter(n => n.type === 'ai_qa').length },
+        ];
+    }
+
     function renderProfileView() {
-        const c = $('profile-render'); if (!c) return;
-        
-        let userAuth = null;
-        if (typeof Auth !== 'undefined') {
-            userAuth = Auth.getUser();
-        }
+        // 「我的」已从左侧栏移入右栏标签；容器随之改为面板内的 panel-profile-render
+        const c = $('panel-profile-render') || $('profile-render'); if (!c) return;
 
-        // We still keep ob_profile for locally customized features if wanted, but Auth takes precedence
+        const userAuth = (typeof Auth !== 'undefined') ? Auth.getUser() : null;
         const profile = JSON.parse(localStorage.getItem('ob_profile') || '{}');
-        const subs = JSON.parse(localStorage.getItem('ob_subscriptions') || '{"daily":true,"commentary":true,"devotional":false,"video":false,"podcast":false}');
 
-        let displayAvatar = '<i class="fa-solid fa-user"></i>';
-        let displayName = t('profile.guest') || '访客用户';
-        let displaySubtitle = t('profile.login_desc') || '登录以同步你的学习记录和笔记';
-
-        if (userAuth) {
-            const localAvatar = profile.avatar;
-            const authAvatar = userAuth.avatar;
-            const avatarSrc = localAvatar || authAvatar;
-            displayAvatar = avatarSrc 
-                ? (avatarSrc.startsWith('data:') || avatarSrc.startsWith('http') ? `<img src="${avatarSrc}" class="profile-avatar-img">` : avatarSrc[0].toUpperCase())
-                : '<i class="fa-solid fa-user"></i>';
-            displayName = userAuth.username || userAuth.email || displayName;
-            displaySubtitle = userAuth.email || t('profile.authenticated') || '已认证用户';
-            
-            // Sync with local profile form values
-            if (!profile.nickname) profile.nickname = displayName;
-            if (!profile.email) profile.email = userAuth.email;
-        } else if (profile.nickname) {
-            displayAvatar = profile.avatar 
-                ? `<img src="${profile.avatar}" class="profile-avatar-img">` 
-                : profile.nickname.charAt(0).toUpperCase();
-            displayName = profile.nickname;
-            displaySubtitle = profile.email || t('profile.set_info') || '请设置个人信息';
+        // ── 未登录：只给一句说明和一个入口，不铺任何表单 ──
+        if (!userAuth) {
+            _profileSub = null;
+            c.innerHTML = `<div class="mep-guest">
+                <div class="mep-avatar is-guest"><i class="fa-solid fa-user"></i></div>
+                <b>${t('profile.guest') || '访客用户'}</b>
+                <p>${t('profile.login_desc') || '登录以同步你的笔记、高亮与阅读进度'}</p>
+                <button class="primary-btn mep-login">${t('profile.unlogged_btn') || '登录 / 注册'}</button>
+            </div>`;
+            c.querySelector('.mep-login')?.addEventListener('click', () => Auth.showModal());
+            return;
         }
 
+        const avatarSrc = profile.avatar || (typeof userAuth.avatar === 'string' && userAuth.avatar.startsWith('data:') ? userAuth.avatar : '');
+        const name = profile.nickname || userAuth.username || userAuth.email || '';
+        const avatarHtml = avatarSrc
+            ? `<img src="${avatarSrc}" alt="">`
+            : _escapeHtml((name || '?')[0].toUpperCase());
+
+        // ── 子页 ──
+        if (_profileSub) {
+            const titles = { info: t('profile.info_title') || '个人信息', notify: t('profile.notify') || '通知设置', community: t('profile.myCommunity') || '我的社群', highlights: t('profile.stat.highlight') || '高亮' };
+            c.innerHTML = `<div class="mep-subhead">
+                    <button class="mep-back" aria-label="${t('cmty.back') || '返回'}"><i class="fa-solid fa-chevron-left"></i></button>
+                    <b>${titles[_profileSub]}</b>
+                </div>
+                <div class="mep-subbody">${
+                    _profileSub === 'info' ? profileInfoHtml(profile, userAuth)
+                    : _profileSub === 'notify' ? profileNotifyHtml()
+                    : _profileSub === 'highlights' ? profileHighlightsHtml()
+                    : '<div class="mep-loading">' + (t('cmty.loading') || '加载中…') + '</div>'
+                }</div>`;
+            c.querySelector('.mep-back')?.addEventListener('click', () => { _profileSub = null; renderProfileView(); });
+            if (_profileSub === 'info') bindProfileInfo(c, profile);
+            if (_profileSub === 'notify') bindProfileNotify(c);
+            if (_profileSub === 'community') loadProfileCommunities(c);
+            if (_profileSub === 'highlights') bindProfileHighlights(c);
+            return;
+        }
+
+        // ── 概览 ──
+        const menu = [
+            ['info', 'fa-id-card', t('profile.info_title') || '个人信息'],
+            ['notify', 'fa-bell', t('profile.notify') || '通知设置'],
+            ['community', 'fa-user-group', t('profile.myCommunity') || '我的社群'],
+        ];
         c.innerHTML = `
-    <div class="profile-hero">
-        <div class="profile-avatar-wrap">
-            <div class="profile-avatar" id="profile-avatar" title="${t('profile.change_avatar') || '点击更换头像'}" style="cursor:pointer;">
-                ${displayAvatar}
-                <div class="profile-avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+        <div class="mep-hero">
+            <button class="mep-avatar" title="${t('profile.change_avatar') || '更换头像'}">${avatarHtml}</button>
+            <div class="mep-id">
+                <b>${_escapeHtml(name)}</b>
+                <small>${_escapeHtml(userAuth.email || '')}</small>
             </div>
-            <input type="file" id="avatar-file-input" accept="image/*" style="display:none">
-            <div class="profile-greeting" ${!userAuth ? 'onclick="if(typeof Auth !== \'undefined\') Auth.showModal(\'login\');"' : ''} style="${!userAuth ? 'cursor:pointer;' : ''}">
-                <div class="profile-name">${displayName}</div>
-                <div class="profile-subtitle">${displaySubtitle}</div>
-            </div>
+            <input type="file" id="mep-avatar-input" accept="image/*" class="hidden">
         </div>
-    </div>
 
-    ${userAuth ? `
-    <div class="settings-section">
-        <div class="settings-section-title"><i class="fa-solid fa-id-card"></i> ${t('profile.info_title') || '个人信息'}</div>
-        <div class="settings-card">
-            <div class="settings-row">
-                <div class="settings-label">${t('profile.nickname') || '昵称'}</div>
-                <input type="text" class="profile-input" id="profile-nickname" value="${profile.nickname || ''}" placeholder="${t('profile.nickname_ph') || '输入昵称'}" disabled>
-            </div>
-            <div class="settings-row">
-                <div class="settings-label">${t('profile.email') || '邮箱'}</div>
-                <input type="email" class="profile-input" id="profile-email" value="${profile.email || ''}" placeholder="${t('profile.email_ph') || '输入邮箱地址'}" disabled>
-            </div>
-            <div class="settings-row">
-                <div class="settings-label">${t('profile.phone') || '手机号'}</div>
-                <input type="tel" class="profile-input" id="profile-phone" value="${profile.phone || ''}" placeholder="${t('profile.phone_ph') || '输入手机号码'}">
-            </div>
-            <div class="settings-row">
-                <div class="settings-label">${t('profile.level') || '属灵阶段'}</div>
-                <select class="profile-input" id="profile-level" style="cursor:pointer;">
-                    <option value="" ${!profile.level ? 'selected' : ''}>${t('profile.level_ph') || '请选择...'}</option>
-                    <option value="1" ${profile.level === '1' ? 'selected' : ''}>${t('profile.level_1') || '不信者 / 探索者'}</option>
-                    <option value="2" ${profile.level === '2' ? 'selected' : ''}>${t('profile.level_2') || '初信者 / 圣经初学者'}</option>
-                    <option value="3" ${profile.level === '3' ? 'selected' : ''}>${t('profile.level_3') || '稳定阅读者 / 一般信徒'}</option>
-                    <option value="4" ${profile.level === '4' ? 'selected' : ''}>${t('profile.level_4') || '进阶研读者 / 教会同工'}</option>
-                    <option value="5" ${profile.level === '5' ? 'selected' : ''}>${t('profile.level_5') || '教牧人员 / 资深圣经教师'}</option>
-                    <option value="6" ${profile.level === '6' ? 'selected' : ''}>${t('profile.level_6') || '神学研究人员'}</option>
-                </select>
-            </div>
-            <div class="settings-row" style="justify-content:flex-end;">
-                <button class="profile-save-btn" id="profile-save-btn"><i class="fa-solid fa-check"></i> ${t('profile.save') || '保存'}</button>
-            </div>
+        <div class="mep-stats">
+            ${profileStats().map(st => `<button class="mep-stat" data-stat="${st.key}"${st.value ? '' : ' disabled'}><b>${st.value}</b><small>${st.label}</small></button>`).join('')}
         </div>
-    </div>
 
-    <div class="settings-section">
-        <div class="settings-section-title"><i class="fa-solid fa-bell"></i> ${t('profile.sub_title') || '内容订阅管理'}</div>
-        <div class="settings-card">
-            <div class="settings-row">
-                <div><div class="settings-label">${t('profile.sub_daily') || '每日经文'}</div><div class="settings-desc">${t('profile.sub_daily_desc') || '每天推送一段经文和灵修内容'}</div></div>
-                <label class="toggle"><input type="checkbox" class="sub-toggle" data-key="daily" ${subs.daily ? 'checked' : ''}><span class="toggle-track"></span></label>
-            </div>
-            <div class="settings-row">
-                <div><div class="settings-label">${t('profile.sub_commentary') || '注释更新'}</div><div class="settings-desc">${t('profile.sub_commentary_desc') || '新增注释和研经资料提醒'}</div></div>
-                <label class="toggle"><input type="checkbox" class="sub-toggle" data-key="commentary" ${subs.commentary ? 'checked' : ''}><span class="toggle-track"></span></label>
-            </div>
-            <div class="settings-row">
-                <div><div class="settings-label">${t('profile.sub_devotional') || '灵修计划'}</div><div class="settings-desc">${t('profile.sub_devotional_desc') || '读经计划进度提醒和归纳'}</div></div>
-                <label class="toggle"><input type="checkbox" class="sub-toggle" data-key="devotional" ${subs.devotional ? 'checked' : ''}><span class="toggle-track"></span></label>
-            </div>
-            <div class="settings-row">
-                <div><div class="settings-label">${t('profile.sub_video') || '视频推荐'}</div><div class="settings-desc">${t('profile.sub_video_desc') || '新上线视频课程通知'}</div></div>
-                <label class="toggle"><input type="checkbox" class="sub-toggle" data-key="video" ${subs.video ? 'checked' : ''}><span class="toggle-track"></span></label>
-            </div>
-            <div class="settings-row">
-                <div><div class="settings-label">${t('profile.sub_podcast') || '音频节目'}</div><div class="settings-desc">${t('profile.sub_podcast_desc') || '新音频节目及讲道录音通知'}</div></div>
-                <label class="toggle"><input type="checkbox" class="sub-toggle" data-key="podcast" ${subs.podcast ? 'checked' : ''}><span class="toggle-track"></span></label>
-            </div>
+        <div class="mep-menu">
+            ${menu.map(([k, icon, label]) => `<button class="mep-item" data-sub="${k}">
+                <i class="fa-solid ${icon}"></i><span>${label}</span><i class="fa-solid fa-chevron-right"></i>
+            </button>`).join('')}
         </div>
-    </div>
 
-    <div class="settings-section">
-        <div class="settings-card" style="padding:0;">
-            <button id="profile-logout-btn" class="profile-logout-btn">
-                <i class="fa-solid fa-right-from-bracket"></i> ${t('profile.logout') || '退出登录'}
-            </button>
+        <div class="mep-menu">
+            <button class="mep-item" data-view="about"><i class="fa-solid fa-circle-info"></i><span>${t('nav.about') || '关于我们'}</span><i class="fa-solid fa-chevron-right"></i></button>
+            <button class="mep-item" data-view="privacy"><i class="fa-solid fa-shield-halved"></i><span>${t('nav.privacy') || '隐私政策'}</span><i class="fa-solid fa-chevron-right"></i></button>
         </div>
-    </div>
-    ` : `
-    <div class="settings-section" style="margin-top:20px;">
-        <div class="settings-card" style="text-align:center;padding:40px 20px;">
-            <i class="fa-solid fa-user-lock" style="font-size:3rem;color:var(--text-tertiary);margin-bottom:16px;"></i>
-            <p style="color:var(--text-secondary);margin-bottom:24px;">${t('profile.unlogged_prompt') || '登录后可保存个人信息、订阅内容及同步学习进度'}</p>
-            <button class="primary-btn" onclick="if(typeof Auth !== 'undefined') Auth.showModal('login');" style="width:100%;padding:12px;border-radius:12px;font-size:1rem;">${t('profile.unlogged_btn') || '立即登录 / 注册'}</button>
-        </div>
-    </div>
-    `}
-    `;
 
-        // Save profile
-        $('profile-save-btn')?.addEventListener('click', () => {
-            const p = JSON.parse(localStorage.getItem('ob_profile') || '{}');
-            p.nickname = $('profile-nickname').value.trim();
-            p.email = $('profile-email').value.trim();
-            p.phone = $('profile-phone').value.trim();
-            p.level = $('profile-level').value;
-            localStorage.setItem('ob_profile', JSON.stringify(p));
+        <button class="mep-logout">${t('profile.logout') || '退出登录'}</button>`;
+
+        c.querySelectorAll('.mep-stat[data-stat]').forEach(b => {
+            b.addEventListener('click', () => {
+                const k = b.dataset.stat;
+                if (k === 'highlights') { _profileSub = 'highlights'; renderProfileView(); return; }
+                // 笔记与慧读复用笔记视图的类型筛选（手写 / AI）
+                notesView.type = k === 'ai' ? 'ai_qa' : 'note';
+                switchView('notes');
+                document.querySelectorAll('#notes-type-chips .notes-chip').forEach(chip =>
+                    chip.classList.toggle('active', chip.dataset.type === notesView.type));
+                renderNotesList();
+            });
+        });
+        c.querySelectorAll('.mep-item[data-sub]').forEach(b => {
+            b.addEventListener('click', () => { _profileSub = b.dataset.sub; renderProfileView(); });
+        });
+        c.querySelectorAll('.mep-item[data-view]').forEach(b => {
+            b.addEventListener('click', () => switchView(b.dataset.view));
+        });
+        c.querySelector('.mep-avatar')?.addEventListener('click', () => $('mep-avatar-input')?.click());
+        bindAvatarUpload(c);
+        c.querySelector('.mep-logout')?.addEventListener('click', () => {
+            if (typeof Auth !== 'undefined') { Auth.logout(); _profileSub = null; renderProfileView(); }
+        });
+    }
+
+    function profileInfoHtml(profile, userAuth) {
+        const stages = ['', '慕道友', '初信者', '稳定读经', '同工/传道'];
+        return `<div class="mep-form">
+            <label><span>${t('profile.nickname') || '昵称'}</span>
+                <input id="mep-nickname" value="${_escapeHtml(profile.nickname || userAuth.username || '')}" maxlength="30"></label>
+            <label><span>${t('profile.email') || '邮箱'}</span>
+                <input value="${_escapeHtml(userAuth.email || '')}" disabled></label>
+            <label><span>${t('profile.phone') || '手机号'}</span>
+                <input id="mep-phone" value="${_escapeHtml(profile.phone || '')}" placeholder="${t('profile.phone_ph') || '选填'}" maxlength="20"></label>
+            <label><span>${t('profile.stage') || '属灵阶段'}</span>
+                <select id="mep-stage">${stages.map(v => `<option value="${v}"${profile.stage === v ? ' selected' : ''}>${v || (t('profile.stage_ph') || '请选择…')}</option>`).join('')}</select></label>
+            <button class="primary-btn mep-save">${t('profile.save') || '保存'}</button>
+        </div>`;
+    }
+
+    function bindProfileInfo(c, profile) {
+        c.querySelector('.mep-save')?.addEventListener('click', () => {
+            profile.nickname = $('mep-nickname')?.value.trim() || '';
+            profile.phone = $('mep-phone')?.value.trim() || '';
+            profile.stage = $('mep-stage')?.value || '';
+            localStorage.setItem('ob_profile', JSON.stringify(profile));
+            if (typeof Auth !== 'undefined') Auth.updateTopBar();
             showToast(t('profile.saved') || '已保存');
+            _profileSub = null;
             renderProfileView();
-            // Update AI presets if level changed
-            if (typeof window.updateAIPresets === 'function') window.updateAIPresets();
         });
+    }
 
-        // Avatar upload
-        $('profile-avatar')?.addEventListener('click', () => $('avatar-file-input')?.click());
-        $('avatar-file-input')?.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) { showToast(t('profile.avatar_too_large') || '图片不能超过2MB'); return; }
-            const reader = new FileReader();
-            reader.onload = () => {
-                const p = JSON.parse(localStorage.getItem('ob_profile') || '{}');
-                p.avatar = reader.result;
-                localStorage.setItem('ob_profile', JSON.stringify(p));
-                showToast(t('profile.avatar_updated') || '头像已更新');
-                // Update top bar avatar
-                const topAvatar = $('auth-avatar');
-                if (topAvatar) {
-                    topAvatar.innerHTML = `<img src="${reader.result}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-                }
-                renderProfileView();
-            };
-            reader.readAsDataURL(file);
+    // 高亮列表：网页版此前只能在经文里看到高亮，没有汇总入口。
+    // 按书卷顺序排，点条目直接跳到那一节。
+    function profileHighlightsHtml() {
+        const entries = Object.entries(S.highlights || {});
+        if (!entries.length) {
+            return `<div class="cmty-empty"><p>${t('profile.noHighlights') || '还没有高亮，长按或右键经文即可标记'}</p></div>`;
+        }
+        const order = Object.keys(BOOK_CHAPTERS);
+        entries.sort((a, b) => {
+            const [ba, ca, va] = a[0].split('-'), [bb, cb, vb] = b[0].split('-');
+            return (order.indexOf(ba) - order.indexOf(bb)) || (+ca - +cb) || (+va - +vb);
         });
+        return `<div class="mep-menu">${entries.map(([ref, color]) => {
+            const [bk, ch, vs] = ref.split('-');
+            const text = (window.bibleData?.[S.version]?.[bk]?.[ch] || []).find(v => String(v.verse) === vs)?.text || '';
+            const plain = plainVerseText(text);
+            return `<button class="mep-item mep-hl" data-ref="${_escapeHtml(ref)}">
+                <span class="mep-hl-dot" style="background:${_escapeHtml(color)}"></span>
+                <span>${_escapeHtml(bookDisplayName(bk))} ${ch}:${vs}${plain ? `<small>${_escapeHtml(plain.slice(0, 30))}</small>` : ''}</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>`;
+        }).join('')}</div>`;
+    }
 
-        // Subscription toggles
+    function bindProfileHighlights(c) {
+        c.querySelectorAll('.mep-hl').forEach(b => {
+            b.addEventListener('click', () => {
+                const [bk, ch, vs] = b.dataset.ref.split('-');
+                navigateTo(bk, ch);   // 内部会切回阅读视图
+                setTimeout(() => {
+                    const el = document.querySelector(`.verse[data-ref="${b.dataset.ref}"]`);
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 400);
+            });
+        });
+    }
+
+    function profileNotifyHtml() {
+        const subs = JSON.parse(localStorage.getItem('ob_subscriptions') || '{"daily":true,"commentary":true,"devotional":false,"video":false,"podcast":false}');
+        const items = [
+            ['daily', t('profile.sub.daily') || '每日经文', t('profile.sub.dailyDesc') || '每天推送一段经文'],
+            ['commentary', t('profile.sub.commentary') || '注释更新', t('profile.sub.commentaryDesc') || '新增注释与研经资料'],
+            ['devotional', t('profile.sub.devotional') || '灵修计划', t('profile.sub.devotionalDesc') || '读经计划进度提醒'],
+            ['video', t('profile.sub.video') || '视频推荐', ''],
+            ['podcast', t('profile.sub.podcast') || '音频节目', ''],
+        ];
+        return `<div class="mep-switches">
+            ${items.map(([k, label, desc]) => `<label class="mep-switch">
+                <span><b>${label}</b>${desc ? `<small>${desc}</small>` : ''}</span>
+                <input type="checkbox" class="sub-toggle" data-key="${k}"${subs[k] ? ' checked' : ''}>
+                <i></i>
+            </label>`).join('')}
+        </div>`;
+    }
+
+    function bindProfileNotify(c) {
         c.querySelectorAll('.sub-toggle').forEach(tog => {
             tog.addEventListener('change', () => {
                 const s = JSON.parse(localStorage.getItem('ob_subscriptions') || '{}');
                 s[tog.dataset.key] = tog.checked;
                 localStorage.setItem('ob_subscriptions', JSON.stringify(s));
-                showToast(tog.checked ? t('profile.subscribed') : t('profile.unsubscribed'));
+                showToast(tog.checked ? (t('profile.subscribed') || '已订阅') : (t('profile.unsubscribed') || '已取消订阅'));
             });
-        });
-
-        // Logout button on profile page
-        $('profile-logout-btn')?.addEventListener('click', () => {
-            if (typeof Auth !== 'undefined') {
-                Auth.logout();
-                renderProfileView();
-            }
         });
     }
 
+    // 我的社群：与 App 的「管理的社群」同源，走社群列表接口
+    async function loadProfileCommunities(c) {
+        const body = c.querySelector('.mep-subbody');
+        if (!body) return;
+        try {
+            const data = await _cmtyFetch('');
+            const list = (data && data.communities) || [];
+            body.innerHTML = list.length
+                ? `<div class="mep-menu">${list.map(g => `<button class="mep-item" data-cid="${_escapeHtml(g.id)}">
+                        ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
+                        <span>${_escapeHtml(g.name)}<small>${g.memberCount || 0} ${t('cmty.members') || '位成员'}${g.membershipRole === 'OWNER' ? ' · ' + (t('cmty.owner') || '群主') : ''}</small></span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>`).join('')}</div>`
+                : `<div class="cmty-empty"><p>${t('cmty.noGroups') || '还没有加入任何社群'}</p></div>`;
+            body.querySelectorAll('.mep-item[data-cid]').forEach(b => {
+                b.addEventListener('click', () => {
+                    switchPanelTab('community');
+                    _cmtyOpen(b.dataset.cid);
+                });
+            });
+        } catch (e) {
+            body.innerHTML = `<div class="cmty-empty"><p>${_escapeHtml(e.message || '加载失败')}</p></div>`;
+        }
+    }
+
+    function bindAvatarUpload(c) {
+        $('mep-avatar-input')?.addEventListener('change', e => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { showToast(t('profile.avatar_too_large') || '头像不能超过 2MB'); return; }
+            const reader = new FileReader();
+            reader.onload = () => {
+                const profile = JSON.parse(localStorage.getItem('ob_profile') || '{}');
+                profile.avatar = reader.result;
+                localStorage.setItem('ob_profile', JSON.stringify(profile));
+                if (typeof Auth !== 'undefined') Auth.updateTopBar();
+                renderProfileView();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
     // ── Update User Dropdown Data ──
     function updateUserDropdown() {
         const user = typeof Auth !== 'undefined' ? Auth.getUser() : null;
@@ -6539,6 +6711,8 @@
 
         // 默认不收起：无论上个会话处于什么状态，启动一律展开侧栏
         document.getElementById('app')?.classList.remove('nav-hidden');
+        // 正文字体偏好（黑体/宋体）
+        if (localStorage.getItem('ob_font') === 'serif') document.body.classList.add('serif-body');
         // 图标栏没有文字，悬停用 title 提示（文本取自被隐藏的 span，随语言切换过的文案）
         document.querySelectorAll('.nav-item[data-view], #theme-btn').forEach(b => {
             const label = b.querySelector('span')?.textContent.trim();
@@ -6787,10 +6961,10 @@
                 answerEl.classList.toggle('expanded');
                 return;
             }
-            // 手写笔记正文超长时点击展开/收起
-            const textEl = e.target.closest('.note-card-text.clampable');
+            // 笔记正文超长时点击展开/收起（手写与慧读卡通用）
+            const textEl = e.target.closest('.clampable');
             if (textEl) {
-                textEl.classList.toggle('expanded');
+                textEl.classList.toggle('is-open');
             }
         });
 
@@ -7145,7 +7319,7 @@
     document.addEventListener('langchange', (e) => {
         updateBrandLogo();
         if (S.view === 'settings') renderSettingsView();
-        if (S.view === 'profile') renderProfileView();
+        if (S.panelTab === 'profile') renderProfileView();
         if (S.view === 'plan') renderPlanView();
         if (S.view === 'about') renderAboutView();
         if (S.view === 'privacy') renderPrivacyView();
@@ -7153,7 +7327,7 @@
     });
 
     document.addEventListener('authchange', (e) => {
-        if (S.view === 'profile') renderProfileView();
+        if (S.panelTab === 'profile') renderProfileView();
         const user = e.detail;
         if (!user) {
             // 未登录 ≠ 无笔记：游客的本地笔记要照常显示。
@@ -7470,6 +7644,7 @@
         window._openAudioPlayer = openAudioPlayer;
         window._openVideoPlayer = openVideoPlayer;
         window.switchView = switchView;
+        window.switchPanelTab = switchPanelTab;
         window.navigateTo = navigateTo;
 
         if (typeof Auth !== 'undefined') Auth.init();
@@ -7533,6 +7708,13 @@
             const lb = e.target.closest('.lang-btn');
             if (lb && lb.dataset.lang) setLang(lb.dataset.lang);
             // 设置页的简/繁：与顶栏共用 ob_script，刷新后由启动逻辑统一应用
+            const fb = e.target.closest('[data-font-set]');
+            if (fb) {
+                const serif = fb.dataset.fontSet === 'serif';
+                localStorage.setItem('ob_font', serif ? 'serif' : 'sans');
+                document.body.classList.toggle('serif-body', serif);
+                document.querySelectorAll('[data-font-set]').forEach(b => b.classList.toggle('active', b === fb));
+            }
             const sb = e.target.closest('[data-script-set]');
             if (sb) {
                 const next = sb.dataset.scriptSet;
@@ -7640,7 +7822,7 @@
 
         // 恢复上次所在的页面（刷新后停留在原页，而非总跳回阅读视图）。
         // 'plan' 需登录，排除以免刷新时弹登录框；未知值回退到阅读。
-        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'profile', 'video', 'audio', 'donate'];
+        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'video', 'audio', 'donate'];
         const lastView = localStorage.getItem('ob_last_view');
         switchView(RESTORE_VIEWS.includes(lastView) ? lastView : 'reading');
         switchPanelTab('ai');

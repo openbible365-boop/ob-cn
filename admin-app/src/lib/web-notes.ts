@@ -10,6 +10,11 @@ export type WebNote = {
   refs?: string[];
   text?: string;
   date?: string;
+  // 慧读问答笔记没有 text，只有下面三项；它进不了共享 Note 表（App 侧按纯文本读），
+  // 但必须原样回传给网页版，否则同步一次就丢一次。
+  type?: string;
+  question?: string;
+  answer?: string;
 };
 
 const BOOK_BY_CODE = new Map(BOOKS.map((book) => [book.code, book]));

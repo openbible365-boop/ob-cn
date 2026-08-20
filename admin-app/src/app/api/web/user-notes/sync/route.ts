@@ -39,7 +39,14 @@ export async function POST(request: Request) {
     }
     const stored = toStoredNote(parsed, fallbackId);
     if (!stored) {
-      if ((parsed.text ?? "").trim()) localOnly.push({ ...parsed, id: fallbackId || parsed.id });
+      // 进不了共享表的两类：无经文散记、慧读问答笔记（只有 question/answer）。
+      // 两类都原样回传留在网页版本地——此前只兜住了前者，
+      // 后者因 text 为空被直接 continue 掉，用户的慧读记录会在同步时永久丢失。
+      const hasBody =
+        (parsed.text ?? "").trim() ||
+        (parsed.answer ?? "").trim() ||
+        (parsed.question ?? "").trim();
+      if (hasBody) localOnly.push({ ...parsed, id: fallbackId || parsed.id });
       continue;
     }
     await db.note.upsert({

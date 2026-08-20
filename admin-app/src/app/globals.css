@@ -94,7 +94,9 @@ input {
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: var(--yellow);
+  /* 品牌 logo 自带金书页，底板用暖白+描边（与网页版 logo 盒一致），黄底会打架 */
+  background: #fffefc;
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -548,7 +550,8 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--yellow);
+  background: #fffefc;
+  border: 1px solid var(--line);
   border-radius: 14px;
 }
 

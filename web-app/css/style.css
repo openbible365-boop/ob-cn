@@ -524,14 +524,16 @@ a {
     width: 24px;
     height: 24px;
     border-radius: 999px;
-    background: var(--accent);
-    color: #fff;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
     font-size: 0.7rem;
     font-weight: 800;
     overflow: hidden;
     line-height: 1;
 }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 999px; }
+/* 右栏「我的」标签里的头像：与标签图标同尺寸 */
+.panel-tab .nav-avatar { width: 17px; height: 17px; font-size: 0.6rem; vertical-align: -3px; }
 
 /* ── 奉献页 ── 布局参考微读圣经；配色遵循本站令牌（金=温暖致辞，紫=交互） */
 .donate-hero {
@@ -682,6 +684,13 @@ a {
 
 /* 慧读标签的迷你 logo：描边随文字色，星与书页保持品牌色 */
 .tab-logo-mark { width: 15px; height: 15px; vertical-align: -2px; }
+
+/* 正文字体切换：设置里的「黑体/宋体」。宋体行高微升，笔画细需要更多呼吸 */
+body.serif-body .verse {
+    font-family: var(--font-serif);
+    line-height: 1.85;
+    letter-spacing: 0;
+}
 
 /* 拼音版：ruby 注音排版 */
 .is-pinyin .verse { line-height: 2.35; }
@@ -1176,6 +1185,8 @@ body[data-theme="dark"] .sel-close-btn:hover {
     transition: all 0.2s ease;
     line-height: 1.7;
     letter-spacing: -0.02em;
+    /* 避头尾：标点不落行首（与注释一致） */
+    line-break: strict;
     font-family: var(--font-text);
     font-size: 1.22rem;
     color: var(--text-primary);
@@ -1435,7 +1446,8 @@ body[data-theme="dark"] .verse-note-icon:hover {
 }
 
 .view-header-title i {
-    color: var(--accent);
+    /* 页头图标是装饰，用中性色；紫只标记可交互元素 */
+    color: var(--text-tertiary);
 }
 
 .view-content {
@@ -1541,7 +1553,7 @@ body[data-theme="dark"] .verse-note-icon:hover {
 }
 
 .section-label i {
-    color: var(--accent);
+    color: var(--text-tertiary);
 }
 
 /* ── AI tab ── */
@@ -2033,6 +2045,109 @@ body[data-theme="dark"] .verse-note-icon:hover {
 }
 
 /* Commentary items */
+/* ── 「我的」面板（右栏）：概览 + 子页两级结构，与 App 端 MePage 同构 ── */
+.profile-panel { padding: 6px 2px 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* 未登录 */
+.mep-guest { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 12px; text-align: center; }
+.mep-guest b { font-size: 0.95rem; }
+.mep-guest p { color: var(--text-secondary); font-size: 0.8rem; line-height: 1.6; }
+.mep-guest .primary-btn { margin-top: 6px; }
+
+/* 身份区 */
+.mep-hero { display: flex; align-items: center; gap: 10px; padding: 2px; }
+.mep-avatar {
+    display: grid; place-items: center;
+    width: 46px; height: 46px; flex: none;
+    /* 头像是身份标识，不是可操作元素——用中性面，把紫留给真正的交互 */
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--bg-hover); color: var(--text-primary);
+    font-size: 1.1rem; font-weight: 800; overflow: hidden; cursor: pointer;
+}
+.mep-avatar.is-guest { background: var(--bg-hover); color: var(--text-tertiary); cursor: default; }
+.mep-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mep-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mep-id b { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mep-id small { color: var(--text-tertiary); font-size: 0.74rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 我的记录 */
+.mep-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.mep-stat {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 10px 4px; border-radius: var(--radius-md); background: var(--bg-hover);
+}
+.mep-stat { border: none; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+.mep-stat:hover:not(:disabled) { background: var(--accent-light); }
+.mep-stat:disabled { cursor: default; opacity: 0.55; }
+.mep-stat b { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); }
+.mep-stat small { color: var(--text-secondary); font-size: 0.72rem; }
+
+/* 菜单组 */
+.mep-menu {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--bg-card, #fff); overflow: hidden;
+}
+.mep-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 12px; border: none; background: none;
+    color: var(--text-primary); font-size: 0.85rem; text-align: left; cursor: pointer;
+}
+.mep-item + .mep-item { border-top: 1px solid var(--border); }
+.mep-item:hover { background: var(--bg-hover); }
+.mep-item > i:first-child { width: 16px; color: var(--text-tertiary); font-size: 0.85rem; }
+.mep-item > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mep-item > span small { color: var(--text-tertiary); font-size: 0.72rem; }
+.mep-item > i:last-child { color: var(--text-tertiary); font-size: 0.7rem; }
+
+/* 高亮列表条目：左侧色点标明高亮颜色 */
+.mep-hl-dot { flex: none; width: 12px; height: 12px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.12); }
+
+.mep-logout {
+    padding: 10px 0; border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: none; color: var(--danger); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.mep-logout:hover { background: var(--danger-soft); }
+
+/* 子页 */
+.mep-subhead { display: flex; align-items: center; gap: 8px; padding-bottom: 2px; }
+.mep-back { display: grid; place-items: center; width: 26px; height: 26px; border: none; border-radius: 8px; background: var(--bg-hover); color: var(--text-secondary); cursor: pointer; }
+.mep-subhead b { font-size: 0.9rem; }
+.mep-loading { color: var(--text-tertiary); font-size: 0.8rem; padding: 12px 2px; }
+
+/* 子页：表单（纵向堆叠，窄栏才放得下） */
+.mep-form { display: flex; flex-direction: column; gap: 12px; }
+.mep-form label { display: flex; flex-direction: column; gap: 5px; }
+.mep-form label span { color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; }
+.mep-form input, .mep-form select {
+    width: 100%; padding: 9px 11px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg-app); color: var(--text-primary); font-size: 0.85rem;
+}
+.mep-form input:focus, .mep-form select:focus { border-color: var(--accent); outline: none; }
+.mep-form input:disabled { color: var(--text-tertiary); }
+.mep-form .primary-btn { width: 100%; margin-top: 2px; }
+
+/* 子页：开关（说明左、开关右——这个横排适合窄栏） */
+.mep-switches { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-card, #fff); overflow: hidden; }
+.mep-switch { display: flex; align-items: center; gap: 10px; padding: 11px 12px; cursor: pointer; }
+.mep-switch + .mep-switch { border-top: 1px solid var(--border); }
+.mep-switch > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mep-switch b { font-size: 0.84rem; font-weight: 600; }
+.mep-switch small { color: var(--text-tertiary); font-size: 0.72rem; }
+.mep-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.mep-switch i {
+    flex: none; width: 38px; height: 22px; border-radius: 999px;
+    background: var(--border-strong); position: relative; transition: background 0.18s;
+}
+.mep-switch i::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 999px; background: #fff;
+    transition: transform 0.18s;
+}
+.mep-switch input:checked + i { background: var(--accent); }
+.mep-switch input:checked + i::after { transform: translateX(16px); }
+
 /* 从正文笔记图标跳转过来时的定位闪烁 */
 @keyframes noteCardFlash {
     0%, 60% { border-color: var(--accent-gold); box-shadow: 0 0 0 3px var(--accent-gold-light); }
@@ -2798,123 +2913,97 @@ body[data-theme="dark"] .share-modal-header {
     animation: fadeUp 0.3s ease;
 }
 
-.note-card-ref {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--accent);
-    margin-bottom: 5px;
-    font-family: var(--font-ui);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    border-radius: var(--radius-sm);
-    padding: 2px 6px 2px 0;
-    transition: background 0.15s, color 0.15s;
-}
+/* 笔记列表约束到可读宽度：卡片内容短，铺满千余像素只会显得空 */
+#notes-list, .notes-toolbar { max-width: 720px; }
 
-.note-card-ref[onclick] {
-    cursor: pointer;
-}
-
-.note-card-ref[onclick]:hover {
-    background: var(--accent-light);
-    text-decoration: underline;
-}
-
-.note-card-text {
-    font-size: 0.88rem;
-    line-height: 1.6;
-    color: var(--text-secondary);
-}
-
-.note-card-date {
-    font-size: 0.72rem;
-    color: var(--text-tertiary);
-    margin-top: 6px;
-    text-align: right;
-}
-
-/* ── AI 问答笔记卡片 ── */
-/* NOTE: 与手写笔记共用 .note-card，额外添加 .note-card-ai 区分视觉 */
-.note-card-ai {
-    border-left: 3px solid var(--accent);
-    background: linear-gradient(135deg, var(--bg-surface), var(--accent-light) 200%);
-}
-
-.note-ai-badge {
-    margin-left: auto;
-    font-size: 0.68rem;
-    color: var(--accent);
-    opacity: 0.75;
-    font-family: var(--font-ui);
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-
-/* 用户提问行 */
-.note-ai-question {
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    background: var(--accent-light);
-    border-radius: var(--radius-sm);
-    padding: 6px 10px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.5;
-}
-
-.note-ai-question i {
-    color: var(--accent);
-    font-size: 0.78rem;
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-/* AI 回答区域 */
-.note-ai-answer {
-    font-size: 0.86rem;
-    line-height: 1.7;
-    color: var(--text-secondary);
-    /* 长答案最多展示 5 行，点击笔记时可展开 */
-    max-height: 8.5em;
-    overflow: hidden;
+/* ── 笔记卡片：元信息一行 + 正文为主，操作悬停显现 ── */
+.note-card {
     position: relative;
-    cursor: pointer;
+    padding: 10px 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card, #fff);
+    transition: border-color 0.15s;
 }
+.note-card:hover { border-color: var(--border-strong); }
+.note-card + .note-card { margin-top: 8px; }
 
-/* 渐隐遮罩提示可展开 */
-.note-ai-answer::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2.5em;
-    background: linear-gradient(transparent, var(--bg-surface));
-    pointer-events: none;
-}
-
-.note-ai-answer.expanded {
-    max-height: none;
-}
-
-.note-ai-answer.expanded::after {
-    display: none;
-}
-
-.note-card-ai .note-card-ref {
-    width: 100%;
+.note-meta {
     display: flex;
     align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 0.74rem;
+    color: var(--text-tertiary);
 }
+/* 经文引用归金族（阅读语境），与顶栏芯片、注释徽章一致 */
+.note-ref {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--gold-ink);
+    font-size: 0.76rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+}
+.note-ref:disabled { cursor: default; opacity: 0.75; }
+.note-ref:hover:not(:disabled) { text-decoration: underline; }
+.note-kind {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.note-meta time { margin-left: auto; flex: none; }
 
-/* =========================================================
-   NOTES — history toolbar (search / filter / sort / group)
-   ========================================================= */
+/* 操作：默认隐形，悬停/键盘聚焦时出现，不打扰阅读 */
+.note-acts { display: flex; gap: 2px; flex: none; opacity: 0; transition: opacity 0.15s; }
+.note-card:hover .note-acts,
+.note-card:focus-within .note-acts { opacity: 1; }
+.note-act {
+    display: grid;
+    place-items: center;
+    width: 24px; height: 24px;
+    border: none; border-radius: 7px;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+.note-act:hover { background: var(--bg-hover); color: var(--text-primary); }
+.note-act.is-danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+.note-body, .note-a {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+}
+.note-a { color: var(--text-secondary); }
+.note-a p { margin: 0 0 6px; }
+.note-a p:last-child { margin-bottom: 0; }
+/* 慧读卡的问句是标题级信息 */
+.note-q {
+    margin-bottom: 4px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.55;
+    color: var(--text-primary);
+}
+/* 超过三行折起，点击展开 */
+.clampable {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+}
+.clampable.is-open { -webkit-line-clamp: unset; }
+
+
 .notes-toolbar {
     position: sticky;
     top: 0;
@@ -3029,9 +3118,9 @@ body[data-theme="dark"] .share-modal-header {
 }
 
 .notes-chip.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
+    background: var(--accent-light);
+    border-color: var(--accent-mid);
+    color: var(--accent);
 }
 
 .notes-controls-right {
@@ -6439,7 +6528,7 @@ body[data-theme="dark"] .toast {
 
     .verse {
         font-size: 1.1rem;
-        line-height: 2.1;
+        line-height: 1.7;
     }
 
     .view {
@@ -7633,6 +7722,62 @@ body[data-theme="dark"] .toast {
     text-align: left;
 }
 .plan-today:hover { background: var(--accent); color: #fff; }
+/* 计划日程展开：逐日可点，点哪天跳哪段经文 */
+.plan-days-toggle {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.plan-days-toggle:hover { text-decoration: underline; }
+.plan-day-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 4px 0 2px;
+    padding: 0;
+    list-style: none;
+}
+.plan-day {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+}
+.plan-day:hover { background: var(--bg-hover); }
+.plan-day > i { margin-left: auto; color: var(--text-tertiary); font-size: 0.7rem; }
+.plan-day-no {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+/* 已完成的天用金色对勾——与共读进度、侧栏激活同族 */
+.plan-day-no.is-done { background: var(--accent-gold-light); color: var(--gold-ink); }
+.plan-day-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.plan-day-text b { font-size: 0.82rem; font-weight: 700; }
+.plan-day-text small { color: var(--text-secondary); font-size: 0.75rem; }
+
 .plan-scard-actions { display: flex; justify-content: flex-end; }
 .plan-complete-btn, .plan-enroll-btn { padding: 6px 16px; font-size: 0.8rem; }
 .plan-card-done { color: var(--success, #2f7a50); font-size: 0.82rem; font-weight: 800; }

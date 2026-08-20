@@ -259,9 +259,9 @@ const Auth = (() => {
         if (typeof showToast === 'function') showToast(window.t ? window.t('toast.logout-ok') : '已退出登录');
     }
 
-    // 左侧「我的」导航项：登录后图标换成用户头像（图片或首字母圆标）
+    // 右栏「我的」标签：登录后图标换成用户头像（图片或首字母圆标）
     function updateNavAvatar(user) {
-        const btn = document.querySelector('.nav-item[data-view="profile"]');
+        const btn = document.querySelector('.panel-tab[data-tab="profile"]');
         if (!btn) return;
         const icon = btn.querySelector('i');
         let av = btn.querySelector('.nav-avatar');
@@ -343,7 +343,8 @@ const Auth = (() => {
 
         // 点击用户区进入个人页
         document.getElementById('auth-user-area')?.addEventListener('click', () => {
-            if (window.switchView) window.switchView('profile');
+            // 「我的」已移入右栏标签页
+            if (window.switchPanelTab) window.switchPanelTab('profile');
             const app = document.getElementById('app');
             if (app && app.classList.contains('nav-hidden')) {
                 app.classList.remove('nav-hidden');
