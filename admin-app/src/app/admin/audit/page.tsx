@@ -2,9 +2,27 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
-import { EmptyState, Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/States";
+import { Badge } from "@/components/ui/Primitives";
+import { Pagination } from "@/components/Pagination";
 import { CreateOperatorControl } from "@/components/CreateOperatorControl";
 import { ResetPasswordControl } from "@/components/ResetPasswordControl";
+
+const OPERATOR_COLUMNS: Column[] = [
+  { key: "username", label: "用户名", width: "1fr" },
+  { key: "name", label: "姓名", width: "1fr" },
+  { key: "role", label: "角色", width: "120px" },
+  { key: "created", label: "创建时间", width: "120px" },
+  { key: "ops", label: "操作", width: "160px" },
+];
+
+const LOG_COLUMNS: Column[] = [
+  { key: "time", label: "时间", width: "140px" },
+  { key: "operator", label: "操作人", width: "120px" },
+  { key: "detail", label: "操作详情", width: "1.6fr" },
+  { key: "target", label: "对象", width: "160px" },
+];
 
 const ROLE_LABEL: Record<string, string> = { SUPER_ADMIN: "超级管理员", MODERATOR: "内容审核员" };
 
@@ -41,38 +59,49 @@ export default async function AuditPage({
           <div style={{ fontSize: 13, fontWeight: 800 }}>运营账号 · {operators.length} 个</div>
           <CreateOperatorControl />
         </div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1fr 1fr 130px 140px 160px" }}>
-          <div>用户名</div><div>姓名</div><div>角色</div><div>创建时间</div><div>操作</div>
-        </div>
-        {operators.map((op) => (
-          <div key={op.id} className="admin-table-row" style={{ gridTemplateColumns: "1fr 1fr 130px 140px 160px" }}>
-            <div style={{ fontWeight: 700 }}>{op.username}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{op.name}</div>
-            <div><span className={`pill ${op.role === "SUPER_ADMIN" ? "pill-yellow" : "pill-purple"}`}>{ROLE_LABEL[op.role]}</span></div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{op.createdAt.toISOString().slice(0, 10)}</div>
-            <div className="row-actions"><ResetPasswordControl operatorId={op.id} /></div>
-          </div>
-        ))}
+        <DataTable columns={OPERATOR_COLUMNS} label="运营账号列表">
+          <DataTable.Head />
+          {operators.map((op) => (
+            <DataTable.Row key={op.id}>
+              <DataTable.Cell truncate title={op.username}>
+                <strong>{op.username}</strong>
+              </DataTable.Cell>
+              <DataTable.Cell truncate title={op.name}>{op.name}</DataTable.Cell>
+              <DataTable.Cell>
+                <Badge tone={op.role === "SUPER_ADMIN" ? "warn" : "info"}>{ROLE_LABEL[op.role]}</Badge>
+              </DataTable.Cell>
+              <DataTable.Cell>{op.createdAt.toISOString().slice(0, 10)}</DataTable.Cell>
+              <DataTable.Cell>
+                <div className="row-actions"><ResetPasswordControl operatorId={op.id} /></div>
+              </DataTable.Cell>
+            </DataTable.Row>
+          ))}
+          {operators.length === 0 && (
+            <EmptyState title="暂无运营账号" hint="点击右上角「新建运营账号」添加第一个账号" />
+          )}
+        </DataTable>
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
         <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>操作日志 · 最近 {logs.length} 条</div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "140px 130px 1.6fr 160px" }}>
-          <div>时间</div><div>操作人</div><div>操作详情</div><div>对象</div>
-        </div>
-        {logs.map((l) => (
-          <div key={l.id} className="admin-table-row" style={{ gridTemplateColumns: "140px 130px 1.6fr 160px" }}>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{l.createdAt.toISOString().slice(0, 16).replace("T", " ")}</div>
-            <div style={{ fontWeight: 700 }}>{l.operator.name}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>
-              <span style={{ color: "var(--ink)", fontWeight: 800 }}>{l.action}</span> · {l.detail}
-            </div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{l.targetType} #{l.targetId.slice(-6)}</div>
-          </div>
-        ))}
-        {logs.length === 0 && (
-          <EmptyState title="暂无操作记录" hint="运营在后台的每一次写操作都会记录在这里" />
-        )}
+        <DataTable columns={LOG_COLUMNS} label="操作日志">
+          <DataTable.Head />
+          {logs.map((l) => (
+            <DataTable.Row key={l.id}>
+              <DataTable.Cell>{l.createdAt.toISOString().slice(0, 16).replace("T", " ")}</DataTable.Cell>
+              <DataTable.Cell truncate title={l.operator.name}>
+                <strong>{l.operator.name}</strong>
+              </DataTable.Cell>
+              <DataTable.Cell truncate title={`${l.action} · ${l.detail}`}>
+                <strong>{l.action}</strong> · {l.detail}
+              </DataTable.Cell>
+              <DataTable.Cell truncate>{l.targetType} #{l.targetId.slice(-6)}</DataTable.Cell>
+            </DataTable.Row>
+          ))}
+          {logs.length === 0 && (
+            <EmptyState title="暂无操作记录" hint="运营在后台的每一次写操作都会记录在这里，便于追溯" />
+          )}
+        </DataTable>
 
         <Pagination info={info} basePath="/admin/audit" params={{}} />
 

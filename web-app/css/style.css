@@ -621,7 +621,8 @@ a {
 }
 .donate-method:hover { border-color: var(--accent-mid); }
 .donate-method.selected { border-color: var(--accent); background: var(--accent-light); }
-.donate-method:last-child { grid-column: 1 / -1; }
+/* 奇数个支付方式时，最后一项跨满整行；两项时保持并排 */
+.donate-method:nth-child(odd):last-child { grid-column: 1 / -1; }
 .donate-submit { width: 100%; margin-top: 16px; padding: 12px 0; font-size: 1rem; border-radius: var(--radius-md); }
 .donate-note { margin-top: 10px; color: var(--text-tertiary); font-size: 0.75rem; text-align: center; }
 

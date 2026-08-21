@@ -5,7 +5,21 @@ import { BanUserControl } from "@/components/BanUserControl";
 import { UserAvatar } from "@/components/UserAvatar";
 import type { Prisma } from "@/generated/prisma/client";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
-import { EmptyState, Pagination } from "@/components/Pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, PageHeader } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
+
+/** 列定义只此一份，表头与所有行由 DataTable 的 Context 共享 */
+const USER_COLUMNS: Column[] = [
+  { key: "user", label: "用户", width: "1.6fr" },
+  { key: "login", label: "登录方式", width: "110px" },
+  { key: "last", label: "最近登录", width: "130px" },
+  { key: "groups", label: "所属群组", width: "90px", align: "right" },
+  { key: "tier", label: "用户等级", width: "110px" },
+  { key: "status", label: "状态", width: "84px" },
+  { key: "ops", label: "操作", width: "220px" },
+];
 
 export default async function UsersPage({
   searchParams,
@@ -61,23 +75,23 @@ export default async function UsersPage({
 
   return (
     <>
-      <div className="admin-header">
-        <div className="title">用户管理</div>
-        <div className="meta">{q ? `匹配 ${total} 名用户` : `共 ${total} 名注册用户`}</div>
-        <div style={{ flex: 1 }} />
-        <form className="search-box" action="/admin/users">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input name="q" placeholder="搜索用户名 / email" defaultValue={q ?? ""} />
-        </form>
-      </div>
+      <PageHeader
+        title="用户管理"
+        meta={q ? `匹配 ${total} 名用户` : `共 ${total} 名注册用户`}
+        actions={
+          <form className="search-box" action="/admin/users">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input name="q" placeholder="搜索用户名 / email" defaultValue={q ?? ""} />
+          </form>
+        }
+      />
 
-      <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
-          <div>用户</div><div>登录方式</div><div>最近登录</div><div>所属群组</div><div>用户等级</div><div>状态</div><div>操作</div>
-        </div>
+      <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: 0, overflow: "auto" }}>
+        <DataTable columns={USER_COLUMNS} label="用户列表">
+        <DataTable.Head />
 
         {users.map((u) => {
           const level = formatUserTier(u.tier, u.tierPriceCents);
@@ -86,34 +100,31 @@ export default async function UsersPage({
             u.status === "BANNED" ? "封禁中" : u.status === "MUTED" ? "禁言中" : "正常";
 
           return (
-            <div key={u.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 120px 130px 90px 110px 90px 220px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <UserAvatar
-                  name={u.name}
-                  avatarColor={u.avatarColor}
-                  avatarUrl={u.avatarUrl}
-                />
-                <div>
-                  <div style={{ fontWeight: 700 }}>
-                    {u.name} <span style={{ fontWeight: 600, color: "var(--body)" }}>· UID {u.uid}</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2, fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-                    {u.email && <div>{u.email}</div>}
-                    <div style={{ color: "var(--purple)" }}>
+            <DataTable.Row key={u.id} tone={u.status === "BANNED" ? "err" : undefined}>
+              <DataTable.Cell>
+                <div className="user-cell">
+                  <UserAvatar name={u.name} avatarColor={u.avatarColor} avatarUrl={u.avatarUrl} />
+                  <div className="user-cell-text">
+                    <div className="user-cell-name" title={`${u.name} · UID ${u.uid}`}>
+                      {u.name} <span>· UID {u.uid}</span>
+                    </div>
+                    {u.email && <div className="user-cell-sub" title={u.email}>{u.email}</div>}
+                    <div className="user-cell-sub">
                       高亮 {u._count.highlights} · 笔记 {u._count.notes}
                     </div>
                   </div>
                 </div>
-              </div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>{login}</div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>{fmtLogin(u.lastLoginAt)}</div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>{u.memberships.length} 个</div>
-              <div><span className="pill pill-purple">{level}</span></div>
-              <div>
-                <span className={`pill ${u.status === "BANNED" ? "pill-pink" : "pill-muted"}`}>
+              </DataTable.Cell>
+              <DataTable.Cell truncate title={login}>{login}</DataTable.Cell>
+              <DataTable.Cell truncate>{fmtLogin(u.lastLoginAt)}</DataTable.Cell>
+              <DataTable.Cell align="right">{u.memberships.length} 个</DataTable.Cell>
+              <DataTable.Cell><Badge tone="info">{level}</Badge></DataTable.Cell>
+              <DataTable.Cell>
+                <Badge tone={u.status === "BANNED" ? "err" : u.status === "MUTED" ? "warn" : "ok"}>
                   {statusLabel}
-                </span>
-              </div>
+                </Badge>
+              </DataTable.Cell>
+              <DataTable.Cell>
               <div className="row-actions">
                 {u.status !== "BANNED" && (
                   <form action={muteUser}>
@@ -133,9 +144,11 @@ export default async function UsersPage({
                   <BanUserControl userId={u.id} />
                 )}
               </div>
-            </div>
+              </DataTable.Cell>
+            </DataTable.Row>
           );
         })}
+        </DataTable>
 
         {users.length === 0 && (
           <EmptyState

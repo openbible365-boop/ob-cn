@@ -1,6 +1,19 @@
 import { db } from "@/lib/db";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
-import { EmptyState, Pagination } from "@/components/Pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
+
+const COMMUNITY_COLUMNS: Column[] = [
+  { key: "community", label: "社群", width: "1.6fr" },
+  { key: "owner", label: "群主", width: "100px" },
+  { key: "members", label: "成员数", width: "80px", align: "right" },
+  { key: "status", label: "状态", width: "90px" },
+  { key: "created", label: "创建时间", width: "110px" },
+  { key: "tier", label: "群组等级", width: "160px" },
+  { key: "ops", label: "操作", width: "220px" },
+];
 import { formatTier } from "@/lib/format";
 import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -64,47 +77,38 @@ export default async function CommunitiesPage({
           </div>
         </div>
 
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 100px 90px 100px 110px 110px 220px" }}>
-          <div>社群</div><div>群主</div><div>成员数</div><div>状态</div><div>创建时间</div><div>群组等级</div><div>操作</div>
-        </div>
+        <DataTable columns={COMMUNITY_COLUMNS} label="社群列表">
+        <DataTable.Head />
 
         {communities.map((c) => {
           const statusLabel =
             c.status === "DISSOLVED" ? "已解散" : c.status === "BANNED" ? "已封禁" : "正常";
 
           return (
-            <div key={c.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 100px 90px 100px 110px 110px 220px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 26, height: 26, background: c.avatarColor, borderRadius: 8,
-                  fontSize: 11, fontWeight: 800,
-                }}>
-                  {c.name.slice(0, 1)}
+            <DataTable.Row key={c.id} tone={c.status !== "ACTIVE" ? "err" : c.warningCount > 0 ? "warn" : undefined}>
+              <DataTable.Cell>
+                <div className="entity-cell">
+                  <span className="entity-mark" style={{ background: c.avatarColor }}>{c.name.slice(0, 1)}</span>
+                  <span className="entity-name" title={c.name}>{c.name}</span>
+                  <Badge>简称 · {c.abbreviation}</Badge>
+                  {c.parent ? (
+                    <Badge>群组 · {c.parent.name}</Badge>
+                  ) : c._count.groups > 0 ? (
+                    <Badge tone="info">{c._count.groups} 个群组</Badge>
+                  ) : null}
+                  {c.isOfficial ? <Badge tone="warn">官方</Badge> : null}
+                  {c.warningCount > 0 ? <Badge tone="warn">已警告 {c.warningCount} 次</Badge> : null}
                 </div>
-                <div style={{ fontWeight: 700 }}>{c.name}</div>
-                <span className="pill pill-muted">简称 · {c.abbreviation}</span>
-                {c.parent ? (
-                  <span className="pill pill-muted">群组 · {c.parent.name}</span>
-                ) : c._count.groups > 0 ? (
-                  <span className="pill pill-purple">{c._count.groups} 个群组</span>
-                ) : null}
-                {c.isOfficial ? <span className="pill pill-yellow">官方</span> : null}
-                {c.warningCount > 0 ? (
-                  <span className="pill pill-orange">已警告 {c.warningCount} 次</span>
-                ) : null}
-              </div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>{c.owner?.name ?? "—"}</div>
-              <div style={{ fontWeight: 700 }}>{c._count.memberships}</div>
-              <div>
-                <span className={`pill ${c.status === "ACTIVE" ? "pill-muted" : "pill-pink"}`}>{statusLabel}</span>
-              </div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>
-                {c.createdAt.toISOString().slice(0, 10)}
-              </div>
-              <div>
+              </DataTable.Cell>
+              <DataTable.Cell truncate title={c.owner?.name ?? "—"}>{c.owner?.name ?? "—"}</DataTable.Cell>
+              <DataTable.Cell align="right"><strong>{c._count.memberships}</strong></DataTable.Cell>
+              <DataTable.Cell>
+                <Badge tone={c.status === "ACTIVE" ? "ok" : "err"}>{statusLabel}</Badge>
+              </DataTable.Cell>
+              <DataTable.Cell>{c.createdAt.toISOString().slice(0, 10)}</DataTable.Cell>
+              <DataTable.Cell>
                 {c.isOfficial || c.parent || !canChangeTier ? (
-                  <span className="pill pill-purple">{formatTier(c.tier, c.tierPriceCents)}</span>
+                  <Badge tone="info">{formatTier(c.tier, c.tierPriceCents)}</Badge>
                 ) : (
                   <form action={changeCommunityTier} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <input type="hidden" name="communityId" value={c.id} />
@@ -116,7 +120,8 @@ export default async function CommunitiesPage({
                     <ConfirmSubmitButton className="action-purple" confirmMessage={`确认调整「${c.name}」的会员方案吗？此操作只修改权益，不会自动扣费。`}>保存</ConfirmSubmitButton>
                   </form>
                 )}
-              </div>
+              </DataTable.Cell>
+              <DataTable.Cell>
               <div className="row-actions">
                 {c.status === "DISSOLVED" ? (
                   <span className="action-body">已解散</span>
@@ -149,7 +154,8 @@ export default async function CommunitiesPage({
                   </>
                 )}
               </div>
-            </div>
+              </DataTable.Cell>
+            </DataTable.Row>
           );
         })}
 
@@ -159,6 +165,7 @@ export default async function CommunitiesPage({
             hint={q ? "换个关键词试试，或清除搜索条件" : "用户在 App 端创建社群后会出现在这里"}
           />
         )}
+        </DataTable>
 
         <Pagination info={info} basePath="/admin/communities" params={{ q }} />
       </div>

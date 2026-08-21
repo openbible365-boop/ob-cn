@@ -3,15 +3,27 @@ import { db } from "@/lib/db";
 import { approveReport, removeReportedContent, hideReportedContent, banReportedUser, muteReportedUser } from "@/lib/actions/moderation";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
-import { EmptyState, Pagination } from "@/components/Pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, Card, Stat, type Tone } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 
 const LEVEL_LABEL: Record<string, string> = { BLOCK: "拦截", REVIEW: "待审", LOG: "仅记录" };
-const LEVEL_PILL: Record<string, string> = { BLOCK: "pill-pink", REVIEW: "pill-orange", LOG: "pill-muted" };
+// 语义映射：拦截=错误级，待审=告警级，仅记录=中性
+const LEVEL_TONE: Record<string, Tone> = { BLOCK: "err", REVIEW: "warn", LOG: "neutral" };
+
+const REPORT_COLUMNS: Column[] = [
+  { key: "content", label: "被举报内容", width: "1.6fr" },
+  { key: "community", label: "所在社群", width: "130px" },
+  { key: "reason", label: "举报原因", width: "150px" },
+  { key: "level", label: "命中级别", width: "90px" },
+  { key: "ops", label: "操作", width: "260px" },
+];
 
 const TIER_META = [
-  { level: "BLOCK" as const, label: "拦截级词条", dot: "var(--pink)" },
-  { level: "REVIEW" as const, label: "待审级词条", dot: "var(--orange)" },
-  { level: "LOG" as const, label: "仅记录词条", dot: "var(--line)" },
+  { level: "BLOCK" as const, label: "拦截级词条", tone: "err" as Tone },
+  { level: "REVIEW" as const, label: "待审级词条", tone: "warn" as Tone },
+  { level: "LOG" as const, label: "仅记录词条", tone: undefined },
 ];
 
 export default async function ModerationPage({
@@ -58,32 +70,30 @@ export default async function ModerationPage({
         </Link>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 12 }}>
+      <div className="stat-grid">
         {TIER_META.map((t) => (
-          <div key={t.level} className="card" style={{ borderRadius: 16, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 10, height: 10, background: t.dot, borderRadius: 100 }} />
-            <div style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{t.label}</div>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{countByLevel[t.level] ?? 0}</div>
-          </div>
+          <Card key={t.level}>
+            <Stat label={t.label} value={countByLevel[t.level] ?? 0} tone={t.tone} />
+          </Card>
         ))}
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
         <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>举报审核队列 · {reports.length} 条待处理</div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.6fr 130px 130px 90px 260px" }}>
-          <div>被举报内容</div><div>所在社群</div><div>举报原因</div><div>命中级别</div><div>操作</div>
-        </div>
+        <DataTable columns={REPORT_COLUMNS} label="举报审核队列">
+        <DataTable.Head />
         {reports.map((r) => (
-          <div key={r.id} className="admin-table-row" style={{ gridTemplateColumns: "1.6fr 130px 130px 90px 260px" }}>
-            <div style={{ fontWeight: 600, color: "var(--body)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {r.contentSnapshot}
-            </div>
-            <div style={{ fontWeight: 700 }}>{r.community.name}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>
+          <DataTable.Row key={r.id} tone={LEVEL_TONE[r.hitLevel] === "err" ? "err" : LEVEL_TONE[r.hitLevel] === "warn" ? "warn" : undefined}>
+            <DataTable.Cell truncate title={r.contentSnapshot}>{r.contentSnapshot}</DataTable.Cell>
+            <DataTable.Cell truncate title={r.community.name}><strong>{r.community.name}</strong></DataTable.Cell>
+            <DataTable.Cell truncate title={r.reason}>
               {r.reason}
-              {r.reporter && <small style={{ display: "block", marginTop: 3, color: "var(--muted)" }}>举报人：{r.reporter.name}</small>}
-            </div>
-            <div><span className={`pill ${LEVEL_PILL[r.hitLevel]}`}>{LEVEL_LABEL[r.hitLevel]}</span></div>
+              {r.reporter && <small className="cell-sub">举报人：{r.reporter.name}</small>}
+            </DataTable.Cell>
+            <DataTable.Cell>
+              <Badge tone={LEVEL_TONE[r.hitLevel]}>{LEVEL_LABEL[r.hitLevel]}</Badge>
+            </DataTable.Cell>
+            <DataTable.Cell>
             <div className="row-actions">
               <form action={removeReportedContent}>
                 <input type="hidden" name="reportId" value={r.id} />
@@ -114,11 +124,13 @@ export default async function ModerationPage({
                 </>
               )}
             </div>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
         {reports.length === 0 && (
           <EmptyState title="暂无待处理举报" hint="用户提交举报后会出现在这里，处理 SLA ≤ 24h" />
         )}
+        </DataTable>
 
         <Pagination info={info} basePath="/admin/moderation" params={{}} />
 

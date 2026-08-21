@@ -4054,14 +4054,13 @@
     // ── 奉献 ──
     // 布局参考微读圣经的奉献页：致辞 + 金额格 + 自定义金额 + 支付方式 + 登录门槛。
     // 支付通道尚未接入商户凭据，提交时如实告知，不伪造成功状态。
-    const _donate = { amount: 20, custom: '', method: 'wechat' };
+    const _donate = { amount: 20, custom: '', method: 'paypal' };
 
     function renderDonateView() {
         const c = $('donate-render'); if (!c) return;
         const amounts = [5, 10, 20, 50, 100, 200];
         const logged = typeof Auth !== 'undefined' && Auth.getUser();
         const methods = [
-            ['wechat', '<i class="fa-brands fa-weixin" style="color:#2aae67"></i> ' + (t('donate.wechat') || '微信')],
             ['paypal', '<i class="fa-brands fa-paypal" style="color:#0070ba"></i> PayPal'],
             ['card', '<i class="fa-solid fa-credit-card"></i> ' + (t('donate.card') || '信用卡')],
         ];
