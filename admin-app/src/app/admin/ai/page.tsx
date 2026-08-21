@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { EmptyState } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, type Tone } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 import { formatCents, formatTokensPerDay } from "@/lib/format";
 import { toggleAutoFallback, toggleRateLimit, expandCanary, rollbackToVersion } from "@/lib/actions/ai";
 import { ApiKeyControl } from "@/components/ApiKeyControl";
@@ -16,11 +18,21 @@ const STATUS_LABELS: Record<string, string> = {
   DEGRADED: "异常",
 };
 
-const PROMPT_STATUS_PILL: Record<string, string> = {
-  CANARY: "pill-purple",
-  GA: "pill-yellow",
-  ARCHIVED: "pill-muted",
+// 语义映射：灰度中需要盯着看=告警，全量=正常，已归档=中性
+const PROMPT_STATUS_TONE: Record<string, Tone> = {
+  CANARY: "warn",
+  GA: "ok",
+  ARCHIVED: "neutral",
 };
+
+const PROMPT_COLUMNS: Column[] = [
+  { key: "version", label: "版本", width: "90px" },
+  { key: "desc", label: "说明", width: "1fr" },
+  { key: "status", label: "状态", width: "130px" },
+  { key: "like", label: "点赞率", width: "100px", align: "right" },
+  { key: "dislike", label: "点踩率", width: "100px", align: "right" },
+  { key: "ops", label: "操作", width: "200px" },
+];
 
 function promptStatusLabel(status: string, rolloutPercent: number) {
   if (status === "GA") return `全量 ${rolloutPercent}%`;
@@ -152,23 +164,20 @@ export default async function AiManagementPage() {
           <div style={{ fontSize: 13, fontWeight: 800 }}>系统 Prompt 版本管理</div>
           <CreatePromptVersionControl />
         </div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "90px 1fr 130px 110px 110px 200px" }}>
-          <div>版本</div><div>说明</div><div>状态</div><div>点赞率</div><div>点踩率</div><div>操作</div>
-        </div>
+        <DataTable columns={PROMPT_COLUMNS} label="提示词版本列表">
         {versions.length === 0 && (
-          <EmptyState title="还没有提示词版本" hint="用上方表单新建第一个版本" />
+          <EmptyState title="还没有提示词版本" hint="用上方表单新建第一个版本，灰度发布后可在此对比点赞率" />
         )}
         {versions.map((v) => (
-          <div key={v.id} className="admin-table-row" style={{ gridTemplateColumns: "90px 1fr 130px 110px 110px 200px" }}>
-            <div style={{ fontWeight: 800, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>{v.version}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{v.description}</div>
-            <div><span className={`pill ${PROMPT_STATUS_PILL[v.status]}`}>{promptStatusLabel(v.status, v.rolloutPercent)}</span></div>
-            <div style={{ fontWeight: 700, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>
-              {v.likeRatePct != null ? `${v.likeRatePct}%` : "—"}
-            </div>
-            <div style={{ fontWeight: 700, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>
-              {v.dislikeRatePct != null ? `${v.dislikeRatePct}%` : "—"}
-            </div>
+          <DataTable.Row key={v.id}>
+            <DataTable.Cell><strong>{v.version}</strong></DataTable.Cell>
+            <DataTable.Cell truncate title={v.description}>{v.description}</DataTable.Cell>
+            <DataTable.Cell>
+              <Badge tone={PROMPT_STATUS_TONE[v.status]}>{promptStatusLabel(v.status, v.rolloutPercent)}</Badge>
+            </DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{v.likeRatePct != null ? `${v.likeRatePct}%` : "—"}</strong></DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{v.dislikeRatePct != null ? `${v.dislikeRatePct}%` : "—"}</strong></DataTable.Cell>
+            <DataTable.Cell>
             <div className="row-actions">
               {v.status === "CANARY" && (
                 <form action={expandCanary}>
@@ -191,8 +200,10 @@ export default async function AiManagementPage() {
                 </form>
               )}
             </div>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
+        </DataTable>
       </div>
     </>
   );

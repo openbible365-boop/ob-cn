@@ -84,6 +84,47 @@ export function Section({
   );
 }
 
+/**
+ * 等宽网格：仪表盘/指标区的通用布局。
+ *
+ * 用 auto-fit + minmax 而非写死列数：窄屏自动减列，不必为每个断点
+ * 各写一遍媒体查询，也避免了 repeat(6, 1fr) 在窄屏挤成一条线。
+ */
+export function Grid({
+  min = "160px",
+  gap = "var(--den-gap)",
+  children,
+}: {
+  /** 单元最小宽度，小于它就自动换行减列 */
+  min?: string;
+  gap?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="ui-grid"
+      style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${min}, 1fr))`, gap }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** 两栏布局：主次内容并排，窄屏自动堆叠 */
+export function Split({
+  ratio = "1.3fr 1fr",
+  children,
+}: {
+  ratio?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="ui-split" style={{ "--split-cols": ratio } as React.CSSProperties}>
+      {children}
+    </div>
+  );
+}
+
 /** 卡片容器：内容区的基本承载单元 */
 export function Card({
   children,

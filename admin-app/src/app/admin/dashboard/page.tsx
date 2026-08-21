@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { Badge, Card, Grid, PageHeader, Split, Stat } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 import { formatCompactNumber, formatDate } from "@/lib/format";
 
 const MODULE_BARS = [
@@ -31,14 +33,13 @@ async function loadLiveOverview() {
 
 function LiveOverview({ stats }: { stats: { label: string; value: number }[] }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12, marginBottom: 14 }}>
+    <Grid min="150px">
       {stats.map((s) => (
-        <div key={s.label} className="card" style={{ borderRadius: 16, padding: "14px 16px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", marginBottom: 6 }}>{s.label}</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{s.value.toLocaleString()}</div>
-        </div>
+        <Card key={s.label}>
+          <Stat label={s.label} value={s.value.toLocaleString()} />
+        </Card>
       ))}
-    </div>
+    </Grid>
   );
 }
 
@@ -51,11 +52,14 @@ export default async function DashboardPage() {
   if (!latest) {
     return (
       <>
-        <div className="admin-header">
-          <div className="title">数据看板</div>
-          <div className="meta">实时统计 · 快照指标（DAU/留存等）待每日汇总任务生成</div>
-        </div>
+        <PageHeader title="数据看板" meta="实时统计 · 快照指标（DAU/留存等）待每日汇总任务生成" />
         <LiveOverview stats={liveStats} />
+        <Card padded={false}>
+          <EmptyState
+            title="快照指标尚未生成"
+            hint="DAU / 留存 / 热点话题由每日汇总任务在次日 06:00 产出，首次运行后这里会显示完整看板。"
+          />
+        </Card>
       </>
     );
   }
@@ -76,47 +80,50 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <div className="admin-header">
-        <div className="title">数据看板</div>
-        <div className="meta">实时统计 + 快照（T+1，更新于 {formatDate(latest.date)} 06:00）</div>
-      </div>
+      <PageHeader
+        title="数据看板"
+        meta={`实时统计 + 快照（T+1，更新于 ${formatDate(latest.date)} 06:00）`}
+      />
 
       <LiveOverview stats={liveStats} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
-        <div className="card" style={{ borderRadius: 16, padding: "14px 16px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", marginBottom: 6 }}>DAU（双端）</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{latest.dau.toLocaleString()}</div>
-          {dauDeltaPct !== null && (
-            <div style={{ fontSize: 11, fontWeight: 700, color: dauDeltaPct >= 0 ? "var(--purple)" : "var(--pink)" }}>
-              {dauDeltaPct >= 0 ? "↑" : "↓"} {Math.abs(dauDeltaPct).toFixed(1)}% 周环比
-            </div>
-          )}
-        </div>
-        <div className="card" style={{ borderRadius: 16, padding: "14px 16px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", marginBottom: 6 }}>MAU</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{latest.mau.toLocaleString()}</div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>
-            DAU/MAU {((latest.dau / latest.mau) * 100).toFixed(1)}%
-          </div>
-        </div>
-        <div className="card" style={{ borderRadius: 16, padding: "14px 16px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", marginBottom: 6 }}>次日留存</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{latest.retentionD1Pct}%</div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)" }}>
-            7 日 {latest.retentionD7Pct}% · 30 日 {latest.retentionD30Pct}%
-          </div>
-        </div>
-        <div className="card" style={{ borderRadius: 16, padding: "14px 16px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--body)", marginBottom: 6 }}>慧读渗透（周）</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{latest.huiduPenetrationPct}%</div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--purple)" }}>
-            人均 {latest.avgRoundsPerSession} 轮/会话
-          </div>
-        </div>
-      </div>
+      <Grid min="170px">
+        <Card>
+          <Stat
+            label="DAU（双端）"
+            value={latest.dau.toLocaleString()}
+            hint={
+              dauDeltaPct !== null
+                ? `${dauDeltaPct >= 0 ? "↑" : "↓"} ${Math.abs(dauDeltaPct).toFixed(1)}% 周环比`
+                : undefined
+            }
+            tone={dauDeltaPct === null ? undefined : dauDeltaPct >= 0 ? "ok" : "err"}
+          />
+        </Card>
+        <Card>
+          <Stat
+            label="MAU"
+            value={latest.mau.toLocaleString()}
+            hint={`DAU/MAU ${((latest.dau / latest.mau) * 100).toFixed(1)}%`}
+          />
+        </Card>
+        <Card>
+          <Stat
+            label="次日留存"
+            value={`${latest.retentionD1Pct}%`}
+            hint={`7 日 ${latest.retentionD7Pct}% · 30 日 ${latest.retentionD30Pct}%`}
+          />
+        </Card>
+        <Card>
+          <Stat
+            label="慧读渗透（周）"
+            value={`${latest.huiduPenetrationPct}%`}
+            hint={`人均 ${latest.avgRoundsPerSession} 轮/会话`}
+          />
+        </Card>
+      </Grid>
 
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 12, minHeight: 0 }}>
+      <Split ratio="1.3fr 1fr">
         <div className="card" style={{ borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
           <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 14 }}>各模块使用时长占比</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -136,12 +143,12 @@ export default async function DashboardPage() {
           </div>
           <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--surface-2)" }}>
             <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>AI 用量（今日）</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-              <div><div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>{latest.aiCallCount.toLocaleString()}</div>调用量</div>
-              <div><div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>{formatCompactNumber(latest.aiTokenCount)}</div>Token</div>
-              <div><div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>{(latest.aiAvgFirstTokenMs / 1000).toFixed(1)}s</div>平均首字</div>
-              <div><div style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>{latest.aiLikeRatePct}%</div>点赞率</div>
-            </div>
+            <Grid min="110px" gap="10px">
+              <Stat label="调用量" value={latest.aiCallCount.toLocaleString()} />
+              <Stat label="Token" value={formatCompactNumber(latest.aiTokenCount)} />
+              <Stat label="平均首字" value={`${(latest.aiAvgFirstTokenMs / 1000).toFixed(1)}s`} />
+              <Stat label="点赞率" value={`${latest.aiLikeRatePct}%`} />
+            </Grid>
           </div>
         </div>
 
@@ -150,21 +157,29 @@ export default async function DashboardPage() {
             <div style={{ fontSize: 13, fontWeight: 800 }}>社群活跃度排行</div>
             <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: "var(--body)" }}>每日更新 · 可下钻</div>
           </div>
-          {ranking.map((c, i) => (
-            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid var(--surface-2)", fontSize: 12 }}>
-              <div style={{ fontWeight: 800, color: "var(--purple)", width: 16 }}>{i + 1}</div>
-              <div style={{ flex: 1, fontWeight: 700 }}>{c.name}</div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>日互动 {c.dailyActivity}</div>
+          {ranking.length > 0 ? (
+            ranking.map((c, i) => (
+              <div key={c.id} className="rank-row">
+                <span className="rank-no">{i + 1}</span>
+                <span className="rank-name" title={c.name}>{c.name}</span>
+                <span className="rank-value">日互动 {c.dailyActivity}</span>
+              </div>
+            ))
+          ) : (
+            <EmptyState title="暂无活跃社群" hint="社群产生互动后会按日互动量排名显示在这里" />
+          )}
+          <div className="rank-subtitle">热门 AI 话题</div>
+          {hotTopics.length > 0 ? (
+            <div className="tag-row">
+              {hotTopics.map((t) => (
+                <Badge key={t.id} tone="info">{t.label}</Badge>
+              ))}
             </div>
-          ))}
-          <div style={{ marginTop: 12, fontSize: 12, fontWeight: 800 }}>热门 AI 话题</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-            {hotTopics.map((t) => (
-              <div key={t.id} className="pill pill-purple">{t.label}</div>
-            ))}
-          </div>
+          ) : (
+            <p className="rank-empty-hint">今日尚未汇总出热门话题</p>
+          )}
         </div>
-      </div>
+      </Split>
     </>
   );
 }

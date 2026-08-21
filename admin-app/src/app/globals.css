@@ -1427,3 +1427,35 @@ body > div select:focus-visible {
 .stat-grid .ui-card { padding: 12px 16px; }
 /* 单元格内的次要说明 */
 .cell-sub { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+
+/* 布局组件 */
+.ui-grid { display: grid; margin-bottom: var(--den-gap); }
+.ui-split {
+  display: grid;
+  grid-template-columns: var(--split-cols);
+  gap: var(--den-gap);
+  min-height: 0;
+}
+@media (max-width: 1000px) {
+  .ui-split { grid-template-columns: 1fr; }
+}
+
+/* 排行榜行 */
+.rank-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--surface-2);
+  font-size: 12px;
+}
+.rank-no { width: 16px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank-name {
+  flex: 1; min-width: 0; font-weight: 700; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rank-value { color: var(--body); font-variant-numeric: tabular-nums; }
+.rank-subtitle { margin-top: 14px; margin-bottom: 8px; font-size: 12px; font-weight: 800; color: var(--ink); }
+.rank-empty-hint { font-size: 12px; color: var(--muted); }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 颜色值展示：色点 + 十六进制 */
+.color-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--body); }
+.color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line); flex: none; }
