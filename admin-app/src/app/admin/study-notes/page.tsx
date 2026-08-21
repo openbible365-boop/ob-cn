@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { EmptyState } from "@/components/ui/States";
 import { deleteStudyNote, saveStudyNote } from "@/lib/actions/library";
 
 export default async function StudyNotesPage({
@@ -84,8 +85,15 @@ export default async function StudyNotesPage({
           <tbody>
             {notes.length === 0 && (
               <tr>
-                <td colSpan={3} className="meta">
-                  {keyword ? `没有匹配「${keyword}」的笔记。` : "还没有研经笔记，用上方表单新增。"}
+                <td colSpan={3} style={{ padding: 0 }}>
+                  <EmptyState
+                    title={keyword ? `没有匹配「${keyword}」的笔记` : "还没有研经笔记"}
+                    hint={
+                      keyword
+                        ? "换个关键词试试，或清空搜索框查看全部"
+                        : "用上方表单新增第一条——研经笔记会作为参考资料展示给用户"
+                    }
+                  />
                 </td>
               </tr>
             )}

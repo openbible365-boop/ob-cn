@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination } from "@/components/Pagination";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -80,6 +81,7 @@ export default async function EventsPage({
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">活动监管</div>
         <div className="meta">全站活动列表 · 共 {events.length} 场</div>

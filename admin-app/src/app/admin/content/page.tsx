@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination } from "@/components/Pagination";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -104,6 +105,7 @@ export default async function ContentManagementPage({
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">内容管理</div>
         <div className="meta">共 {posts.length} 条动态</div>

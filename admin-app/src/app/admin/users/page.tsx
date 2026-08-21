@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
 import { formatLoginMethods, formatUserTier } from "@/lib/format";
 import { muteUser, unbanUser } from "@/lib/actions/users";
 import { BanUserControl } from "@/components/BanUserControl";
@@ -75,6 +76,7 @@ export default async function UsersPage({
 
   return (
     <>
+      <SearchShortcut />
       <PageHeader
         title="用户管理"
         meta={q ? `匹配 ${total} 名用户` : `共 ${total} 名注册用户`}

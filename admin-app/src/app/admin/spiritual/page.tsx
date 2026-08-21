@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { Card } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 import {
   deleteSpiritualQuestion,
   deleteSpiritualStage,
@@ -119,7 +121,12 @@ export default async function SpiritualPage({
       )}
 
       {stages.length === 0 && (
-        <section className="card"><div className="meta">还没有属灵阶段，先用上方表单新增一个。</div></section>
+        <Card padded={false}>
+          <EmptyState
+            title="还没有属灵阶段"
+            hint="属灵阶段用于给用户分层推荐内容（如慕道友、初信者）。先用上方表单新增一个，再往里添加灵修内容。"
+          />
+        </Card>
       )}
 
       {stages.map((stage) => (

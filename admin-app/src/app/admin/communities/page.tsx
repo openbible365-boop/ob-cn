@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination } from "@/components/Pagination";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -57,6 +58,7 @@ export default async function CommunitiesPage({
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">社群管理</div>
         <div style={{ flex: 1 }} />

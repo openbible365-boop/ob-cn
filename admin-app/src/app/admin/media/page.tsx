@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { EmptyState } from "@/components/ui/States";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination, SearchBox } from "@/components/Pagination";
 import { deleteMediaItem, saveMediaItem } from "@/lib/actions/library";
@@ -144,9 +145,18 @@ export default async function MediaPage({
           </thead>
           <tbody>
             {items.length === 0 && (
-              <tr><td colSpan={5} className="meta">
-                {q ? "没有找到匹配的影音，换个关键词试试。" : "还没有影音内容，用上方表单新增。"}
-              </td></tr>
+              <tr>
+                <td colSpan={5} style={{ padding: 0 }}>
+                  <EmptyState
+                    title={q ? "没有找到匹配的影音" : "还没有影音内容"}
+                    hint={
+                      q
+                        ? "换个关键词试试，或清空搜索框查看全部"
+                        : "用上方表单添加视频或音频链接——内容会显示在 App 与网页版的影音栏目里"
+                    }
+                  />
+                </td>
+              </tr>
             )}
             {items.map((item) => (
               <tr key={item.id}>

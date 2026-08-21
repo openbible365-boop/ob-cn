@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { EmptyState } from "@/components/ui/States";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination, SearchBox } from "@/components/Pagination";
 import {
@@ -188,9 +189,18 @@ export default async function EncyclopediaPage({
           </thead>
           <tbody>
             {entries.length === 0 && (
-              <tr><td colSpan={5} className="meta">
-                {q ? "没有找到匹配的条目，换个关键词试试。" : "还没有内容，用上方表单新增。"}
-              </td></tr>
+              <tr>
+                <td colSpan={5} style={{ padding: 0 }}>
+                  <EmptyState
+                    title={q ? "没有找到匹配的条目" : "还没有百科内容"}
+                    hint={
+                      q
+                        ? "换个关键词试试，或清空搜索框查看全部条目"
+                        : "用上方表单新增第一条——条目会同步显示在 App 与网页版的百科栏目里"
+                    }
+                  />
+                </td>
+              </tr>
             )}
             {entries.map((entry) => (
               <tr key={entry.id}>

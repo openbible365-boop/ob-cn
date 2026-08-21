@@ -1,6 +1,9 @@
+"use client";
+
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Badge, Card, PageHeader, Section, Stat } from "@/components/ui/Primitives";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/ui/States";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
 
 /**
  * 组件预览页（不需要登录，仅本地开发可见）。
@@ -8,8 +11,6 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/ui/States";
  * 后台其余页面都要登录才能看，改样式时无法快速自查；这里把每个组件的
  * 各种状态一次性摆出来，用于核对密度、对比度、长文本溢出与焦点样式。
  */
-export const dynamic = "force-static";
-
 const COLUMNS: Column[] = [
   { key: "name", label: "名称", width: "1.6fr" },
   { key: "owner", label: "负责人", width: "120px" },
@@ -27,10 +28,16 @@ export default function ComponentPreviewPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1100 }}>
+      <SearchShortcut />
       <PageHeader
         title="组件预览"
-        meta="后台 UI 组件的全状态自查页 · 仅开发环境可见"
-        actions={<button className="action-purple">示例操作</button>}
+        meta="后台 UI 组件的全状态自查页 · 仅开发环境可见 · 按 / 聚焦搜索"
+        actions={
+          <form className="search-box" onSubmit={(e) => e.preventDefault()}>
+            <input name="q" placeholder="按 / 聚焦此处" />
+            <ShortcutHint />
+          </form>
+        }
       />
 
       <Section title="关键指标" hint="等宽数字，多个指标纵向对齐便于比较">
