@@ -25,17 +25,6 @@ const STAGE_HINTS: Record<string, string> = {
   "6": "对方是神学研究人员，可以进入学术层面的讨论。",
 };
 
-function templateAnswer(question: string, context: string, lang: "zh" | "en" | "ko") {
-  const q = question.slice(0, 60);
-  if (lang === "en") {
-    return `On “${q}” — ${context ? `staying with ${context}, ` : ""}consider the wording of the passage, its surrounding context, and related passages that shed light on it. Please consult a trusted commentary for further study; this note is for reference only and does not replace authoritative exegesis.`;
-  }
-  if (lang === "ko") {
-    return `「${q}」에 대하여 — ${context ? `${context}의 문맥 안에서 ` : ""}본문의 표현, 앞뒤 문맥, 관련 구절의 상호 조명이라는 세 방면에서 생각해 볼 수 있습니다. 더 깊은 연구는 신뢰할 만한 주석을 참고하시기 바랍니다. 본 답변은 참고용이며 권위 있는 주해를 대신하지 않습니다.`;
-  }
-  return `关于「${q}」——${context ? `回到 ${context} 的语境，` : ""}可以从经文用词、上下文脉络与相关经文互证三方面来思想。建议对照可靠的注释进一步查考；本回答仅供参考，不替代权威释经。`;
-}
-
 export async function POST(request: Request) {
   let body: { question?: unknown; context?: unknown; verseText?: unknown; stage_level?: unknown; version?: unknown };
   try {
@@ -94,5 +83,11 @@ export async function POST(request: Request) {
     maxTokens: 900,
   });
 
-  return NextResponse.json({ answer: raw ?? templateAnswer(question, context, lang) });
+  if (raw) return NextResponse.json({ answer: raw });
+  // 诚实降级：不再用模板话术冒充 AI 回答——那会被前端当成真回答
+  // 存进笔记和慧读记录、扣减额度显示，用户毫不知情。与 App 端行为一致。
+  return NextResponse.json(
+    { detail: "AI 服务尚未配置或暂时不可用，请稍后再试。经文与注释阅读不受影响。" },
+    { status: 503 },
+  );
 }

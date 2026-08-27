@@ -3,7 +3,10 @@ import { db } from "@/lib/db";
 import { BOOKS, getBook } from "@/lib/bible-books";
 import { chapterVerses } from "@/lib/web-compat";
 import { markChapterStatus, publishCommentary, saveCommentaryEntry } from "@/lib/actions/commentary";
-import { EmptyState, SearchBox } from "@/components/Pagination";
+import { SearchBox } from "@/components/Pagination";
+import { Badge, PageHeader } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
+import type { Tone } from "@/components/ui/Primitives";
 import { auth } from "@/auth";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -11,10 +14,10 @@ const STATUS_LABEL: Record<string, string> = {
   REVIEWED: "已校对",
   PUBLISHED: "已发布",
 };
-const STATUS_PILL: Record<string, string> = {
-  DRAFT: "pill-orange",
-  REVIEWED: "pill-purple",
-  PUBLISHED: "pill-muted",
+const STATUS_TONE: Record<string, Tone> = {
+  DRAFT: "warn",
+  REVIEWED: "info",
+  PUBLISHED: "neutral",
 };
 
 export default async function CommentaryPage({
@@ -35,10 +38,7 @@ export default async function CommentaryPage({
     });
     return (
       <>
-        <div className="admin-header">
-          <div className="title">注释校对</div>
-          <div className="meta">搜索到 {hits.length} 条（最多显示 50 条）</div>
-        </div>
+        <PageHeader title="注释校对" meta={`搜索到 ${hits.length} 条（最多显示 50 条）`} />
         <div className="card" style={{ padding: "16px 18px", flex: 1, overflow: "auto" }}>
           <SearchBox basePath="/admin/commentary" defaultValue={q} placeholder="搜索注释正文" />
           {hits.length === 0 && <EmptyState title="没有找到匹配的注释" hint="换个关键词试试" />}
@@ -52,7 +52,7 @@ export default async function CommentaryPage({
                 {getBook(hit.bookOrder).zh} {hit.verses}
               </span>
               <span className="commentary-hit-text">{hit.text.slice(0, 90)}…</span>
-              <span className={`pill ${STATUS_PILL[hit.status]}`}>{STATUS_LABEL[hit.status]}</span>
+              <Badge tone={STATUS_TONE[hit.status]}>{STATUS_LABEL[hit.status]}</Badge>
             </Link>
           ))}
         </div>
@@ -92,21 +92,18 @@ export default async function CommentaryPage({
 
   return (
     <>
-      <div className="admin-header">
-        <div className="title">注释校对</div>
-        <div className="meta">
-          {activeBook.zh} 第 {activeChapter} 章 · {entries.length} 条
-        </div>
-        <div style={{ flex: 1 }} />
-        {canPublish && (
+      <PageHeader
+        title="注释校对"
+        meta={`${activeBook.zh} 第 ${activeChapter} 章 · ${entries.length} 条`}
+        actions={canPublish ? (
           <form action={publishCommentary}>
             <input type="hidden" name="bookOrder" value={bookOrder} />
             <button type="submit" className="action-purple" title="把本卷内容导出到静态文件，读者才会看到改动">
               发布本卷
             </button>
           </form>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       <div className="commentary-layout">
         {/* 左：卷 + 章导航 */}
@@ -178,9 +175,7 @@ export default async function CommentaryPage({
                   className="commentary-verses"
                   aria-label="经文引用"
                 />
-                <span className={`pill ${STATUS_PILL[entry.status]}`}>
-                  {STATUS_LABEL[entry.status]}
-                </span>
+                <Badge tone={STATUS_TONE[entry.status]}>{STATUS_LABEL[entry.status]}</Badge>
                 <span className="commentary-type">
                   {entry.entryType === "overview" ? "段落综览" : "逐节注释"}
                 </span>

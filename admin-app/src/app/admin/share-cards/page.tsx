@@ -8,6 +8,8 @@ import {
   SHARE_CARD_TEMPLATES,
 } from "@/lib/share-card-templates";
 import { getShareCardSettings } from "@/lib/share-card-settings-store";
+import { Badge } from "@/components/ui/Primitives";
+import { PageHeader } from "@/components/ui/Primitives";
 
 export default async function ShareCardsPage() {
   const settings = await getShareCardSettings();
@@ -15,17 +17,15 @@ export default async function ShareCardsPage() {
 
   return (
     <>
-      <div className="admin-header">
-        <div>
-          <div className="title">分享模板</div>
-          <div className="meta" style={{ marginTop: 3 }}>
-            控制每日金句和经文分享图片的默认视觉风格
-          </div>
-        </div>
-        <span className="share-card-admin-status">
-          当前生效：{SHARE_CARD_TEMPLATES.find((item) => item.id === effectiveTemplate)?.name}
-        </span>
-      </div>
+      <PageHeader
+        title="分享模板"
+        meta="控制每日金句和经文分享图片的默认视觉风格"
+        actions={(
+          <Badge tone="info">
+            当前生效：{SHARE_CARD_TEMPLATES.find((item) => item.id === effectiveTemplate)?.name}
+          </Badge>
+        )}
+      />
 
       <section className="card share-card-admin-settings">
         <div>
@@ -64,7 +64,7 @@ export default async function ShareCardsPage() {
               className={`card share-card-admin-option template-${template.id}${selected ? " is-selected" : ""}`}
             >
               <div className="share-card-admin-preview">
-                <small>OPENBIBLE · 每日读经</small>
+                <small>慧读圣经 · 每日读经</small>
                 <blockquote>你的话是我脚前的灯，是我路上的光。</blockquote>
                 <strong>— 诗篇 119:105</strong>
                 <span>扫码阅读完整经文</span>

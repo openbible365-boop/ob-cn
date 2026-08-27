@@ -9,8 +9,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "OpenBible 后台管理",
-  description: "OpenBible 运营后台",
+  title: "慧读圣经 后台管理",
+  description: "慧读圣经 运营后台",
 };
 
 export default function RootLayout({

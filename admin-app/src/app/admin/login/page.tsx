@@ -38,7 +38,7 @@ export default async function LoginPage({
             <line x1="60" y1="53" x2="60" y2="88" stroke="#202229" strokeWidth="5" />
           </svg>
         </div>
-        <h1>OpenBible 后台管理</h1>
+        <h1>慧读圣经 后台管理</h1>
         <div className="sub">运营账号登录</div>
 
         {error ? <div className="login-error">用户名或密码不正确</div> : null}

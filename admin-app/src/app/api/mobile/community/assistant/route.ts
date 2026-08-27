@@ -490,6 +490,11 @@ function extractPublishAction(
   };
 }
 
+// 用户说的「19:30」是北京时间，不是服务器时区——生产环境跑 UTC 时，
+// 按服务器本地构造会让每个活动差 8 小时。固定按 Asia/Shanghai（UTC+8，
+// 无夏令时）换算成 UTC 存储。
+const EVENT_TIMEZONE_OFFSET_HOURS = 8;
+
 function dateFromParts(
   year: number,
   month: number,
@@ -497,11 +502,13 @@ function dateFromParts(
   hour: number,
   minute: number,
 ) {
-  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+  const date = new Date(Date.UTC(year, month - 1, day, hour - EVENT_TIMEZONE_OFFSET_HOURS, minute, 0, 0));
+  // 用回加时差后的 UTC 分量校验年月日，捕获「2 月 30 日」这类无效日期
+  const check = new Date(date.getTime() + EVENT_TIMEZONE_OFFSET_HOURS * 3_600_000);
   if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
   ) {
     return null;
   }
@@ -650,6 +657,8 @@ function formatDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "时间待补充";
   return new Intl.DateTimeFormat("zh-CN", {
+    // 与解析侧同一时区：不写的话生产的 UTC 服务器会把确认卡显示得差 8 小时
+    timeZone: "Asia/Shanghai",
     year: "numeric",
     month: "long",
     day: "numeric",

@@ -44,7 +44,9 @@ describe("POST /api/web/ai/question", () => {
     );
     expect(res.status).toBe(400);
   });
-  it("降级模板回答包含问题与上下文", async () => {
+  // LLM 未配置时必须诚实报错，绝不能返回模板话术冒充 AI 回答——
+  // 前端会把 answer 存进笔记与慧读记录、扣减额度显示，用户毫不知情。
+  it("LLM 未配置时返回 503 与明确说明，而不是伪回答", async () => {
     const res = await question(
       new Request("http://x/", {
         method: "POST",
@@ -52,10 +54,10 @@ describe("POST /api/web/ai/question", () => {
         body: JSON.stringify({ question: "什么是恩典？", context: "创世记 1章", version: "cuv" }),
       }),
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(503);
     const body = await res.json();
-    expect(body.answer).toContain("什么是恩典？");
-    expect(body.answer).toContain("创世记 1章");
+    expect(body.answer).toBeUndefined();
+    expect(body.detail).toContain("AI 服务");
   });
 });
 

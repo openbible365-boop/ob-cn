@@ -23,6 +23,12 @@ export const SHARE_CARD_TEMPLATES = [
     description: "深蓝与金色高对比，适合晚间阅读分享。",
     colors: ["#131a2b", "#d9b65d", "#f6f0df"],
   },
+  {
+    id: "study",
+    name: "书房光影",
+    description: "深棕书房质感，光束与颗粒噪点，接近摄影海报。",
+    colors: ["#221509", "#c98a3b", "#f3e3c2"],
+  },
 ] as const;
 
 export type ShareCardTemplateId = (typeof SHARE_CARD_TEMPLATES)[number]["id"];

@@ -56,7 +56,7 @@ export function AdminSidebar({ operatorName, role }: { operatorName: string; rol
             <line x1="60" y1="53" x2="60" y2="88" stroke="#202229" strokeWidth="5" />
           </svg>
         </div>
-        <div className="name">OpenBible 后台</div>
+        <div className="name">慧读圣经 后台</div>
       </div>
 
       <nav className="admin-nav">
