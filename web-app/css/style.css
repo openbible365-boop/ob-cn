@@ -11903,6 +11903,393 @@ select:focus-visible,
 .cmty-asst-voice:disabled { opacity: 0.5; cursor: default; }
 .cmty-asst-note { color: var(--text-tertiary); font-size: 0.68rem; line-height: 1.4; }
 
+/* ── 社群工作台（App 端 GroupPage 的同构移植） ── */
+
+/* 顶栏副标题：在线数 / 成员数 */
+.cmty-head-sub { margin-left: auto; color: var(--text-tertiary); font-size: 0.72rem; white-space: nowrap; }
+
+/* 栏目标签：助手/动态/活动（/成员/小组/资料） */
+.cmty-tabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+}
+.cmty-tabs button {
+    flex: 1;
+    padding: 7px 2px 8px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.cmty-tabs button:hover { color: var(--text-primary); }
+.cmty-tabs button.active { border-bottom-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+/* 列表页：徽章与分区 */
+.cmty-list-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cmty-list-title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmty-badge {
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+}
+.cmty-badge.is-official { background: var(--gold-soft, rgba(244, 199, 95, 0.28)); color: var(--gold-deep, #8a6212); }
+.cmty-badge.is-role { background: var(--accent-soft, rgba(130, 80, 171, 0.12)); color: var(--accent); }
+.cmty-badge.is-alert { background: rgba(201, 56, 112, 0.12); color: var(--danger, #c93870); }
+.cmty-list-row.is-official {
+    background: var(--gold-soft, rgba(244, 199, 95, 0.18));
+    border: 1px solid transparent;
+}
+.cmty-list-row.is-official:hover { border-color: var(--gold-deep, #c9992e); background: var(--gold-soft, rgba(244, 199, 95, 0.28)); }
+.cmty-sect {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+.cmty-sect b { font-weight: 700; }
+.cmty-sect span { color: var(--text-tertiary); font-size: 0.74rem; }
+.cmty-note { color: var(--text-tertiary); font-size: 0.74rem; line-height: 1.5; }
+.cmty-status { padding: 8px 2px; color: var(--text-tertiary); font-size: 0.78rem; line-height: 1.5; }
+
+/* 发现社群 */
+.cmty-discover-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg-app);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cmty-discover-toggle:hover { background: var(--bg-hover); color: var(--accent); }
+.cmty-discover { display: flex; flex-direction: column; gap: 8px; }
+.cmty-discover-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card, var(--bg-app));
+    color: var(--text-tertiary);
+}
+.cmty-discover-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    outline: none;
+}
+.cmty-discover-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--bg-card, var(--bg-app));
+    border: 1px solid var(--border);
+}
+.cmty-discover-row .cmty-list-copy b { font-size: 0.82rem; }
+.cmty-join-btn {
+    flex: 0 0 auto;
+    padding: 4px 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.cmty-join-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* 各栏目通用：新建入口与用量行 */
+.cmty-create-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 8px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cmty-create-btn:hover { border-color: var(--accent); background: var(--bg-hover); }
+.cmty-usage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+}
+
+/* 活动卡片 */
+.cmty-event {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card, var(--bg-app));
+}
+.cmty-event.is-ended { opacity: 0.65; }
+.cmty-event-kicker { color: var(--accent); font-size: 0.68rem; font-weight: 700; }
+.cmty-event.is-ended .cmty-event-kicker { color: var(--text-tertiary); }
+.cmty-event b { font-size: 0.86rem; font-weight: 700; }
+.cmty-event p { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.55; }
+.cmty-event small { color: var(--text-tertiary); font-size: 0.72rem; }
+.cmty-event-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 3px; }
+.cmty-ev-signup {
+    padding: 4px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.cmty-ev-signup.is-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.cmty-ev-signup:disabled { opacity: 0.6; cursor: default; }
+.cmty-past summary {
+    padding: 6px 0;
+    color: var(--text-tertiary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cmty-past[open] summary { margin-bottom: 8px; }
+.cmty-past summary span { margin-left: 4px; }
+
+/* 成员栏目 */
+.cmty-reqs { display: flex; flex-direction: column; gap: 8px; }
+.cmty-req,
+.cmty-member {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card, var(--bg-app));
+}
+.cmty-req-actions,
+.cmty-member-actions { display: flex; flex: 0 0 auto; gap: 6px; }
+.cmty-req-actions button,
+.cmty-member-actions button {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.cmty-req-ok { border-color: var(--accent) !important; background: var(--accent) !important; color: #fff !important; }
+.cmty-remove-btn:hover { border-color: var(--danger, #c93870); color: var(--danger, #c93870); }
+.cmty-invite { display: flex; gap: 6px; }
+.cmty-invite-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-size: 0.76rem;
+}
+.cmty-invite-btn {
+    flex: 0 0 auto;
+    padding: 4px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 资料栏目 */
+.cmty-res-filters { display: flex; gap: 6px; }
+.cmty-res-filters button {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.cmty-res-filters button.is-active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.cmty-res {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card, var(--bg-app));
+}
+.cmty-res-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--bg-app);
+    color: var(--text-tertiary);
+}
+.cmty-res .cmty-list-copy b { font-size: 0.82rem; }
+.cmty-res-status {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.64rem;
+    font-weight: 700;
+}
+.cmty-res-status.is-indexed { background: rgba(39, 174, 96, 0.12); color: #1f7a46; }
+.cmty-res-status.is-parsing { background: var(--bg-hover); color: var(--text-secondary); }
+.cmty-res-status.is-failed,
+.cmty-res-status.is-reindex { background: rgba(201, 56, 112, 0.1); color: var(--danger, #c93870); }
+.cmty-res-actions { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 4px; }
+.cmty-res-actions button,
+.cmty-res-actions a {
+    padding: 2px 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+.cmty-res-actions .cmty-res-hide { color: var(--text-tertiary); }
+.cmty-res-actions .cmty-res-hide:hover { color: var(--danger, #c93870); }
+
+/* 助手首页：身份卡 + 建议芯片 */
+.cmty-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 26px 12px 10px;
+    text-align: center;
+}
+.cmty-hero-mark {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--accent-soft, rgba(130, 80, 171, 0.12));
+    color: var(--accent);
+    font-size: 1rem;
+    font-weight: 800;
+}
+.cmty-hero:not(.is-official) .cmty-hero-mark { color: #fff; }
+.cmty-hero h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+.cmty-hero-type {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft, rgba(130, 80, 171, 0.12));
+    color: var(--accent);
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.cmty-hero p { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.6; }
+.cmty-hero-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+}
+.cmty-hero-chip {
+    padding: 9px 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card, var(--bg-app));
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmty-hero-chip:hover { border-color: var(--accent); color: var(--accent); }
+.cmty-hero-note { margin-top: 6px; color: var(--text-tertiary); font-size: 0.7rem; line-height: 1.5; }
+
+/* 举报：动作行末尾的弱化旗标；点开出现原因行，选原因即提交 */
+.cmty-report-btn {
+  margin-left: auto;
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.cmty-report-btn:hover { color: var(--danger, #c93870); }
+.cmty-report-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--bg-app);
+}
+.cmty-report-row small { color: var(--text-tertiary); font-size: 0.72rem; }
+.cmty-report-row button {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cmty-report-row button:hover { border-color: var(--danger, #c93870); color: var(--danger, #c93870); }
+.cmty-report-row .cmty-report-cancel { border: none; color: var(--text-tertiary); }
+
 /* 「查看全部评论」/「加载更多动态」——次要动作，用文字按钮而非实心按钮，
    避免和发布、发送这些主操作抢视觉权重。 */
 .cmty-more {

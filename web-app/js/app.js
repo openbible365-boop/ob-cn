@@ -3297,7 +3297,13 @@
     const COMMUNITY_API = '/api/mobile/community';
     // comments：按 postId 缓存「查看全部」展开后的完整评论，
     // { items: [], nextCursor: string|null, loading: bool }。未展开的帖子不在表里。
-    const _cmty = { view: 'list', list: null, activeId: null, workspace: null, loading: false, error: '', composerOpen: false, comments: {}, morePosts: false };
+    // view: 'list' | 'workspace'；tab 与 App 端 GroupPage 同构（助手为默认栏目）
+    const _cmty = {
+        view: 'list', tab: 'assistant', list: null, activeId: null, workspace: null,
+        online: null, joinRequests: null, loading: false, error: '', composerOpen: false,
+        comments: {}, discoverOpen: false, discoverKeyword: '', discoverMsg: '',
+        joiningId: '', resFilter: 'ALL', memberKeyword: '', reportPid: null,
+    };
 
     // 经文引用解析：把 "约翰福音 3:16-18"、"创世记 1章"、"John 3:16" 这类
     // 引用文本还原成 { book, chapter }，供点击跳转阅读器。
@@ -3424,76 +3430,167 @@
             </div>`;
             c.querySelector('.cmty-retry-btn')?.addEventListener('click', () => {
                 _cmty.error = '';
-                if (_cmty.view === 'feed') _cmtyOpen(_cmty.activeId); else _cmtyLoadList();
+                if (_cmty.view === 'workspace') _cmtyOpen(_cmty.activeId); else _cmtyLoadList();
             });
             return;
         }
 
-        if (_cmty.view === 'feed') { _cmtyRenderFeed(c); return; }
+        if (_cmty.view === 'workspace') { _cmtyRenderWorkspace(c); return; }
         _cmtyRenderList(c);
     }
 
-    // ── 社群列表 ──
+    // ── 社群列表（与 App 端 CommunityPage 同构） ──
+    // 总群置顶卡 + 「我的社群与小组」+ 一人一群说明 + 搜索/发现并加入。
+    function _cmtyListRow(g) {
+        const role = g.membershipRole === 'OWNER' ? ('群主')
+            : g.membershipRole === 'ADMIN' ? ('管理员') : '';
+        const pending = g.pendingJoinRequestCount > 0
+            ? `<span class="cmty-badge is-alert">${g.pendingJoinRequestCount} ${'个申请'}</span>` : '';
+        const sub = g.isOfficial
+            ? `${'公共空间'} · ${'全体已注册成员'}`
+            : `${'私有空间'} · ${g.memberCount || 0} ${t('cmty.members') || '成员'}`;
+        return `<button class="cmty-list-row${g.isOfficial ? ' is-official' : ''}" data-cid="${_escapeHtml(g.id)}">
+            ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
+            <span class="cmty-list-copy">
+                <span class="cmty-list-title">
+                    <b>${_escapeHtml(g.name)}</b>
+                    ${g.isOfficial ? `<span class="cmty-badge is-official">${'公共社群'}</span>`
+                        : role ? `<span class="cmty-badge is-role">${role}</span>` : ''}
+                    ${pending}
+                </span>
+                <small>${sub}</small>
+            </span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>`;
+    }
+
     function _cmtyRenderList(c) {
         if (!_cmty.list) {
             c.innerHTML = `<div class="cmty-loading">${t('cmty.loading') || '加载中…'}</div>`;
             _cmtyLoadList();
             return;
         }
-        const mine = _cmty.list.communities || [];
-        if (mine.length === 0) {
-            c.innerHTML = `<div class="cmty-empty">
-                <i class="fa-solid fa-user-group"></i>
-                <p>${t('cmty.noGroups') || '还没有加入任何社群'}</p>
-                <p class="cmty-hint">${t('cmty.joinInApp') || '可在 App 端「社群」里发现并加入'}</p>
-            </div>`;
-            return;
-        }
-        c.innerHTML = `<div class="cmty-list-head">
-            <b>${t('cmty.myGroups') || '我的社群'}</b>
-            <button class="cmty-refresh" aria-label="${t('cmty.refresh') || '刷新'}"><i class="fa-solid fa-rotate"></i></button>
-        </div>
-        <div class="cmty-list">
-            ${mine.map(g => `
-                <button class="cmty-list-row" data-cid="${_escapeHtml(g.id)}">
-                    ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
-                    <span class="cmty-list-copy">
-                        <b>${_escapeHtml(g.name)}</b>
-                        <small>${g.memberCount || 0} ${t('cmty.members') || '位成员'}${g.isOfficial ? ' · ' + (t('cmty.official') || '官方') : ''}</small>
-                    </span>
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>`).join('')}
-        </div>`;
+        const dir = _cmty.list;
+        const all = dir.communities || [];
+        const official = all.find(g => g.isOfficial);
+        const joined = all.filter(g => !g.isOfficial);
+        const owned = all.find(g => g.membershipRole === 'OWNER');
+        const discoverable = dir.discoverableCommunities || [];
+        const kw = _cmty.discoverKeyword.trim();
+
+        c.innerHTML = `
+            ${official ? _cmtyListRow(official) : ''}
+            <div class="cmty-sect">
+                <b>${'我的社群与小组'}</b>
+                <span>${joined.length}</span>
+            </div>
+            ${joined.length === 0
+                ? `<div class="cmty-status">${'还没有加入其他社群'}</div>`
+                : `<div class="cmty-list">${joined.map(_cmtyListRow).join('')}</div>`}
+            ${!dir.canCreateCommunity && owned
+                ? `<p class="cmty-note">${'每位用户只能创建一个社群，你已经创建了'}「${_escapeHtml(owned.name)}」。</p>`
+                : ''}
+            <button class="cmty-discover-toggle">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                ${_cmty.discoverOpen ? ('收起发现社群') : ('搜索或发现社群')}
+            </button>
+            ${_cmty.discoverOpen ? `<div class="cmty-discover">
+                <label class="cmty-discover-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input class="cmty-discover-input" value="${_escapeHtml(_cmty.discoverKeyword)}"
+                        placeholder="${'搜索社群名称或介绍'}" aria-label="${'搜索社群名称或介绍'}">
+                </label>
+                ${_cmty.discoverMsg ? `<div class="cmty-status" role="status">${_escapeHtml(_cmty.discoverMsg)}</div>` : ''}
+                ${discoverable.length === 0
+                    ? `<div class="cmty-status">${kw ? ('没有找到匹配的社群') : ('暂时没有可发现的社群')}</div>`
+                    : discoverable.map(g => `<div class="cmty-discover-row">
+                        ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
+                        <span class="cmty-list-copy">
+                            <b>${_escapeHtml(g.name)}</b>
+                            <small>${g.memberCount || 0} ${t('cmty.members') || '成员'}${g.description ? ` · ${_escapeHtml(g.description)}` : ''}</small>
+                        </span>
+                        <button class="cmty-join-btn" data-cid="${_escapeHtml(g.id)}"${_cmty.joiningId ? ' disabled' : ''}>
+                            ${_cmty.joiningId === g.id ? ('处理中')
+                                : g.joinPolicy === 'OPEN' ? ('加入') : ('申请')}
+                        </button>
+                    </div>`).join('')}
+            </div>` : ''}`;
+
         c.querySelectorAll('.cmty-list-row').forEach(row => {
             row.addEventListener('click', () => _cmtyOpen(row.dataset.cid));
         });
-        // 在 App 或别处新建/加入社群后，这里可以手动拉最新列表
-        c.querySelector('.cmty-refresh')?.addEventListener('click', () => {
-            _cmty.list = null;
+        c.querySelector('.cmty-discover-toggle')?.addEventListener('click', () => {
+            _cmty.discoverOpen = !_cmty.discoverOpen;
+            _cmty.discoverMsg = '';
             renderCommunityPanel();
         });
+        // 搜索走服务端全量检索；输入不触发重渲染（会丢焦点），停顿后拉数据再渲染
+        const input = c.querySelector('.cmty-discover-input');
+        if (input) {
+            input.addEventListener('input', () => {
+                _cmty.discoverKeyword = input.value;
+                clearTimeout(_cmtyDiscoverTimer);
+                _cmtyDiscoverTimer = setTimeout(() => _cmtyLoadList(true), 320);
+            });
+        }
+        c.querySelectorAll('.cmty-join-btn').forEach(btn => {
+            btn.addEventListener('click', () => _cmtyJoin(btn.dataset.cid));
+        });
     }
+    let _cmtyDiscoverTimer = null;
 
-    async function _cmtyLoadList() {
+    async function _cmtyLoadList(isSearch) {
         if (_cmty.loading) return;
         _cmty.loading = true;
+        const kw = _cmty.discoverKeyword.trim();
         try {
-            _cmty.list = await _cmtyFetch('');
+            _cmty.list = await _cmtyFetch(kw ? `?keyword=${encodeURIComponent(kw)}` : '');
         } catch (e) {
-            _cmty.error = e.message || (t('cmty.loadFail') || '社群加载失败');
+            if (isSearch) { _cmty.discoverMsg = e.message || (t('cmty.loadFail') || '社群加载失败'); }
+            else { _cmty.error = e.message || (t('cmty.loadFail') || '社群加载失败'); }
         } finally {
             _cmty.loading = false;
+            // 只有列表视图需要跟着刷新；已进工作台就别把人拽回列表
+            if (_cmty.view === 'list') {
+                const wasFocused = document.activeElement?.classList?.contains('cmty-discover-input');
+                renderCommunityPanel();
+                if (wasFocused) {
+                    const box = document.querySelector('.cmty-discover-input');
+                    if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+                }
+            }
+        }
+    }
+
+    async function _cmtyJoin(communityId) {
+        if (_cmty.joiningId) return;
+        _cmty.joiningId = communityId;
+        _cmty.discoverMsg = '';
+        renderCommunityPanel();
+        try {
+            const data = await _cmtyFetch(`/${encodeURIComponent(communityId)}/join`, { method: 'POST' });
+            _cmty.discoverMsg = data.message || ('已提交');
+            _cmty.list = null;   // 加入成功后目录会变化，重拉
+        } catch (e) {
+            _cmty.discoverMsg = e.message || ('操作失败');
+        } finally {
+            _cmty.joiningId = '';
             renderCommunityPanel();
         }
     }
 
     async function _cmtyOpen(communityId) {
-        _cmty.view = 'feed';
+        _cmty.view = 'workspace';
+        _cmty.tab = 'assistant';   // 与 App 一致：进群先落在助手栏目
         _cmty.activeId = communityId;
         _cmty.workspace = null;
+        _cmty.online = null;
+        _cmty.joinRequests = null;
         _cmty.composerOpen = false;
+        _cmty.resFilter = 'ALL';
+        _cmty.memberKeyword = '';
         _cmty.comments = {};   // 换社群或刷新时丢弃上一次展开的评论
-        // 换社群才清对话；助手办完事会调用本函数刷新动态流，那时要保住上下文
+        // 换社群才清对话；同群内刷新走 _cmtyReload，不经过这里
         if (_asstLastGroup !== communityId) { _asstReset(); _asstLastGroup = communityId; }
         renderCommunityPanel();
         try {
@@ -3502,31 +3599,142 @@
             _cmty.error = e.message || (t('cmty.loadFail') || '社群加载失败');
         }
         renderCommunityPanel();
+        _cmtyHeartbeat();
     }
 
-    // ── 群动态 ──
-    function _cmtyRenderFeed(c) {
+    // 同群内的数据刷新：保住当前栏目、助手对话和滚动语境
+    async function _cmtyReload() {
+        if (!_cmty.activeId) return;
+        try {
+            _cmty.workspace = await _cmtyFetch(`/${encodeURIComponent(_cmty.activeId)}/workspace`);
+            _cmty.comments = {};
+        } catch (e) {
+            showToast(e.message || (t('cmty.loadFail') || '刷新失败'));
+        }
+        renderCommunityPanel();
+    }
+
+    // 单次在线心跳：换取「N 在线」。失败就保持成员数展示，不重试不打扰。
+    async function _cmtyHeartbeat() {
+        const id = _cmty.activeId;
+        const ws = _cmty.workspace;
+        if (!id || !ws || ws.access.role === 'GUEST') return;
+        try {
+            const data = await _cmtyFetch(`/${encodeURIComponent(id)}/presence`, { method: 'POST' });
+            if (_cmty.activeId === id && typeof data.onlineCount === 'number') {
+                _cmty.online = data.onlineCount;
+                renderCommunityPanel();
+            }
+        } catch (e) { /* 在线数是锦上添花 */ }
+    }
+
+    // ── 社群工作台（与 App 端 GroupPage 同构） ──
+    // 顶部固定：标题行 + 标签页；各栏目内容在 .cmty-feed-scroll 里自己滚。
+    // 官方群只有 助手/动态/活动；私有群多出 成员/资料，管理员再多一个 小组。
+    function _cmtyRenderWorkspace(c) {
+        c.classList.add('is-feed');
         const ws = _cmty.workspace;
         if (!ws) {
+            c.classList.remove('is-feed');
             c.innerHTML = `<div class="cmty-loading">${t('cmty.loading') || '加载中…'}</div>`;
             return;
         }
-        const posts = ws.posts || [];
-        const canPublish = ws.access && ws.access.canPublish;
-        const refLabelNow = S.selection.size > 0 ? refLabel(S.selection)
-            : (S.book && S.chapter ? `${bookDisplayName(S.book)} ${S.chapter}${t('cmty.chapter') || '章'}` : '');
+        const isOfficial = ws.community.isOfficial;
+        const tabs = [['assistant', '助手'], ['feed', '动态'], ['events', '活动']];
+        if (!isOfficial) {
+            tabs.push(['members', '成员']);
+            if (ws.access.isAdmin) tabs.push(['groups', '小组']);
+            tabs.push(['resources', '资料']);
+        }
+        // 降级或切群后落在看不到的栏目时回到助手，不留空白页
+        if (!tabs.some(item => item[0] === _cmty.tab)) _cmty.tab = 'assistant';
 
-        // 群动态区自己滚，助手输入栏作为固定页脚常驻面板底部——
-        // 否则输入栏会跟着动态流走，内容少时飘在半空、内容多时被推到看不见的地方。
-        c.classList.add('is-feed');
+        // 整段替换 DOM 会重建助手输入框：先留存文字与焦点，渲染后写回
+        const keepBox = c.querySelector('.cmty-asst-input');
+        const keepVal = keepBox ? keepBox.value : '';
+        const keepFocus = Boolean(keepBox && document.activeElement === keepBox);
+
+        const sub = _cmty.online !== null
+            ? `${_cmty.online} ${'在线'}`
+            : `${ws.usage.members} ${t('cmty.members') || '成员'}`;
+
+        let body;
+        if (_cmty.tab === 'assistant') body = _asstTabHtml(ws);
+        else if (_cmty.tab === 'feed') body = `<div class="cmty-feed-scroll">${_cmtyFeedHtml(ws)}</div>`;
+        else if (_cmty.tab === 'events') body = `<div class="cmty-feed-scroll">${_cmtyEventsHtml(ws)}</div>`;
+        else if (_cmty.tab === 'members') body = `<div class="cmty-feed-scroll">${_cmtyMembersHtml(ws)}</div>`;
+        else if (_cmty.tab === 'groups') body = `<div class="cmty-feed-scroll">${_cmtyGroupsHtml(ws)}</div>`;
+        else body = `<div class="cmty-feed-scroll">${_cmtyResourcesHtml(ws)}</div>`;
+
         c.innerHTML = `
             <div class="cmty-feed-head">
                 <button class="cmty-back" aria-label="${t('cmty.back') || '返回社群列表'}"><i class="fa-solid fa-chevron-left"></i></button>
                 <b>${_escapeHtml(ws.community.name)}</b>
-                ${canPublish ? `<button class="cmty-new" aria-label="${t('cmty.newPost') || '发布动态'}"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
+                <small class="cmty-head-sub">${sub}</small>
             </div>
-            <div class="cmty-feed-scroll">
-                ${_cmtyPlansHtml(ws.readingPlans)}
+            <div class="cmty-tabs" role="tablist" aria-label="${'社群功能'}">
+                ${tabs.map(([id, label]) => `<button role="tab" data-tab="${id}" aria-selected="${_cmty.tab === id}"
+                    class="${_cmty.tab === id ? 'active' : ''}">${label}</button>`).join('')}
+            </div>
+            ${body}`;
+
+        c.querySelector('.cmty-back')?.addEventListener('click', () => {
+            _cmty.view = 'list'; _cmty.activeId = null; _cmty.workspace = null;
+            _cmty.list = null;   // 申请数、成员数可能已变化，回列表重拉
+            renderCommunityPanel();
+        });
+        c.querySelectorAll('.cmty-tabs [data-tab]').forEach(b => {
+            b.addEventListener('click', () => {
+                if (_cmty.tab === b.dataset.tab) return;
+                _cmty.tab = b.dataset.tab;
+                renderCommunityPanel();
+            });
+        });
+
+        if (_cmty.tab === 'assistant') _cmtyBindAssistant(c, ws);
+        else if (_cmty.tab === 'feed') _cmtyBindFeed(c, ws);
+        else if (_cmty.tab === 'events') _cmtyBindEvents(c);
+        else if (_cmty.tab === 'members') _cmtyBindMembers(c, ws);
+        else if (_cmty.tab === 'groups') _cmtyBindGroups(c);
+        else if (_cmty.tab === 'resources') _cmtyBindResources(c);
+
+        const box = c.querySelector('.cmty-asst-input');
+        if (box && keepVal && !box.value) box.value = keepVal;
+        if (box && keepFocus) box.focus();
+    }
+
+    // 把助手输入框预填一句可编辑的指令——App 端建议芯片的交互
+    function _asstPrefill(text) {
+        _cmty.tab = 'assistant';
+        renderCommunityPanel();
+        const box = document.querySelector('.cmty-asst-input');
+        if (box) {
+            box.value = text;
+            box.focus();
+            box.setSelectionRange(box.value.length, box.value.length);
+        }
+    }
+
+    // 「上传群资料 / 添加资料」直达附件选择：文件输入框只存在于助手栏目
+    function _asstAttachPrompt() {
+        _cmty.tab = 'assistant';
+        renderCommunityPanel();
+        document.querySelector('.cmty-asst-file')?.click();
+    }
+
+    // ── 动态栏目 ──
+    function _cmtyRefLabelNow() {
+        return S.selection.size > 0 ? refLabel(S.selection)
+            : (S.book && S.chapter ? `${bookDisplayName(S.book)} ${S.chapter}${t('cmty.chapter') || '章'}` : '');
+    }
+
+    function _cmtyFeedHtml(ws) {
+        const posts = ws.posts || [];
+        const refLabelNow = _cmtyRefLabelNow();
+        return `
+            ${ws.access && ws.access.canPublish
+                ? `<button class="cmty-create-btn cmty-new"><i class="fa-solid fa-pen-to-square"></i> ${t('cmty.newPost') || '发布内容'}</button>` : ''}
+            ${_cmtyPlansHtml(ws.readingPlans)}
             ${_cmty.composerOpen ? `
             <div class="cmty-composer">
                 <textarea id="cmty-composer-text" rows="3" placeholder="${t('cmty.composerPh') || '分享你的思考…'}"></textarea>
@@ -3549,14 +3757,11 @@
                 ${ws.postsNextCursor ? `<button class="cmty-more cmty-more-posts"${_cmty.loadingPosts ? ' disabled' : ''}>
                     ${_cmty.loadingPosts ? (t('cmty.loading') || '加载中…') : (t('cmty.morePosts') || '加载更多动态')}
                 </button>` : ''}
-                </div>
-            </div>
-            ${_asstHtml()}`;
+            </div>`;
+    }
 
-        c.querySelector('.cmty-back')?.addEventListener('click', () => {
-            _cmty.view = 'list'; _cmty.activeId = null; _cmty.workspace = null;
-            renderCommunityPanel();
-        });
+    function _cmtyBindFeed(c, ws) {
+        const refLabelNow = _cmtyRefLabelNow();
         c.querySelector('.cmty-new')?.addEventListener('click', () => {
             _cmty.composerOpen = !_cmty.composerOpen;
             renderCommunityPanel();
@@ -3579,7 +3784,6 @@
                 _cmtyComment(btn.dataset.pid, input?.value.trim());
             });
         });
-        _asstBind(c);
         c.querySelectorAll('.cmty-post-ref.is-link').forEach(btn => {
             btn.addEventListener('click', () => _refJump(btn.dataset.ref));
         });
@@ -3592,6 +3796,400 @@
         c.querySelectorAll('.cmty-more-comments').forEach(btn => {
             btn.addEventListener('click', () => _cmtyLoadComments(btn.dataset.pid));
         });
+        // 举报：点旗标展开原因行，选原因即提交（REPORT_POST 与 App 端同一接口）
+        c.querySelectorAll('.cmty-report-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                _cmty.reportPid = _cmty.reportPid === btn.dataset.pid ? null : btn.dataset.pid;
+                renderCommunityPanel();
+            });
+        });
+        c.querySelectorAll('.cmty-report-cancel').forEach(btn => {
+            btn.addEventListener('click', () => { _cmty.reportPid = null; renderCommunityPanel(); });
+        });
+        c.querySelectorAll('.cmty-report-reason').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                try {
+                    const data = await _cmtyAction({ action: 'REPORT_POST', postId: btn.dataset.pid, reason: btn.dataset.reason });
+                    showToast((data && data.message) || '举报已提交，平台将尽快处理');
+                } catch (e) {
+                    showToast(e.message || '举报失败，请稍后重试');
+                }
+                _cmty.reportPid = null;
+                renderCommunityPanel();
+            });
+        });
+    }
+
+    // ── 活动栏目 ──
+    function _cmtyEventTime(iso) {
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso || '';
+        return `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function _cmtyEventCard(ev) {
+        const ended = ev.state === 'ENDED';
+        const full = ev.capacity !== null && ev.signupCount >= ev.capacity && !ev.signedUpByMe;
+        const status = ended ? '已结束' : ev.state === 'ACTIVE' ? '进行中' : '报名中';
+        return `<article class="cmty-event${ended ? ' is-ended' : ''}">
+            <span class="cmty-event-kicker">${status}</span>
+            <b>${_escapeHtml(ev.title)}</b>
+            ${ev.description ? `<p>${_escapeHtml(ev.description)}</p>` : ''}
+            <small><i class="fa-solid fa-calendar"></i> ${_cmtyEventTime(ev.startAt)}${ev.endAt ? ` – ${_cmtyEventTime(ev.endAt)}` : ''}</small>
+            ${ev.location ? `<small><i class="fa-solid fa-location-dot"></i> ${_escapeHtml(ev.location)}</small>` : ''}
+            <span class="cmty-event-foot">
+                <small>已报名 ${ev.signupCount}${ev.capacity === null ? ' 人' : `/${ev.capacity}`}</small>
+                <button class="cmty-ev-signup${ev.signedUpByMe || ended ? '' : ' is-primary'}" data-eid="${_escapeHtml(ev.id)}"${ended || full ? ' disabled' : ''}>
+                    ${ended ? '已结束' : full ? '名额已满' : ev.signedUpByMe ? '取消报名' : '报名'}
+                </button>
+            </span>
+        </article>`;
+    }
+
+    function _cmtyEventsHtml(ws) {
+        const events = ws.events || [];
+        const upcoming = events.filter(e => e.state !== 'ENDED');
+        const ended = events.filter(e => e.state === 'ENDED');
+        return `
+            ${ws.access.isAdmin ? `<button class="cmty-create-btn cmty-ev-create"><i class="fa-solid fa-pen-to-square"></i> 创建活动</button>` : ''}
+            ${events.length === 0 ? `<div class="cmty-status">${ws.community.isOfficial ? '暂时没有公共活动。' : '暂时没有群活动。'}${ws.access.isAdmin ? '点上方「创建活动」，由助手一句话建好。' : ''}</div>` : ''}
+            ${upcoming.length === 0 && ended.length > 0 ? `<div class="cmty-status">近期没有可报名的活动。</div>` : ''}
+            ${upcoming.map(_cmtyEventCard).join('')}
+            ${ended.length ? `<details class="cmty-past"><summary>已结束的活动 <span>${ended.length}</span></summary>${ended.map(_cmtyEventCard).join('')}</details>` : ''}`;
+    }
+
+    function _cmtyBindEvents(c) {
+        c.querySelector('.cmty-ev-create')?.addEventListener('click', () =>
+            _asstPrefill('创建活动，标题“周五查经”，时间“YYYY-MM-DD 19:30”，地点“线上”，说明“”'));
+        c.querySelectorAll('.cmty-ev-signup').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                btn.disabled = true;
+                try {
+                    const data = await _cmtyAction({ action: 'TOGGLE_SIGNUP', eventId: btn.dataset.eid });
+                    if (data && data.message) showToast(data.message);
+                    await _cmtyReload();
+                } catch (e) {
+                    showToast(e.message || '操作失败');
+                    btn.disabled = false;
+                }
+            });
+        });
+    }
+
+    // ── 成员栏目 ──
+    function _cmtyMembersHtml(ws) {
+        const lim = ws.entitlements ? ws.entitlements.memberLimit : null;
+        const reqs = _cmty.joinRequests;
+        const kw = _cmty.memberKeyword.trim().toLowerCase();
+        const members = (ws.members || []).filter(m =>
+            !kw || `${m.user.name} ${m.user.email || ''}`.toLowerCase().includes(kw));
+        const roleLabel = r => r === 'OWNER' ? '群主' : r === 'ADMIN' ? '管理员' : '成员';
+        const statusLabel = s => s === 'ACTIVE' ? '正常' : s === 'MUTED' ? '已禁言' : '已封禁';
+        return `
+            <div class="cmty-usage">
+                <span>成员 ${ws.usage.members}${lim == null ? '' : `/${lim}`}</span>
+                ${ws.entitlements && ws.entitlements.label ? `<span>${_escapeHtml(ws.entitlements.label)}方案</span>` : ''}
+            </div>
+            ${ws.access.canManageMembers && Array.isArray(reqs) && reqs.length ? `<div class="cmty-reqs">
+                <div class="cmty-sect"><b>加入申请</b><span>${reqs.length}</span></div>
+                ${reqs.map(r => `<div class="cmty-req">
+                    ${_cmtyAvatar(r.user.name, r.user.avatarColor)}
+                    <span class="cmty-list-copy">
+                        <b>${_escapeHtml(r.user.name)}</b>
+                        <small>${_escapeHtml(r.user.email || '已注册用户')}</small>
+                        ${r.message ? `<small>${_escapeHtml(r.message)}</small>` : ''}
+                    </span>
+                    <span class="cmty-req-actions">
+                        <button class="cmty-req-no" data-rid="${_escapeHtml(r.id)}">拒绝</button>
+                        <button class="cmty-req-ok" data-rid="${_escapeHtml(r.id)}">批准</button>
+                    </span>
+                </div>`).join('')}
+            </div>` : ''}
+            ${ws.access.canManageMembers ? `<div class="cmty-invite">
+                <input class="cmty-invite-input" type="email" placeholder="邀请成员：填写对方注册邮箱">
+                <button class="cmty-invite-btn">邀请</button>
+            </div>` : ''}
+            ${(ws.members || []).length > 6 ? `<label class="cmty-discover-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input class="cmty-member-search" value="${_escapeHtml(_cmty.memberKeyword)}" placeholder="搜索成员姓名或邮箱">
+            </label>` : ''}
+            ${kw && members.length === 0 ? `<div class="cmty-status">没有匹配的成员。</div>` : ''}
+            ${members.map(m => `<div class="cmty-member">
+                ${_cmtyAvatar(m.user.name, m.user.avatarColor)}
+                <span class="cmty-list-copy">
+                    <b>${_escapeHtml(m.user.name)}</b>
+                    <small>${roleLabel(m.role)} · ${statusLabel(m.user.status)}</small>
+                </span>
+                ${ws.access.canManageMembers && m.role !== 'OWNER' ? `<span class="cmty-member-actions">
+                    ${ws.access.canManageRoles ? `<button class="cmty-role-btn" data-uid="${_escapeHtml(m.user.id)}" data-role="${m.role === 'ADMIN' ? 'MEMBER' : 'ADMIN'}">${m.role === 'ADMIN' ? '取消管理员' : '设为管理员'}</button>` : ''}
+                    <button class="cmty-remove-btn" data-uid="${_escapeHtml(m.user.id)}" data-name="${_escapeHtml(m.user.name)}">移除</button>
+                </span>` : ''}
+            </div>`).join('')}`;
+    }
+
+    async function _cmtyLoadJoinRequests() {
+        const ws = _cmty.workspace;
+        if (!ws || !ws.access.canManageMembers || _cmty.joinRequests !== null) return;
+        try {
+            const data = await _cmtyFetch(`/${encodeURIComponent(_cmty.activeId)}/join-requests`);
+            _cmty.joinRequests = data.requests || [];
+        } catch (e) {
+            _cmty.joinRequests = [];
+        }
+        if (_cmty.tab === 'members') renderCommunityPanel();
+    }
+
+    function _cmtyBindMembers(c, ws) {
+        if (ws.access.canManageMembers && _cmty.joinRequests === null) _cmtyLoadJoinRequests();
+        const search = c.querySelector('.cmty-member-search');
+        if (search) {
+            search.addEventListener('input', () => {
+                _cmty.memberKeyword = search.value;
+                clearTimeout(_cmtyMemberTimer);
+                _cmtyMemberTimer = setTimeout(() => {
+                    renderCommunityPanel();
+                    const box = document.querySelector('.cmty-member-search');
+                    if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+                }, 200);
+            });
+        }
+        const review = async (requestId, decision) => {
+            try {
+                const data = await _cmtyFetch(`/${encodeURIComponent(_cmty.activeId)}/join-requests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId, decision }),
+                });
+                if (data && data.message) showToast(data.message);
+                _cmty.joinRequests = null;   // 重取剩余申请
+                await _cmtyReload();
+                _cmtyLoadJoinRequests();
+            } catch (e) {
+                showToast(e.message || '处理失败');
+            }
+        };
+        c.querySelectorAll('.cmty-req-ok').forEach(b => b.addEventListener('click', () => review(b.dataset.rid, 'APPROVE')));
+        c.querySelectorAll('.cmty-req-no').forEach(b => b.addEventListener('click', () => review(b.dataset.rid, 'REJECT')));
+        c.querySelector('.cmty-invite-btn')?.addEventListener('click', async () => {
+            const input = c.querySelector('.cmty-invite-input');
+            const email = input ? input.value.trim() : '';
+            if (!email) { showToast('请填写对方注册邮箱'); return; }
+            try {
+                const data = await _cmtyAction({ action: 'INVITE_MEMBER', email });
+                if (data && data.message) showToast(data.message);
+                await _cmtyReload();
+            } catch (e) {
+                showToast(e.message || '邀请失败');
+            }
+        });
+        c.querySelectorAll('.cmty-role-btn').forEach(b => {
+            b.addEventListener('click', async () => {
+                try {
+                    const data = await _cmtyAction({ action: 'UPDATE_MEMBER_ROLE', userId: b.dataset.uid, role: b.dataset.role });
+                    if (data && data.message) showToast(data.message);
+                    await _cmtyReload();
+                } catch (e) { showToast(e.message || '操作失败'); }
+            });
+        });
+        c.querySelectorAll('.cmty-remove-btn').forEach(b => {
+            b.addEventListener('click', async () => {
+                // 移除不可逆且影响他人，浏览器原生确认足够醒目
+                if (!window.confirm(`将 ${b.dataset.name} 移出社群？移除后对方将无法查看群内内容。`)) return;
+                try {
+                    const data = await _cmtyAction({ action: 'REMOVE_MEMBER', userId: b.dataset.uid });
+                    if (data && data.message) showToast(data.message);
+                    await _cmtyReload();
+                } catch (e) { showToast(e.message || '操作失败'); }
+            });
+        });
+    }
+    let _cmtyMemberTimer = null;
+
+    // ── 小组栏目（仅管理员可见） ──
+    function _cmtyGroupsHtml(ws) {
+        const lim = ws.entitlements ? ws.entitlements.groupLimit : null;
+        const limitReached = lim != null && ws.usage.groups >= lim;
+        const groups = ws.groups || [];
+        return `
+            <div class="cmty-usage"><span>小组 ${ws.usage.groups}${lim == null ? '' : `/${lim}`}</span></div>
+            ${ws.access.canCreateGroups && !limitReached ? `<button class="cmty-create-btn cmty-grp-create"><i class="fa-solid fa-pen-to-square"></i> 新建小组</button>` : ''}
+            ${ws.access.canCreateGroups && limitReached ? `<div class="cmty-status">当前方案最多创建 ${lim} 个小组。</div>` : ''}
+            ${groups.length === 0 ? `<div class="cmty-status">还没有下属小组。${ws.access.canCreateGroups && !limitReached ? '点上方「新建小组」，由助手一句话建好。' : ''}</div>` : ''}
+            ${groups.map(g => `<button class="cmty-list-row" data-cid="${_escapeHtml(g.id)}">
+                ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
+                <span class="cmty-list-copy">
+                    <b>${_escapeHtml(g.name)}</b>
+                    <small>${g.memberCount || 0} 成员${g.description ? ` · ${_escapeHtml(g.description)}` : ''}</small>
+                </span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>`).join('')}`;
+    }
+
+    function _cmtyBindGroups(c) {
+        c.querySelector('.cmty-grp-create')?.addEventListener('click', () =>
+            _asstPrefill('新建小组，名称“青年查经组”，简称“青年”，简介“”'));
+        c.querySelectorAll('.cmty-list-row').forEach(row => {
+            row.addEventListener('click', () => _cmtyOpen(row.dataset.cid));
+        });
+    }
+
+    // ── 资料栏目 ──
+    function _cmtyResourcesHtml(ws) {
+        const lim = ws.entitlements ? ws.entitlements.resourceLimit : null;
+        const typeLabel = { LINK: '链接', DOCUMENT: '文档', AUDIO: '音频', VIDEO: '视频', IMAGE: '图片', TEXT: '文本', OTHER: '文件' };
+        const typeIcon = { AUDIO: 'fa-volume-high', VIDEO: 'fa-circle-play', IMAGE: 'fa-image', TEXT: 'fa-file-lines', LINK: 'fa-link' };
+        const ks = r => r.knowledgeStatus === 'PARSING' ? ['正在解析', 'is-parsing']
+            : r.knowledgeStatus === 'INDEXED' ? ['已加入知识库', 'is-indexed']
+            : r.knowledgeStatus === 'FAILED' ? ['解析失败', 'is-failed']
+            : ['需要重新索引', 'is-reindex'];
+        const match = r => _cmty.resFilter === 'ALL' ? true
+            : _cmty.resFilter === 'DOCUMENT' ? (r.type === 'DOCUMENT' || r.type === 'TEXT')
+            : _cmty.resFilter === 'MEDIA' ? ['IMAGE', 'AUDIO', 'VIDEO'].includes(r.type)
+            : r.type === 'LINK';
+        const size = v => typeof v !== 'number' ? ''
+            : v < 1024 ? `${v} B` : v < 1048576 ? `${(v / 1024).toFixed(1)} KB` : `${(v / 1048576).toFixed(1)} MB`;
+        const all = ws.resources || [];
+        const shown = all.filter(match);
+        return `
+            <div class="cmty-usage">
+                <span>群资料 ${ws.usage.resources}${lim == null ? ' 份' : `/${lim}`}</span>
+                <span>仅供本群 · AI 可检索已解析资料</span>
+            </div>
+            ${ws.access.canManageResources ? `<button class="cmty-create-btn cmty-res-add"><i class="fa-solid fa-paperclip"></i> 添加资料</button>` : ''}
+            ${all.length ? `<div class="cmty-res-filters">${[['ALL', '全部'], ['DOCUMENT', '文档'], ['MEDIA', '影音'], ['LINK', '链接']]
+                .map(([v, l]) => `<button data-f="${v}" class="${_cmty.resFilter === v ? 'is-active' : ''}">${l}</button>`).join('')}</div>` : ''}
+            ${all.length === 0 ? `<div class="cmty-status">暂时没有共享资料。${ws.access.canManageResources ? '点上方「添加资料」上传。' : ''}</div>` : ''}
+            ${all.length && !shown.length ? `<div class="cmty-status">这个分类暂时没有资料。</div>` : ''}
+            ${shown.map(r => {
+                const status = ks(r);
+                const title = (r.title || '').trim() || (r.fileName || '').replace(/\.[^.]+$/, '') || `${typeLabel[r.type] || '文件'}资料`;
+                return `<article class="cmty-res">
+                    <span class="cmty-res-icon"><i class="fa-solid ${typeIcon[r.type] || 'fa-file'}"></i></span>
+                    <span class="cmty-list-copy">
+                        <b>${_escapeHtml(title)}</b>
+                        <small>${typeLabel[r.type] || '文件'}${typeof r.fileSize === 'number' ? ` · ${size(r.fileSize)}` : ''} · ${r.visibility === 'ADMINS' ? '仅管理员' : '全体成员'}${r.uploader && r.uploader.name ? ` · ${_escapeHtml(r.uploader.name)}` : ''}</small>
+                        ${r.description ? `<small>${_escapeHtml(r.description)}</small>` : ''}
+                        <span class="cmty-res-status ${status[1]}">${status[0]}</span>
+                    </span>
+                    <span class="cmty-res-actions">
+                        <button class="cmty-res-ask" data-title="${_escapeHtml(title)}">问助手</button>
+                        ${r.url ? `<a href="${_escapeHtml(r.url)}" target="_blank" rel="noreferrer">打开</a>` : ''}
+                        ${ws.access.canManageResources && r.knowledgeStatus !== 'INDEXED' ? `<button class="cmty-res-reindex" data-rid="${_escapeHtml(r.id)}">重新索引</button>` : ''}
+                        ${ws.access.canManageResources ? `<button class="cmty-res-hide" data-rid="${_escapeHtml(r.id)}" data-title="${_escapeHtml(title)}">下架</button>` : ''}
+                    </span>
+                </article>`;
+            }).join('')}`;
+    }
+
+    function _cmtyBindResources(c) {
+        c.querySelector('.cmty-res-add')?.addEventListener('click', _asstAttachPrompt);
+        c.querySelectorAll('.cmty-res-filters [data-f]').forEach(b => {
+            b.addEventListener('click', () => {
+                _cmty.resFilter = b.dataset.f;
+                renderCommunityPanel();
+            });
+        });
+        c.querySelectorAll('.cmty-res-ask').forEach(b => {
+            b.addEventListener('click', () => _asstPrefill(`请根据本群资料《${b.dataset.title}》回答：`));
+        });
+        c.querySelectorAll('.cmty-res-reindex').forEach(b => {
+            b.addEventListener('click', async () => {
+                try {
+                    const data = await _cmtyAction({ action: 'REINDEX_RESOURCE', resourceId: b.dataset.rid });
+                    if (data && data.message) showToast(data.message);
+                    await _cmtyReload();
+                } catch (e) { showToast(e.message || '操作失败'); }
+            });
+        });
+        c.querySelectorAll('.cmty-res-hide').forEach(b => {
+            b.addEventListener('click', async () => {
+                if (!window.confirm(`下架「${b.dataset.title}」？成员将不再看到，也不再参与助手检索。`)) return;
+                try {
+                    const data = await _cmtyAction({ action: 'UPDATE_RESOURCE_STATUS', resourceId: b.dataset.rid, status: 'HIDDEN' });
+                    if (data && data.message) showToast(data.message);
+                    await _cmtyReload();
+                } catch (e) { showToast(e.message || '操作失败'); }
+            });
+        });
+    }
+
+    // ── 助手栏目 ──
+    // 无对话时是「首页」：身份卡 + 建议芯片（App 端 community-assistant-home 的同构）；
+    // 有对话后变成消息流。输入栏固定在面板底部。
+    function _asstHeroHtml(ws) {
+        const isOfficial = ws.community.isOfficial;
+        const name = ws.community.name;
+        const role = ws.access.role;
+        const roleLabel = role === 'OWNER' ? '群主' : role === 'ADMIN' ? '管理员' : role === 'GUEST' ? '游客' : '成员';
+        const dir = _cmty.list;
+        const chips = [];
+        if (isOfficial) {
+            chips.push(['解释一段经文', '请解释这段经文的背景、重点和生活应用：']);
+            chips.push(['查询总群资料', '请根据慧读总群资料回答：']);
+            if (dir && dir.canCreateCommunity) chips.push(['创建我的社群', '创建社群“”，简称“”，简介“”']);
+            chips.push(['管理我的社群', '管理我的社群']);
+            chips.push(['查找可加入社群', '搜索适合我的社群：']);
+            chips.push(['申请加入社群', '申请加入社群“”']);
+        } else {
+            chips.push(['整理为群动态', '发布动态，请把这段内容整理成适合群内发布的动态：']);
+            chips.push(ws.access.isAdmin
+                ? ['创建查经活动', '创建活动，标题“周五查经”，时间“YYYY-MM-DD 19:30”，地点“线上”，说明“”']
+                : ['查看近期活动', `请查看${name}近期有哪些活动。`]);
+            chips.push(ws.access.isAdmin ? ['邀请新成员', '邀请成员，请填写已注册邮箱：'] : ['查找群内成员', '查找成员：']);
+            chips.push(['查询本群资料', `请根据${name}的群资料回答：`]);
+            chips.push(ws.access.canCreateGroups
+                ? ['新建社群小组', '新建小组，名称“青年查经组”，简称“青年”，简介“”']
+                : ['解释一段经文', '请解释这段经文的背景、重点和生活应用：']);
+            chips.push(ws.access.canManageResources
+                ? ['上传群资料', '__attach__']
+                : ['提炼内容重点', '请帮我提炼下面这段内容的重点：']);
+        }
+        const note = isOfficial
+            ? (role === 'GUEST' ? '动态和活动可直接浏览，互动与提问需要登录' : '公共内容由平台维护，管理操作会先确认权限')
+            : '本群资料独立隔离，管理操作会先请你确认';
+        return `<div class="cmty-hero${isOfficial ? ' is-official' : ''}">
+            <span class="cmty-hero-mark"${isOfficial ? '' : ` style="background:${_escapeHtml(ws.community.avatarColor || 'var(--accent)')}"`}>
+                ${isOfficial ? '<i class="fa-solid fa-wand-magic-sparkles"></i>' : _escapeHtml((ws.community.abbreviation || name || '群').slice(0, 2))}
+            </span>
+            <h3>
+                ${isOfficial ? '今天想一起做什么？' : `${_escapeHtml(name)}助手`}
+                <span class="cmty-hero-type">${isOfficial ? (role === 'GUEST' ? '公共社群 · 游客浏览' : '公共社群') : `私有社群 · ${roleLabel}`}</span>
+            </h3>
+            <p>${isOfficial ? '问经文、查总群资料，或用一句话办理社群事务。' : `问经文、查${_escapeHtml(name)}资料，或用一句话办理群事务。`}</p>
+            <div class="cmty-hero-chips">
+                ${chips.map(([label, fill]) => `<button class="cmty-hero-chip" data-fill="${_escapeHtml(fill)}">${label}</button>`).join('')}
+            </div>
+            <small class="cmty-hero-note">${note}</small>
+        </div>`;
+    }
+
+    function _asstTabHtml(ws) {
+        const hasThread = _asst.messages.length > 0 || _asst.pending.length > 0 || _asst.sending || _asst.error;
+        return `<div class="cmty-feed-scroll cmty-asst-scroll">
+            ${hasThread ? _asstThreadHtml() : _asstHeroHtml(ws)}
+        </div>
+        ${_asstBarHtml()}`;
+    }
+
+    function _cmtyBindAssistant(c, ws) {
+        _asstBind(c);
+        c.querySelectorAll('.cmty-hero-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const fill = chip.dataset.fill;
+                if (fill === '__attach__') { c.querySelector('.cmty-asst-file')?.click(); return; }
+                const box = c.querySelector('.cmty-asst-input');
+                if (box) {
+                    box.value = fill;
+                    box.focus();
+                    box.setSelectionRange(box.value.length, box.value.length);
+                }
+            });
+        });
+        // 有对话时停在最新消息
+        const scroll = c.querySelector('.cmty-asst-scroll');
+        if (scroll && (_asst.messages.length || _asst.pending.length || _asst.sending)) {
+            scroll.scrollTop = scroll.scrollHeight;
+        }
     }
 
     // 群动态翻页：workspace 只带首屏，其余按游标从 /posts 续取。
@@ -3697,7 +4295,16 @@
                     <i class="fa-solid fa-heart"></i> ${p.likeCount || 0}
                 </button>`}
                 <span class="cmty-count"><i class="fa-solid fa-comment"></i> ${total}</span>
+                <button class="cmty-report-btn" data-pid="${_escapeHtml(p.id)}" aria-label="${t('cmty.report') || '举报这条内容'}" title="${t('cmty.report') || '举报'}">
+                    <i class="fa-solid fa-flag"></i>
+                </button>
             </div>
+            ${_cmty.reportPid === p.id ? `<div class="cmty-report-row" role="group" aria-label="举报原因">
+                <small>举报原因：</small>
+                ${['不当内容', '垃圾广告', '人身攻击', '虚假信息', '其他'].map(reason =>
+                    `<button class="cmty-report-reason" data-pid="${_escapeHtml(p.id)}" data-reason="${reason}">${reason}</button>`).join('')}
+                <button class="cmty-report-cancel">取消</button>
+            </div>` : ''}
             ${comments.length ? `<div class="cmty-comments">
                 ${comments.map(cm => `<div class="cmty-comment"><b>${_escapeHtml(cm.author?.name || '')}</b> ${_escapeHtml(cm.content || '')}</div>`).join('')}
             </div>` : ''}
@@ -3803,17 +4410,20 @@
     }
     let _asstRecognition = null;
 
-    function _asstHtml() {
-        const hasThread = _asst.messages.length > 0 || _asst.pending.length > 0 || _asst.sending || _asst.error;
+    // 消息流：在助手栏目的滚动区里展示，输入栏则固定在面板底部
+    function _asstThreadHtml() {
+        return `<div class="cmty-asst-thread">
+            ${_asst.messages.map(m => `<div class="cmty-asst-msg is-${m.role}">${_escapeHtml(m.text).replace(/\n/g, '<br>')}</div>`).join('')}
+            ${_asst.pending.map(a => _asstCardHtml(a)).join('')}
+            ${_asst.sending ? `<div class="cmty-asst-msg is-assistant is-thinking">${t('cmty.asstThinking') || '正在思考…'}</div>` : ''}
+            ${_asst.error ? `<div class="cmty-asst-error" role="alert">${_escapeHtml(_asst.error)}</div>` : ''}
+            <button class="cmty-asst-clear">${t('cmty.asstClear') || '清空对话'}</button>
+        </div>`;
+    }
+
+    function _asstBarHtml() {
         const att = _asst.attachment;
         return `<div class="cmty-asst">
-            ${hasThread ? `<div class="cmty-asst-thread">
-                ${_asst.messages.map(m => `<div class="cmty-asst-msg is-${m.role}">${_escapeHtml(m.text).replace(/\n/g, '<br>')}</div>`).join('')}
-                ${_asst.pending.map(a => _asstCardHtml(a)).join('')}
-                ${_asst.sending ? `<div class="cmty-asst-msg is-assistant is-thinking">${t('cmty.asstThinking') || '正在思考…'}</div>` : ''}
-                ${_asst.error ? `<div class="cmty-asst-error" role="alert">${_escapeHtml(_asst.error)}</div>` : ''}
-                <button class="cmty-asst-clear">${t('cmty.asstClear') || '清空对话'}</button>
-            </div>` : ''}
             ${_asst.voiceError ? `<div class="cmty-asst-error" role="alert">${_escapeHtml(_asst.voiceError)}</div>` : ''}
             ${_asst.listening ? `<div class="cmty-asst-status" role="status">${t('ai.voiceListening') || '正在聆听…说完后再点一次麦克风'}</div>` : ''}
             ${att ? `<div class="cmty-asst-chip">
@@ -3925,8 +4535,9 @@
         if (data.answer) _asst.messages.push({ role: 'assistant', text: data.answer });
         if (data.action) _asst.pending.push(data.action);
         if (data.effect) {
-            // 执行产生了实际变更（建了活动、发了内容…），动态流需要重取
-            if (data.effect.refresh !== false) _cmtyOpen(_cmty.activeId);
+            // 执行产生了实际变更（建了活动、发了内容…），工作台数据重取；
+            // 用 _cmtyReload 保住当前栏目与对话，不要整个重开
+            if (data.effect.refresh !== false) _cmtyReload();
         }
     }
 
@@ -4019,7 +4630,7 @@
             await _cmtyAction({ action: 'CREATE_POST', postType: postType || 'POST', content, verseRef: verseRef || '' });
             _cmty.composerOpen = false;
             showToast(t('cmty.published') || '已发布');
-            await _cmtyOpen(_cmty.activeId);
+            await _cmtyReload();
         } catch (e) {
             showToast(e.message || (t('cmty.publishFail') || '发布失败'));
         }
@@ -4045,7 +4656,7 @@
         try {
             // NOTE: posts/[postId]/comments 只有 GET（翻页读取），发评论走 workspace 的 ADD_COMMENT
             await _cmtyAction({ action: 'ADD_COMMENT', postId, content });
-            await _cmtyOpen(_cmty.activeId);
+            await _cmtyReload();
         } catch (e) {
             showToast(e.message || (t('cmty.commentFail') || '评论失败'));
         }
@@ -5945,7 +6556,7 @@
             body.innerHTML = list.length
                 ? `<div class="mep-menu">${list.map(g => `<button class="mep-item" data-cid="${_escapeHtml(g.id)}">
                         ${_cmtyAvatar(g.abbreviation || g.name, g.avatarColor)}
-                        <span>${_escapeHtml(g.name)}<small>${g.memberCount || 0} ${t('cmty.members') || '位成员'}${g.membershipRole === 'OWNER' ? ' · ' + (t('cmty.owner') || '群主') : ''}</small></span>
+                        <span>${_escapeHtml(g.name)}<small>${g.memberCount || 0} ${t('cmty.members') || '位成员'}${g.membershipRole === 'OWNER' ? ' · ' + ('群主') : ''}</small></span>
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>`).join('')}</div>`
                 : `<div class="cmty-empty"><p>${t('cmty.noGroups') || '还没有加入任何社群'}</p></div>`;
