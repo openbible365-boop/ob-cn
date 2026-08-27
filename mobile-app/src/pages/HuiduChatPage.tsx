@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { UnifiedHeader } from "../components/UnifiedHeader";
-import { UserAvatar } from "../components/UserAvatar";
 import { VoiceInputButton } from "../components/VoiceInputButton";
 import {
   appendFollowup,
@@ -16,7 +15,6 @@ import {
   type HuiduBlock,
 } from "../data/huidu";
 import { useSpeechInput } from "../hooks/useSpeechInput";
-import { useSessionUser } from "../hooks/useSessionUser";
 import { BOOKS, VERSIONS, bookName, getReading } from "../data/scripture";
 
 function TypingDots() {
@@ -27,6 +25,15 @@ function TypingDots() {
     </div>
   );
 }
+
+// 空态建议提示词：主流 AI 应用的起步方式——给出可点的具体问法，
+// 点击后填入输入框（可改可发），而不是替用户直接发送。
+const STARTER_PROMPTS = [
+  "解释一段经文的背景与生活应用",
+  "今天用一节经文鼓励我",
+  "祷告可以从哪里开始？",
+  "圣经里的「恩典」是什么意思？",
+];
 
 function BlockView({ block }: { block: HuiduBlock }) {
   return (
@@ -70,8 +77,11 @@ export function HuiduChatPage() {
   const [requestError, setRequestError] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
-  const sessionUser = useSessionUser();
+  const [copiedIndex, setCopiedIndex] = useState(-1);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const answerTimerRef = useRef<number | null>(null);
   const initialQuestionStartedRef = useRef(false);
   const speechInput = useSpeechInput({
@@ -144,17 +154,35 @@ export function HuiduChatPage() {
     navigate(`/bible?${query.toString()}`);
   };
 
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setRequestError("附件不能超过 50 MB");
+      return;
+    }
+    setRequestError("");
+    setAttachment(file);
+    inputRef.current?.focus();
+  };
+
   const submit = async (value: string) => {
+    const file = attachment;
     const text = value.trim();
-    if (!text || pendingAnswer) return;
+    if ((!text && !file) || pendingAnswer) return;
     speechInput.stopListening();
+
+    // 只发附件不写字时给一句默认提问，与社群助手一致
+    const questionForApi = text || "请阅读并总结这个附件。";
+    const displayText = file ? `📎 ${file.name}\n${questionForApi}` : text;
 
     let originalConversation = conv;
     if (originalConversation.id === "new") {
       const customTitle = originalConversation.title === "新的 AI 对话"
         ? ""
         : originalConversation.title;
-      originalConversation = startGeneralConversation(customTitle, text);
+      originalConversation = startGeneralConversation(customTitle, questionForApi);
       navigate(`/huidu/${originalConversation.id}`, {
         replace: true,
         state: { justCreated: true },
@@ -162,21 +190,23 @@ export function HuiduChatPage() {
     }
     const optimisticConversation: Conversation = {
       ...originalConversation,
-      messages: [...originalConversation.messages, { role: "user", content: text }],
+      messages: [...originalConversation.messages, { role: "user", content: displayText }],
     };
 
     setQuestion("");
+    setAttachment(null);
     setRequestError("");
     setPendingAnswer(true);
     setConv(optimisticConversation);
 
-    const result = await requestHuiduFollowup(originalConversation, text);
+    const result = await requestHuiduFollowup(originalConversation, questionForApi, file);
     if (result.ok) {
-      const updated = appendFollowup(originalConversation.id, text, result.answer);
+      const updated = appendFollowup(originalConversation.id, displayText, result.answer);
       setConv(updated ?? originalConversation);
     } else {
       setConv(originalConversation);
       setQuestion(text);
+      setAttachment(file);
       setRequestError(result.message);
     }
     setPendingAnswer(false);
@@ -228,30 +258,73 @@ export function HuiduChatPage() {
         {conv.messages.length === 0 && (
           <section className="huidu-chat-empty" aria-label="开始新的 AI 对话">
             <span aria-hidden="true">
-              <Icon name="sparkle" size={20} />
+              <Icon name="sparkle" size={22} />
             </span>
-            <h1>开始新的 AI 对话</h1>
-            <p>直接在下方输入问题。需要深入阅读经文时，可从圣经页面选择一节经文进入慧读。</p>
+            <h1>平安，今天想聊什么？</h1>
+            <p>可以直接提问，也可以从下面的问法开始。</p>
+            <div className="huidu-suggests" role="group" aria-label="推荐提示词">
+              {STARTER_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    setQuestion(prompt);
+                    inputRef.current?.focus();
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </section>
         )}
 
         <div className="huidu-message-list">
           {conv.messages.map((message, index) => {
             if (message.role === "user") {
+              // 主流 AI 应用的消息样式：用户消息右侧气泡不带头像，
+              // 助手消息通栏平铺——对话里只有两个声音，头像不提供信息。
               return (
                 <div key={index} className="huidu-user-message-row">
                   <div className="huidu-user-message">
                     {message.content}
                   </div>
-                  <UserAvatar
-                    name={sessionUser?.name ?? "我"}
-                    avatarColor={sessionUser?.avatarColor ?? "var(--yellow)"}
-                    avatarUrl={sessionUser?.avatarUrl ?? null}
-                    size={30}
-                  />
                 </div>
               );
             }
+
+            // 回答全文（复制用）：分段块拼上标签，纯文本回答原样
+            const answerText = message.blocks
+              ? message.blocks.map((block) => `${block.tag}\n${block.text}`).join("\n\n")
+              : message.content ?? "";
+            const copyAnswer = async () => {
+              let copied = false;
+              try {
+                await navigator.clipboard.writeText(answerText);
+                copied = true;
+              } catch {
+                // 旧 WebView / 无剪贴板权限时退回 execCommand
+                const holder = document.createElement("textarea");
+                holder.value = answerText;
+                holder.style.position = "fixed";
+                holder.style.opacity = "0";
+                document.body.appendChild(holder);
+                holder.select();
+                try { copied = document.execCommand("copy"); } catch { copied = false; }
+                holder.remove();
+              }
+              if (!copied) return;
+              setCopiedIndex(index);
+              window.setTimeout(() => setCopiedIndex((current) => (current === index ? -1 : current)), 1600);
+            };
+            const actions = (
+              <div className="huidu-msg-actions">
+                <button type="button" onClick={() => void copyAnswer()} aria-label="复制这条回答">
+                  <Icon name={copiedIndex === index ? "check" : "copy"} size={14} />
+                  {copiedIndex === index ? "已复制" : "复制"}
+                </button>
+              </div>
+            );
 
             if (message.blocks) {
               const isFirstAnswer = index === 1;
@@ -263,7 +336,7 @@ export function HuiduChatPage() {
                 <div key={index} className="huidu-assistant-message">
                   {message.blocks.slice(0, Math.max(visibleCount, streaming ? visibleCount : message.blocks.length))
                     .map((block, blockIndex) => <BlockView key={blockIndex} block={block} />)}
-                  {streaming && <TypingDots />}
+                  {streaming ? <TypingDots /> : actions}
                 </div>
               );
             }
@@ -273,6 +346,7 @@ export function HuiduChatPage() {
                 {(message.content ?? "").split("\n\n").map((paragraph, paragraphIndex) => (
                   <p className="huidu-answer-paragraph" key={paragraphIndex}>{paragraph}</p>
                 ))}
+                {actions}
               </div>
             );
           })}
@@ -282,12 +356,6 @@ export function HuiduChatPage() {
               <TypingDots />
             </div>
           )}
-        </div>
-
-        <div className="huidu-thread-note">
-          {scriptureContext
-            ? "慧读用于辅助理解经文，不替代教会教导与权威释经。"
-            : "AI 回答仅供参考，重要信息请进一步核实。"}
         </div>
       </main>
 
@@ -299,9 +367,42 @@ export function HuiduChatPage() {
             正在聆听…说完后再点一次麦克风
           </div>
         )}
+        {attachment && (
+          <div className="huidu-attach-chip">
+            <Icon name="paperclip" size={14} />
+            <span>{attachment.name}</span>
+            <small>{attachment.size < 1024 * 1024
+              ? `${Math.max(1, Math.round(attachment.size / 1024))} KB`
+              : `${(attachment.size / (1024 * 1024)).toFixed(1)} MB`} · 仅用于本次提问</small>
+            <button type="button" aria-label="移除附件" onClick={() => setAttachment(null)}>
+              <Icon name="x" size={14} />
+            </button>
+          </div>
+        )}
+        {/* 主流 AI 输入栏：大圆角药丸，附件、语音与发送都在框内，发送键是圆形上箭头 */}
         <form className="huidu-chat-row" onSubmit={(event) => { event.preventDefault(); void submit(question); }}>
           <span className="huidu-chat-field">
             <input
+              ref={fileInputRef}
+              type="file"
+              className="huidu-attach-input"
+              accept=".txt,.md,.markdown,.csv,.tsv,.json,.xml,.html,.htm,.yaml,.yml,.srt,.vtt,.log"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleFileSelected}
+            />
+            <button
+              type="button"
+              className="huidu-attach-btn"
+              aria-label="添加附件"
+              title="添加附件（支持文本类文件）"
+              disabled={pendingAnswer}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Icon name="paperclip" size={17} />
+            </button>
+            <input
+              ref={inputRef}
               value={question}
               onChange={(event) => {
                 setQuestion(event.target.value);
@@ -313,9 +414,11 @@ export function HuiduChatPage() {
               aria-label={conv.messages.length === 0 ? "输入问题" : "继续追问"}
               placeholder={speechInput.isListening
                 ? "正在聆听…"
-                : conv.messages.length === 0
-                  ? "输入问题，开始对话…"
-                  : "继续追问…"}
+                : attachment
+                  ? "可补充问题，发送后分析附件…"
+                  : conv.messages.length === 0
+                    ? "有问题，尽管问…"
+                    : "继续追问…"}
             />
             <VoiceInputButton
               isSupported={speechInput.isSupported}
@@ -323,16 +426,21 @@ export function HuiduChatPage() {
               disabled={pendingAnswer}
               onClick={speechInput.toggleListening}
             />
+            <button
+              type="submit"
+              aria-label="发送追问"
+              disabled={pendingAnswer || (!question.trim() && !attachment)}
+              className="huidu-send-btn"
+            >
+              <Icon name="arrow-up" size={17} />
+            </button>
           </span>
-          <button
-            type="submit"
-            aria-label="发送追问"
-            disabled={pendingAnswer || !question.trim()}
-            className="icon-btn icon-btn-primary composer-icon-btn huidu-send-btn"
-          >
-            <Icon name="send" size={20} />
-          </button>
         </form>
+        <p className="huidu-composer-note">
+          {scriptureContext
+            ? "慧读用于辅助理解经文，不替代教会教导与权威释经"
+            : "AI 回答仅供参考，重要信息请进一步核实"}
+        </p>
       </div>
 
       {renameOpen && (

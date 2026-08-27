@@ -4,6 +4,7 @@
 // book) persists to localStorage.
 import { load, save } from "./store";
 import manifest from "./manifest.json";
+import { cachedResponse } from "./offline-bible";
 
 export type Version = { code: string; label: string; lang: "zh" | "ko" | "en" };
 export type Book = {
@@ -80,7 +81,10 @@ export function loadBook(versionCode: string, bookCode: string): Promise<BookDat
   const key = `${versionCode}/${bookCode}`;
   let promise = bookCache.get(key);
   if (!promise) {
-    promise = fetch(`/data/bible/${versionCode}/${bookCode}.json`)
+    const url = `/data/bible/${versionCode}/${bookCode}.json`;
+    // 离线优先：在「资源管理」下载过的译本直接读本机缓存，无网络也能翻书
+    promise = cachedResponse(url)
+      .then((cached) => cached ?? fetch(url))
       .then((r) => {
         if (!r.ok) throw new Error(`load ${key}: HTTP ${r.status}`);
         return r.json() as Promise<RawBook>;
@@ -140,14 +144,34 @@ function deobfuscate(text: string): Record<string, JingduEntry[]> {
 function loadJingdu(bookOrder: number) {
   let promise = commentaryCache.get(bookOrder);
   if (!promise) {
-    promise = fetch(`/data/commentary/jingdu/${bookOrder}.json`).then((r) => {
-      if (!r.ok) throw new Error(`load jingdu ${bookOrder}: HTTP ${r.status}`);
-      return r.text().then((text) => deobfuscate(text));
-    });
+    const url = `/data/commentary/jingdu/${bookOrder}.json`;
+    // 与 loadBook 同理：注释包下载过就读本机缓存，离线也能看注释
+    promise = cachedResponse(url)
+      .then((cached) => cached ?? fetch(url))
+      .then((r) => {
+        if (!r.ok) throw new Error(`load jingdu ${bookOrder}: HTTP ${r.status}`);
+        return r.text().then((text) => deobfuscate(text));
+      });
     commentaryCache.set(bookOrder, promise);
     promise.catch(() => commentaryCache.delete(bookOrder));
   }
   return promise;
+}
+
+// 注释数据源的中文标点是半角（"冬天下雨,其降雨量"），排版观感差。
+// 与网页端 zhTypeset 同一套归一规则：两个汉字之间的 , ; : ? ! 转全角。
+const CJK_CLASS = "[一-鿿　-〿？！；：、」』）]";
+const CJK_OPEN = CJK_CLASS.replace("]", "「『（]");
+const PUNCT_RULES: Array<[RegExp, string]> = [
+  [new RegExp(`(${CJK_CLASS}),(?=${CJK_OPEN})`, "g"), "$1，"],
+  [new RegExp(`(${CJK_CLASS});(?=${CJK_CLASS})`, "g"), "$1；"],
+  [new RegExp(`(${CJK_CLASS}):(?=${CJK_CLASS})`, "g"), "$1："],
+  [new RegExp(`(${CJK_CLASS})[?](?=${CJK_CLASS})`, "g"), "$1？"],
+  [new RegExp(`(${CJK_CLASS})[!](?=${CJK_CLASS})`, "g"), "$1！"],
+];
+
+function zhTypeset(text: string): string {
+  return PUNCT_RULES.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), text);
 }
 
 export async function loadCommentary(
@@ -160,6 +184,6 @@ export async function loadCommentary(
     .filter((e) => e.text?.trim())
     .map((e) => ({
       title: e.type === "overview" ? `${e.verses} · 段落综览` : e.verses,
-      body: e.text.trim(),
+      body: zhTypeset(e.text.trim()),
     }));
 }

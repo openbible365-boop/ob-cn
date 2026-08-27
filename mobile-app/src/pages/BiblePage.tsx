@@ -851,11 +851,40 @@ export function BiblePage() {
     setVoiceMenuOpen(false);
     setPicker(null);
   };
-  const gotoAudioChapter = (nextChapter: number) => {
+  // 上一章/下一章支持跨书卷：自动续播本来就会跨卷，手动按钮在卷首卷尾
+  // 却被禁用，行为不一致——创世记 50 章的下一章就是出埃及记 1 章。
+  const audioBookIndex = BOOKS.findIndex((item) => item.code === book.code);
+  const prevAudioTarget = chapter > 1
+    ? { bookCode: book.code, chapter: chapter - 1 }
+    : audioBookIndex > 0
+      ? { bookCode: BOOKS[audioBookIndex - 1].code, chapter: BOOKS[audioBookIndex - 1].chapters }
+      : null;
+  const nextAudioTarget = chapter < maxChapter
+    ? { bookCode: book.code, chapter: chapter + 1 }
+    : audioBookIndex < BOOKS.length - 1
+      ? { bookCode: BOOKS[audioBookIndex + 1].code, chapter: 1 }
+      : null;
+  const gotoAudioTarget = (target: { bookCode: string; chapter: number } | null) => {
+    if (!target) return;
     continueAudioAfterLoadRef.current = false;
     audioRef.current?.pause();
-    setParams({ t: version.code, bk: book.code, c: String(nextChapter) });
+    setParams({ t: version.code, bk: target.bookCode, c: String(target.chapter) });
     setSelected(new Set());
+  };
+  // 下载走同域代理路由：mp3 在跨域 CDN 上，直接 <a download> 会变成页面跳转
+  const downloadAudio = () => {
+    if (!audioUrl) return;
+    const query = new URLSearchParams({
+      version: version.code,
+      book: book.code,
+      chapter: String(chapter),
+      voice: displayedAudioVoice,
+      name: `${displayedBook} ${chapter} ${displayedAudioVoice === "female" ? "女声" : "男声"}`,
+    });
+    const anchor = document.createElement("a");
+    anchor.href = `/api/mobile/audio/file?${query.toString()}`;
+    anchor.download = "";
+    anchor.click();
   };
   const continueToNextAudioChapter = () => {
     const bookIndex = BOOKS.findIndex((item) => item.code === book.code);
@@ -999,6 +1028,19 @@ export function BiblePage() {
                 {ver.code === version.code && <span style={{ marginLeft: "auto", color: "var(--purple)" }}><Icon name="check" size={16} /></span>}
               </button>
             ))}
+            {/* 列表尾部通往资源管理：译本的离线下载都在那里 */}
+            <button
+              className="bible-version-add"
+              onClick={() => { setPicker(null); navigate("/me/resources"); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 10px",
+                marginTop: 4, borderTop: "1px solid var(--line)", borderRadius: 0, fontSize: 13,
+                textAlign: "left", fontWeight: 700, background: "transparent", color: "var(--purple)",
+              }}
+            >
+              <Icon name="download" size={15} />
+              添加译本
+            </button>
           </div>
         )}
 
@@ -1445,6 +1487,16 @@ export function BiblePage() {
             <div className="audio-player-kicker">
               <Icon name="volume-2" size={20} />
               <span>语音圣经</span>
+              <button
+                type="button"
+                className="audio-player-download"
+                aria-label={`下载${displayedBook}第${chapter}章音频到本地`}
+                title="下载本章音频"
+                disabled={!audioUrl || audioLoading}
+                onClick={downloadAudio}
+              >
+                <Icon name="download" size={18} />
+              </button>
               <button type="button" className="audio-player-close" aria-label="关闭语音圣经" onClick={closeAudio}>
                 <Icon name="x" size={20} />
               </button>
@@ -1484,7 +1536,7 @@ export function BiblePage() {
             </div>
 
             <div className="audio-controls">
-              <button type="button" aria-label="上一章" disabled={chapter <= 1 || audioLoading} onClick={() => gotoAudioChapter(chapter - 1)}><Icon name="skip-back" size={24} /></button>
+              <button type="button" aria-label="上一章" disabled={!prevAudioTarget || audioLoading} onClick={() => gotoAudioTarget(prevAudioTarget)}><Icon name="skip-back" size={24} /></button>
               <button type="button" aria-label="后退30秒" disabled={!audioUrl} onClick={() => seekAudio(-30)}>
                 <span className="audio-seek-icon"><Icon name="rotate-ccw" size={24} /><b>30</b></span>
               </button>
@@ -1494,10 +1546,12 @@ export function BiblePage() {
               <button type="button" aria-label="前进30秒" disabled={!audioUrl} onClick={() => seekAudio(30)}>
                 <span className="audio-seek-icon"><Icon name="rotate-cw" size={24} /><b>30</b></span>
               </button>
-              <button type="button" aria-label="下一章" disabled={chapter >= maxChapter || audioLoading} onClick={() => gotoAudioChapter(chapter + 1)}><Icon name="skip-forward" size={24} /></button>
+              <button type="button" aria-label="下一章" disabled={!nextAudioTarget || audioLoading} onClick={() => gotoAudioTarget(nextAudioTarget)}><Icon name="skip-forward" size={24} /></button>
             </div>
 
             <button type="button" className="audio-current-passage" onClick={locateAudioVerse}>
+              {/* CSS 网格是 图标/文案/箭头 三列；缺了图标列文案会被挤进 32px 里 */}
+              <span className="audio-current-icon" aria-hidden="true"><Icon name="book" size={16} /></span>
               <span className="audio-current-copy">
                 <b>正在朗读 · {displayedBook} {chapter}:{audioCurrentVerse?.label ?? 1}</b>
                 <small>{audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "经文加载中…"}</small>

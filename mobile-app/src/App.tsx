@@ -14,6 +14,7 @@ import { MyContentPage } from "./pages/MyContentPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { MyActivitiesPage } from "./pages/MyActivitiesPage";
 import { AccountDataPage } from "./pages/AccountDataPage";
+import { ResourcesPage } from "./pages/ResourcesPage";
 import { ReadingPlansPage } from "./pages/ReadingPlansPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LegalPage } from "./pages/LegalPage";
@@ -123,6 +124,8 @@ export default function App() {
         <Route path="/me/notifications" element={<NotificationsPage />} />
         <Route path="/me/activities" element={<RequireLogin><MyActivitiesPage /></RequireLogin>} />
         <Route path="/me/account" element={<RequireLogin><AccountDataPage /></RequireLogin>} />
+        {/* 译本下载是设备级功能，不要求登录 */}
+        <Route path="/me/resources" element={<ResourcesPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>

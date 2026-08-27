@@ -1089,24 +1089,30 @@ a {
   font-weight: 700;
 }
 
+/* 结果不加外框：留白 + 细分隔线分行，引用徽章本身就是视觉锚点，
+   胶囊外框只会跟徽章抢注意力、还压缩了正文宽度 */
 .bible-search-result-list {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
   padding: 0 14px 24px;
 }
 
 .bible-search-result-list > button {
   display: flex;
   width: 100%;
-  min-height: 88px;
   flex-direction: column;
-  gap: 9px;
-  padding: 14px 15px;
-  border-radius: 999px;
-  background: var(--white);
-  border: 1px solid var(--line);
+  gap: 8px;
+  padding: 14px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
   color: var(--ink);
   text-align: left;
+}
+
+.bible-search-result-list > button + button {
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
 }
 
 .bible-search-result-list > button:active,
@@ -2083,9 +2089,11 @@ body.dark .notification-daily-verse-action {
   transform: translate(-50%, calc(100% + 16px + env(safe-area-inset-bottom)));
 }
 
+/* 悬浮标签栏 bottom 8px + 栏高 58px + 内边距，实际遮挡到约 82px；
+   74px 时正文最后一两行会穿到标签栏后面被挡住，统一留 96px 呼吸空间。 */
 .app.has-tab-bar .screen-scroll {
-  padding-bottom: calc(74px + env(safe-area-inset-bottom)) !important;
-  scroll-padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .tab-bar .tab {
@@ -2410,14 +2418,47 @@ body.dark .notification-daily-verse-action {
   display: none;
 }
 
+/* 配色语义：听经属于「阅读」场景，题眉走金色；紫色只留给
+   播放键 / 进度条这类可交互主操作，两个色相不再混用。 */
 .audio-player-kicker {
   display: flex;
   align-items: center;
   gap: 7px;
   min-height: 26px;
-  color: var(--purple-deep);
+  color: var(--yellow-ink);
   font-size: 12px;
   font-weight: 800;
+}
+
+.audio-player-kicker > .app-icon {
+  color: var(--yellow-ink);
+}
+
+/* 下载本章音频：与关闭键同排的弱化图标按钮 */
+.audio-player-download {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  margin-left: auto;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--purple-deep);
+  transition: background-color 160ms ease;
+}
+
+.audio-player-download:hover:not(:disabled),
+.audio-player-download:active:not(:disabled) {
+  background: var(--purple-soft);
+}
+
+.audio-player-download:disabled {
+  color: var(--muted);
+}
+
+.audio-player-download + .audio-player-close {
+  margin-left: 0;
 }
 
 .audio-player-close {
@@ -2640,6 +2681,7 @@ body.dark .notification-daily-verse-action {
   white-space: nowrap;
 }
 
+/* 正在朗读的是「经文」——图标与引用走金色阅读语义，和经文引用芯片一家人 */
 .audio-current-icon {
   display: flex;
   align-items: center;
@@ -2647,11 +2689,16 @@ body.dark .notification-daily-verse-action {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--audio-purple-soft);
-  color: var(--audio-purple);
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
-.audio-current-passage b { display: block; font-size: 12px; margin-bottom: 3px; color: var(--purple-deep); }
+.audio-current-passage {
+  border-color: var(--yellow-medium);
+  background: var(--yellow-soft);
+}
+
+.audio-current-passage b { display: block; font-size: 12px; margin-bottom: 3px; color: var(--yellow-ink); }
 .audio-current-passage small {
   display: -webkit-box;
   height: 1.35em;
@@ -3216,12 +3263,6 @@ body.dark .notification-daily-verse-action {
   padding: 18px 20px 28px;
 }
 
-/* 这一页最后是退出按钮和版本号，共享的 74px 只够贴住悬浮导航条，
-   会从导航条两侧的空隙里透出来。多留一段，让页尾真正收住。 */
-.app.has-tab-bar .me-scroll {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
-}
-
 .me-profile {
   display: flex;
   align-items: center;
@@ -3400,6 +3441,179 @@ body.dark .notification-daily-verse-action {
   font-size: 16px;
   font-weight: 800;
   line-height: 1;
+}
+
+/* 读经进度横幅：金色淡底承载阅读语义，整卡可点跳读经计划 */
+.me-plan-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 14px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  text-align: left;
+}
+
+.me-plan-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.me-plan-banner-head b {
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-plan-banner-head small {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.me-plan-banner-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(113, 74, 8, 0.14);
+}
+
+.me-plan-banner-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--yellow);
+}
+
+.me-plan-banner-today {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.me-plan-banner.is-empty {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.me-plan-banner.is-empty span {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-plan-banner.is-empty b {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* 四宫格快捷入口：灰图标 + 名称 + 数字角标 */
+.me-quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.me-quick > button {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 66px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.me-quick > button .app-icon {
+  color: var(--body);
+}
+
+.me-quick-count {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 分组菜单卡：一张卡装一组行，行间用分隔线（原来每行各自一张卡，组感不强）。
+   flex-shrink:0 —— me-scroll 是 flex 列，不锁的话内容超高时整卡会被压扁，
+   行溢出再被 overflow:hidden 裁掉。横幅与宫格同理。 */
+.me-plan-banner,
+.me-quick,
+.me-menu-card {
+  flex-shrink: 0;
+}
+
+.me-menu-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.me-menu-card > button {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.me-menu-card > button + button,
+.me-menu-card > .me-group-list.is-nested {
+  border-top: 1px solid var(--line);
+}
+
+.me-menu-card > button > .app-icon {
+  flex: none;
+  color: var(--body);
+}
+
+.me-menu-card .app-icon.is-rotated {
+  transform: rotate(90deg);
+}
+
+.me-menu-meta {
+  flex: none;
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-group-list.is-nested {
+  padding: 8px;
+  gap: 6px;
 }
 
 .me-group-list,
@@ -3791,56 +4005,37 @@ body.dark .notification-daily-verse-action {
   font-weight: 700;
 }
 
-.me-data-counts {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+/* 本机数据宫格只有三项（无「活动」——那是云端数据），等分三列 */
+.me-quick.is-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.me-data-counts span {
+/* 云端同步：只读状态卡。头部与菜单行同构，数字行不带箭头不做 hover */
+.me-cloud-head {
   display: flex;
-  min-height: 50px;
-  flex-direction: column;
+  min-height: 54px;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border-radius: 12px;
-  background: var(--white);
-  color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  gap: 10px;
+  padding: 8px 12px;
 }
 
-.me-data-counts b {
-  color: var(--ink);
-  font-size: 15px;
-}
-
-.me-data-export {
+.me-cloud-row {
   display: flex;
   min-height: 44px;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 12px;
-  background: var(--white);
-  color: var(--purple-deep);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.me-data-cloud-row {
-  display: flex;
-  min-height: 28px;
-  align-items: center;
   justify-content: space-between;
+  padding: 0 14px;
+  border-top: 1px solid var(--line);
   color: var(--body);
   font-size: 12px;
   font-weight: 600;
 }
 
-.me-data-cloud-row b {
+.me-cloud-row b {
   color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .me-data-note {
@@ -3852,79 +4047,102 @@ body.dark .notification-daily-verse-action {
   line-height: 1.7;
 }
 
-.me-guest {
+/* 资源管理：译本下载列表 */
+.me-res-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 72px 28px 28px;
-  text-align: center;
+  gap: 8px;
 }
 
-.me-guest-mark {
+.me-res-row {
   display: flex;
-  width: 62px;
-  height: 62px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.me-res-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  background: var(--yellow);
-  color: var(--brown);
-}
-
-.me-guest h1 {
-  margin: 20px 0 8px;
-  font-size: 20px;
-}
-
-.me-guest > p {
-  max-width: 280px;
-  margin: 0;
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.7;
-}
-
-.me-login-button {
-  width: min(100%, 300px);
-  min-height: 44px;
-  margin-top: 24px;
   border-radius: 12px;
-  background: var(--purple);
-  color: #fff;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
+.me-res-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.me-res-copy b {
   font-size: 13px;
   font-weight: 800;
 }
 
-.me-guest-benefits {
-  display: flex;
-  width: min(100%, 300px);
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 24px;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--white);
-  border: 1px solid var(--line);
+.me-res-copy small {
   color: var(--body);
-  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.me-guest-benefits span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.me-res-bar {
+  height: 4px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.me-res-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--purple);
+  transition: width 0.2s ease;
+}
+
+.me-res-btn {
+  min-width: 58px;
+  min-height: 34px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.me-res-btn.is-primary {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+
+.me-res-btn:disabled {
+  opacity: 0.55;
+}
+
+.me-res-error {
+  margin: 0;
+  color: var(--danger, #b3403f);
   font-size: 12px;
   font-weight: 700;
 }
 
-.me-guest-benefits .app-icon {
-  color: var(--purple);
-}
-
-.me-guest > small {
-  margin-top: 18px;
-  color: var(--muted);
+.me-res-unsupported {
+  margin: 0;
+  color: var(--body);
   font-size: 12px;
   font-weight: 600;
 }
@@ -3948,17 +4166,19 @@ body.dark .notification-daily-verse-action {
   background: var(--yellow-medium);
 }
 
-.huidu-chat-title-label {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 5px;
+/* 标题芯片：长标题收在固定宽度里、以省略号结尾。
+   不设上限时芯片会撑到被布局硬裁，截断处没有省略号、右侧贴边很难看。 */
+.huidu-chat-screen .bible-reader-selector.version {
+  max-width: min(48vw, 176px);
+  flex: 0 1 auto;
 }
 
-.huidu-chat-title-label > span {
+.huidu-chat-title-label {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .huidu-chat-title-label > .app-icon {
@@ -4016,22 +4236,26 @@ body.dark .notification-daily-verse-action {
   gap: 10px;
 }
 
+/* 空态：主流 AI 的居中问候 + 建议提示词 */
 .huidu-chat-empty {
   display: flex;
-  max-width: 360px;
+  width: 100%;
+  max-width: 340px;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 18px 4px 8px;
+  align-items: center;
+  gap: 8px;
+  margin: auto;
+  padding: 18px 4px;
+  text-align: center;
 }
 
 .huidu-chat-empty > span {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   margin-bottom: 3px;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--yellow-medium);
   color: var(--purple);
 }
@@ -4039,7 +4263,7 @@ body.dark .notification-daily-verse-action {
 .huidu-chat-empty h1 {
   margin: 0;
   color: var(--ink);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
 }
 
@@ -4051,43 +4275,85 @@ body.dark .notification-daily-verse-action {
   line-height: 1.7;
 }
 
+.huidu-suggests {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.huidu-suggests button {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.huidu-suggests button:active {
+  border-color: var(--purple);
+  color: var(--purple-deep);
+}
+
+/* 用户消息：右侧浅底气泡、无头像——对话里只有两个声音，头像不提供信息 */
 .huidu-user-message {
   min-width: 0;
-  flex: 1;
-  padding: 8px 11px;
-  border-radius: 12px 12px 4px;
-  background: var(--purple);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.55;
+  padding: 9px 13px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .huidu-user-message-row {
   display: flex;
-  max-width: 88%;
-  align-items: flex-end;
+  max-width: 82%;
   align-self: flex-end;
-  gap: 7px;
 }
 
-.huidu-user-message-row > .user-avatar {
-  margin-bottom: 1px;
-}
-
+/* 助手消息：通栏平铺不装卡片——主流 AI 的答案就是页面正文 */
 .huidu-assistant-message {
   display: flex;
   flex-direction: column;
   gap: 12px;
   align-self: stretch;
-  padding: 12px 13px;
-  border-radius: 16px;
-  background: var(--surface-2);
+  padding: 2px 2px 0;
 }
 
 .huidu-assistant-message.is-pending {
-  min-height: 48px;
+  min-height: 40px;
   justify-content: center;
+}
+
+/* 回答下方的操作行：复制等轻操作，弱化为幽灵按钮 */
+.huidu-msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: -4px;
+}
+
+.huidu-msg-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.huidu-msg-actions button:active {
+  background: var(--surface-2);
+  color: var(--body);
 }
 
 .huidu-answer-block {
@@ -4166,15 +4432,6 @@ body.dark .notification-daily-verse-action {
   font-weight: 600;
 }
 
-.huidu-thread-note {
-  padding: 4px 10px 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.55;
-  text-align: center;
-}
-
 .huidu-missing {
   padding: 24px;
   color: var(--body);
@@ -4204,23 +4461,100 @@ body.dark .notification-daily-verse-action {
   gap: 7px;
 }
 
+/* 附件芯片：悬在输入栏上方，说明只用于本次提问 */
+.huidu-attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 3px 7px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.huidu-attach-chip > .app-icon {
+  flex: none;
+  color: var(--body);
+}
+
+.huidu-attach-chip span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.huidu-attach-chip small {
+  flex: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.huidu-attach-chip button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-left: auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+}
+
+.huidu-attach-input {
+  display: none;
+}
+
+.huidu-attach-btn {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  margin-left: -6px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--purple-deep);
+}
+
+.huidu-attach-btn:active:not(:disabled) {
+  background: rgba(191, 120, 246, 0.09);
+}
+
+.huidu-attach-btn:disabled {
+  color: var(--muted);
+}
+
+/* 主流 AI 输入栏：大圆角药丸，语音与发送都收进框内 */
 .huidu-chat-field {
   display: flex;
   min-width: 0;
-  height: 42px;
+  height: 48px;
   flex: 1;
   align-items: center;
   gap: 2px;
-  padding: 2px 4px 2px 10px;
+  padding: 4px 5px 4px 15px;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-2);
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgba(48, 42, 30, 0.06);
+}
+
+.huidu-chat-field:focus-within {
+  border-color: var(--purple);
 }
 
 .huidu-chat-field input {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  height: 38px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -4228,7 +4562,7 @@ body.dark .notification-daily-verse-action {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .huidu-chat-field .voice-input-btn {
@@ -4255,19 +4589,35 @@ body.dark .notification-daily-verse-action {
   height: 17px;
 }
 
+/* 发送键：框内圆形上箭头（主流 AI 的通行样式），有内容才点亮 */
 .huidu-send-btn {
+  display: grid;
   width: 38px;
   height: 38px;
   flex: none;
+  place-items: center;
   border: 0;
   border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
   box-shadow: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .huidu-send-btn:disabled {
   background: var(--surface-2);
   color: var(--muted);
   opacity: 1;
+  cursor: default;
+}
+
+.huidu-composer-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
 }
 
 @keyframes ob-blink {
@@ -4455,9 +4805,36 @@ body.dark .notification-daily-verse-action {
 
 .verse-share-templates {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+/* 排版方向：横排 / 竖排 */
+.verse-share-layouts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin: 0 0 12px;
+}
+
+.verse-share-layouts button {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.verse-share-layouts button.active {
+  border-color: var(--purple-deep);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
 }
 
 .verse-share-templates button {
@@ -4533,6 +4910,16 @@ body.dark .notification-daily-verse-action {
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   gap: 10px;
+}
+
+.verse-share-actions.is-three {
+  grid-template-columns: 1fr 1fr 1.1fr;
+  gap: 8px;
+}
+
+.verse-share-actions.is-three button {
+  gap: 5px;
+  font-size: 12px;
 }
 
 .verse-share-actions button {
@@ -7522,15 +7909,23 @@ body.dark .bible-toolbar-action {
   color: var(--ink);
 }
 
-/* Guest view in MePage */
+/* Guest view in MePage：满屏纯登录页。
+   品牌 + 广告语 + 登录按钮垂直居中，协议链接沉底，不放其他信息。 */
 .me-guest-scroll {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
+  padding: 24px 28px 28px;
   text-align: center;
-  gap: 20px;
+}
+
+/* margin auto 上下均分剩余空间，把整组内容顶到屏幕正中 */
+.me-guest-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  margin: auto 0;
 }
 
 .me-guest-brand {
@@ -7538,22 +7933,21 @@ body.dark .bible-toolbar-action {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
 }
 
 .me-logo-shield {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   background: var(--surface-2);
-  border-radius: 16px;
+  border-radius: 20px;
   color: var(--ink);
 }
 
 .me-guest-brand h1 {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
   margin: 0;
   display: flex;
@@ -7561,21 +7955,15 @@ body.dark .bible-toolbar-action {
 }
 
 .me-guest-brand p {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--body);
   margin: 0;
-}
-
-.me-guest-prompt {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-top: 10px;
+  letter-spacing: 0.05em;
 }
 
 .me-login-button {
-  width: 100%;
+  width: min(100%, 320px);
   height: 48px;
   background: var(--purple);
   color: #fff;
@@ -7593,37 +7981,8 @@ body.dark .bible-toolbar-action {
   opacity: 0.9;
 }
 
-.me-guest-benefits {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  padding: 16px;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  margin-top: 15px;
-}
-
-.me-guest-benefits span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.me-guest-benefits .app-icon {
-  color: #27ae60;
-}
-
-.me-guest-scroll small {
-  font-size: 12px;
-  color: var(--body);
-  line-height: 1.5;
-  margin-top: 5px;
+.me-guest-scroll .me-legal-links {
+  margin-top: 24px;
 }
 
 body.dark .bible-setting-segment button.active {

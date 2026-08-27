@@ -70,46 +70,72 @@ export function AccountDataPage() {
           </div>
         </section>
 
+        {/* 本机数据：与「我的」页同一套宫格语言，数字可点直达对应列表 */}
         <section className="me-data-section">
           <div className="me-data-heading">
             <div>
               <h2>本机数据</h2>
-              <p>笔记和慧读仅保存在当前设备。</p>
+              <p>笔记和慧读仅保存在当前设备，点格子直接查看。</p>
             </div>
-            <span>{notes.length + conversations.length} 条</span>
+            <span>{highlights.length + notes.length + conversations.length} 条</span>
           </div>
-          <div className="me-data-counts">
-            <span><b>{highlights.length}</b>高亮</span>
-            <span><b>{notes.length}</b>笔记</span>
-            <span><b>{conversations.length}</b>慧读</span>
+          <div className="me-quick is-three">
+            <button type="button" onClick={() => navigate("/me/content?t=highlights")}>
+              <Icon name="star" size={20} />
+              <span>高亮</span>
+              <b className="me-quick-count">{highlights.length}</b>
+            </button>
+            <button type="button" onClick={() => navigate("/me/content?t=notes")}>
+              <Icon name="edit" size={20} />
+              <span>笔记</span>
+              <b className="me-quick-count">{notes.length}</b>
+            </button>
+            <button type="button" onClick={() => navigate("/huidu")}>
+              <Icon name="sparkle" size={20} />
+              <span>慧读</span>
+              <b className="me-quick-count">{conversations.length}</b>
+            </button>
           </div>
-          <button className="me-data-export" type="button" onClick={exportLocalData}>
-            <Icon name="download" size={16} />
-            {exported ? "已导出本机数据" : "导出本机数据"}
-          </button>
         </section>
 
-        <section className="me-data-section">
-          <div className="me-data-heading">
-            <div>
-              <h2>云端同步</h2>
-              <p>经文高亮和活动报名已关联当前账户。</p>
-            </div>
-            <Icon name="cloud" size={20} />
+        {/* 资源与备份：两个操作合成一张分组卡，与「我的」页菜单卡同构 */}
+        <div className="me-menu-card">
+          <button type="button" onClick={() => navigate("/me/resources")}>
+            <span className="me-menu-icon"><Icon name="book" size={16} /></span>
+            <span className="me-menu-copy">
+              <b>资源管理</b>
+              <small>圣经译本与注释离线下载</small>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
+          <button type="button" onClick={exportLocalData}>
+            <span className="me-menu-icon"><Icon name="download" size={16} /></span>
+            <span className="me-menu-copy">
+              <b>{exported ? "已导出本机数据" : "导出本机数据"}</b>
+              <small>生成 JSON 备份，不含密码、凭证或社群成员资料</small>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
+        </div>
+
+        {/* 云端同步：只读状态卡，头部说明 + 数字行，无箭头（点不动就别长得像能点） */}
+        <div className="me-menu-card is-static">
+          <div className="me-cloud-head">
+            <span className="me-menu-icon"><Icon name="cloud" size={16} /></span>
+            <span className="me-menu-copy">
+              <b>云端同步</b>
+              <small>经文高亮和活动报名已关联当前账户</small>
+            </span>
           </div>
-          <div className="me-data-cloud-row">
+          <div className="me-cloud-row">
             <span>云端高亮</span>
             <b>{user?.counts.highlights ?? "—"} 处</b>
           </div>
-          <div className="me-data-cloud-row">
+          <div className="me-cloud-row">
             <span>报名活动</span>
             <b>{user?.counts.eventSignups ?? "—"} 项</b>
           </div>
-        </section>
-
-        <p className="me-data-note">
-          导出的文件只包含当前设备上的阅读内容，不包含密码、登录凭证或社群成员资料。
-        </p>
+        </div>
       </main>
     </div>
   );

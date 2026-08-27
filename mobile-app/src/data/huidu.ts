@@ -2,7 +2,7 @@
 // existing three-part presentation; follow-up questions are answered by the
 // authenticated Qwen API and then stored in the same local thread.
 import { load, save, uid } from "./store";
-import { apiRequest } from "./api";
+import { apiFormRequest, apiRequest } from "./api";
 
 // 分段标签只保留语义名，配色交给样式表统一处理，避免每处各写一个色值。
 export type HuiduBlock = { tag: string; text: string };
@@ -236,27 +236,42 @@ function messageContent(message: Message) {
 export async function requestHuiduFollowup(
   conversation: Conversation,
   question: string,
+  file?: File | null,
 ): Promise<HuiduAssistantResult> {
   try {
-    const response = await apiRequest<
-      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string }
-    >("/api/mobile/huidu/assistant", {
-      method: "POST",
-      body: {
-        conversationId: conversation.id,
-        refLabel: conversation.refLabel,
-        verseText: conversation.verseText,
-        bookCode: conversation.bookCode,
-        versionCode: conversation.versionCode,
-        chapter: conversation.chapter,
-        verse: conversation.verse,
-        question,
-        history: conversation.messages.map((message) => ({
-          role: message.role,
-          content: messageContent(message),
-        })),
-      },
-    });
+    const history = conversation.messages.map((message) => ({
+      role: message.role,
+      content: messageContent(message),
+    }));
+    type AssistantReply =
+      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string };
+    let response;
+    if (file) {
+      // 带附件走 multipart：服务端提取纯文本并入本次提问的上下文，不落库
+      const form = new FormData();
+      form.append("conversationId", conversation.id);
+      form.append("refLabel", conversation.refLabel);
+      form.append("verseText", conversation.verseText);
+      form.append("question", question);
+      form.append("history", JSON.stringify(history));
+      form.append("file", file);
+      response = await apiFormRequest<AssistantReply>("/api/mobile/huidu/assistant", form);
+    } else {
+      response = await apiRequest<AssistantReply>("/api/mobile/huidu/assistant", {
+        method: "POST",
+        body: {
+          conversationId: conversation.id,
+          refLabel: conversation.refLabel,
+          verseText: conversation.verseText,
+          bookCode: conversation.bookCode,
+          versionCode: conversation.versionCode,
+          chapter: conversation.chapter,
+          verse: conversation.verse,
+          question,
+          history,
+        },
+      });
+    }
     const result = response.data;
 
     if (!response.ok || !result?.ok) {
