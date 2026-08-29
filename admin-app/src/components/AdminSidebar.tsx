@@ -30,6 +30,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope }[] 
   { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
+  { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app" },
 
   { href: "/admin/study-notes", label: "研经笔记", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },
   { href: "/admin/encyclopedia", label: "圣经百科", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },

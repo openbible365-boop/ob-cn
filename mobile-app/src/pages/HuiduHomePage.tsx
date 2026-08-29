@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { useSettings } from "../context/SettingsContext";
+import { ANDROID_BACK_EVENT } from "../native/android-back";
 import {
   deleteConversation,
   getConversations,
@@ -24,6 +25,14 @@ export function HuiduHomePage() {
   const [conversations, setConversations] = useState<Conversation[]>(() => getConversations());
   const [grouping, setGrouping] = useState<"time" | "type">("time");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // 安卓返回键：搜索面板打开时先关它
+  useEffect(() => {
+    if (!searchOpen) return;
+    const close = (event: Event) => { event.preventDefault(); setSearchOpen(false); };
+    window.addEventListener(ANDROID_BACK_EVENT, close);
+    return () => window.removeEventListener(ANDROID_BACK_EVENT, close);
+  }, [searchOpen]);
   const [searchText, setSearchText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
 

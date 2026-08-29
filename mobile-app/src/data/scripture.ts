@@ -34,6 +34,29 @@ export function bookName(book: Book, version: Version): string {
   return book[version.lang];
 }
 
+// 长书名在顶栏窄芯片里放不下（帖撒罗尼迦前书 7 字会把箭头挤出裁切）。
+// 芯片展示用教会通用简称；选择器、分享卡、朗读标签等场景仍用全名。
+const ZH_CHIP_ABBREVIATIONS: Record<string, string> = {
+  "1sa": "撒上",
+  "2sa": "撒下",
+  lam: "哀歌",
+  oba: "俄巴底亚",
+  zec: "撒迦利亚",
+  "1co": "林前",
+  "2co": "林后",
+  "1th": "帖前",
+  "2th": "帖后",
+  "1ti": "提前",
+  "2ti": "提后",
+};
+
+export function bookChipName(book: Book, version: Version): string {
+  if (version.lang === "zh" && ZH_CHIP_ABBREVIATIONS[book.code]) {
+    return ZH_CHIP_ABBREVIATIONS[book.code];
+  }
+  return bookName(book, version);
+}
+
 // ---------- reading position ----------
 
 type Reading = { version: string; book: string; chapter: number };

@@ -2,6 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { VerseShareSheet } from "../components/VerseShareSheet";
+import { AudioGlyph } from "../components/AudioGlyph";
+import {
+  downloadBookAudio,
+  isBookAudioCached,
+  offlineAudioSupported,
+  removeBookAudio,
+} from "../data/offline-audio";
+import { getDailyVerse } from "../data/daily-verse";
+import { getStreak, markTodayRead } from "../data/streak";
 import {
   BOOKS,
   VERSIONS,
@@ -13,6 +22,7 @@ import {
   setReading,
   defaultChapterFor,
   bookName,
+  bookChipName,
   loadBook,
   stripHtml,
   type BookData,
@@ -39,6 +49,7 @@ import {
   updateAndroidMedia,
 } from "../data/android-media";
 import { useSettings } from "../context/SettingsContext";
+import { ANDROID_BACK_EVENT } from "../native/android-back";
 
 const PlayingAudioIcon = () => (
   <span className="playing-audio-icon" aria-hidden="true">
@@ -214,11 +225,53 @@ export function BiblePage() {
   const [audioTimestamps, setAudioTimestamps] = useState<AudioTimestamp[]>([]);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
+  const [audioCacheBusy, setAudioCacheBusy] = useState<{ done: number; total: number } | null>(null);
+  const [audioCacheReady, setAudioCacheReady] = useState(false);
+  // 正在播放的章节标签：面板关闭后切章浏览时，迷你条仍如实显示音频来源
+  const [audioSourceLabel, setAudioSourceLabel] = useState("");
+  // 顶栏滚动收起：向下滚隐藏、向上滚或回到顶部恢复
+  const [toolbarHidden, setToolbarHidden] = useState(false);
+  const [readProgress, setReadProgress] = useState(0);
+  const lastScrollTopRef = useRef(0);
+  // 今日金句卡：当天手动收起后不再出现，次日自动回来。
+  // 用本地日期而非 toISOString（UTC）——否则晚八点后就跨天错乱
+  const todayDate = new Date();
+  const todayKey = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}`;
+  const [dailyDismissed, setDailyDismissed] = useState(() => {
+    try { return localStorage.getItem("ob.daily-card-dismissed") === todayKey; } catch { return false; }
+  });
+  const [dailyShareOpen, setDailyShareOpen] = useState(false);
+  // 操作条「更多」与译本对照
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareData, setCompareData] = useState<Array<{ label: string; text: string }> | null>(null);
+  const dailyVerse = getDailyVerse();
+  const readStreak = getStreak();
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
   const androidMediaStartedRef = useRef(false);
   const continueAudioAfterLoadRef = useRef(false);
+
+  // 安卓返回键：开着的弹层逐层关闭，全关完才轮到路由回退
+  useEffect(() => {
+    const closeTopOverlay = (event: Event) => {
+      const close =
+        (shareOpen && (() => setShareOpen(false)))
+        || (dailyShareOpen && (() => setDailyShareOpen(false)))
+        || (compareOpen && (() => setCompareOpen(false)))
+        || (noteOpen && (() => setNoteOpen(false)))
+        || (moreOpen && (() => setMoreOpen(false)))
+        || (picker !== null && (() => { setPicker(null); setPickerBook(null); }))
+        || (selected.size > 0 && (() => setSelected(new Set())));
+      if (close) {
+        event.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
+    return () => window.removeEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
+  }, [shareOpen, dailyShareOpen, compareOpen, noteOpen, moreOpen, picker, selected]);
 
   useEffect(() => {
     if (picker === "search") return;
@@ -308,6 +361,7 @@ export function BiblePage() {
         setAudioUrl(result.audioUrl);
         setAudioTimestamps(result.timestamps);
         setResolvedAudioVoice(result.voice);
+        setAudioSourceLabel(`${displayedBook} ${chapter}`);
         setLoadedAudioKey(currentKey);
       })
       .catch((error: unknown) => {
@@ -336,6 +390,11 @@ export function BiblePage() {
   }, [data, params]);
 
   const displayedAudioVoice = resolvedAudioVoice || audioVoice;
+
+  // 换书卷或换音色后重查整卷缓存状态
+  useEffect(() => {
+    setAudioCacheReady(isBookAudioCached(book.code, displayedAudioVoice));
+  }, [book.code, displayedAudioVoice]);
   const chooseAudioVoice = (voice: string) => {
     setVoiceMenuOpen(false);
     setResolvedAudioVoice("");
@@ -513,13 +572,7 @@ export function BiblePage() {
     setPicker(null);
   };
 
-  const closeSheet = () => {
-    setSelected(new Set());
-    setNoteOpen(false);
-    setNoteText("");
-    setEditingNoteId(null);
-  };
-
+  // 紧凑操作条无关闭键（与画布一致）：再点已选经文即取消选择
   const saveSearchHistory = (term: string, targetVersionCode: string) => {
     setSearchHistory((current) => {
       const next = [
@@ -654,7 +707,33 @@ export function BiblePage() {
     } catch {
       /* clipboard unavailable */
     }
-    closeSheet();
+    setMoreOpen(false);
+    setSelected(new Set());
+  };
+
+  // 译本对照：把选中经文在三个译本里的文本并排展示（数据全在本机/缓存）
+  const openCompare = async () => {
+    if (selectedVerses.length === 0) return;
+    setMoreOpen(false);
+    setCompareOpen(true);
+    setCompareData(null);
+    const wanted = selectedVerses.map((verse) => verse.verse);
+    const results = await Promise.all(VERSIONS.map(async (candidate) => {
+      try {
+        const bookData = await loadBook(candidate.code, book.code);
+        const text = wanted
+          .map((number) => {
+            const item = bookData.chapters.get(chapter)?.find((verse) => verse.verse === number);
+            return item ? `${item.label} ${stripHtml(item.text)}` : "";
+          })
+          .filter(Boolean)
+          .join(" ");
+        return { label: candidate.label, text: text || "（该译本暂无此节）" };
+      } catch {
+        return { label: candidate.label, text: "（读取失败）" };
+      }
+    }));
+    setCompareData(results);
   };
 
   const pickerBookData = pickerBook ? getBookByCode(pickerBook) : null;
@@ -813,6 +892,16 @@ export function BiblePage() {
     return () => window.cancelAnimationFrame(frame);
   }, [audioPlaying, audioCurrentVerseNumber, picker]);
 
+  // 歌词式视图只露三节：上一节 / 当前节 / 下一节，播放推进时窗口自动跟随
+  const audioLyricIndex = Math.max(
+    0,
+    verses.findIndex((verse) => verse.verse === audioCurrentVerseNumber),
+  );
+  const audioLyricWindow = verses.slice(
+    Math.max(0, audioLyricIndex - 1),
+    audioLyricIndex + 2,
+  );
+
   useEffect(() => {
     if (
       !("mediaSession" in navigator)
@@ -871,20 +960,35 @@ export function BiblePage() {
     setParams({ t: version.code, bk: target.bookCode, c: String(target.chapter) });
     setSelected(new Set());
   };
-  // 下载走同域代理路由：mp3 在跨域 CDN 上，直接 <a download> 会变成页面跳转
-  const downloadAudio = () => {
-    if (!audioUrl) return;
-    const query = new URLSearchParams({
-      version: version.code,
-      book: book.code,
-      chapter: String(chapter),
-      voice: displayedAudioVoice,
-      name: `${displayedBook} ${chapter} ${displayedAudioVoice === "female" ? "女声" : "男声"}`,
-    });
-    const anchor = document.createElement("a");
-    anchor.href = `/api/mobile/audio/file?${query.toString()}`;
-    anchor.download = "";
-    anchor.click();
+  // 整卷音频缓存：把当前书卷全部章节（当前音色）缓存到本机，离线可听。
+  // 单章 mp3 走跨域 CDN，一律经同域代理 /api/mobile/audio/file 拉取。
+  const cacheBookAudio = async () => {
+    if (audioCacheBusy) return;
+    if (audioCacheReady) {
+      if (!window.confirm(`已缓存《${displayedBook}》整卷音频。删除本卷离线音频？`)) return;
+      await removeBookAudio(version.code, book.code, book.chapters, displayedAudioVoice);
+      setAudioCacheReady(false);
+      return;
+    }
+    if (!offlineAudioSupported()) {
+      setAudioError("当前环境不支持离线缓存");
+      return;
+    }
+    setAudioCacheBusy({ done: 0, total: book.chapters });
+    try {
+      await downloadBookAudio(
+        version.code,
+        book.code,
+        book.chapters,
+        displayedAudioVoice,
+        (done, total) => setAudioCacheBusy({ done, total }),
+      );
+      setAudioCacheReady(true);
+    } catch (error) {
+      setAudioError(error instanceof Error ? error.message : "整卷缓存失败，请检查网络后重试");
+    } finally {
+      setAudioCacheBusy(null);
+    }
   };
   const continueToNextAudioChapter = () => {
     const bookIndex = BOOKS.findIndex((item) => item.code === book.code);
@@ -897,6 +1001,13 @@ export function BiblePage() {
     continueAudioAfterLoadRef.current = true;
     setParams({ t: version.code, bk: nextBook.code, c: String(nextChapter) });
     setSelected(new Set());
+  };
+  // 歌词式视图：点某节从该节开始听（有时间戳才可点）
+  const seekToVerse = (verseNumber: number) => {
+    const audio = audioRef.current;
+    const stamp = audioTimestamps.find((item) => item.verse === verseNumber);
+    if (!audio || !stamp || !Number.isFinite(audio.duration)) return;
+    audio.currentTime = Math.min(audio.duration, stamp.start + 0.01);
   };
   const locateAudioVerse = () => {
     if (!audioCurrentVerse) return;
@@ -939,26 +1050,14 @@ export function BiblePage() {
         }}
       />
       {/* reading toolbar */}
-      <div className="bible-toolbar">
+      <div className={`bible-toolbar${toolbarHidden ? " is-hidden" : ""}`}>
         <div className="bible-reader-selectors" aria-label="经卷章节及译本选择">
+          {/* 书卷与章合并为一个芯片：点开当前书的章网格，「‹ 书卷」可退回换书——
+              比三芯片少一个认知单元，覆盖「换章多、换书少」的真实使用频率 */}
           <button
-            className={`bible-reader-selector book${picker === "chapter" && !pickerBookData ? " is-open" : ""}`}
+            className={`bible-reader-selector book is-combined${picker === "chapter" ? " is-open" : ""}`}
             onClick={() => {
-              if (picker === "chapter" && !pickerBookData) {
-                setPicker(null);
-                return;
-              }
-              setPicker("chapter");
-              setPickerBook(null);
-            }}
-            aria-label={`选择书卷，当前为${displayedBook}`}
-          >
-            {displayedBook}
-          </button>
-          <button
-            className={`bible-reader-selector chapter-number${picker === "chapter" && pickerBookData ? " is-open" : ""}`}
-            onClick={() => {
-              if (picker === "chapter" && pickerBookData?.code === book.code) {
+              if (picker === "chapter") {
                 setPicker(null);
                 setPickerBook(null);
                 return;
@@ -966,9 +1065,10 @@ export function BiblePage() {
               setPicker("chapter");
               setPickerBook(book.code);
             }}
-            aria-label={`选择章节，当前为第${chapter}章`}
+            aria-label={`选择书卷与章节，当前为${displayedBook}第${chapter}章`}
           >
-            {chapter}
+            {translate(bookChipName(book, version))} {chapter}
+            <Icon name="chevron-down" size={12} className="selector-caret" />
           </button>
           <button
             className={`bible-reader-selector version${picker === "version" ? " is-open" : ""}`}
@@ -976,6 +1076,7 @@ export function BiblePage() {
             aria-label={`选择译本，当前为${version.label}`}
           >
             {version.label}
+            <Icon name="chevron-down" size={12} className="selector-caret" />
           </button>
         </div>
 
@@ -1008,7 +1109,12 @@ export function BiblePage() {
           </button>
         </div>
 
-        {picker === "version" && (
+        {/* 章内阅读进度：2px 金色细线，随滚动更新位置感 */}
+      <div className="bible-read-progress" aria-hidden="true">
+        <div style={{ width: `${readProgress}%` }} />
+      </div>
+
+      {picker === "version" && (
           <div className="bible-version-picker" style={{ position: "absolute", top: 46, left: 16, width: 220, background: "var(--white)", border: "1px solid var(--line)", borderRadius: 16, boxShadow: "0 12px 32px rgba(48,49,51,.16)", padding: 8, zIndex: 30 }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "var(--body)", padding: "4px 6px 8px" }}>选择译本</div>
             {VERSIONS.map((ver) => (
@@ -1371,12 +1477,71 @@ export function BiblePage() {
         className={`screen-scroll bible-reading-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}${selectedVerses.length > 0 ? " has-verse-action-sheet" : ""}`}
         style={{ padding: version.code === "pinyin" ? "12px 22px 24px" : version.lang === "ko" ? "14px 22px 24px" : "8px 24px 24px" }}
         onClick={() => picker && setPicker(null)}
+        onScroll={(event) => {
+          const top = event.currentTarget.scrollTop;
+          const delta = top - lastScrollTopRef.current;
+          lastScrollTopRef.current = top;
+          const range = event.currentTarget.scrollHeight - event.currentTarget.clientHeight;
+          setReadProgress(range > 0 ? Math.min(100, Math.max(0, (top / range) * 100)) : 0);
+          // 选择器打开或接近顶部时始终显示；小幅抖动（±6px）不触发切换
+          if (picker || top < 48) {
+            setToolbarHidden(false);
+          } else if (delta > 6) {
+            setToolbarHidden(true);
+          } else if (delta < -6) {
+            setToolbarHidden(false);
+          }
+        }}
         onPointerDown={handleReadingPointerDown}
         onPointerUp={handleReadingPointerUp}
         onPointerCancel={() => {
           swipeStartRef.current = null;
         }}
       >
+        {/* 今日金句：每日仪式感的入口——今天一句、连续天数、直达经文与分享 */}
+        {!dailyDismissed && (
+          <section className="daily-verse-card" aria-label="今日金句">
+            <div className="daily-verse-head">
+              <span className="daily-verse-kicker">
+                今日金句 · {new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" }).format(new Date())}
+              </span>
+              {readStreak > 0 && (
+                <span className="daily-verse-streak" title={`连续读经 ${readStreak} 天`}>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2c1 3-1 4.5-2.2 6C8.5 9.6 8 11 8.4 12.8 6.9 12 6 10.6 6 9c-2 2-3 4.2-3 6.3C3 19 6.6 22 12 22s9-3 9-6.7c0-4.6-3.6-6.6-5-9.3-.7 1.3-.8 2.6-.2 4-1.8-1-3.3-3.4-3.8-8z"></path></svg>
+                  {readStreak} 天
+                </span>
+              )}
+              <button
+                type="button"
+                className="daily-verse-close"
+                aria-label="今天先收起金句卡"
+                onClick={() => {
+                  setDailyDismissed(true);
+                  try { localStorage.setItem("ob.daily-card-dismissed", todayKey); } catch { /* 存不了就只收本次 */ }
+                }}
+              >
+                <Icon name="x" size={14} />
+              </button>
+            </div>
+            <p className="daily-verse-text">{translate(dailyVerse.text)}</p>
+            <div className="daily-verse-foot">
+              <b>{translate(dailyVerse.reference)}</b>
+              <div className="daily-verse-actions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    markTodayRead();
+                    setParams({ t: "cuv", bk: dailyVerse.book, c: String(dailyVerse.chapter), v: String(dailyVerse.verse) });
+                  }}
+                >
+                  读这节
+                </button>
+                <button type="button" onClick={() => setDailyShareOpen(true)}>分享</button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {!data && !loadError && (
           <div style={{ fontSize: 13, color: "var(--body)" }}>加载经文中…</div>
         )}
@@ -1402,7 +1567,7 @@ export function BiblePage() {
             return (
               <span key={v.label} className="bible-verse">
                 {showHeadings && v.heading && (
-                  <span style={{ display: "block", fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}>{translate(v.heading)}</span>
+                  <span className="bible-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 800, margin: "14px 0 6px", color: "var(--ink)" }}><span aria-hidden="true" style={{ width: 3, height: 14, background: "var(--yellow)", borderRadius: 2, flex: "none" }} />{translate(v.heading)}</span>
                 )}
                 <span
                   id={`bible-verse-${v.verse}`}
@@ -1421,7 +1586,7 @@ export function BiblePage() {
                     }
                   }}
                 >
-                  <sup className="bible-verse-number" style={{ fontSize: 12, color: "var(--body)", margin: "0 4px" }}>{v.label}</sup>
+                  <sup className="bible-verse-number" style={{ fontSize: 10, color: "var(--muted)", margin: "0 4px" }}>{v.label}</sup>
                   <span
                     className="verse-text"
                     style={{
@@ -1479,37 +1644,91 @@ export function BiblePage() {
       </div>
 
       {/* audio modal */}
+      {/* 只在播放中显示：暂停时隐藏，不占阅读空间（进度保留，从顶栏喇叭键可回到面板） */}
+      {audioUrl && picker !== "audio" && audioPlaying && (
+        <div className="audio-mini-bar">
+          <button type="button" className="audio-mini-main" aria-label="展开语音圣经" onClick={() => setPicker("audio")}>
+            <span className="audio-mini-eq" aria-hidden="true">
+              {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={16} />}
+            </span>
+            <span className="audio-mini-copy">
+              <b>{audioSourceLabel || "语音圣经"}</b>
+              <small>{formatAudioTime(audioCurrentTime)} / {formatAudioTime(audioDuration)}</small>
+            </span>
+          </button>
+          <button type="button" className="audio-mini-play" aria-label={audioPlaying ? "暂停" : "播放"} onClick={() => void toggleAudio()}>
+            <AudioGlyph name={audioPlaying ? "pause" : "play"} size={18} />
+          </button>
+        </div>
+      )}
+
       {picker === "audio" && (
         <>
           <div className="audio-player-scrim" onClick={closeAudio} />
-          <section className="audio-player-sheet" role="dialog" aria-modal="true" aria-label={`${displayedBook}第${chapter}章语音圣经`}>
+          <section className="audio-player-sheet is-lyrics" role="dialog" aria-modal="true" aria-label={`${displayedBook}第${chapter}章语音圣经`}>
             <div className="audio-player-handle" />
             <div className="audio-player-kicker">
               <Icon name="volume-2" size={20} />
               <span>语音圣经</span>
               <button
                 type="button"
-                className="audio-player-download"
-                aria-label={`下载${displayedBook}第${chapter}章音频到本地`}
-                title="下载本章音频"
-                disabled={!audioUrl || audioLoading}
-                onClick={downloadAudio}
+                className={`audio-player-download${audioCacheReady ? " is-done" : ""}`}
+                aria-label={audioCacheBusy
+                  ? `正在缓存${displayedBook}整卷音频，第 ${audioCacheBusy.done} 章，共 ${audioCacheBusy.total} 章`
+                  : audioCacheReady
+                    ? `已缓存${displayedBook}整卷音频，点击可删除`
+                    : `缓存${displayedBook}整卷音频到本机`}
+                title={audioCacheBusy ? "整卷缓存中…" : audioCacheReady ? "已缓存整卷 · 点击删除" : "缓存整卷音频"}
+                disabled={Boolean(audioCacheBusy)}
+                onClick={() => void cacheBookAudio()}
               >
-                <Icon name="download" size={18} />
+                {audioCacheBusy
+                  ? <b className="audio-cache-progress">{audioCacheBusy.done}/{audioCacheBusy.total}</b>
+                  : <Icon name={audioCacheReady ? "check" : "download"} size={18} />}
               </button>
               <button type="button" className="audio-player-close" aria-label="关闭语音圣经" onClick={closeAudio}>
                 <Icon name="x" size={20} />
               </button>
             </div>
-            <h2 className="audio-player-title">{displayedBook} {chapter}</h2>
-            <div
-              className={`audio-player-status${audioError ? " error" : audioLoading || !audioUrl ? " loading" : " ready"}`}
-              role="status"
-              aria-live="polite"
-            >
-              <span className="audio-status-indicator" aria-hidden="true" />
-              <span>{audioError || (audioLoading || !audioUrl ? "正在准备本章音频" : "本章音频已就绪")}</span>
+            <div className="audio-player-titlebar">
+              <h2 className="audio-player-title">{displayedBook} {chapter}</h2>
+              <button type="button" className="audio-locate-btn" aria-label="在正文中定位当前经节" title="定位正文" onClick={locateAudioVerse}>
+                <Icon name="map-pin" size={16} />
+              </button>
             </div>
+            {(audioError || audioLoading || !audioUrl) && (
+              <div
+                className={`audio-player-status${audioError ? " error" : " loading"}`}
+                role="status"
+                aria-live="polite"
+              >
+                <span className="audio-status-indicator" aria-hidden="true" />
+                <span>{audioError || "正在准备本章音频"}</span>
+              </div>
+            )}
+
+            {/* 歌词式经文：只露上一节/当前节/下一节，当前节高亮，点某节从该节开始听 */}
+            <div className="audio-lyrics" aria-label="当前朗读经文及前后节">
+              {audioLyricWindow.map((verse) => {
+                const isCurrent = verse.verse === audioCurrentVerseNumber;
+                const seekable = audioTimestamps.some((item) => item.verse === verse.verse);
+                return (
+                  <button
+                    type="button"
+                    key={verse.verse}
+                    id={`audio-lyric-${verse.verse}`}
+                    className={`audio-lyric${isCurrent ? " is-current" : ""}`}
+                    disabled={!seekable}
+                    aria-current={isCurrent || undefined}
+                    onClick={() => seekToVerse(verse.verse)}
+                  >
+                    <span className="audio-lyric-num">{verse.label}</span>
+                    <span className="audio-lyric-text">{stripHtml(verse.text)}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="audio-progress-wrap">
               <input
                 className="audio-progress"
@@ -1536,28 +1755,18 @@ export function BiblePage() {
             </div>
 
             <div className="audio-controls">
-              <button type="button" aria-label="上一章" disabled={!prevAudioTarget || audioLoading} onClick={() => gotoAudioTarget(prevAudioTarget)}><Icon name="skip-back" size={24} /></button>
+              <button type="button" aria-label="上一章" disabled={!prevAudioTarget || audioLoading} onClick={() => gotoAudioTarget(prevAudioTarget)}><AudioGlyph name="prev" size={24} /></button>
               <button type="button" aria-label="后退30秒" disabled={!audioUrl} onClick={() => seekAudio(-30)}>
-                <span className="audio-seek-icon"><Icon name="rotate-ccw" size={24} /><b>30</b></span>
+                <span className="audio-seek-icon"><AudioGlyph name="replay" size={26} /><b>30</b></span>
               </button>
               <button type="button" className="audio-play-button" disabled={!audioUrl || audioLoading} aria-label={audioPlaying ? "暂停" : "播放"} onClick={toggleAudio}>
-                <Icon name={audioPlaying ? "pause" : "play"} size={28} />
+                <AudioGlyph name={audioPlaying ? "pause" : "play"} size={26} />
               </button>
               <button type="button" aria-label="前进30秒" disabled={!audioUrl} onClick={() => seekAudio(30)}>
-                <span className="audio-seek-icon"><Icon name="rotate-cw" size={24} /><b>30</b></span>
+                <span className="audio-seek-icon"><AudioGlyph name="forward" size={26} /><b>30</b></span>
               </button>
-              <button type="button" aria-label="下一章" disabled={!nextAudioTarget || audioLoading} onClick={() => gotoAudioTarget(nextAudioTarget)}><Icon name="skip-forward" size={24} /></button>
+              <button type="button" aria-label="下一章" disabled={!nextAudioTarget || audioLoading} onClick={() => gotoAudioTarget(nextAudioTarget)}><AudioGlyph name="next" size={24} /></button>
             </div>
-
-            <button type="button" className="audio-current-passage" onClick={locateAudioVerse}>
-              {/* CSS 网格是 图标/文案/箭头 三列；缺了图标列文案会被挤进 32px 里 */}
-              <span className="audio-current-icon" aria-hidden="true"><Icon name="book" size={16} /></span>
-              <span className="audio-current-copy">
-                <b>正在朗读 · {displayedBook} {chapter}:{audioCurrentVerse?.label ?? 1}</b>
-                <small>{audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "经文加载中…"}</small>
-              </span>
-              <Icon name="chevron-right" size={20} />
-            </button>
 
             <div className="audio-voice-section">
               <div className="audio-voice-picker">
@@ -1574,7 +1783,7 @@ export function BiblePage() {
                   <span className="audio-voice-selected">
                     音色 · {displayedAudioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
                   </span>
-                  <span className="audio-voice-chevron" aria-hidden="true"><Icon name="chevron-down" size={20} /></span>
+                  <span className="audio-voice-chevron" aria-hidden="true"><AudioGlyph name="chevron" size={16} /></span>
                 </button>
                 {voiceMenuOpen && (
                   <div className="audio-voice-menu" role="listbox" aria-label="朗读音色">
@@ -1606,51 +1815,10 @@ export function BiblePage() {
       {/* selection sheet (design 1b) */}
       {selectedVerses.length > 0 && selectedVerse && (
         <>
-          <div ref={verseActionSheetRef} className="sheet verse-action-sheet" role="dialog" aria-label="经文操作" data-testid="verse-action-sheet">
-            <header className="verse-action-sheet-header">
-              <div className="verse-action-reference">
-                <strong>{displayedBook} {chapter}:{selectedRangeLabel}</strong>
-                <span>{selectedVerses.length} 节 · {version.label}</span>
-              </div>
-              <button type="button" className="icon-btn icon-btn-ghost sheet-close-btn" aria-label="关闭经文选择" onClick={closeSheet}><Icon name="x" size={16} /></button>
-            </header>
-
-            <div className="verse-highlight-row">
-              <span className="verse-highlight-label">高亮</span>
-              {HIGHLIGHT_COLORS.map((color, colorIndex) => (
-                <button
-                  key={color}
-                  type="button"
-                  className="verse-highlight-choice"
-                  aria-label={`使用第 ${colorIndex + 1} 种高亮颜色`}
-                  onClick={() => {
-                    selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color, version.code));
-                    setStoreVersion((v) => v + 1);
-                  }}
-                >
-                  <span
-                    className={`verse-highlight-swatch${selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) ? " active" : ""}`}
-                    style={{ background: color }}
-                  >
-                    {selectedVerses.every((verse) => highlightMap.get(verse.verse) === color) && <Icon name="check" size={14} />}
-                  </span>
-                </button>
-              ))}
-              <button
-                type="button"
-                className="verse-highlight-choice"
-                onClick={() => {
-                  selectedVerses.forEach((verse) => clearHighlight(book.code, chapter, verse.verse));
-                  setStoreVersion((v) => v + 1);
-                }}
-                aria-label="取消高亮"
-              >
-                <span className="verse-highlight-swatch verse-highlight-clear" />
-              </button>
-            </div>
-
+          <div ref={verseActionSheetRef} className="sheet verse-action-sheet is-compact" role="dialog" aria-label="经文操作" data-testid="verse-action-sheet">
             {noteOpen && selectedVerses.length === 1 ? (
               <form
+                className="verse-compact-note-form"
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (noteText.trim()) {
@@ -1664,54 +1832,107 @@ export function BiblePage() {
                     setEditingNoteId(null);
                   }
                 }}
-                style={{ display: "flex", gap: 8, marginBottom: 8 }}
               >
                 <input
                   autoFocus
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="写下你的笔记…"
-                  style={{ flex: 1, height: 44, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14 }}
                 />
-                <button type="submit" style={{ height: 44, padding: "0 16px", background: "var(--purple)", borderRadius: 999, color: "#fff", fontSize: 13, fontWeight: 800 }}>{editingNoteId ? "更新" : "保存"}</button>
+                <button type="submit">{editingNoteId ? "更新" : "保存"}</button>
               </form>
             ) : (
-              <div className="verse-action-grid">
-                {[
-                  {
-                    label: selectedNotes.length ? "编辑笔记" : "笔记",
-                    icon: "edit",
-                    onClick: () => openNoteEditor(selectedVerse.verse, selectedNotes[0], true),
-                    disabled: selectedVerses.length === 0,
-                  },
-                  { label: "复制", icon: "align-justify", onClick: copyVerse },
-                  { label: "分享", icon: "share", onClick: () => setShareOpen(true) },
-                  { label: "慧读", icon: "star", onClick: askHuidu, primary: true, disabled: selectedVerses.length === 0 },
-                  {
-                    label: "注释",
-                    icon: "message-square",
-                    onClick: () => selectedVerse && navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`),
-                    disabled: selectedVerses.length === 0,
-                  },
-                ].map((a) => (
+              /* 紧凑单行操作条（与设计画布一致）：引用 + 五色高亮点 + 笔记/慧读/分享。
+                 点已激活的颜色再点一次即清除高亮；复制并入分享面板（分享文字走剪贴板）。 */
+              <div className="verse-compact-row">
+                {/* 短式引用：书名顶栏已有，条内只留 章:节，为「注释」入口腾出宽度 */}
+                <strong className="verse-compact-ref" title={`${displayedBook} ${chapter}:${selectedRangeLabel} · ${selectedVerses.length} 节 · ${version.label}`}>
+                  {chapter}:{selectedRangeLabel}
+                </strong>
+                <div className="verse-compact-swatches" role="group" aria-label="高亮颜色">
+                  {HIGHLIGHT_COLORS.map((color, colorIndex) => {
+                    const active = selectedVerses.length > 0
+                      && selectedVerses.every((verse) => highlightMap.get(verse.verse) === color);
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        aria-label={active ? "取消高亮" : `使用第 ${colorIndex + 1} 种高亮颜色`}
+                        aria-pressed={active}
+                        onClick={() => {
+                          if (active) selectedVerses.forEach((verse) => clearHighlight(book.code, chapter, verse.verse));
+                          else selectedVerses.forEach((verse) => setHighlight(book.code, chapter, verse.verse, color, version.code));
+                          setStoreVersion((v) => v + 1);
+                        }}
+                      >
+                        <span className={`verse-highlight-swatch${active ? " active" : ""}`} style={{ background: color }}>
+                          {active && <Icon name="check" size={12} />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="verse-compact-actions">
+                  <button type="button" disabled={selectedVerses.length === 0} onClick={() => openNoteEditor(selectedVerse.verse, selectedNotes[0], true)}>笔记</button>
+                  <button type="button" disabled={selectedVerses.length === 0} onClick={() => selectedVerse && navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`)}>注释</button>
+                  <button type="button" disabled={selectedVerses.length === 0} onClick={askHuidu}>慧读</button>
+                  <button type="button" onClick={() => setShareOpen(true)}>分享</button>
                   <button
                     type="button"
-                    key={a.label}
-                    className={`verse-action-button${a.primary ? " primary" : ""}`}
-                    disabled={a.disabled}
-                    onClick={a.onClick}
+                    className="verse-compact-more"
+                    aria-label={moreOpen ? "收起更多操作" : "更多操作"}
+                    aria-expanded={moreOpen}
+                    onClick={() => setMoreOpen((open) => !open)}
                   >
-                    <span className="verse-action-icon">
-                      <Icon name={a.icon} size={20} />
-                    </span>
-                    <span className="verse-action-label">{a.label}</span>
+                    <Icon name="more-horizontal" size={16} />
                   </button>
+                </div>
+              </div>
+            )}
+            {moreOpen && !noteOpen && (
+              <div className="verse-compact-extra">
+                <button type="button" disabled={selectedVerses.length === 0} onClick={() => void openCompare()}>译本对照</button>
+                <button type="button" disabled={selectedVerses.length === 0} onClick={() => void copyVerse()}>复制经文</button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {compareOpen && (
+        <>
+          <div className="audio-player-scrim" onClick={() => setCompareOpen(false)} />
+          <section className="sheet compare-sheet" role="dialog" aria-modal="true" aria-label="译本对照">
+            <div className="compare-sheet-head">
+              <b>译本对照 · {displayedBook} {chapter}:{selectedRangeLabel}</b>
+              <button type="button" aria-label="关闭对照" onClick={() => setCompareOpen(false)}><Icon name="x" size={18} /></button>
+            </div>
+            {compareData === null ? (
+              <div className="compare-loading">正在读取各译本…</div>
+            ) : (
+              <div className="compare-list">
+                {compareData.map((item) => (
+                  <div className="compare-item" key={item.label}>
+                    <span className="compare-version">{item.label}</span>
+                    <p>{translate(item.text)}</p>
+                  </div>
                 ))}
               </div>
             )}
-
-          </div>
+          </section>
         </>
+      )}
+
+      {dailyShareOpen && (
+        <VerseShareSheet
+          data={{
+            verseText: dailyVerse.text,
+            reference: dailyVerse.reference,
+            versionLabel: "和合本",
+            shareUrl: `https://app.openbible.live/#/bible?t=cuv&bk=${dailyVerse.book}&c=${dailyVerse.chapter}&v=${dailyVerse.verse}`,
+          }}
+          onClose={() => setDailyShareOpen(false)}
+        />
       )}
 
       {shareOpen && selectedVerses.length > 0 && (

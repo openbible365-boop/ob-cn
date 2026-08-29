@@ -13,6 +13,7 @@ import {
   type AccountNotification,
 } from "../data/profile";
 import { useSessionUser } from "../hooks/useSessionUser";
+import { disableReminder, enableReminder, getReminder, reminderSupported } from "../data/reading-reminder";
 
 export function NotificationsPage() {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ export function NotificationsPage() {
   const [systemPermission, setSystemPermission] = useState<string>(() =>
     typeof Notification === "undefined" ? "unsupported" : Notification.permission,
   );
+  const [reminder, setReminder] = useState(getReminder);
+  const [reminderFeedback, setReminderFeedback] = useState("");
+  const [reminderBusy, setReminderBusy] = useState(false);
   const dailyVerse = useMemo(
     () => ({
       verseText: "你的话是我脚前的灯，是我路上的光。",
@@ -97,6 +101,31 @@ export function NotificationsPage() {
     setUnreadCount(0);
   };
 
+  const toggleReminder = async () => {
+    if (reminderBusy) return;
+    setReminderBusy(true);
+    if (reminder.enabled) {
+      await disableReminder();
+      setReminder(getReminder());
+      setReminderFeedback("提醒已关闭");
+    } else {
+      const result = await enableReminder(reminder.time);
+      setReminder(getReminder());
+      setReminderFeedback(result.message);
+    }
+    setReminderBusy(false);
+  };
+
+  const changeReminderTime = async (time: string) => {
+    setReminder((current) => ({ ...current, time }));
+    if (!reminder.enabled || reminderBusy) return;
+    setReminderBusy(true);
+    const result = await enableReminder(time);
+    setReminder(getReminder());
+    setReminderFeedback(result.message);
+    setReminderBusy(false);
+  };
+
   const requestSystemPermission = async () => {
     if (typeof Notification === "undefined") return;
     const permission = await Notification.requestPermission();
@@ -155,6 +184,42 @@ export function NotificationsPage() {
           <span className="notification-daily-verse-reference">{dailyVerse.reference} · {dailyVerse.versionLabel}</span>
           <span className="notification-daily-verse-action">预览分享图片 <Icon name="chevron-right" size={16} /></span>
         </button>
+
+        <section className="notification-section notification-reminder-section" aria-labelledby="reading-reminder-title">
+          <div className="notification-section-heading compact">
+            <div>
+              <h2 id="reading-reminder-title">每日读经提醒</h2>
+              <p>{reminderSupported() ? "到点在这台设备上提醒你读经" : "在慧读圣经 App 内可用，网页版暂不支持"}</p>
+            </div>
+            {reminderSupported() && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={reminder.enabled}
+                aria-label={`每日读经提醒，${reminder.enabled ? "已开启" : "已关闭"}`}
+                className="notification-reminder-toggle"
+                disabled={reminderBusy}
+                onClick={() => void toggleReminder()}
+              >
+                <span className={`notification-switch${reminder.enabled ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+              </button>
+            )}
+          </div>
+          {reminderSupported() && (
+            <div className="notification-reminder-body">
+              <label className="notification-reminder-time">
+                <span>提醒时间</span>
+                <input
+                  type="time"
+                  value={reminder.time}
+                  disabled={reminderBusy}
+                  onChange={(event) => void changeReminderTime(event.target.value)}
+                />
+              </label>
+              {reminderFeedback && <p className="notification-reminder-feedback" role="status">{reminderFeedback}</p>}
+            </div>
+          )}
+        </section>
 
         <section className="notification-section notification-system-section" aria-labelledby="system-notification-title">
           <div className="notification-section-heading compact">

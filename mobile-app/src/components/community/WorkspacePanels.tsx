@@ -11,6 +11,7 @@ import {
 } from "./WorkspaceComposers";
 import { resolveApiUrl, resolveAvatarUrl } from "../../data/api";
 import type { CommunityJoinRequest } from "../../data/community";
+import { addPrayer } from "../../data/prayers";
 import {
   fetchCommunityPosts,
   fetchPostComments,
@@ -277,7 +278,26 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
           {post.verseRef && <div className="community-verse-ref"><Icon name="book" size={14} />{post.verseRef}</div>}
           <div className="community-inline-actions">
             {post.postType === "PRAYER"
-              ? <button disabled={busy} aria-label={`${post.likedByMe ? "取消代祷" : "我为你祷告"}，已有 ${post.likeCount} 人祷告`} aria-pressed={post.likedByMe} className={`community-pray-btn${post.likedByMe ? " is-active" : ""}`} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}>🙏 {post.likedByMe ? "已为你祷告" : "我为你祷告"}{post.likeCount > 0 ? ` · ${post.likeCount}` : ""}</button>
+              ? <>
+                  <button disabled={busy} aria-label={`${post.likedByMe ? "取消代祷" : "我为你祷告"}，已有 ${post.likeCount} 人祷告`} aria-pressed={post.likedByMe} className={`community-pray-btn${post.likedByMe ? " is-active" : ""}`} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}>🙏 {post.likedByMe ? "已为你祷告" : "我为你祷告"}{post.likeCount > 0 ? ` · ${post.likeCount}` : ""}</button>
+                  <button
+                    type="button"
+                    className="community-prayer-save"
+                    aria-label="把这条代祷请求记入我的祷告清单"
+                    onClick={(event) => {
+                      addPrayer(
+                        Array.from(post.content).slice(0, 120).join(""),
+                        "community",
+                        `${post.author.name}的代祷请求`,
+                      );
+                      const target = event.currentTarget;
+                      target.textContent = "已记入清单";
+                      target.disabled = true;
+                    }}
+                  >
+                    记入清单
+                  </button>
+                </>
               : <button disabled={busy} aria-label={`${post.likedByMe ? "取消点赞" : "点赞"}，当前 ${post.likeCount} 个赞`} aria-pressed={post.likedByMe} className={post.likedByMe ? "is-active" : ""} onClick={() => runAction({ action: "TOGGLE_LIKE", postId: post.id })}><Icon name="heart" size={16} />{post.likeCount}</button>}
             <button aria-label={`写评论，当前 ${post.commentCount} 条`} aria-expanded={commentPostId === post.id} onClick={() => setCommentPostId(commentPostId === post.id ? "" : post.id)}><Icon name="message-square" size={16} />{post.commentCount}</button>
             <button disabled={busy} aria-pressed={post.bookmarkedByMe} className={post.bookmarkedByMe ? "is-bookmarked" : ""} onClick={() => runAction({ action: "TOGGLE_BOOKMARK", postId: post.id })}><Icon name="bookmark" size={16} />{post.bookmarkedByMe ? "已收藏" : "收藏"}</button>

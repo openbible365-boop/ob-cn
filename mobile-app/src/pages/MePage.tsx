@@ -14,6 +14,7 @@ import {
   type SessionUser,
 } from "../data/profile";
 import { fetchReadingPlans, type ReadingPlan } from "../data/reading-plans";
+import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
 
 export function MePage() {
@@ -118,16 +119,20 @@ export function MePage() {
     { icon: "calendar", label: translate("活动"), value: user.counts.eventSignups, to: "/me/activities" },
   ];
 
-  // 菜单分组：读经 / 账户 两张卡（社群卡单独渲染，只有管理身份才出现）。
-  // 法务条款升级成菜单行——注册型产品里它们该能被找到，不该藏在页脚小字里。
+  // 菜单分组：读经内容 / 设置 / 法务三张卡（社群卡单独渲染，只有管理身份才出现）。
+  // 法务条款独立成组放最底部——注册型产品里它们该能被找到，但不该和日常设置挤在一起。
   const menuGroups = [
     [
       { icon: "calendar", label: translate("读经计划"), desc: translate("个人与社群每日阅读"), to: "/me/plans" },
-      { icon: "align-justify", label: translate("我的内容"), desc: "", to: "/me/content" },
+      { icon: "align-justify", label: translate("我的内容"), desc: translate("高亮与笔记的汇总"), to: "/me/content" },
+      { icon: "heart", label: translate("祷告清单"), desc: translate("代求与已应允的记录"), to: "/me/prayers" },
     ],
     [
-      { icon: "download", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
-      { icon: "bell", label: translate("通知设置"), desc: "", to: "/me/notifications" },
+      { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
+      { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
+      { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
+    ],
+    [
       { icon: "info", label: translate("用户协议"), desc: "", to: "/legal/terms" },
       { icon: "shield", label: translate("隐私政策"), desc: "", to: "/legal/privacy" },
     ],
@@ -232,9 +237,12 @@ export function MePage() {
               <Icon name="book" size={16} />
               <b>{activePlan.title}</b>
               <small>{activePlan.completedDays}/{activePlan.totalDays} {translate("天")}</small>
+              {/* 整卡可点的 affordance：没有箭头没人知道能点 */}
+              <Icon name="chevron-right" size={14} className="me-plan-banner-caret" />
             </span>
             <span className="me-plan-banner-bar"><span style={{ width: `${planPct}%` }} /></span>
             <small className="me-plan-banner-today">
+              {getStreak() > 0 ? `${translate("连续")} ${getStreak()} ${translate("天")} · ` : ""}
               {activePlan.completedAt
                 ? translate("已完成，去看看其他计划")
                 : activePlan.today
@@ -255,7 +263,8 @@ export function MePage() {
             <button key={stat.label} type="button" onClick={() => navigate(stat.to)}>
               <Icon name={stat.icon} size={20} />
               <span>{stat.label}</span>
-              <b className="me-quick-count">{stat.value}</b>
+              {/* 零值弱化：还没有数据的格子不该和有数据的抢注意力 */}
+              <b className={`me-quick-count${stat.value === 0 ? " is-zero" : ""}`}>{stat.value}</b>
             </button>
           ))}
         </div>
@@ -311,9 +320,9 @@ export function MePage() {
           </div>
         )}
 
-        {menuGroups[1] && (
-          <div className="me-menu-card">
-            {menuGroups[1].map((row) => (
+        {menuGroups.slice(1).map((group, index) => (
+          <div className="me-menu-card" key={index}>
+            {group.map((row) => (
               <button key={row.label} type="button" onClick={() => navigate(row.to)}>
                 <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
                 <span className="me-menu-copy">
@@ -324,7 +333,7 @@ export function MePage() {
               </button>
             ))}
           </div>
-        )}
+        ))}
 
         {!logoutConfirm ? (
           <button className="me-logout-button" type="button" onClick={() => setLogoutConfirm(true)}>
@@ -346,7 +355,7 @@ export function MePage() {
         )}
         {logoutError && <div className="me-logout-error" role="alert">{logoutError}</div>}
 
-        <div className="me-version">慧读圣经 · v0.1</div>
+        <div className="me-version">慧读圣经 · v{__APP_VERSION__}</div>
       </main>
     </div>
   );

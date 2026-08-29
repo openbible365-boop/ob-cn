@@ -4,6 +4,7 @@ import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { BookIntroduction } from "../components/BookIntroduction";
 import { useSettings } from "../context/SettingsContext";
+import { ANDROID_BACK_EVENT } from "../native/android-back";
 import { PlayingAudioIcon } from "../components/AudioBiblePlayer";
 import {
   AnnotationAudioPlayer,
@@ -19,8 +20,12 @@ import {
   setReading,
   defaultChapterFor,
   bookName,
+  bookChipName,
+  loadBook,
   loadCommentary,
+  stripHtml,
   type CommentarySection,
+  type Verse,
 } from "../data/scripture";
 
 const commentaryReferencePattern =
@@ -109,7 +114,29 @@ export function AnnotationsPage() {
   const [audioCurrentSegment, setAudioCurrentSegment] = useState<string | null>(null);
   const [pickerBook, setPickerBook] = useState<string | null>(null);
   const [locatedAnnotation, setLocatedAnnotation] = useState<string | null>(null);
+  // 注释↔经文对照：点条目的引用徽章，就地展开对应经文
+  const [expandedScripture, setExpandedScripture] = useState<string | null>(null);
+  const [scriptureVerses, setScriptureVerses] = useState<Verse[] | null>(null);
+  const expandedScriptureRef = useRef<string | null>(null);
+  const [readProgress, setReadProgress] = useState(0);
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // 安卓返回键：先关掉打开的面板，再轮到路由回退
+  useEffect(() => {
+    const closeTopOverlay = (event: Event) => {
+      const close =
+        (audioOpen && (() => setAudioOpen(false)))
+        || (fontSettingsOpen && (() => setFontSettingsOpen(false)))
+        || (copyrightOpen && (() => setCopyrightOpen(false)))
+        || (chapterPickerOpen && (() => { setChapterPickerOpen(false); setPickerBook(null); }));
+      if (close) {
+        event.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
+    return () => window.removeEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
+  }, [audioOpen, fontSettingsOpen, copyrightOpen, chapterPickerOpen]);
   const pickerBookData = pickerBook ? getBookByCode(pickerBook) : null;
   const displayedBook = translate(displayBook);
 
@@ -307,6 +334,54 @@ export function AnnotationsPage() {
     gotoAdjacentChapter(deltaX < 0 ? 1 : -1);
   };
 
+  // 换章时收起经文对照、进度线归零
+  useEffect(() => {
+    expandedScriptureRef.current = null;
+    setExpandedScripture(null);
+    setScriptureVerses(null);
+    setReadProgress(0);
+  }, [commentaryChapterKey, isIntroduction]);
+
+  // 章内阅读进度：与圣经页一致的 2px 金色细线
+  useEffect(() => {
+    const scroller = document.querySelector<HTMLElement>(".annotation-reader-scroll");
+    if (!scroller) return;
+    const update = () => {
+      const total = scroller.scrollHeight - scroller.clientHeight;
+      setReadProgress(total > 0 ? Math.min(100, (scroller.scrollTop / total) * 100) : 0);
+    };
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    return () => scroller.removeEventListener("scroll", update);
+  }, [commentaryChapterKey, isIntroduction, commentary]);
+
+  const toggleScripture = async (sectionId: string, title: string) => {
+    if (expandedScripture === sectionId) {
+      expandedScriptureRef.current = null;
+      setExpandedScripture(null);
+      setScriptureVerses(null);
+      return;
+    }
+    const range = commentaryRange(title);
+    if (!range) return;
+    expandedScriptureRef.current = sectionId;
+    setExpandedScripture(sectionId);
+    setScriptureVerses(null);
+    try {
+      const bookData = await loadBook(version.code, book.code);
+      if (expandedScriptureRef.current !== sectionId) return; // 已切到别的条目
+      const startVerse = range.start % 1000;
+      // 跨章的范围只展示当前章内的部分，避免一次贴出几十节
+      const endVerse = Math.floor(range.end / 1000) === chapter ? range.end % 1000 : Number.MAX_SAFE_INTEGER;
+      const verses = (bookData.chapters.get(chapter) ?? []).filter(
+        (verse) => verse.verse >= startVerse && verse.verse <= endVerse,
+      );
+      setScriptureVerses(verses);
+    } catch {
+      if (expandedScriptureRef.current === sectionId) setScriptureVerses([]);
+    }
+  };
+
   const commentaryBody = (body: string) => {
     const colonIndex = body.search(/[：:]/);
     if (colonIndex <= 0 || colonIndex > 18) return body;
@@ -340,10 +415,30 @@ export function AnnotationsPage() {
           className="annotation-section-body"
           style={{ fontSize, lineHeight: annotationLineHeight }}
         >
-          <span className="annotation-reference-chip">{commentaryReference(section.title)}</span>
+          <button
+            type="button"
+            className={`annotation-reference-chip${expandedScripture === sectionId ? " is-expanded" : ""}`}
+            aria-expanded={expandedScripture === sectionId}
+            aria-label={`${commentaryReference(section.title)}，${expandedScripture === sectionId ? translate("收起经文") : translate("展开对应经文")}`}
+            onClick={() => void toggleScripture(sectionId, section.title)}
+          >
+            {commentaryReference(section.title)}
+          </button>
           {topic && <strong className="annotation-entry-topic">{translate(topic)}</strong>}
           {variant === "detail" ? commentaryBody(translate(section.body)) : translate(section.body)}
         </p>
+        {expandedScripture === sectionId && (
+          <blockquote className="annotation-scripture-quote" style={{ fontSize: Math.max(fontSize - 2, 13) }}>
+            {scriptureVerses === null && <span className="annotation-scripture-loading">{translate("正在取经文…")}</span>}
+            {scriptureVerses?.length === 0 && <span className="annotation-scripture-loading">{translate("暂时取不到这段经文")}</span>}
+            {scriptureVerses?.map((verse) => (
+              <span className="annotation-scripture-verse" key={verse.verse}>
+                <sup>{verse.label}</sup>
+                {translate(stripHtml(verse.text))}
+              </span>
+            ))}
+          </blockquote>
+        )}
       </article>
     );
   };
@@ -352,7 +447,7 @@ export function AnnotationsPage() {
     <div className="screen annotation-reader-screen">
       <CompactToolbar
         ariaLabel={translate("当前注释卷章与版本")}
-        primary={displayedBook}
+        primary={translate(bookChipName(book, version))}
         middle={isIntroduction ? translate("绪论") : chapter}
         secondary={translate("精读本注释")}
         primaryAriaLabel={`${translate("选择书卷，当前为")}${displayedBook}`}
@@ -570,6 +665,10 @@ export function AnnotationsPage() {
         )}
       />
 
+      <div className="annotation-read-progress" aria-hidden="true">
+        <div style={{ width: `${readProgress}%` }} />
+      </div>
+
       <div
         className={`screen-scroll annotation-reader annotation-reader-scroll${isIntroduction ? " is-introduction" : ""}`}
         onClick={() => {
@@ -616,7 +715,18 @@ export function AnnotationsPage() {
                   <div>{translate("可以切换到其他章节继续阅读。")}</div>
                 </div>
               )}
-              <div className="annotation-swipe-hint">{translate("左右滑动切换绪论、上一章或下一章")}</div>
+              {/* 长注释读到底后直接切章，不必回顶部或依赖滑动手势 */}
+              <div className="annotation-chapter-nav">
+                <button type="button" onClick={() => gotoAdjacentChapter(-1)}>
+                  <Icon name="chevron-left" size={15} />
+                  {chapter > 1 ? translate("上一章") : translate("绪论")}
+                </button>
+                <button type="button" onClick={() => gotoAdjacentChapter(1)}>
+                  {chapter < maxChapter ? translate("下一章") : translate("下一卷")}
+                  <Icon name="chevron-right" size={15} />
+                </button>
+              </div>
+              <div className="annotation-swipe-hint">{translate("也可以左右滑动切换章节")}</div>
           </section>
         )}
       </div>

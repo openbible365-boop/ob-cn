@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { getStreak, markTodayRead } from "../data/streak";
 import { bookName, getBookByCode, getVersion } from "../data/scripture";
 import {
   fetchReadingPlans,
@@ -53,6 +54,8 @@ export function ReadingPlansPage() {
       plan.id,
     );
     if (result.ok) {
+      // 打卡成功计入连续读经天数（本机 streak）
+      if (plan.enrolled) markTodayRead();
       setMessage(result.message);
       await loadPlans();
     } else setError(result.message);
@@ -74,7 +77,7 @@ export function ReadingPlansPage() {
     <div className="screen reading-plans-screen">
       <UnifiedHeader
         title="读经计划"
-        subtitle={plans.length ? `${plans.length} 个` : "每日同行"}
+        subtitle={getStreak() > 0 ? `连续 ${getStreak()} 天` : plans.length ? `${plans.length} 个` : "每日同行"}
         ariaLabel="个人与社群读经计划"
         onBack={() => navigate("/me")}
         backLabel="返回我的"

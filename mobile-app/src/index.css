@@ -529,6 +529,126 @@ a {
   padding: 5px 16px;
   border-bottom: 0.5px solid var(--line);
   background: var(--white);
+  transition: margin-top 220ms ease, opacity 180ms ease;
+}
+
+/* 今日金句卡：金色淡底的每日仪式感入口 */
+.daily-verse-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 14px;
+  background: linear-gradient(160deg, var(--yellow-soft), var(--white) 90%);
+}
+
+.daily-verse-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-verse-kicker {
+  flex: 1;
+  color: var(--yellow-ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.daily-verse-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.daily-verse-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+.daily-verse-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.daily-verse-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.daily-verse-foot > b {
+  flex: 1;
+  color: var(--yellow-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.daily-verse-actions {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+.daily-verse-actions button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 章内阅读进度线：紧贴顶栏下缘，收起顶栏后仍在，保持位置感 */
+.bible-read-progress {
+  position: absolute;
+  right: 0;
+  bottom: -0.5px;
+  left: 0;
+  height: 2px;
+  background: var(--surface-2);
+}
+
+.bible-read-progress > div {
+  height: 2px;
+  background: var(--yellow);
+  transition: width 120ms linear;
+}
+
+/* 合并芯片与下拉箭头 */
+.bible-reader-selector .selector-caret {
+  margin-left: 5px;
+  opacity: 0.7;
+}
+
+.bible-reader-selector.is-combined {
+  border-radius: 10px;
+}
+
+/* 向下滚阅读时收起顶栏，把竖向空间还给正文；向上滚随即恢复 */
+.bible-toolbar.is-hidden {
+  margin-top: -50px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bible-reader-selectors {
@@ -687,7 +807,8 @@ a {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  margin-left: auto;
 }
 
 .bible-toolbar-action {
@@ -1338,8 +1459,10 @@ a {
   display: inline-block;
   margin-right: 8px;
   padding: 2px 7px;
+  border: 0;
   border-radius: 999px;
-  /* 与网页端注释一致：金族徽章（单节淡金；多节实金见 is-range 覆盖） */
+  /* 与网页端注释一致：金族徽章（单节淡金；多节实金见 is-range 覆盖）。
+     现在是按钮：点它就地展开对应经文 */
   background: var(--yellow-soft);
   color: var(--yellow-ink);
   font-size: 12px;
@@ -1349,6 +1472,11 @@ a {
   white-space: nowrap;
 }
 
+.annotation-reference-chip.is-expanded {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
 .annotation-section-body {
   margin: 0;
   color: #292d33;
@@ -1356,7 +1484,78 @@ a {
   line-height: 1.85;
   overflow-wrap: anywhere;
   text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
+  hanging-punctuation: allow-end;
   word-break: break-word;
+}
+
+/* 注释↔经文对照：金竖条引用块，视觉上明确「这是圣经原文」 */
+.annotation-scripture-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 4px;
+  padding: 9px 12px 10px;
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 10px 10px 0;
+  background: var(--yellow-soft);
+  color: var(--ink);
+  line-height: 1.85;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
+}
+
+.annotation-scripture-verse sup {
+  margin-right: 3px;
+  color: var(--yellow-ink);
+  font-size: 0.7em;
+  font-weight: 800;
+}
+
+.annotation-scripture-loading {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 章内阅读进度：紧贴顶栏下缘的 2px 金线，与圣经页一致 */
+.annotation-read-progress {
+  position: relative;
+  z-index: 6;
+  height: 2px;
+  margin-bottom: -2px;
+  flex: none;
+  background: transparent;
+}
+
+.annotation-read-progress > div {
+  height: 2px;
+  background: var(--yellow);
+  transition: width 120ms linear;
+}
+
+/* 章尾导航：读完直接切章 */
+.annotation-chapter-nav {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 4px;
+}
+
+.annotation-chapter-nav button {
+  display: flex;
+  height: 42px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .annotation-comparison-section {
@@ -1402,6 +1601,7 @@ a {
   margin: 8px -10px;
   padding: 14px 12px 16px;
   border-top: 0;
+  border-left: 3px solid var(--yellow);
   border-radius: 12px;
   background: rgba(244, 199, 95, 0.12);
 }
@@ -2223,6 +2423,229 @@ body.dark .notification-daily-verse-action {
   box-shadow: 0 -10px 34px rgba(39, 34, 24, 0.12);
 }
 
+/* 紧凑单行操作条：悬浮胶囊，停靠在标签栏上方（与设计画布一致） */
+.verse-action-sheet.is-compact {
+  left: 12px;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-overlay);
+}
+
+.verse-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.verse-compact-ref {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verse-compact-swatches {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+}
+
+.verse-compact-swatches button {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border: 0;
+  background: none;
+}
+
+.verse-compact-swatches .verse-highlight-swatch {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  color: rgba(32, 34, 41, 0.62);
+}
+
+.verse-compact-swatches .verse-highlight-swatch.active {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3.5px var(--purple);
+}
+
+.verse-compact-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.verse-compact-actions button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.verse-compact-actions button:disabled {
+  color: var(--muted);
+}
+
+/* 操作条「更多」：省略号小键 + 上方弹出的第二行（对照/复制的容身处） */
+.verse-compact-more {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+.verse-compact-more[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.verse-compact-extra {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 8px 6px 2px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+
+.verse-compact-extra button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.verse-compact-extra button:disabled {
+  color: var(--muted);
+}
+
+/* 译本对照面板 */
+.compare-sheet {
+  z-index: 52;
+  max-height: 62dvh;
+  overflow-y: auto;
+  border-radius: 16px 16px 0 0;
+  border-top: 0;
+  box-shadow: var(--shadow-overlay);
+}
+
+.compare-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.compare-sheet-head b {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.compare-sheet-head button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--body);
+}
+
+.compare-loading {
+  padding: 20px 0 28px;
+  color: var(--body);
+  font-size: 13px;
+  text-align: center;
+}
+
+.compare-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+
+.compare-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.compare-version {
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.compare-item p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.85;
+  text-align: justify;
+}
+
+/* 注意：拼音和合本的注音在对照里已剥离，只看纯文本 */
+
+.verse-compact-note-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.verse-compact-note-form input {
+  height: 40px;
+  min-width: 0;
+  flex: 1;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.verse-compact-note-form button {
+  height: 36px;
+  flex: none;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .verse-action-sheet-header {
   display: flex;
   align-items: center;
@@ -2457,6 +2880,19 @@ body.dark .notification-daily-verse-action {
   color: var(--muted);
 }
 
+.audio-player-download.is-done {
+  color: var(--success);
+}
+
+/* 整卷缓存进度：图标位显示 x/y 章 */
+.audio-cache-progress {
+  color: var(--purple-deep);
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .audio-player-download + .audio-player-close {
   margin-left: 0;
 }
@@ -2679,6 +3115,198 @@ body.dark .notification-daily-verse-action {
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 迷你播放条：关掉播放器面板后停靠在标签栏上方，点击展开完整面板 */
+.audio-mini-bar {
+  position: fixed;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: min(calc(100vw - 28px), 366px);
+  padding: 6px 8px 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  transform: translateX(-50%);
+}
+
+.audio-mini-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.audio-mini-eq {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  border-radius: 50%;
+}
+
+.audio-mini-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.audio-mini-copy b {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-mini-copy small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-mini-play {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
+}
+
+/* ── 歌词式播放器：三节紧凑窗口（上一节 / 当前节 / 下一节） ── */
+.audio-player-sheet.is-lyrics {
+  display: flex;
+  flex-direction: column;
+  width: min(calc(100% - 28px), 460px);
+  max-height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow: hidden auto;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom) / 2);
+  /* 暖纸渐变：顶部一抹金，往下过渡回纸白——阅读场景的底色 */
+  background: linear-gradient(180deg, var(--yellow-soft) 0%, var(--white) 26%);
+}
+
+.audio-player-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.audio-player-sheet.is-lyrics .audio-player-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.audio-locate-btn {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--body);
+}
+
+.audio-locate-btn:active {
+  background: var(--surface-2);
+  color: var(--purple-deep);
+}
+
+/* 歌词区：只有三行，随内容自适应，不需要滚动 */
+.audio-lyrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px -6px 8px;
+  padding: 4px 6px;
+}
+
+.audio-lyric {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--body);
+  text-align: left;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.audio-lyric:disabled {
+  opacity: 0.85;
+}
+
+/* 相邻两节弱化成上下文预览，视觉重心留给当前节 */
+.audio-lyric:not(.is-current) {
+  opacity: 0.55;
+}
+
+.audio-lyric:not(.is-current) .audio-lyric-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.audio-lyric-num {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.audio-lyric-text {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.85;
+  word-break: break-word;
+}
+
+/* 当前朗读节：金底 + 左金条 + 深字，全文完整展开 */
+.audio-lyric.is-current {
+  background: var(--yellow-soft);
+  box-shadow: inset 3px 0 0 var(--yellow);
+  color: var(--ink);
+}
+
+.audio-lyric.is-current .audio-lyric-num {
+  color: var(--yellow-ink);
+}
+
+.audio-lyric.is-current .audio-lyric-text {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.9;
+}
+
+.audio-player-sheet.is-lyrics .audio-progress-wrap,
+.audio-player-sheet.is-lyrics .audio-controls,
+.audio-player-sheet.is-lyrics .audio-voice-section {
+  flex: none;
 }
 
 /* 正在朗读的是「经文」——图标与引用走金色阅读语义，和经文引用芯片一家人 */
@@ -3479,6 +4107,11 @@ body.dark .notification-daily-verse-action {
   opacity: 0.85;
 }
 
+.me-plan-banner-caret {
+  flex: none;
+  opacity: 0.7;
+}
+
 .me-plan-banner-bar {
   height: 5px;
   overflow: hidden;
@@ -3557,6 +4190,11 @@ body.dark .notification-daily-verse-action {
   font-size: 11px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+.me-quick-count.is-zero {
+  opacity: 0.4;
+  font-weight: 600;
 }
 
 /* 分组菜单卡：一张卡装一组行，行间用分隔线（原来每行各自一张卡，组感不强）。
@@ -4047,6 +4685,298 @@ body.dark .notification-daily-verse-action {
   line-height: 1.7;
 }
 
+/* ── 全局兜底：崩溃页与退出提示 ── */
+.app-crash {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 28px calc(32px + var(--safe-bottom));
+  background: var(--surface);
+  color: var(--body);
+  text-align: center;
+}
+
+.app-crash b {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.app-crash p {
+  margin: 0;
+  max-width: 300px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.app-crash-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.app-crash-actions button {
+  height: 40px;
+  padding: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.app-crash-actions button.is-primary {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+
+.app-crash small {
+  margin-top: 14px;
+  max-width: 320px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.app-exit-toast {
+  position: fixed;
+  bottom: calc(96px + var(--safe-bottom));
+  left: 50%;
+  z-index: 90;
+  transform: translateX(-50%);
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(32, 34, 41, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: exit-toast-in 160ms ease;
+}
+
+body.dark .app-exit-toast {
+  background: rgba(242, 240, 235, 0.94);
+  color: #17191f;
+}
+
+@keyframes exit-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── 每日读经提醒 ── */
+.notification-reminder-toggle {
+  border: 0;
+  background: none;
+  padding: 0;
+  flex: none;
+}
+
+.notification-reminder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.notification-reminder-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notification-reminder-time span {
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notification-reminder-time input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notification-reminder-feedback {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── 祷告清单 ── */
+.prayer-compose {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.prayer-compose input {
+  height: 44px;
+  min-width: 0;
+  flex: 1;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  font-size: 14px;
+}
+
+.prayer-compose button {
+  height: 44px;
+  flex: none;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.prayer-compose button:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.prayer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 36px 24px;
+  color: var(--body);
+  text-align: center;
+}
+
+.prayer-empty .app-icon { color: var(--muted); }
+.prayer-empty b { color: var(--ink); font-size: 14px; font-weight: 800; }
+.prayer-empty p { margin: 0; font-size: 12px; font-weight: 600; line-height: 1.7; }
+
+.prayer-section {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prayer-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.prayer-section-head b { font-weight: 800; color: var(--ink); }
+.prayer-section-head span { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+.prayer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prayer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.prayer-item.is-answered {
+  background: var(--surface-soft);
+}
+
+.prayer-check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-top: 1px;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  color: #fff;
+}
+
+.prayer-item.is-answered .prayer-check {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.prayer-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prayer-copy p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.prayer-item.is-answered .prayer-copy p {
+  color: var(--body);
+  text-decoration: line-through;
+  text-decoration-color: rgba(47, 122, 80, 0.4);
+}
+
+.prayer-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.prayer-remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+/* 社群代祷贴的「记入清单」小按钮 */
+.community-prayer-save {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.community-prayer-save:disabled {
+  color: var(--success);
+}
+
 /* 资源管理：译本下载列表 */
 .me-res-list {
   display: flex;
@@ -4263,7 +5193,7 @@ body.dark .notification-daily-verse-action {
 .huidu-chat-empty h1 {
   margin: 0;
   color: var(--ink);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 800;
 }
 
@@ -4284,6 +5214,9 @@ body.dark .notification-daily-verse-action {
 }
 
 .huidu-suggests button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 11px 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -4292,6 +5225,24 @@ body.dark .notification-daily-verse-action {
   font-size: 13px;
   font-weight: 600;
   text-align: left;
+}
+
+.huidu-suggests button > .app-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+/* 第二入口提示：经文慧读路径可被发现 */
+.huidu-scripture-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .huidu-suggests button:active {
@@ -4644,6 +5595,28 @@ body.dark .notification-daily-verse-action {
   font-size: 0.55em;
   color: var(--body);
   font-weight: 400;
+}
+
+/* 经文正文按中文书排标准修正：
+   - 两端对齐 + inter-ideograph：右缘不再参差，多余空隙摊进汉字间
+   - line-break strict：避头尾——「。，？」不落行首、引号开头不吊行尾
+   - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，视觉右缘更齐
+   字号/行高/节距沿用现有内联值（此前逐项调过），这里只管排版规则。 */
+.bible-verse-content {
+  text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hanging-punctuation: allow-end;
+}
+
+/* 韩文/拼音排版规则不同：拼音有 ruby 注音、韩文按词换行，
+   两端对齐会把空格拉出大洞，退回自然左对齐 */
+.bible-verse-content.is-korean,
+.bible-verse-content.is-pinyin {
+  text-align: left;
+  line-break: auto;
 }
 
 .bible-verse-main {
@@ -5222,6 +6195,8 @@ body.dark .notification-daily-verse-action {
   padding: 0 14px;
 }
 
+/* 发现社群是次级动作：虚线描边 + 紫字的轻按钮，
+   不再用灰底填充块与主列表卡抢重量 */
 .community-discover-toggle {
   display: flex;
   width: 100%;
@@ -5229,8 +6204,11 @@ body.dark .notification-daily-verse-action {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--surface-2);
-  color: var(--ink);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: none;
+  color: var(--purple-deep);
+  font-weight: 700;
 }
 
 .community-discover-panel {
@@ -8021,6 +8999,15 @@ body.dark .annotation-entry-topic {
 body.dark .annotation-entry.is-located {
   background: rgba(241, 198, 98, 0.12);
   box-shadow: 0 0 0 2px rgba(241, 198, 98, 0.35);
+}
+
+body.dark .annotation-scripture-quote {
+  background: var(--yellow-soft);
+  color: var(--ink);
+}
+
+body.dark .annotation-chapter-nav button {
+  background: var(--surface-2);
 }
 
 body.dark .annotation-reference-chip {

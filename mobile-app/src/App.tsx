@@ -15,9 +15,11 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { MyActivitiesPage } from "./pages/MyActivitiesPage";
 import { AccountDataPage } from "./pages/AccountDataPage";
 import { ResourcesPage } from "./pages/ResourcesPage";
+import { PrayerListPage } from "./pages/PrayerListPage";
 import { ReadingPlansPage } from "./pages/ReadingPlansPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LegalPage } from "./pages/LegalPage";
+import { setupAndroidBackButton } from "./native/android-back";
 import { syncHighlights, syncNotes } from "./data/annotations";
 import { syncConversations } from "./data/huidu";
 import { fetchMe } from "./data/profile";
@@ -50,6 +52,11 @@ export default function App() {
     void syncHighlights();
     void syncNotes();
     void syncConversations();
+    setupAndroidBackButton({
+      // 从 hash 现读路径：监听器只注册一次，不能闭包住某一次渲染的 pathname
+      isAtTabRoot: () => TAB_PATHS.includes(window.location.hash.replace(/^#/, "").split("?")[0]),
+      goBack: () => window.history.back(),
+    });
   }, []);
 
   useEffect(() => {
@@ -126,6 +133,8 @@ export default function App() {
         <Route path="/me/account" element={<RequireLogin><AccountDataPage /></RequireLogin>} />
         {/* 译本下载是设备级功能，不要求登录 */}
         <Route path="/me/resources" element={<ResourcesPage />} />
+        {/* 祷告清单：本机数据，不要求登录 */}
+        <Route path="/me/prayers" element={<PrayerListPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>

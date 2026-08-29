@@ -4,6 +4,10 @@ import { HashRouter } from "react-router-dom";
 import { SettingsProvider } from "./context/SettingsContext";
 import "./index.css";
 import App from "./App";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import { setupStatusBarThemeSync } from "./native/status-bar";
+
+setupStatusBarThemeSync();
 
 // Apply the saved reading theme before React paints so every route keeps the
 // same palette and dark mode does not flash back to white during navigation.
@@ -16,11 +20,13 @@ document.querySelector('meta[name="theme-color"]')?.setAttribute(
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <HashRouter>
-      <SettingsProvider>
-        <App />
-      </SettingsProvider>
-    </HashRouter>
+    <AppErrorBoundary>
+      <HashRouter>
+        <SettingsProvider>
+          <App />
+        </SettingsProvider>
+      </HashRouter>
+    </AppErrorBoundary>
   </StrictMode>,
 );
 

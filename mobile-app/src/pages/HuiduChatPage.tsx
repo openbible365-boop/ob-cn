@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { ANDROID_BACK_EVENT } from "../native/android-back";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { VoiceInputButton } from "../components/VoiceInputButton";
@@ -28,11 +29,12 @@ function TypingDots() {
 
 // 空态建议提示词：主流 AI 应用的起步方式——给出可点的具体问法，
 // 点击后填入输入框（可改可发），而不是替用户直接发送。
-const STARTER_PROMPTS = [
-  "解释一段经文的背景与生活应用",
-  "今天用一节经文鼓励我",
-  "祷告可以从哪里开始？",
-  "圣经里的「恩典」是什么意思？",
+// 每条配一个灰色线性小图标，列表扫读更快（与设计画布一致）。
+const STARTER_PROMPTS: Array<{ icon: string; text: string }> = [
+  { icon: "book", text: "解释一段经文的背景与生活应用" },
+  { icon: "heart", text: "今天用一节经文鼓励我" },
+  { icon: "info", text: "祷告可以从哪里开始？" },
+  { icon: "search", text: "圣经里的「恩典」是什么意思？" },
 ];
 
 function BlockView({ block }: { block: HuiduBlock }) {
@@ -76,6 +78,14 @@ export function HuiduChatPage() {
   const [question, setQuestion] = useState("");
   const [requestError, setRequestError] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
+
+  // 安卓返回键：重命名弹窗打开时先关它
+  useEffect(() => {
+    if (!renameOpen) return;
+    const close = (event: Event) => { event.preventDefault(); setRenameOpen(false); };
+    window.addEventListener(ANDROID_BACK_EVENT, close);
+    return () => window.removeEventListener(ANDROID_BACK_EVENT, close);
+  }, [renameOpen]);
   const [titleDraft, setTitleDraft] = useState("");
   const [copiedIndex, setCopiedIndex] = useState(-1);
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -265,17 +275,24 @@ export function HuiduChatPage() {
             <div className="huidu-suggests" role="group" aria-label="推荐提示词">
               {STARTER_PROMPTS.map((prompt) => (
                 <button
-                  key={prompt}
+                  key={prompt.text}
                   type="button"
                   onClick={() => {
-                    setQuestion(prompt);
+                    setQuestion(prompt.text);
                     inputRef.current?.focus();
                   }}
                 >
-                  {prompt}
+                  <Icon name={prompt.icon} size={15} />
+                  {prompt.text}
                 </button>
               ))}
             </div>
+            {/* 第二入口：经文慧读的路径此前不可被发现（信息架构补洞） */}
+            <button type="button" className="huidu-scripture-hint" onClick={() => navigate("/bible")}>
+              <Icon name="book" size={13} />
+              或在圣经页选中经文，进入经文慧读
+              <Icon name="chevron-right" size={12} />
+            </button>
           </section>
         )}
 
