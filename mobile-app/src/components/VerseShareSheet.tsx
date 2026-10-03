@@ -41,11 +41,6 @@ function extractThemeWords(text: string): string[] {
     .map((item) => item.word);
 }
 
-// 汉字之间垫一个空格的展示写法："智慧" → "智 慧"
-function spaced(word: string) {
-  return Array.from(word).join(" ");
-}
-
 function todayStamp() {
   const now = new Date();
   return `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
@@ -149,8 +144,6 @@ function paintShareCardBackground(
     context.fillRect(0, 0, 720, 960);
     context.fillStyle = "rgba(117,85,55,.055)";
     for (let y = 0; y < 960; y += 18) context.fillRect(0, y, 720, 1);
-    context.fillStyle = "#8d6643";
-    context.fillRect(0, 0, 14, 960);
     return {
       ink: "#28342d",
       muted: "#6d6252",
@@ -172,8 +165,6 @@ function paintShareCardBackground(
     glow.addColorStop(1, "rgba(255,255,255,0)");
     context.fillStyle = glow;
     context.fillRect(0, 0, 720, 360);
-    context.fillStyle = "#8f60b1";
-    context.fillRect(0, 0, 12, 960);
     return {
       ink: "#49345d",
       muted: "#6f6178",
@@ -195,8 +186,6 @@ function paintShareCardBackground(
     glow.addColorStop(1, "rgba(124,99,176,0)");
     context.fillStyle = glow;
     context.fillRect(350, 0, 370, 420);
-    context.fillStyle = "#d9b65d";
-    context.fillRect(0, 0, 12, 960);
     return {
       ink: "#f6f0df",
       muted: "#bbb5c5",
@@ -212,8 +201,6 @@ function paintShareCardBackground(
   gradient.addColorStop(1, "#f8f1e5");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 720, 960);
-  context.fillStyle = "#ffd465";
-  context.fillRect(0, 0, 12, 960);
   return {
     ink: "#18191f",
     muted: "#666b76",
@@ -224,6 +211,48 @@ function paintShareCardBackground(
 }
 
 const CJK_FONT = "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+
+// 四角星芒：品牌「慧读」的母题，取代通用装饰
+function paintSparkle(context: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
+  const k = r * 0.22;
+  context.save();
+  context.translate(x, y);
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(0, -r);
+  context.quadraticCurveTo(k, -k, r, 0);
+  context.quadraticCurveTo(k, k, 0, r);
+  context.quadraticCurveTo(-k, k, -r, 0);
+  context.quadraticCurveTo(-k, -k, 0, -r);
+  context.fill();
+  context.restore();
+}
+
+// 细线内框 + 右上角星芒：代替原先各模板的左侧色条，让卡片像一页装帧过的内页
+function paintFrame(context: CanvasRenderingContext2D, theme: CanvasTheme) {
+  context.save();
+  context.strokeStyle = theme.quote;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.roundRect(26, 26, 720 - 52, 960 - 52, 22);
+  context.stroke();
+  context.restore();
+  paintSparkle(context, 626, 74, 15, theme.accent);
+  paintSparkle(context, 654, 102, 7, theme.quote);
+}
+
+// 巨型底纹字：第一个主题词的首字淡淡压在版面一角，给卡片一个「题眼」
+function paintWatermark(context: CanvasRenderingContext2D, theme: CanvasTheme, word: string | undefined, x = 500, y = 640) {
+  if (!word) return;
+  context.save();
+  context.globalAlpha = 0.55;
+  context.fillStyle = theme.quote;
+  context.font = `700 330px ${CJK_FONT}`;
+  context.textAlign = "center";
+  context.fillText(Array.from(word)[0], x, y);
+  context.restore();
+  context.textAlign = "left";
+}
 
 // 红色印章：中文卡片的落款传统，比一行 logo 文字更有辨识度
 function paintSeal(context: CanvasRenderingContext2D, x: number, y: number) {
@@ -251,34 +280,37 @@ async function paintFooter(
   theme: CanvasTheme,
   withSeal: boolean,
 ) {
-  const darkCard = template === "night" || template === "study";
-  context.strokeStyle = darkCard ? "rgba(246,240,223,.18)" : "rgba(24,25,31,.12)";
+  // 二维码放进带衬底的圆角瓷片：深色模板上自然成一块亮区，浅色模板上由描边界定
+  const tile = { x: 486, y: 788, size: 166 };
+  context.fillStyle = theme.qrLight;
+  context.strokeStyle = theme.quote;
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(68, 790);
-  context.lineTo(652, 790);
+  context.roundRect(tile.x, tile.y, tile.size, tile.size, 18);
+  context.fill();
   context.stroke();
 
   // 二维码库只在真正生成分享图时加载
   const { default: QRCode } = await import("qrcode");
   const qrDataUrl = await QRCode.toDataURL(data.shareUrl, {
-    width: 150,
-    margin: 1,
+    width: 138,
+    margin: 0,
     errorCorrectionLevel: "M",
     color: { dark: template === "night" ? "#171c31" : template === "study" ? "#2c1c10" : theme.ink, light: theme.qrLight },
   });
   const qrImage = new Image();
   qrImage.src = qrDataUrl;
   await qrImage.decode();
-  context.drawImage(qrImage, 502, 800, 150, 150);
+  context.drawImage(qrImage, tile.x + 14, tile.y + 14, tile.size - 28, tile.size - 28);
 
+  paintSparkle(context, 78, 848, 11, theme.accent);
   context.fillStyle = theme.ink;
-  context.font = `800 25px ${CJK_FONT}`;
-  context.fillText("扫码阅读完整经文", 68, 860);
+  context.font = `600 24px ${CJK_FONT}`;
+  context.fillText("扫码阅读本节经文", 102, 857);
   context.fillStyle = theme.muted;
-  context.font = `500 18px ${CJK_FONT}`;
-  context.fillText("慧读圣经 · 一起读经 · 一起成长", 68, 898);
-  if (withSeal) paintSeal(context, 412, 812); // 印章落在文字与二维码之间的空档
+  context.font = `500 17px ${CJK_FONT}`;
+  context.fillText("慧读圣经 · 一起读经 · 一起成长", 102, 893);
+  if (withSeal) paintSeal(context, 404, 836); // 印章落在文字与二维码之间的空档
 }
 
 function paintHorizontalLayout(
@@ -288,43 +320,68 @@ function paintHorizontalLayout(
   themeWords: string[],
 ) {
   context.fillStyle = theme.accent;
-  context.font = `700 20px ${CJK_FONT}`;
-  context.fillText("慧读圣经 · 每日读经", 68, 82);
-  // 日期戳靠右：分享出去的卡片自带「今天」的语境
+  context.font = `600 20px ${CJK_FONT}`;
+  context.fillText("慧读圣经 · 每日读经", 68, 84);
   context.fillStyle = theme.muted;
-  context.font = `600 18px ${CJK_FONT}`;
-  context.textAlign = "right";
-  context.fillText(todayStamp(), 652, 82);
-  context.textAlign = "left";
+  context.font = `500 17px ${CJK_FONT}`;
+  context.fillText(todayStamp(), 68, 114);
 
-  // 关键词题眉：主题词横排居左，字间留白 + 竖线分隔
-  let verseTop = 230;
-  if (themeWords.length) {
-    context.fillStyle = theme.accent;
-    context.font = `700 30px ${CJK_FONT}`;
-    context.fillText(themeWords.map(spaced).join("  ｜  "), 68, 148);
-    verseTop = 262;
-  }
+  paintWatermark(context, theme, themeWords[0], 520, 660);
 
-  context.fillStyle = theme.quote;
-  context.font = "700 142px Georgia, serif";
-  context.fillText("“", 55, verseTop - 10);
-
+  // ── 先测量整块内容的高度，再在题眉与页脚之间垂直居中 ──
   const textLength = data.verseText.length;
-  const verseFontSize = textLength <= 80 ? 42 : textLength <= 150 ? 35 : 29;
-  const lineHeight = Math.round(verseFontSize * 1.62);
-  context.fillStyle = theme.ink;
+  const verseFontSize = textLength <= 40 ? 52 : textLength <= 80 ? 44 : textLength <= 150 ? 36 : 30;
+  const lineHeight = Math.round(verseFontSize * 1.6);
   context.font = `500 ${verseFontSize}px ${CJK_FONT}`;
   const lines = wrapCanvasText(context, data.verseText, 584, textLength <= 80 ? 7 : 9);
-  lines.forEach((line, index) => context.fillText(line, 68, verseTop + index * lineHeight));
 
-  const textBottom = verseTop + Math.max(1, lines.length) * lineHeight;
+  const chipRow = themeWords.length ? 86 : 0;        // 字牌行高（含与正文的间距）
+  const refBlock = 96;                               // 短金线 + 出处 + 译本
+  const blockHeight = chipRow + lines.length * lineHeight + refBlock;
+  const zoneTop = 170;
+  const zoneBottom = 764;
+  let cursor = zoneTop + Math.max(0, (zoneBottom - zoneTop - blockHeight) / 2);
+
+  // 主题词字牌：描边小方牌，一牌一词，像一排闲章
+  if (themeWords.length) {
+    let chipX = 68;
+    for (const word of themeWords.slice(0, 3)) {
+      const characters = Array.from(word);
+      const width = characters.length * 30 + 22;
+      context.strokeStyle = theme.accent;
+      context.lineWidth = 2;
+      context.beginPath();
+      context.roundRect(chipX, cursor, width, 48, 10);
+      context.stroke();
+      context.fillStyle = theme.accent;
+      context.font = `600 26px ${CJK_FONT}`;
+      characters.forEach((character, index) => {
+        context.fillText(character, chipX + 13 + index * 30, cursor + 34);
+      });
+      chipX += width + 14;
+    }
+    cursor += chipRow;
+  }
+
+  // 引号压在首行左上，作衬不作声
+  context.fillStyle = theme.quote;
+  context.font = "700 130px Georgia, serif";
+  context.fillText("\u201c", 52, cursor + 4);
+
   context.fillStyle = theme.ink;
-  context.font = `800 28px ${CJK_FONT}`;
-  context.fillText(`— ${data.reference}`, 68, Math.min(720, textBottom + 34));
+  context.font = `500 ${verseFontSize}px ${CJK_FONT}`;
+  lines.forEach((line, index) => context.fillText(line, 68, cursor + verseFontSize + index * lineHeight));
+
+  // 出处：短金线起笔，出处为主、译本为辅
+  let refY = cursor + lines.length * lineHeight + verseFontSize * 0.4 + 26;
+  context.fillStyle = theme.accent;
+  context.fillRect(68, refY - 10, 38, 3);
+  context.fillStyle = theme.ink;
+  context.font = `600 28px ${CJK_FONT}`;
+  context.fillText(data.reference, 118, refY);
   context.fillStyle = theme.muted;
-  context.font = `600 19px ${CJK_FONT}`;
-  context.fillText(data.versionLabel, 68, Math.min(758, textBottom + 72));
+  context.font = `500 18px ${CJK_FONT}`;
+  context.fillText(data.versionLabel, 118, refY + 32);
 }
 
 // 竖排布局：经文从右往左逐列直排——中文排版的本源写法，分享卡里非常出挑
@@ -333,14 +390,13 @@ function paintVerticalLayout(
   data: ShareCardData,
   theme: CanvasTheme,
 ) {
-  context.fillStyle = theme.muted;
-  context.font = `600 18px ${CJK_FONT}`;
-  context.fillText(todayStamp(), 68, 82);
+  // 品牌行放左上（右上留给内框的星芒），与横排同构
   context.fillStyle = theme.accent;
-  context.font = `700 20px ${CJK_FONT}`;
-  context.textAlign = "right";
-  context.fillText("慧读圣经", 652, 82);
-  context.textAlign = "left";
+  context.font = `600 20px ${CJK_FONT}`;
+  context.fillText("慧读圣经", 68, 84);
+  context.fillStyle = theme.muted;
+  context.font = `500 17px ${CJK_FONT}`;
+  context.fillText(todayStamp(), 68, 114);
 
   const characters = Array.from(data.verseText.replace(/\s+/g, ""));
   const length = characters.length;
@@ -392,7 +448,9 @@ async function createShareCard(
   if (!context) throw new Error("Canvas unavailable");
 
   const theme = paintShareCardBackground(context, template);
+  paintFrame(context, theme);
   if (layout === "vertical") {
+    paintWatermark(context, theme, extractThemeWords(data.verseText)[0], 230, 660);
     paintVerticalLayout(context, data, theme);
   } else {
     paintHorizontalLayout(context, data, theme, extractThemeWords(data.verseText));
