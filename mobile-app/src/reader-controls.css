@@ -1045,3 +1045,111 @@
 .verse-share-templates button {
   min-height: 36px;
 }
+
+/* 播放器状态行内的就地操作键（如「切换到和合本」） */
+.audio-player-status {
+  gap: 10px;
+}
+
+.audio-status-action {
+  min-height: 30px;
+  flex: none;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ═══ 播放器 2.0：语音圣经与注释朗读共用一套「声场」视觉 ═══ */
+
+/* 顶部一层淡紫声场光晕，卡片从「表单」变「播放空间」 */
+.audio-player-sheet {
+  position: fixed;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.audio-player-sheet::before {
+  content: "";
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  width: 420px;
+  height: 190px;
+  background: radial-gradient(closest-side, var(--purple-soft), transparent);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.audio-player-kicker {
+  position: relative;
+  color: var(--purple-deep);
+}
+
+.audio-player-kicker > .app-icon:first-child {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--purple-soft);
+}
+
+.audio-player-title {
+  font-weight: 600;
+}
+
+/* 歌词区：去框化。上下文节只留灰字，当前节放大加左侧紫栏——像歌词而不像表格 */
+.audio-lyric {
+  border-radius: 10px;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.audio-lyric.is-current {
+  background: var(--purple-soft);
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+.audio-lyric.is-current .audio-lyric-text {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.8;
+}
+
+.audio-lyric.is-current .audio-lyric-num {
+  color: var(--purple-deep) !important;
+  font-weight: 600;
+}
+
+.audio-lyric:not(.is-current) .audio-lyric-text {
+  font-size: 14px;
+}
+
+/* 主播放键：紫色实心圆外加一圈柔光，整张卡的视觉锚点 */
+.audio-controls .audio-play-button {
+  box-shadow:
+    0 0 0 8px var(--purple-soft),
+    0 6px 18px color-mix(in srgb, var(--purple) 30%, transparent);
+}
+
+/* 进度滑块：加大拇指并描边，拖动目标更明确 */
+.audio-progress::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--white);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--purple) 40%, transparent);
+}
+
+/* 注释朗读的「当前段落」行与歌词当前节同构：紫栏 + 紫底，不再是灰色表单行 */
+.audio-current-passage {
+  border: 0;
+  background: var(--purple-soft);
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+.audio-current-passage .audio-current-copy b {
+  color: var(--purple-deep);
+}

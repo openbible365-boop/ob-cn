@@ -351,7 +351,7 @@ export function BiblePage() {
     if (version.code !== "cuv") {
       continueAudioAfterLoadRef.current = false;
       setLoadedAudioKey(null);
-      setAudioError("当前仅和合本提供语音圣经，请先切换到和合本");
+      setAudioError("当前仅和合本提供语音圣经");
       return;
     }
 
@@ -1675,6 +1675,19 @@ export function BiblePage() {
               >
                 <span className="audio-status-indicator" aria-hidden="true" />
                 <span>{audioError || "正在准备本章音频"}</span>
+                {audioError && version.code !== "cuv" && (
+                  <button
+                    type="button"
+                    className="audio-status-action"
+                    onClick={() => {
+                      // 就地换到和合本：不关面板，加载完成后自动开始朗读
+                      continueAudioAfterLoadRef.current = true;
+                      setParams({ t: "cuv", bk: book.code, c: String(chapter) });
+                    }}
+                  >
+                    切换到和合本
+                  </button>
+                )}
               </div>
             )}
 
