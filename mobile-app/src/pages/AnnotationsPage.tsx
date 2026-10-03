@@ -5,7 +5,7 @@ import { CompactToolbar } from "../components/CompactToolbar";
 import { BookIntroduction } from "../components/BookIntroduction";
 import { useSettings } from "../context/SettingsContext";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
-import { PlayingAudioIcon } from "../components/AudioBiblePlayer";
+import { PlayingAudioIcon } from "../components/PlayingAudioIcon";
 import {
   AnnotationAudioPlayer,
   type AnnotationAudioSegment,
@@ -74,7 +74,7 @@ function commentaryTopic(title: string) {
 
 // 注释页（design 2b）— real 精读本 (jingdu) commentary for every book.
 export function AnnotationsPage() {
-  const { translate } = useSettings();
+  const { translate, isTraditional, setIsTraditional } = useSettings();
   const [params, setParams] = useSearchParams();
   const reading = getReading();
   const version = getVersion(params.get("t") ?? reading.version);
@@ -99,12 +99,6 @@ export function AnnotationsPage() {
     () => localStorage.getItem("ob.annotations.lineSpacing") === "compact"
       ? "compact"
       : "comfortable",
-  );
-  const [isTraditional, setIsTraditional] = useState(
-    () => localStorage.getItem("ob.bible.isTraditional") === "true",
-  );
-  const [isDarkMode, setIsDarkMode] = useState(
-    () => localStorage.getItem("ob.bible.isDarkMode") === "true",
   );
   const [chapterPickerOpen, setChapterPickerOpen] = useState(false);
   const [copyrightOpen, setCopyrightOpen] = useState(false);
@@ -240,18 +234,6 @@ export function AnnotationsPage() {
     localStorage.setItem("ob.annotations.lineSpacing", lineSpacing);
   }, [lineSpacing]);
 
-  useEffect(() => {
-    localStorage.setItem("ob.bible.isTraditional", String(isTraditional));
-  }, [isTraditional]);
-
-  useEffect(() => {
-    localStorage.setItem("ob.bible.isDarkMode", String(isDarkMode));
-    document.body.classList.toggle("dark", isDarkMode);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute(
-      "content",
-      isDarkMode ? "#101116" : "#F6F7F8",
-    );
-  }, [isDarkMode]);
 
   useEffect(() => {
     if (!audioPlaying || audioOpen || !audioCurrentSegment) return;
@@ -475,7 +457,7 @@ export function AnnotationsPage() {
         }}
         actions={(
           <>
-            <button
+            <button data-icon-button="default"
               type="button"
               className="bible-toolbar-action annotation-audio-trigger"
               title={translate("注释朗读")}
@@ -492,7 +474,7 @@ export function AnnotationsPage() {
             >
               {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={24} />}
             </button>
-            <button
+            <button data-icon-button="default"
               type="button"
               className="bible-toolbar-action annotation-copyright-trigger"
               aria-label={translate("查看精读本注释版权与版本信息")}
@@ -508,7 +490,7 @@ export function AnnotationsPage() {
             >
               <Icon name="info" size={20} />
             </button>
-            <button
+            <button data-icon-button="default"
               type="button"
               className="bible-toolbar-action annotation-font-trigger"
               title={translate("字体设置")}
@@ -566,7 +548,7 @@ export function AnnotationsPage() {
                           type="button"
                           key={candidate.code}
                           onClick={() => setPickerBook(candidate.code)}
-                          className={`bible-book-option${candidate.code === book.code ? " active" : ""}`}
+                          className={`bible-book-option${candidate.code === book.code ? " active" : ""}${bookName(candidate, version).length >= 7 ? " is-long" : ""}`}
                         >
                           {translate(bookName(candidate, version))}
                         </button>
@@ -618,25 +600,6 @@ export function AnnotationsPage() {
                       onClick={() => setIsTraditional(true)}
                     >
                       繁
-                    </button>
-                  </div>
-                </div>
-                <div className="bible-reading-setting-row">
-                  <span>{translate("阅读模式")}</span>
-                  <div className="bible-setting-segment">
-                    <button
-                      type="button"
-                      className={!isDarkMode ? "active" : ""}
-                      onClick={() => setIsDarkMode(false)}
-                    >
-                      {translate("浅色")}
-                    </button>
-                    <button
-                      type="button"
-                      className={isDarkMode ? "active" : ""}
-                      onClick={() => setIsDarkMode(true)}
-                    >
-                      {translate("深色")}
                     </button>
                   </div>
                 </div>
@@ -772,7 +735,7 @@ export function AnnotationsPage() {
                   <p>{translate("精读本圣经注释")}</p>
                 </span>
               </div>
-              <button
+              <button data-icon-button="default"
                 type="button"
                 className="annotation-copyright-close"
                 aria-label={translate("关闭")}

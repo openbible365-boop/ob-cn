@@ -47,7 +47,7 @@ export function CommunitySheet({
             <b>{title}</b>
             <span>{hint}</span>
           </div>
-          <button type="button" aria-label="关闭" onClick={onClose}>
+          <button data-icon-button="default" type="button" aria-label="关闭" onClick={onClose}>
             <Icon name="x" size={20} />
           </button>
         </div>
@@ -105,7 +105,7 @@ export function ConfirmSheet({
             <b>{title}</b>
             <span>{description}</span>
           </div>
-          <button type="button" aria-label="关闭" onClick={onCancel}>
+          <button data-icon-button="default" type="button" aria-label="关闭" onClick={onCancel}>
             <Icon name="x" size={20} />
           </button>
         </div>

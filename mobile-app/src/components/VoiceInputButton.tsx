@@ -18,7 +18,7 @@ export function VoiceInputButton({
       : "开始语音输入";
 
   return (
-    <button
+    <button data-icon-button="default"
       type="button"
       aria-label={label}
       aria-pressed={isListening}

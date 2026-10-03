@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
+import { EmptyState } from "../components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -17,6 +19,7 @@ import { disableReminder, enableReminder, getReminder, reminderSupported } from 
 
 export function NotificationsPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const sessionUser = useSessionUser();
   const [prefs, setPrefs] = useState(getPrefs);
   const [notifications, setNotifications] = useState<AccountNotification[]>([]);
@@ -135,10 +138,10 @@ export function NotificationsPage() {
   return (
     <div className="screen notification-screen">
       <UnifiedHeader
-        title="通知管理"
+        title="通知设置"
         subtitle={sessionUser ? "账号同步" : "本机设置"}
-        ariaLabel="通知管理"
-        onBack={() => navigate("/me")}
+        ariaLabel="通知设置"
+        onBack={goBack}
         backLabel="返回我的"
       />
 
@@ -176,14 +179,15 @@ export function NotificationsPage() {
               );
             })}
           </div>
+          {/* 金句推送的样张：设置页里只占一行，点开才看完整分享图 */}
+          <button type="button" className="notification-preview-row" onClick={() => setDailyVersePreviewOpen(true)} aria-label="预览今日金句分享图片">
+            <span className="notification-preference-copy">
+              <strong>预览今日金句</strong>
+              <small>{dailyVerse.reference} · {dailyVerseDate}</small>
+            </span>
+            <Icon name="chevron-right" size={16} />
+          </button>
         </section>
-
-        <button type="button" className="notification-daily-verse-demo" onClick={() => setDailyVersePreviewOpen(true)} aria-label="预览今日金句分享图片">
-          <span className="notification-daily-verse-kicker">今日金句 · {dailyVerseDate}</span>
-          <strong>“{dailyVerse.verseText}”</strong>
-          <span className="notification-daily-verse-reference">{dailyVerse.reference} · {dailyVerse.versionLabel}</span>
-          <span className="notification-daily-verse-action">预览分享图片 <Icon name="chevron-right" size={16} /></span>
-        </button>
 
         <section className="notification-section notification-reminder-section" aria-labelledby="reading-reminder-title">
           <div className="notification-section-heading compact">
@@ -257,7 +261,7 @@ export function NotificationsPage() {
                 ))}
               </div>
             ) : (
-              <div className="notification-empty-state"><Icon name="bell" size={20} /><strong>暂无通知</strong><span>有新的活动、互动或审核结果时会显示在这里</span></div>
+              <EmptyState compact art="inbox" title="暂无通知" desc="有新的活动、互动或审核结果时会显示在这里" />
             )}
           </section>
         )}

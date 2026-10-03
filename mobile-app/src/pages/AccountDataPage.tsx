@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UserAvatar } from "../components/UserAvatar";
@@ -9,6 +10,7 @@ import { fetchMe, type SessionUser } from "../data/profile";
 
 export function AccountDataPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [user, setUser] = useState<SessionUser | null>(null);
   const [exported, setExported] = useState(false);
   const highlights = getHighlights();
@@ -52,7 +54,7 @@ export function AccountDataPage() {
         title="数据与账户"
         subtitle={user?.entitlements.label ?? "读取中"}
         ariaLabel="数据与账户"
-        onBack={() => navigate("/me")}
+        onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll me-detail-scroll">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { EmptyState } from "../components/EmptyState";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import {
@@ -25,6 +27,7 @@ function fmtDate(iso: string) {
 // 我的内容（design 5b）— lists the real local highlights & notes.
 export function MyContentPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [params, setParams] = useSearchParams();
   const tab = TABS.some((t) => t.id === params.get("t")) ? (params.get("t") as string) : "highlights";
   const [, refreshHighlights] = useState(0);
@@ -74,47 +77,39 @@ export function MyContentPage() {
   };
 
   return (
-    <div className="screen" style={{ background: "var(--surface)" }}>
-      <UnifiedHeader title="我的内容" subtitle="内容记录" ariaLabel="我的内容" onBack={() => navigate("/me")} backLabel="返回我的" />
+    <div className="screen">
+      <UnifiedHeader title="我的内容" subtitle="内容记录" ariaLabel="我的内容" onBack={goBack} backLabel="返回我的" />
 
-      <div style={{ flex: "none", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", background: "var(--white)", borderBottom: "1px solid var(--line)", padding: "0 16px" }}>
+      <div className="record-tabs" role="tablist" aria-label="内容类型">
         {TABS.map((t) => (
-          <button key={t.id} onClick={() => setParams({ t: t.id })} style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", height: 44, fontSize: 14, fontWeight: tab === t.id ? 800 : 600, color: tab === t.id ? "var(--ink)" : "var(--body)" }}>
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? "active" : ""} onClick={() => setParams({ t: t.id })}>
             {t.label}
-            {tab === t.id && (
-              <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "var(--purple)", borderRadius: 999 }} />
-            )}
           </button>
         ))}
       </div>
 
-      <div className="screen-scroll" style={{ padding: "14px 16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="screen-scroll record-scroll">
         {tab === "highlights" && (
           <>
             {highlights.map((h) => (
               <button
                 key={`${h.book}:${h.chapter}:${h.verse}`}
-                className="card"
+                className="card record-card"
                 onClick={() => navigate(`/bible?t=${h.version ?? fallbackVersion.code}&bk=${h.book}&c=${h.chapter}&v=${h.verse}`)}
-                style={{ display: "flex", gap: 12, padding: "13px 14px", textAlign: "left" }}
               >
-                <div style={{ flex: "none", width: 4, borderRadius: 999, background: h.color }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, background: h.color, borderRadius: 8, padding: "2px 8px" }}>
-                      {refLabel(h.book, h.chapter, h.verse, h.version)}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{fmtDate(h.createdAt)}</div>
+                <i className="record-rail" style={{ background: h.color }} aria-hidden="true" />
+                <div className="record-body">
+                  <div className="record-meta">
+                    <span className="record-chip" style={{ background: h.color }}>{refLabel(h.book, h.chapter, h.verse, h.version)}</span>
+                    <span className="record-date">{fmtDate(h.createdAt)}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.7, color: "var(--body)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                    {verseText(h.book, h.chapter, h.verse, h.version)}
-                  </div>
+                  <div className="record-preview">{verseText(h.book, h.chapter, h.verse, h.version)}</div>
                 </div>
-                <div style={{ alignSelf: "center", color: "var(--body)" }}><Icon name="chevron-right" size={16} /></div>
+                <Icon name="chevron-right" size={16} className="record-caret" />
               </button>
             ))}
             {highlights.length === 0 && (
-              <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>还没有高亮。在阅读页点选经文，选择颜色即可。</div>
+              <EmptyState art="content" title="还没有高亮" desc="在阅读页点选经文，选择颜色即可收进这里。" />
             )}
           </>
         )}
@@ -124,21 +119,18 @@ export function MyContentPage() {
             {notes.map((n) => (
               <button
                 key={n.id}
-                className="card"
+                className="card record-card is-note"
                 onClick={() => navigate(`/bible?t=${n.version ?? fallbackVersion.code}&bk=${n.book}&c=${n.chapter}&v=${n.verse}`)}
-                style={{ display: "flex", flexDirection: "column", gap: 6, padding: "13px 14px", textAlign: "left", alignItems: "stretch" }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ fontSize: 12, fontWeight: 800, background: "var(--surface-2)", borderRadius: 8, padding: "2px 8px" }}>
-                    {refLabel(n.book, n.chapter, n.verse, n.version)}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--body)" }}>{fmtDate(n.createdAt)}</div>
+                <div className="record-meta">
+                  <span className="record-chip is-plain">{refLabel(n.book, n.chapter, n.verse, n.version)}</span>
+                  <span className="record-date">{fmtDate(n.createdAt)}</span>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.7 }}>{n.content}</div>
+                <div className="record-note-text">{n.content}</div>
               </button>
             ))}
             {notes.length === 0 && (
-              <div style={{ fontSize: 13, color: "var(--body)", padding: "8px 2px" }}>还没有笔记。在阅读页点选经文，选择「笔记」即可。</div>
+              <EmptyState art="content" title="还没有笔记" desc="在阅读页点选经文，选择「笔记」即可记下想法。" />
             )}
           </>
         )}

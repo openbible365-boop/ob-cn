@@ -255,7 +255,7 @@ export function AnnotationAudioPlayer({
         <div className="audio-player-kicker">
           <Icon name="volume-2" size={20} />
           <span>{translate("注释朗读")}</span>
-          <button
+          <button data-icon-button="default"
             type="button"
             className="audio-player-close"
             aria-label={translate("关闭注释朗读窗口")}
@@ -300,7 +300,7 @@ export function AnnotationAudioPlayer({
         </div>
 
         <div className="audio-controls">
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("上一章注释")}
             disabled={chapter <= 1}
@@ -308,7 +308,7 @@ export function AnnotationAudioPlayer({
           >
             <Icon name="skip-back" size={24} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("上一段注释")}
             disabled={currentIndex <= 0 || segments.length === 0}
@@ -316,7 +316,7 @@ export function AnnotationAudioPlayer({
           >
             <Icon name="chevron-left" size={24} />
           </button>
-          <button
+          <button data-icon-button="primary"
             type="button"
             className="audio-play-button"
             disabled={segments.length === 0}
@@ -325,7 +325,7 @@ export function AnnotationAudioPlayer({
           >
             <Icon name={isPlaying ? "pause" : "play"} size={28} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("下一段注释")}
             disabled={currentIndex >= segments.length - 1 || segments.length === 0}
@@ -333,7 +333,7 @@ export function AnnotationAudioPlayer({
           >
             <Icon name="chevron-right" size={24} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("下一章注释")}
             disabled={chapter >= maxChapter}

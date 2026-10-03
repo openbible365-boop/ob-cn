@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -260,6 +261,7 @@ export function GroupPage() {
   const sessionUser = useSessionUser();
   const { groupId = "" } = useParams();
   const navigate = useNavigate();
+  const goBack = useAppBack("/community");
   const [searchParams, setSearchParams] = useSearchParams();
   const cachedGroup = getGroup(groupId);
   const requestedTab = searchParams.get("tab");
@@ -806,10 +808,10 @@ export function GroupPage() {
         title={displayName}
         subtitle={subtitle}
         ariaLabel={`${displayName}${isOfficial ? "公共社群" : "私有社群"}概览`}
-        onBack={() => navigate("/community")}
+        onBack={goBack}
         backLabel="返回社群列表"
         actions={workspace?.access.isAdmin ? (
-          <button className="bible-toolbar-action" aria-label={isOfficial ? "平台管理" : "社群管理"} title={isOfficial ? "平台管理" : "社群管理"} onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
+          <button data-icon-button="default" className="bible-toolbar-action" aria-label={isOfficial ? "平台管理" : "社群管理"} title={isOfficial ? "平台管理" : "社群管理"} onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
         ) : undefined}
       />
 
@@ -870,7 +872,7 @@ export function GroupPage() {
             void loadWorkspace();
             void loadServiceHealth();
           }}
-          onBack={() => navigate("/community")}
+          onBack={goBack}
         />
       )}
 
@@ -881,7 +883,7 @@ export function GroupPage() {
             void loadWorkspace(false);
             void loadServiceHealth();
           }}
-          onBack={() => navigate("/community")}
+          onBack={goBack}
         >
           {workspaceError}
         </CommunityDegradedNotice>
@@ -1062,14 +1064,15 @@ export function GroupPage() {
             <span className="community-chat-row">
               <span className="community-chat-field">
                 {canAttachFiles && (
-                  <button type="button" aria-label="添加附件" title="添加附件" disabled={isSending} className="icon-btn composer-icon-btn community-attachment-btn" onClick={() => resourceFileInputRef.current?.click()}>
+                  <button data-icon-button="default" type="button" aria-label="添加附件" title="添加附件" disabled={isSending} className="icon-btn composer-icon-btn community-attachment-btn" onClick={() => resourceFileInputRef.current?.click()}>
                     <Icon name="paperclip" size={20} />
                   </button>
                 )}
                 <input value={question} onChange={(event) => { setQuestion(event.target.value); if (chatError) setChatError(""); if (speechInput.error) speechInput.clearError(); }} disabled={isSending || !workspace || workspaceIsStale} maxLength={1200} aria-label="向社群助手提问" placeholder={workspaceIsStale ? "服务恢复后可继续使用助手" : speechInput.isListening ? "正在聆听…" : pendingResourceFile ? usesPrivateConversationAttachments ? "可补充问题，发送后分析附件…" : "可补充资料说明，发送后上传…" : `提问或办理${displayName}事务…`} />
                 <VoiceInputButton isSupported={speechInput.isSupported} isListening={speechInput.isListening} disabled={isSending || !workspace || workspaceIsStale} onClick={speechInput.toggleListening} />
+                {/* 与慧读输入栏同构：发送键收进框内，圆形上箭头 */}
+                <button data-icon-button="primary" type="submit" aria-label={pendingResourceFile ? usesPrivateConversationAttachments ? "发送附件" : "确认上传资料" : "发送问题"} disabled={isSending || !workspace || workspaceIsStale || (!question.trim() && !pendingResourceFile)} className="huidu-send-btn"><Icon name="arrow-up" size={17} /></button>
               </span>
-              <button type="submit" aria-label={pendingResourceFile ? usesPrivateConversationAttachments ? "发送附件" : "确认上传资料" : "发送问题"} disabled={isSending || !workspace || workspaceIsStale || (!question.trim() && !pendingResourceFile)} className="icon-btn icon-btn-primary composer-icon-btn community-send-btn"><Icon name="send" size={20} /></button>
             </span>
           </form>
         </>

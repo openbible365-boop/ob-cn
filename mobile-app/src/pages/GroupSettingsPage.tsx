@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useParams } from "react-router-dom";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { CommunityErrorState } from "../components/community/CommunityServiceState";
@@ -35,6 +36,7 @@ function requestTime(value: string) {
 export function GroupSettingsPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const goBack = useAppBack(`/community/${groupId ?? ""}`);
   // 本地目录缓存只用于首屏占位，社群是否存在一律以服务端结果为准。
   const cachedGroup = getGroup(groupId ?? "");
   const [community, setCommunity] =
@@ -112,7 +114,7 @@ export function GroupSettingsPage() {
   if (accessAllowed === null) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <UnifiedHeader title="社群设置" subtitle="确认权限" ariaLabel="社群管理" onBack={() => navigate(-1)} backLabel="返回社群" />
+        <UnifiedHeader title="社群设置" subtitle="确认权限" ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
         <div className="route-status">正在确认管理权限…</div>
       </div>
     );
@@ -123,7 +125,7 @@ export function GroupSettingsPage() {
     const forbidden = accessErrorStatus === 403 || accessErrorStatus === null;
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <UnifiedHeader title="社群设置" subtitle={notFound ? "不存在" : "不可用"} ariaLabel="社群管理" onBack={() => navigate("/community")} backLabel="返回社群" />
+        <UnifiedHeader title="社群设置" subtitle={notFound ? "不存在" : "不可用"} ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
         <CommunityErrorState
           title={
             accessErrorStatus === 401
@@ -145,7 +147,7 @@ export function GroupSettingsPage() {
             void loadAccess();
             void loadHealth();
           }}
-          onBack={() => navigate(notFound ? "/community" : `/community/${groupId}`)}
+          onBack={goBack}
         />
       </div>
     );
@@ -218,7 +220,7 @@ export function GroupSettingsPage() {
 
   return (
     <div className="screen community-settings-screen">
-      <UnifiedHeader title="社群设置" subtitle={accessRole === "ADMIN" ? "管理员" : "群主"} ariaLabel="社群管理" onBack={() => navigate(-1)} backLabel="返回社群" />
+      <UnifiedHeader title="社群设置" subtitle={accessRole === "ADMIN" ? "管理员" : "群主"} ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
 
       <div className="screen-scroll community-settings-scroll">
         <div className="community-settings-identity">

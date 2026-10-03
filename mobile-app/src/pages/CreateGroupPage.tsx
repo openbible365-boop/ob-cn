@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -15,6 +16,7 @@ const COLOR_NAMES = ["暖黄色", "慧读紫", "珊瑚橙", "玫红色"];
 // 创建社群（design 4e）
 export function CreateGroupPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/community");
   const [name, setName] = useState("");
   const [abbreviation, setAbbreviation] = useState("");
   const [desc, setDesc] = useState("");
@@ -55,7 +57,7 @@ export function CreateGroupPage() {
 
   return (
     <div className="screen community-settings-screen">
-      <UnifiedHeader title="创建社群" subtitle="新群组" ariaLabel="创建社群" onBack={() => navigate(-1)} backLabel="返回社群" />
+      <UnifiedHeader title="创建社群" subtitle="新群组" ariaLabel="创建社群" onBack={goBack} backLabel="返回社群" />
 
       <div className="screen-scroll community-settings-scroll">
         <div className="community-create-identity">
@@ -127,7 +129,7 @@ export function CreateGroupPage() {
             status={errorStatus}
             health={serviceHealth}
             onRetry={() => void submit()}
-            onBack={() => navigate("/community")}
+            onBack={goBack}
           />
         ) : null}
 

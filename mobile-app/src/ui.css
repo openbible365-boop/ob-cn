@@ -1,0 +1,4 @@
+/* Page rules have lower precedence than shared UI controls. */
+@import url("./index.css") layer(pages);
+@import url("./icon-controls.css");
+@import url("./reader-controls.css");

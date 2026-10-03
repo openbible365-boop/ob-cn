@@ -2,17 +2,22 @@
    Warm gold = reading, violet = AI/interaction, blue-grey = commentary. */
 :root {
   color-scheme: light;
-  --ink: #202229;
-  --body: #545b66;
-  --muted: #6f7681;
-  --line: #e0e3e8;
-  --surface: #f6f7f8;
+  /* 暖纸面：正文对比 13.7:1，避免纯黑配纯白的眩光；次要 7.3:1，辅助 5.4:1 */
+  --ink: #2b2926;
+  --body: #57524b;
+  --muted: #6b665e;
+  /* 第三级文字：只给节号这类可有可无的定位信息，3.3:1 */
+  --ink-3: #8f897f;
+  --line: #e6e2da;
+  --surface: #f3f1ec;
   /* 补齐被引用但未定义的令牌：不接上会静默继承 */
-  --surface-soft: #fafbfc;
+  --surface-soft: #f7f5f0;
   --danger: var(--pink);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --surface-2: #eef0f3;
-  --white: #fffefc;
+  --surface-2: #efece6;
+  --white: #faf8f3;
+  /* 阅读页左右页边：主流手机 24px，≤374 的小屏收到 20px */
+  --reading-gutter: 24px;
 
   --yellow: #f4c75f;
   --yellow-soft: #fff3d2;
@@ -50,6 +55,13 @@ body,
 #root {
   height: 100%;
   overflow: hidden;
+}
+
+/* 字重体系：400 正文 · 500 标签 · 600 标题与强调。
+   <b>/<strong> 不走浏览器默认 700，统一落在 600。 */
+b,
+strong {
+  font-weight: 600;
 }
 
 body {
@@ -149,7 +161,7 @@ a {
   margin-bottom: 8px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-picker-heading button {
@@ -158,7 +170,7 @@ a {
   gap: 4px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-chapter-grid {
@@ -174,7 +186,7 @@ a {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-chapter-grid button.active {
@@ -184,7 +196,7 @@ a {
 
 .annotation-reader.is-introduction {
   padding-top: 0;
-  background: #fffefa;
+  background: var(--white);
 }
 
 .annotation-introduction {
@@ -201,9 +213,9 @@ a {
 
 .annotation-intro-eyebrow {
   margin-bottom: 9px;
-  color: #4e6d94;
+  color: var(--commentary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
@@ -217,7 +229,7 @@ a {
 .annotation-intro-hero h1 {
   font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
   font-size: 32px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1.18;
 }
@@ -226,24 +238,24 @@ a {
   flex: none;
   padding: 4px 9px;
   border-radius: 999px;
-  background: rgba(78, 109, 148, 0.1);
-  color: #4e6d94;
+  background: var(--commentary-soft);
+  color: var(--commentary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-intro-hero > p {
   margin-top: 5px;
-  color: #333841;
+  color: var(--ink);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-intro-meta {
   margin-top: 10px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-intro-section {
@@ -252,19 +264,19 @@ a {
 
 .annotation-intro-section h2 {
   margin-bottom: 13px;
-  color: #3f5f88;
+  color: var(--commentary);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-intro-section h2 span {
   display: inline-block;
   padding-bottom: 5px;
-  border-bottom: 2px solid #5c7da6;
+  border-bottom: 2px solid var(--commentary);
 }
 
 .annotation-intro-section > p {
-  color: #26272d;
+  color: var(--ink);
   text-align: justify;
   word-break: break-word;
 }
@@ -274,8 +286,8 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 22px 0 0;
   padding: 14px 0;
-  border-top: 1px solid #e8e3d8;
-  border-bottom: 1px solid #e8e3d8;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .annotation-intro-facts > div {
@@ -287,13 +299,13 @@ a {
 }
 
 .annotation-intro-facts > div + div {
-  border-left: 1px solid #e8e3d8;
+  border-left: 1px solid var(--line);
 }
 
 .annotation-intro-facts small {
   color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-facts strong {
@@ -315,10 +327,10 @@ a {
 .annotation-intro-themes li {
   padding: 7px 10px;
   border-radius: 8px;
-  background: #f0f2f5;
-  color: #39414c;
+  background: var(--commentary-soft);
+  color: var(--ink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-intro-stages {
@@ -332,18 +344,18 @@ a {
   align-items: center;
   gap: 10px;
   min-height: 49px;
-  border-top: 1px solid #e8e3d8;
+  border-top: 1px solid var(--line);
 }
 
 .annotation-intro-stages > div:last-child {
-  border-bottom: 1px solid #e8e3d8;
+  border-bottom: 1px solid var(--line);
 }
 
 .annotation-intro-stages > div > span {
-  color: #5c7da6;
+  color: var(--commentary);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-stages small {
@@ -358,7 +370,7 @@ a {
 .annotation-intro-note {
   margin-top: 24px;
   padding-left: 12px;
-  border-left: 2px solid #9aacc1;
+  border-left: 2px solid color-mix(in srgb, var(--commentary) 55%, transparent);
   color: var(--body);
   font-size: 12px;
   font-style: normal;
@@ -385,13 +397,13 @@ a {
   gap: 2px;
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-intro-start small {
   color: #cbd7e6;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-start > .app-icon {
@@ -412,7 +424,7 @@ a {
 
 .page-header .title {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .icon-btn {
@@ -437,7 +449,7 @@ a {
 
 .icon-btn:hover:not(:disabled) {
   border-color: #aaa8a4;
-  background: #fffdf8;
+  background: var(--white);
 }
 
 .icon-btn:active:not(:disabled),
@@ -553,8 +565,8 @@ a {
 .daily-verse-kicker {
   flex: 1;
   color: var(--yellow-ink);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .daily-verse-streak {
@@ -566,8 +578,8 @@ a {
   border-radius: 999px;
   background: var(--yellow-medium);
   color: var(--yellow-ink);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .daily-verse-close {
@@ -601,7 +613,7 @@ a {
   flex: 1;
   color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .daily-verse-actions {
@@ -615,7 +627,7 @@ a {
   background: none;
   color: var(--purple-deep);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* 章内阅读进度线：紧贴顶栏下缘，收起顶栏后仍在，保持位置感 */
@@ -682,6 +694,11 @@ a {
   font-size: 14px;
 }
 
+/* 只有一段的标题芯片（我的、社群空态等）两端都要圆 */
+.bible-reader-selector:only-child {
+  border-radius: 999px;
+}
+
 .bible-reader-selector.book {
   max-width: 118px;
   padding-right: 8px;
@@ -710,15 +727,12 @@ a {
   border-radius: 0 999px 999px 0;
 }
 
+/* 展开态只加深一档黄色，不再整块反黑，和弹层的选中色同一套 */
 .bible-reader-selector.book.is-open,
-.bible-reader-selector.chapter-number.is-open {
-  background: var(--ink);
-  color: var(--yellow);
-}
-
+.bible-reader-selector.chapter-number.is-open,
 .bible-reader-selector.version.is-open {
-  background: var(--ink);
-  color: var(--yellow);
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
 .bible-chapter-picker {
@@ -770,8 +784,8 @@ a {
 .bible-book-group-title {
   margin-bottom: 4px;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .bible-book-grid {
@@ -789,7 +803,7 @@ a {
   border-radius: 8px;
   background: var(--white);
   color: var(--ink);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   text-overflow: clip;
@@ -800,7 +814,7 @@ a {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--yellow);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-toolbar-actions {
@@ -1040,7 +1054,7 @@ a {
   padding: 0 2px;
   color: var(--purple);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-search-filters {
@@ -1086,7 +1100,7 @@ a {
   color: inherit;
   font: inherit;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1117,7 +1131,7 @@ a {
   background: var(--surface);
   color: var(--body);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bible-search-scopes button::after {
@@ -1150,7 +1164,7 @@ a {
   margin: 0;
   color: var(--ink);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-search-section-heading > button {
@@ -1181,7 +1195,7 @@ a {
   border: 1px solid var(--line);
   color: var(--ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -1207,7 +1221,7 @@ a {
 .bible-search-results-heading > span {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* 结果不加外框：留白 + 细分隔线分行，引用徽章本身就是视觉锚点，
@@ -1303,29 +1317,8 @@ a {
   to { transform: rotate(360deg); }
 }
 
-.bible-search-empty {
-  display: flex;
-  min-height: 180px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 28px 20px;
-  color: var(--body);
-  text-align: center;
-}
 
-.bible-search-empty p {
-  margin: 3px 0 0;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 700;
-}
 
-.bible-search-empty small {
-  font-size: 12px;
-  line-height: 1.6;
-}
 
 .bible-search-limit {
   margin: 0;
@@ -1341,7 +1334,7 @@ a {
   border-radius: 4px;
   background: var(--yellow-medium);
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-reading-settings {
@@ -1363,7 +1356,7 @@ a {
 .bible-reading-setting-row > span {
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-reading-settings .bible-font-size-control {
@@ -1403,7 +1396,7 @@ a {
 .bible-setting-segment button {
   color: var(--ink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bible-setting-segment button + button {
@@ -1416,12 +1409,12 @@ a {
 
 /* 精读本注释：保留纸本的绪论、综览和经节锚点，转换为手机单栏阅读。 */
 .annotation-reader-screen {
-  background: #fffefa;
+  background: var(--white);
 }
 
 .annotation-copyright-trigger[aria-expanded="true"] {
-  background: #eef3f9;
-  color: #526f96;
+  background: var(--commentary-soft);
+  color: var(--commentary);
 }
 
 .annotation-audio-trigger[aria-expanded="true"],
@@ -1450,7 +1443,7 @@ a {
 
 .annotation-reader-scroll {
   padding: 0 20px 32px;
-  background: #fffefa;
+  background: var(--white);
   touch-action: pan-y;
 }
 
@@ -1466,7 +1459,7 @@ a {
   background: var(--yellow-soft);
   color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.5;
   vertical-align: 2px;
   white-space: nowrap;
@@ -1479,7 +1472,7 @@ a {
 
 .annotation-section-body {
   margin: 0;
-  color: #292d33;
+  color: var(--ink);
   font-weight: 400;
   line-height: 1.85;
   overflow-wrap: anywhere;
@@ -1511,7 +1504,7 @@ a {
   margin-right: 3px;
   color: var(--yellow-ink);
   font-size: 0.7em;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-scripture-loading {
@@ -1555,7 +1548,7 @@ a {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-comparison-section {
@@ -1574,7 +1567,7 @@ a {
   border-radius: 12px;
   color: var(--ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -1584,14 +1577,14 @@ a {
   height: 26px;
   place-items: center;
   border-radius: 8px;
-  background: #526f96;
+  background: var(--commentary);
   color: #fff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-book-intro-entry > .app-icon {
-  color: #75808d;
+  color: var(--muted);
 }
 
 /* 综览段落：用注释色的浅底块与逐节注释区分，不再需要标题文字。 */
@@ -1603,7 +1596,7 @@ a {
   border-top: 0;
   border-left: 3px solid var(--yellow);
   border-radius: 12px;
-  background: rgba(244, 199, 95, 0.12);
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
 }
 
 .annotation-entry.is-range .annotation-reference-chip {
@@ -1640,7 +1633,7 @@ a {
 .annotation-entry-topic {
   margin-right: 6px;
   color: var(--yellow-ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-status-card {
@@ -1657,13 +1650,13 @@ a {
 .annotation-empty-title {
   margin-bottom: 3px;
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-swipe-hint {
   padding: 30px 0 6px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-align: center;
 }
@@ -1693,9 +1686,9 @@ a {
   max-height: calc(100dvh - 44px);
   overflow-y: auto;
   padding: 20px 22px 22px;
-  border: 1px solid rgba(82, 111, 150, 0.16);
+  border: 1px solid color-mix(in srgb, var(--commentary) 16%, transparent);
   border-radius: 16px;
-  background: #fffefa;
+  background: var(--white);
   box-shadow: 0 20px 52px rgba(38, 41, 48, 0.22);
 }
 
@@ -1721,16 +1714,16 @@ a {
   flex: none;
   place-items: center;
   border-radius: 12px;
-  background: #eef3f9;
-  color: #526f96;
+  background: var(--commentary-soft);
+  color: var(--commentary);
   font-family: Georgia, serif;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-copyright-heading h2 {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -1765,14 +1758,14 @@ a {
 }
 
 .annotation-copyright-details dt {
-  color: #777b84;
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-copyright-details dd {
   min-width: 0;
-  color: #292d33;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
@@ -1780,7 +1773,7 @@ a {
 }
 
 .annotation-copyright-details a {
-  color: #526f96;
+  color: var(--commentary);
 }
 
 @media (max-width: 360px) {
@@ -1868,7 +1861,7 @@ a {
   background: var(--purple-soft);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
   text-align: left;
 }
@@ -1923,13 +1916,13 @@ a {
   border-radius: 8px;
   background: var(--purple);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .notification-section-heading p {
   margin: 3px 0 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -1973,7 +1966,7 @@ a {
 .notification-inbox-copy time {
   overflow: hidden;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
   text-overflow: ellipsis;
 }
@@ -2023,7 +2016,7 @@ a {
   background: var(--white);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .notification-permission-button:disabled {
@@ -2045,124 +2038,18 @@ a {
   box-shadow: inset 3px 0 0 var(--purple);
 }
 
-.notification-empty-state {
-  display: grid;
-  place-items: center;
-  gap: 5px;
-  padding: 15px 12px 13px;
-  color: var(--muted);
-  text-align: center;
-}
 
-.notification-empty-state strong {
-  color: var(--ink);
-  font-size: 13px;
-}
 
-.notification-empty-state span {
-  font-size: 11px;
-}
 
-.notification-daily-verse-demo {
-  position: relative;
-  display: flex;
-  width: 100%;
-  min-height: 154px;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow: hidden;
-  padding: 17px 18px;
-  border: 1px solid rgba(188, 142, 61, 0.22);
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.2), transparent 34%),
-    linear-gradient(145deg, #fff5d9 0%, #fffaf0 52%, #f5edf9 100%);
-  color: #25201a;
-  text-align: left;
-  box-shadow: 0 10px 26px rgba(75, 62, 43, 0.08);
-}
 
-.notification-daily-verse-demo::after {
-  position: absolute;
-  top: 15px;
-  right: 18px;
-  color: rgba(143, 76, 193, 0.18);
-  content: "“";
-  font-family: Georgia, serif;
-  font-size: 76px;
-  line-height: 0.8;
-  pointer-events: none;
-}
 
-.notification-daily-verse-kicker {
-  position: relative;
-  z-index: 1;
-  color: #805516;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
 
-.notification-daily-verse-demo > strong {
-  position: relative;
-  z-index: 1;
-  max-width: 90%;
-  margin-top: 12px;
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.55;
-}
 
-.notification-daily-verse-reference {
-  position: relative;
-  z-index: 1;
-  max-width: 48%;
-  margin-top: 8px;
-  color: #675f54;
-  font-size: 12px;
-  font-weight: 600;
-}
 
-.notification-daily-verse-action {
-  position: absolute;
-  right: 18px;
-  bottom: 16px;
-  z-index: 1;
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  gap: 3px;
-  margin-top: 0;
-  padding: 0 11px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #74409a;
-  font-size: 12px;
-  font-weight: 700;
-}
 
-body.dark .notification-daily-verse-demo {
-  border-color: rgba(226, 184, 90, 0.2);
-  background:
-    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.26), transparent 36%),
-    linear-gradient(145deg, #2a2418 0%, #211f1b 50%, #241c2a 100%);
-  color: #f6f0e6;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-}
 
-body.dark .notification-daily-verse-kicker {
-  color: #e6bd61;
-}
 
-body.dark .notification-daily-verse-reference {
-  color: #bcb4a8;
-}
 
-body.dark .notification-daily-verse-action {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d5acee;
-}
 
 .btn-primary {
   display: flex;
@@ -2174,7 +2061,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 12px;
   color: #fff;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
   box-shadow: var(--shadow-card);
   transition: background-color 160ms ease, opacity 160ms ease, transform 120ms ease;
 }
@@ -2199,13 +2086,13 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease, transform 120ms ease;
 }
 
 .compact-action-btn:hover:not(:disabled) {
   border-color: #aaa8a4;
-  background: #fffdf8;
+  background: var(--white);
 }
 
 .compact-action-btn.is-primary {
@@ -2239,7 +2126,7 @@ body.dark .notification-daily-verse-action {
   color: var(--ink);
   box-shadow: var(--shadow-card);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 
@@ -2253,7 +2140,9 @@ body.dark .notification-daily-verse-action {
   transform: translateY(1px);
 }
 
-/* tab bar */
+/* tab bar
+   悬浮底栏：与正文同宽页边、不透明纸面 + 毛玻璃兜底、1px 细线、单层轻阴影。
+   选中态只保留三个信号：图标填色、文字变色、极浅的平底块（无描边、无阴影、无放大）。 */
 .tab-bar {
   --tab-active-ink: var(--yellow-ink);
   --tab-active-fill: var(--yellow);
@@ -2261,21 +2150,21 @@ body.dark .notification-daily-verse-action {
   right: auto;
   bottom: max(8px, env(safe-area-inset-bottom));
   left: 50%;
-  width: min(calc(100vw - 20px), 680px);
+  width: min(calc(100vw - 32px), 680px);
   z-index: 30;
   flex: none;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  min-height: 58px;
+  min-height: 56px;
   margin-top: 20px;
   padding: 3px;
-  border: 1px solid rgba(191, 174, 142, 0.58);
-  border-radius: 17px;
-  background: rgba(255, 254, 252, 0.96);
-  box-shadow:
-    0 -1px 1px rgba(255, 255, 255, 0.9),
-    0 8px 24px rgba(63, 52, 35, 0.12);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--white) 92%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 6px 20px rgba(43, 41, 38, 0.1);
   transform: translateX(-50%);
   transition:
     transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -2289,9 +2178,8 @@ body.dark .notification-daily-verse-action {
   transform: translate(-50%, calc(100% + 16px + env(safe-area-inset-bottom)));
 }
 
-/* 悬浮标签栏 bottom 8px + 栏高 58px + 内边距，实际遮挡到约 82px；
-   74px 时正文最后一两行会穿到标签栏后面被挡住，统一留 96px 呼吸空间。 */
-.app.has-tab-bar .screen-scroll {
+/* 悬浮标签栏 bottom 8px + 栏高 56px，实际遮挡约 66px；统一留 96px 呼吸空间 */
+.app.has-tab-bar .screen-scroll:not(.has-verse-action-sheet) {
   padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
   scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
@@ -2299,52 +2187,27 @@ body.dark .notification-daily-verse-action {
 .tab-bar .tab {
   display: flex;
   min-width: 0;
-  height: 50px;
+  height: 48px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border: 1px solid transparent;
-  border-radius: 13px;
-  color: var(--body);
-  transition:
-    color 180ms ease,
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+  gap: 4px;
+  border-radius: 12px;
+  color: var(--muted);
+  transition: color 180ms ease, background-color 180ms ease;
 }
 
 .tab-bar .tab .tab-icon {
   display: grid;
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   place-items: center;
   color: currentColor;
-  transform-origin: 50% 78%;
-  transition: transform 220ms ease;
 }
 
 .tab-bar .tab-icon-svg {
   display: block;
   overflow: visible;
-}
-
-.tab-bar .tab-icon-svg-huidu {
-  width: 36px;
-  height: 36px;
-  align-self: center;
-  justify-self: center;
-  transform: translate(-4.5px, -7px);
-  transform-origin: center;
-}
-
-.tab-bar .tab-icon-svg-huidu * {
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-.tab-bar .tab-icon-svg-huidu .tab-icon-sparkle-large {
-  stroke-width: 2;
 }
 
 .tab-bar .tab-icon-surface {
@@ -2357,29 +2220,15 @@ body.dark .notification-daily-verse-action {
 }
 
 .tab-bar .tab .tab-label {
-  font-size: 11.5px;
-  font-weight: 560;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.01em;
   color: currentColor;
-  transition: font-weight 180ms ease;
 }
 
 .tab-bar .tab.active {
   color: var(--tab-active-ink);
-  border-color: rgba(226, 175, 70, 0.38);
-  background: linear-gradient(145deg, #fff9e8, var(--yellow-soft));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.86),
-    0 3px 8px rgba(179, 122, 20, 0.1);
-}
-
-.tab-bar .tab.active .tab-icon {
-  transform: translateY(-1px) scale(1.04);
-}
-
-.tab-bar .tab.active .tab-icon-huidu {
-  transform: translateY(-1px);
+  background: var(--yellow-soft);
 }
 
 .tab-bar .tab.active .tab-icon-surface {
@@ -2387,20 +2236,17 @@ body.dark .notification-daily-verse-action {
 }
 
 .tab-bar .tab.active .tab-label {
-  font-weight: 760;
-  color: var(--tab-active-ink);
+  font-weight: 600;
 }
 
 .tab-bar .tab:focus-visible {
-  outline: 2px solid #d99a25;
+  outline: 2px solid var(--yellow-ink);
   outline-offset: -2px;
 }
 
 @media (max-width: 360px) {
   .tab-bar {
-    width: calc(100vw - 14px);
-    padding-right: 3px;
-    padding-left: 3px;
+    width: calc(100vw - 24px);
   }
 }
 
@@ -2447,7 +2293,7 @@ body.dark .notification-daily-verse-action {
   flex: 1;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2492,7 +2338,7 @@ body.dark .notification-daily-verse-action {
   background: none;
   color: var(--purple-deep);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2532,91 +2378,12 @@ body.dark .notification-daily-verse-action {
   background: none;
   color: var(--purple-deep);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .verse-compact-extra button:disabled {
   color: var(--muted);
 }
-
-/* 译本对照面板 */
-.compare-sheet {
-  z-index: 52;
-  max-height: 62dvh;
-  overflow-y: auto;
-  border-radius: 16px 16px 0 0;
-  border-top: 0;
-  box-shadow: var(--shadow-overlay);
-}
-
-.compare-sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.compare-sheet-head b {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.compare-sheet-head button {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: var(--body);
-}
-
-.compare-loading {
-  padding: 20px 0 28px;
-  color: var(--body);
-  font-size: 13px;
-  text-align: center;
-}
-
-.compare-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-bottom: 6px;
-}
-
-.compare-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 11px 13px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface-soft);
-}
-
-.compare-version {
-  align-self: flex-start;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--yellow-medium);
-  color: var(--yellow-ink);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.compare-item p {
-  margin: 0;
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.85;
-  text-align: justify;
-}
-
-/* 注意：拼音和合本的注音在对照里已剥离，只看纯文本 */
 
 .verse-compact-note-form {
   display: flex;
@@ -2643,7 +2410,7 @@ body.dark .notification-daily-verse-action {
   background: var(--purple);
   color: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .verse-action-sheet-header {
@@ -2665,7 +2432,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--ink);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2673,7 +2440,7 @@ body.dark .notification-daily-verse-action {
 .verse-action-reference span {
   flex: none;
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -2695,7 +2462,7 @@ body.dark .notification-daily-verse-action {
   flex: none;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .verse-highlight-choice {
@@ -2783,15 +2550,15 @@ body.dark .notification-daily-verse-action {
 .verse-action-label {
   overflow: hidden;
   max-width: 100%;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .verse-action-button.primary .verse-action-label {
   color: var(--purple-deep);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* audio Bible player */
@@ -2850,7 +2617,7 @@ body.dark .notification-daily-verse-action {
   min-height: 26px;
   color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .audio-player-kicker > .app-icon {
@@ -2887,8 +2654,8 @@ body.dark .notification-daily-verse-action {
 /* 整卷缓存进度：图标位显示 x/y 章 */
 .audio-cache-progress {
   color: var(--purple-deep);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -2939,7 +2706,7 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
   transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
@@ -3033,7 +2800,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 999px;
   background: var(--audio-purple-soft);
   color: var(--audio-purple);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .audio-controls {
@@ -3085,7 +2852,7 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   font-size: 7px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .audio-current-passage {
@@ -3168,15 +2935,15 @@ body.dark .notification-daily-verse-action {
 .audio-mini-copy b {
   overflow: hidden;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .audio-mini-copy small {
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3214,7 +2981,7 @@ body.dark .notification-daily-verse-action {
 .audio-player-sheet.is-lyrics .audio-player-title {
   margin: 0;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .audio-locate-btn {
@@ -3267,14 +3034,14 @@ body.dark .notification-daily-verse-action {
 }
 
 .audio-lyric:not(.is-current) .audio-lyric-text {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.7;
 }
 
 .audio-lyric-num {
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -3299,7 +3066,7 @@ body.dark .notification-daily-verse-action {
 
 .audio-lyric.is-current .audio-lyric-text {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.9;
 }
 
@@ -3374,7 +3141,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3436,7 +3203,7 @@ body.dark .notification-daily-verse-action {
   background: var(--purple-soft);
   color: var(--audio-purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .sr-only {
@@ -3516,7 +3283,7 @@ body.dark .notification-daily-verse-action {
 
 .huidu-start-copy b {
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-start-copy small {
@@ -3563,13 +3330,13 @@ body.dark .notification-daily-verse-action {
 
 .huidu-history-heading b {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-history-heading span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-history-sort {
@@ -3588,20 +3355,20 @@ body.dark .notification-daily-verse-action {
   border-radius: 8px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-history-sort button.active {
   background: var(--white);
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-history-label {
   padding-left: 2px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-history-list {
@@ -3668,7 +3435,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--ink);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3693,7 +3460,7 @@ body.dark .notification-daily-verse-action {
   margin-left: auto;
   padding-left: 2px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -3709,17 +3476,11 @@ body.dark .notification-daily-verse-action {
 }
 
 .huidu-history-delete:hover {
-  background: rgba(225, 49, 125, 0.08);
+  background: color-mix(in srgb, var(--pink) 8%, transparent);
   color: var(--pink);
   opacity: 1;
 }
 
-.huidu-history-empty {
-  padding: 18px 4px;
-  color: var(--body);
-  font-size: 12px;
-  line-height: 1.65;
-}
 
 .huidu-home-scroll > .disclaimer {
   margin-top: -4px;
@@ -3833,7 +3594,7 @@ body.dark .notification-daily-verse-action {
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-delete-dialog button.is-danger {
@@ -3853,7 +3614,7 @@ body.dark .notification-daily-verse-action {
   color: var(--ink);
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-rename-dialog button.is-primary {
@@ -3906,7 +3667,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 50%;
   color: #202229;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .user-avatar img {
@@ -3956,8 +3717,8 @@ body.dark .notification-daily-verse-action {
   display: block;
   margin-top: 3px;
   color: var(--orange-deep);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-avatar-message.is-success {
@@ -3992,8 +3753,8 @@ body.dark .notification-daily-verse-action {
   border-radius: 999px;
   background: var(--yellow-soft);
   color: var(--yellow-ink);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-profile-copy p {
@@ -4022,14 +3783,14 @@ body.dark .notification-daily-verse-action {
 .me-section-heading h2 {
   margin: 0;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-section-heading > button,
 .me-section-heading > span {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* 「查看内容」这类栏目右侧的文字入口原来只有 17px 高，
@@ -4060,14 +3821,14 @@ body.dark .notification-daily-verse-action {
   border: 1px solid var(--line);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
 .me-stat-value {
   color: var(--ink);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -4095,7 +3856,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   flex: 1;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4103,7 +3864,7 @@ body.dark .notification-daily-verse-action {
 .me-plan-banner-head small {
   flex: none;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   opacity: 0.85;
 }
 
@@ -4150,7 +3911,7 @@ body.dark .notification-daily-verse-action {
 .me-plan-banner.is-empty b {
   flex: none;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* 四宫格快捷入口：灰图标 + 名称 + 数字角标 */
@@ -4175,7 +3936,7 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .me-quick > button .app-icon {
@@ -4187,8 +3948,8 @@ body.dark .notification-daily-verse-action {
   top: 6px;
   right: 8px;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4300,7 +4061,7 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-group-avatar,
@@ -4313,7 +4074,7 @@ body.dark .notification-daily-verse-action {
   justify-content: center;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-menu-icon {
@@ -4334,7 +4095,7 @@ body.dark .notification-daily-verse-action {
 .me-menu-copy b {
   overflow: hidden;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4370,7 +4131,7 @@ body.dark .notification-daily-verse-action {
   padding: 4px 10px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .me-logout-button {
@@ -4381,7 +4142,7 @@ body.dark .notification-daily-verse-action {
   border: 1px solid var(--line);
   color: var(--orange-deep);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-logout-confirm {
@@ -4422,7 +4183,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 8px;
   background: var(--white);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-logout-actions .is-danger {
@@ -4434,7 +4195,7 @@ body.dark .notification-daily-verse-action {
   margin-top: -12px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -4465,7 +4226,7 @@ body.dark .notification-daily-verse-action {
   gap: 12px;
   color: var(--body);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .me-detail-state.is-error {
@@ -4474,38 +4235,9 @@ body.dark .notification-daily-verse-action {
 }
 
 .me-detail-state button,
-.me-detail-empty button {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 800;
-}
 
-.me-detail-empty {
-  display: flex;
-  min-height: 280px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: var(--body);
-  text-align: center;
-}
 
-.me-detail-empty b {
-  color: var(--ink);
-  font-size: 15px;
-}
 
-.me-detail-empty span {
-  max-width: 280px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.65;
-}
 
 .me-activity-group {
   display: flex;
@@ -4550,8 +4282,8 @@ body.dark .notification-daily-verse-action {
 
 .me-activity-date {
   color: var(--purple-deep);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-activity-list b {
@@ -4560,7 +4292,7 @@ body.dark .notification-daily-verse-action {
 
 .me-activity-list small {
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -4579,7 +4311,7 @@ body.dark .notification-daily-verse-action {
   justify-content: center;
   border-radius: 16px;
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-data-account > div:last-child {
@@ -4631,7 +4363,7 @@ body.dark .notification-daily-verse-action {
 .me-data-heading p {
   margin-top: 3px;
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
 }
@@ -4639,8 +4371,8 @@ body.dark .notification-daily-verse-action {
 .me-data-heading > span {
   flex: none;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* 本机数据宫格只有三项（无「活动」——那是云端数据），等分三列 */
@@ -4672,7 +4404,7 @@ body.dark .notification-daily-verse-action {
 .me-cloud-row b {
   color: var(--ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4680,7 +4412,7 @@ body.dark .notification-daily-verse-action {
   margin: 0;
   padding: 0 4px;
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.7;
 }
@@ -4702,7 +4434,7 @@ body.dark .notification-daily-verse-action {
 .app-crash b {
   color: var(--ink);
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .app-crash p {
@@ -4727,7 +4459,7 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .app-crash-actions button.is-primary {
@@ -4740,7 +4472,7 @@ body.dark .notification-daily-verse-action {
   margin-top: 14px;
   max-width: 320px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   word-break: break-all;
 }
@@ -4756,7 +4488,7 @@ body.dark .notification-daily-verse-action {
   background: rgba(32, 34, 41, 0.92);
   color: #fff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   animation: exit-toast-in 160ms ease;
 }
@@ -4798,7 +4530,7 @@ body.dark .app-exit-toast {
 .notification-reminder-time span {
   color: var(--body);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .notification-reminder-time input {
@@ -4809,7 +4541,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .notification-reminder-feedback {
@@ -4846,7 +4578,7 @@ body.dark .app-exit-toast {
   background: var(--purple);
   color: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .prayer-compose button:disabled {
@@ -4854,19 +4586,7 @@ body.dark .app-exit-toast {
   color: var(--muted);
 }
 
-.prayer-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  padding: 36px 24px;
-  color: var(--body);
-  text-align: center;
-}
 
-.prayer-empty .app-icon { color: var(--muted); }
-.prayer-empty b { color: var(--ink); font-size: 14px; font-weight: 800; }
-.prayer-empty p { margin: 0; font-size: 12px; font-weight: 600; line-height: 1.7; }
 
 .prayer-section {
   display: flex;
@@ -4882,8 +4602,8 @@ body.dark .app-exit-toast {
   font-size: 13px;
 }
 
-.prayer-section-head b { font-weight: 800; color: var(--ink); }
-.prayer-section-head span { color: var(--muted); font-size: 12px; font-weight: 700; }
+.prayer-section-head b { font-weight: 600; color: var(--ink); }
+.prayer-section-head span { color: var(--muted); font-size: 12px; font-weight: 600; }
 
 .prayer-list {
   display: flex;
@@ -4948,7 +4668,7 @@ body.dark .app-exit-toast {
 
 .prayer-copy small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -4970,7 +4690,7 @@ body.dark .app-exit-toast {
   background: none;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-prayer-save:disabled {
@@ -5016,12 +4736,12 @@ body.dark .app-exit-toast {
 
 .me-res-copy b {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-res-copy small {
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -5050,7 +4770,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-res-btn.is-primary {
@@ -5067,7 +4787,7 @@ body.dark .app-exit-toast {
   margin: 0;
   color: var(--danger, #b3403f);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .me-res-unsupported {
@@ -5142,13 +4862,13 @@ body.dark .app-exit-toast {
   background: var(--yellow-medium);
   color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-quote-meta b {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-quote p {
@@ -5194,7 +4914,7 @@ body.dark .app-exit-toast {
   margin: 0;
   color: var(--ink);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-chat-empty p {
@@ -5242,7 +4962,7 @@ body.dark .app-exit-toast {
   background: none;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-suggests button:active {
@@ -5298,8 +5018,8 @@ body.dark .app-exit-toast {
   border-radius: 8px;
   background: none;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .huidu-msg-actions button:active {
@@ -5319,7 +5039,7 @@ body.dark .app-exit-toast {
   align-self: flex-start;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.02em;
 }
 
@@ -5399,11 +5119,11 @@ body.dark .app-exit-toast {
   margin: 0 3px 7px;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-composer-status.is-error {
-  color: #c64040;
+  color: var(--danger);
 }
 
 .huidu-chat-row {
@@ -5442,7 +5162,7 @@ body.dark .app-exit-toast {
 .huidu-attach-chip small {
   flex: none;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .huidu-attach-chip button {
@@ -5476,7 +5196,7 @@ body.dark .app-exit-toast {
 }
 
 .huidu-attach-btn:active:not(:disabled) {
-  background: rgba(191, 120, 246, 0.09);
+  background: var(--purple-soft);
 }
 
 .huidu-attach-btn:disabled {
@@ -5513,7 +5233,7 @@ body.dark .app-exit-toast {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .huidu-chat-field .voice-input-btn {
@@ -5527,7 +5247,7 @@ body.dark .app-exit-toast {
 
 .huidu-chat-field .voice-input-btn:hover:not(:disabled) {
   border: 0;
-  background: rgba(191, 120, 246, 0.09);
+  background: var(--purple-soft);
 }
 
 .huidu-chat-field .voice-input-btn.is-listening {
@@ -5566,7 +5286,7 @@ body.dark .app-exit-toast {
 .huidu-composer-note {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-align: center;
 }
@@ -5591,6 +5311,15 @@ body.dark .app-exit-toast {
   text-decoration-color: var(--body);
 }
 
+/* 圣经正文里专名虚线默认不画，减少满屏的小干扰；选中该节时再出现 */
+.bible-verse-content .verse-text mark {
+  text-decoration: none;
+}
+
+.bible-verse-content .bible-verse-main.is-selected .verse-text mark {
+  text-decoration: underline dotted var(--muted);
+}
+
 .verse-text ruby rt {
   font-size: 0.55em;
   color: var(--body);
@@ -5603,6 +5332,10 @@ body.dark .app-exit-toast {
    - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，视觉右缘更齐
    字号/行高/节距沿用现有内联值（此前逐项调过），这里只管排版规则。 */
 .bible-verse-content {
+  color: var(--ink);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-wrap: pretty;
   text-align: justify;
   text-justify: inter-ideograph;
   line-break: strict;
@@ -5661,7 +5394,7 @@ body.dark .app-exit-toast {
   margin-right: 7px !important;
   color: var(--purple-deep) !important;
   font-size: 12px !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bible-verse-content.is-pinyin .verse-text mark {
@@ -5699,7 +5432,7 @@ body.dark .app-exit-toast {
   margin: 0 4px 0 0 !important;
   color: var(--purple-deep) !important;
   font-size: 12px !important;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -5749,7 +5482,7 @@ body.dark .app-exit-toast {
 .verse-share-heading small {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .verse-share-heading strong {
@@ -5800,8 +5533,8 @@ body.dark .app-exit-toast {
   border-radius: 8px;
   background: var(--white);
   color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .verse-share-layouts button.active {
@@ -5821,8 +5554,8 @@ body.dark .app-exit-toast {
   border-radius: 8px;
   background: var(--white);
   color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .verse-share-templates button.active {
@@ -5906,7 +5639,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .verse-share-actions button.primary {
@@ -5954,7 +5687,7 @@ body.dark .app-exit-toast {
   padding-top: 1px;
   color: #8d6919;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
@@ -5984,7 +5717,7 @@ body.dark .app-exit-toast {
   min-height: 28px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sheet-close-btn {
@@ -6051,13 +5784,13 @@ body.dark .app-exit-toast {
 
 .community-directory-section-title b {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-directory-section-title span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-directory-list {
@@ -6088,7 +5821,7 @@ body.dark .app-exit-toast {
   place-items: center;
   border-radius: 12px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-directory-row.is-official .community-directory-avatar {
@@ -6113,7 +5846,7 @@ body.dark .app-exit-toast {
 .community-directory-title b {
   overflow: hidden;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -6140,7 +5873,7 @@ body.dark .app-exit-toast {
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-directory-badge.is-official {
@@ -6154,7 +5887,7 @@ body.dark .app-exit-toast {
 }
 
 .community-directory-badge.is-alert {
-  background: rgba(225, 49, 125, 0.09);
+  background: color-mix(in srgb, var(--pink) 10%, transparent);
   color: var(--pink);
 }
 
@@ -6187,7 +5920,7 @@ body.dark .app-exit-toast {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-directory-login-note button {
@@ -6208,7 +5941,7 @@ body.dark .app-exit-toast {
   border-radius: 12px;
   background: none;
   color: var(--purple-deep);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-discover-panel {
@@ -6263,7 +5996,7 @@ body.dark .app-exit-toast {
   place-items: center;
   border-radius: 12px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-discover-row > div {
@@ -6280,16 +6013,16 @@ body.dark .app-exit-toast {
 }
 
 .community-discover-row b { font-size: 13px; }
-.community-discover-row small { color: var(--body); font-size: 11px; }
+.community-discover-row small { color: var(--body); font-size: 12px; }
 .community-discover-row > button { padding: 0 12px; }
 
 .community-directory-error {
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(225, 49, 125, 0.07);
+  background: color-mix(in srgb, var(--pink) 8%, transparent);
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-error-state {
@@ -6309,7 +6042,7 @@ body.dark .app-exit-toast {
   height: 36px;
   place-items: center;
   border-radius: 12px;
-  background: rgba(225, 49, 125, 0.1);
+  background: color-mix(in srgb, var(--pink) 10%, transparent);
   color: var(--pink);
 }
 
@@ -6374,14 +6107,14 @@ body.dark .app-exit-toast {
 }
 
 .community-service-item b {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .community-service-item em {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-error-state-actions {
@@ -6397,7 +6130,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-error-state-actions button.is-primary {
@@ -6426,7 +6159,7 @@ body.dark .app-exit-toast {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.45;
 }
 
@@ -6442,8 +6175,8 @@ body.dark .app-exit-toast {
 .community-degraded-notice-actions button {
   min-height: 32px;
   color: inherit;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .community-service-summary.is-compact {
@@ -6461,7 +6194,7 @@ body.dark .app-exit-toast {
 
 .community-service-summary.is-compact .community-service-item b,
 .community-service-summary.is-compact .community-service-item em {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 @media (max-width: 360px) {
@@ -6504,7 +6237,7 @@ body.dark .app-exit-toast {
 
 .community-tabs button.active {
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-tabs button.active::after {
@@ -6526,20 +6259,20 @@ body.dark .app-exit-toast {
   gap: 10px;
   min-height: 34px;
   padding: 7px 16px;
-  background: rgba(74, 145, 92, 0.1);
-  color: #267a45;
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-feedback.is-error {
-  background: rgba(225, 49, 125, 0.09);
+  background: color-mix(in srgb, var(--pink) 10%, transparent);
   color: var(--pink);
 }
 
 .community-feedback button {
   color: inherit;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-panel-stack {
@@ -6645,7 +6378,7 @@ body.dark .app-exit-toast {
   margin: 0;
   color: var(--ink);
   font-size: 19px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -6659,7 +6392,7 @@ body.dark .app-exit-toast {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0;
   white-space: nowrap;
 }
@@ -6690,7 +6423,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
   text-align: left;
 }
@@ -6739,7 +6472,7 @@ body.dark .app-exit-toast {
   border-radius: 12px;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-assistant-home.is-community h2 {
@@ -6750,7 +6483,7 @@ body.dark .app-exit-toast {
 }
 
 .community-assistant-home.is-community .community-assistant-type {
-  background: rgba(35, 36, 43, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--body);
 }
 
@@ -6817,7 +6550,7 @@ body.dark .app-exit-toast {
   background: var(--yellow);
   box-shadow: var(--shadow-card);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-settings-identity > .community-form-field {
@@ -6837,21 +6570,21 @@ body.dark .app-exit-toast {
   gap: 6px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-form-field > span small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .community-form-field > span em {
   margin-left: auto;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-form-field input,
@@ -6870,7 +6603,7 @@ body.dark .app-exit-toast {
 .community-form-field input {
   min-height: 44px;
   padding: 0 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-form-field textarea {
@@ -6881,7 +6614,7 @@ body.dark .app-exit-toast {
 
 .community-form-field input:focus,
 .community-form-field textarea:focus {
-  border-color: rgba(142, 71, 190, 0.55);
+  border-color: color-mix(in srgb, var(--purple) 55%, transparent);
   box-shadow: 0 0 0 3px rgba(191, 120, 246, 0.1);
 }
 
@@ -6899,7 +6632,7 @@ body.dark .app-exit-toast {
   margin: 0 0 10px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-settings-section > h2 em {
@@ -6913,11 +6646,11 @@ body.dark .app-exit-toast {
   background: var(--surface-2);
   font-size: 12px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-settings-section > h2 em.is-pending {
-  background: rgba(201, 56, 112, 0.11);
+  background: color-mix(in srgb, var(--pink) 11%, transparent);
   color: var(--pink);
 }
 
@@ -6951,7 +6684,7 @@ body.dark .app-exit-toast {
 .community-policy-grid small {
   display: block;
   margin-top: 3px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   opacity: 0.85;
 }
@@ -6987,7 +6720,7 @@ body.dark .app-exit-toast {
   margin-top: 10px;
   color: var(--success);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-settings-error {
@@ -6997,7 +6730,7 @@ body.dark .app-exit-toast {
   margin-top: 10px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-settings-error > span {
@@ -7022,7 +6755,7 @@ body.dark .app-exit-toast {
   display: block;
   margin-top: 3px;
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -7031,8 +6764,8 @@ body.dark .app-exit-toast {
   border-radius: 999px;
   background: var(--yellow);
   color: var(--yellow-ink);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .community-create-identity {
@@ -7053,7 +6786,7 @@ body.dark .app-exit-toast {
   border-radius: 16px;
   box-shadow: var(--shadow-card);
   font-size: 30px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-create-avatar > i {
@@ -7071,7 +6804,7 @@ body.dark .app-exit-toast {
 
 .community-create-identity > small {
   color: var(--body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -7123,14 +6856,14 @@ body.dark .app-exit-toast {
   border: 1px solid var(--line);
   color: var(--body);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-feed-more-error {
   margin-top: 10px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -7179,7 +6912,7 @@ body.dark .app-exit-toast {
   margin-bottom: 10px;
   color: var(--purple-deep);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-join-requests > header span {
@@ -7197,7 +6930,7 @@ body.dark .app-exit-toast {
 .community-join-request-row + .community-join-request-row {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(130, 80, 171, 0.16);
+  border-top: 1px solid color-mix(in srgb, var(--purple) 16%, transparent);
 }
 
 .community-join-request-row > p {
@@ -7227,7 +6960,7 @@ body.dark .app-exit-toast {
   background: var(--purple-soft);
   color: var(--purple-deep);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-sheet-fields {
@@ -7248,12 +6981,12 @@ body.dark .app-exit-toast {
   gap: 6px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-sheet-field > span small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -7270,7 +7003,7 @@ body.dark .app-exit-toast {
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-sheet-segment > button.is-active {
@@ -7303,7 +7036,7 @@ body.dark .app-exit-toast {
   margin-top: 12px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-sheet-actions {
@@ -7342,7 +7075,7 @@ body.dark .app-exit-toast {
 .community-publish-sheet textarea:focus,
 .community-publish-sheet input:focus,
 .community-comment-composer input:focus {
-  border-color: rgba(142, 71, 190, 0.55);
+  border-color: color-mix(in srgb, var(--purple) 55%, transparent);
   box-shadow: 0 0 0 3px rgba(191, 120, 246, 0.1);
 }
 
@@ -7474,12 +7207,12 @@ body.dark .app-exit-toast {
 }
 
 .community-post-card.is-notice {
-  border-color: rgba(226, 168, 53, 0.45);
-  background: linear-gradient(145deg, #fffdf5, #fff9e9);
+  border-color: color-mix(in srgb, var(--yellow) 50%, transparent);
+  background: linear-gradient(145deg, var(--white), var(--yellow-soft));
 }
 
 .community-post-card.is-pinned {
-  border-color: rgba(226, 168, 53, 0.5);
+  border-color: color-mix(in srgb, var(--yellow) 50%, transparent);
   box-shadow: 0 5px 15px rgba(172, 126, 25, 0.1);
 }
 
@@ -7513,9 +7246,9 @@ body.dark .app-exit-toast {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #9b690a;
+  color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-post-menu {
@@ -7539,7 +7272,7 @@ body.dark .app-exit-toast {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-post-menu > button.is-danger {
@@ -7553,42 +7286,42 @@ body.dark .app-exit-toast {
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-post-kind.is-notice {
-  background: rgba(226, 168, 53, 0.16);
-  color: #8f5e05;
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  color: var(--yellow-ink);
 }
 
 .community-post-kind.is-article {
-  background: rgba(143, 184, 232, 0.18);
-  color: #356692;
+  background: var(--commentary-soft);
+  color: var(--commentary);
 }
 
 .community-post-kind.is-media {
-  background: rgba(191, 120, 246, 0.14);
+  background: var(--purple-soft);
   color: var(--purple);
 }
 
 .community-post-kind.is-event {
-  background: rgba(91, 154, 116, 0.14);
-  color: #36744f;
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
 }
 
 .community-post-kind.is-prayer {
-  background: rgba(130, 80, 171, 0.12);
+  background: var(--purple-soft);
   color: var(--purple);
 }
 
 /* 代祷卡：淡紫底与「我为你祷告」按钮 */
 .community-post-card.is-prayer {
-  border-color: rgba(130, 80, 171, 0.35);
-  background: linear-gradient(145deg, #fdfbff, #f7f2fb);
+  border-color: color-mix(in srgb, var(--purple) 35%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--purple) 3%, var(--white)), color-mix(in srgb, var(--purple) 7%, var(--white)));
 }
 
 .community-pray-btn {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-pray-btn.is-active {
@@ -7618,7 +7351,7 @@ body.dark .app-exit-toast {
   border-radius: 50%;
   object-fit: cover;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-person-row > div {
@@ -7632,7 +7365,7 @@ body.dark .app-exit-toast {
 .community-resource-card b,
 .community-group-row b {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-person-row small,
@@ -7676,7 +7409,7 @@ audio.community-post-media {
   color: var(--purple);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   list-style: none;
 }
 
@@ -7702,7 +7435,7 @@ audio.community-post-media {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-inline-actions {
@@ -7718,7 +7451,7 @@ audio.community-post-media {
   gap: 5px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-inline-actions button.is-active {
@@ -7743,12 +7476,12 @@ audio.community-post-media {
   border-radius: 999px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-report-reasons > button.is-active {
-  border-color: rgba(142, 71, 190, 0.42);
-  background: rgba(191, 120, 246, 0.1);
+  border-color: color-mix(in srgb, var(--purple) 42%, transparent);
+  background: var(--purple-soft);
   color: var(--purple);
 }
 
@@ -7775,12 +7508,12 @@ audio.community-post-media {
   padding: 2px 0;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-comments-error {
   color: var(--pink);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-usage-line button {
@@ -7795,7 +7528,7 @@ audio.community-post-media {
   background: var(--white);
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-card-kicker {
@@ -7806,7 +7539,7 @@ audio.community-post-media {
   background: var(--purple-soft);
   color: var(--purple);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-event-card h3 {
@@ -7828,7 +7561,7 @@ audio.community-post-media {
   color: var(--body);
   cursor: pointer;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   list-style: none;
 }
 
@@ -7877,13 +7610,13 @@ audio.community-post-media {
   border-radius: 16px;
   color: var(--ink);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-join-preview h2 {
   margin: 14px 0 6px;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-join-preview > p {
@@ -7905,7 +7638,7 @@ audio.community-post-media {
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-join-preview > .btn-primary {
@@ -7915,7 +7648,7 @@ audio.community-post-media {
 .community-join-preview > small {
   margin-top: 12px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -7954,7 +7687,7 @@ audio.community-post-media {
 .community-usage-line > span {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-usage-line {
@@ -7990,7 +7723,7 @@ audio.community-post-media {
   height: 38px;
   border-radius: 12px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-group-row > div,
@@ -8032,32 +7765,10 @@ audio.community-post-media {
   background: var(--surface);
 }
 
-.community-resource-heading {
-  padding: 0 2px 2px;
-}
 
-.community-resource-heading > div {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
 
-.community-resource-heading b {
-  color: var(--ink);
-  font-size: 16px;
-}
 
-.community-resource-heading span,
-.community-resource-heading p {
-  color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
-}
 
-.community-resource-heading p {
-  margin: 3px 0 0;
-  line-height: 1.45;
-}
 
 .community-resource-filters {
   display: flex;
@@ -8077,11 +7788,11 @@ audio.community-post-media {
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-resource-filters button.is-active {
-  border-color: rgba(143, 76, 191, 0.2);
+  border-color: color-mix(in srgb, var(--purple) 20%, transparent);
   background: var(--purple-soft);
   color: var(--purple);
 }
@@ -8164,22 +7875,22 @@ audio.community-post-media {
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--purple);
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-knowledge-status.is-parsing { background: var(--purple-soft); color: var(--purple); }
-.community-knowledge-status.is-indexed { background: rgba(38, 122, 69, 0.1); color: var(--success); }
-.community-knowledge-status.is-failed { background: rgba(225, 49, 125, 0.08); color: var(--pink); }
-.community-knowledge-status.is-reindex { background: rgba(243, 195, 84, 0.16); color: var(--yellow-ink); }
+.community-knowledge-status.is-indexed { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
+.community-knowledge-status.is-failed { background: color-mix(in srgb, var(--pink) 8%, transparent); color: var(--pink); }
+.community-knowledge-status.is-reindex { background: color-mix(in srgb, var(--yellow) 16%, transparent); color: var(--yellow-ink); }
 
 .community-knowledge-error {
   display: -webkit-box;
   overflow: hidden;
   margin: 8px 0 0 !important;
   color: var(--pink) !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 600;
   line-height: 1.45;
   white-space: normal !important;
@@ -8215,7 +7926,7 @@ audio.community-post-media {
   color: var(--body);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-resource-text p {
@@ -8262,8 +7973,8 @@ audio.community-post-media {
   border-radius: 8px;
   color: var(--body);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
   list-style: none;
 }
 
@@ -8294,7 +8005,7 @@ audio.community-post-media {
   color: var(--body);
   text-align: left;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-resource-admin-actions button:active {
@@ -8350,7 +8061,7 @@ audio.community-post-media {
   gap: 4px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-assistant-message {
@@ -8387,8 +8098,8 @@ audio.community-post-media {
   display: block;
   margin-bottom: 4px;
   color: var(--purple);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .community-confirm-card dl {
@@ -8408,7 +8119,7 @@ audio.community-post-media {
 .community-confirm-card dt,
 .community-confirm-card dd { margin: 0; font-size: 12px; line-height: 1.45; }
 .community-confirm-card dt { color: var(--muted); }
-.community-confirm-card dd { color: var(--ink); font-weight: 700; }
+.community-confirm-card dd { color: var(--ink); font-weight: 600; }
 .community-confirm-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; }
 
 .community-confirm-field {
@@ -8420,7 +8131,7 @@ audio.community-post-media {
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-confirm-field:focus {
@@ -8431,8 +8142,8 @@ audio.community-post-media {
 
 .community-post-visibility {
   color: var(--purple);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .community-pending-actions {
@@ -8460,8 +8171,8 @@ audio.community-post-media {
   border-radius: 999px;
   background: var(--purple-soft);
   color: var(--purple);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .community-pending-actions .community-confirm-card { margin-top: 0; }
@@ -8510,7 +8221,7 @@ audio.community-post-media {
   border-radius: 50%;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-member-result-row img {
@@ -8529,7 +8240,7 @@ audio.community-post-media {
 .community-member-result-row small {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-management-result > div {
@@ -8560,7 +8271,7 @@ audio.community-post-media {
   justify-content: center;
   border-radius: 8px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .community-management-result button > div {
@@ -8580,7 +8291,7 @@ audio.community-post-media {
 .community-management-result button small {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-management-result button .app-icon {
@@ -8598,7 +8309,7 @@ audio.community-post-media {
   margin-bottom: 7px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-chat-composer > .community-pending-upload {
@@ -8640,7 +8351,7 @@ audio.community-post-media {
   flex: none;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .community-resource-file-input {
@@ -8657,7 +8368,7 @@ audio.community-post-media {
 }
 
 .community-chat-composer .community-attachment-btn:hover:not(:disabled) {
-  background: rgba(191, 120, 246, 0.06);
+  background: color-mix(in srgb, var(--purple) 6%, transparent);
   color: var(--purple);
 }
 
@@ -8667,17 +8378,23 @@ audio.community-post-media {
   gap: 7px;
 }
 
+/* 与 .huidu-chat-field 同一套药丸：48 高、全圆角、白底、发送键在框内 */
 .community-chat-field {
   display: flex;
   min-width: 0;
-  height: 42px;
+  height: 48px;
   flex: 1;
   align-items: center;
   gap: 2px;
-  padding: 2px 4px;
+  padding: 4px 5px 4px 9px;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-2);
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgba(48, 42, 30, 0.06);
+}
+
+.community-chat-field:focus-within {
+  border-color: var(--purple);
 }
 
 .community-chat-field input {
@@ -8706,7 +8423,7 @@ audio.community-post-media {
 
 .community-chat-field .voice-input-btn:hover:not(:disabled) {
   border: 0;
-  background: rgba(191, 120, 246, 0.09);
+  background: var(--purple-soft);
 }
 
 .community-chat-field .voice-input-btn.is-listening {
@@ -8743,7 +8460,7 @@ audio.community-post-media {
   padding: 0 2px;
   color: var(--purple-deep);
   font-size: inherit;
-  font-weight: 800;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -8760,7 +8477,7 @@ audio.community-post-media {
   margin-bottom: 18px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .legal-card section + section {
@@ -8780,18 +8497,37 @@ audio.community-post-media {
   line-height: 1.8;
 }
 
+/* 护眼（米黄纸）：正文 11.0:1，次要 7.6:1，辅助 5.4:1 */
+body.sepia {
+  color-scheme: light;
+  --ink: #3b2f22;
+  --body: #54473a;
+  --muted: #6c5d49;
+  --ink-3: #8a7a62;
+  --line: #e2d6bb;
+  --surface: #ede3cb;
+  --surface-soft: #f1e8d3;
+  --surface-2: #eadfc3;
+  --white: #f4ecd8;
+  --yellow-soft: #f8ecc8;
+  --commentary-soft: #ebe3cf;
+  background: var(--surface);
+}
+
 /* Global dark mode — the same reading palette follows every route. */
 body.dark {
   color-scheme: dark;
-  --ink: #f2f0eb;
-  --body: #c0beb8;
-  --muted: #9297a2;
-  --line: #343740;
-  --surface: #101116;
-  --surface-soft: #16171d;
+  /* 不用纯白字、不用纯黑底：正文 12.1:1，夜读不刺眼 */
+  --ink: #d8d4cc;
+  --body: #b8b3aa;
+  --muted: #9a958c;
+  --ink-3: #77736b;
+  --line: #2f3036;
+  --surface: #101113;
+  --surface-soft: #1a1b1f;
   --danger: var(--pink);
-  --surface-2: #1e2027;
-  --white: #17191f;
+  --surface-2: #222328;
+  --white: #16171a;
   --yellow: #f1c662;
   --yellow-soft: #2b2518;
   --yellow-medium: #3a301b;
@@ -8839,8 +8575,8 @@ body.dark .bible-reader-selector.book.is-open,
 body.dark .bible-reader-selector.chapter-number.is-open,
 body.dark .bible-reader-selector.chapter.is-open,
 body.dark .bible-reader-selector.version.is-open {
-  background: #282a31;
-  color: var(--yellow);
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
 body.dark .bible-version-picker,
@@ -8850,11 +8586,6 @@ body.dark .bible-reading-settings,
 body.dark .audio-player-sheet,
 body.dark .verse-share-sheet {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
-}
-
-body.dark .bible-version-option.active {
-  background: #2d2613 !important;
-  color: var(--yellow) !important;
 }
 
 body.dark input,
@@ -8869,7 +8600,8 @@ body.dark textarea::placeholder {
   color: var(--muted);
 }
 
-body.dark .bible-search-field input {
+/* 药丸容器里的输入框本身要透明，否则深色下框内会多出一块色差 */
+body.dark :is(.bible-search-field, .huidu-chat-field, .community-chat-field) input {
   background: transparent;
 }
 
@@ -8926,7 +8658,7 @@ body.dark .bible-toolbar-action {
 
 .me-guest-brand h1 {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 600;
   margin: 0;
   display: flex;
   gap: 2px;
@@ -8948,7 +8680,7 @@ body.dark .bible-toolbar-action {
   border: 0;
   border-radius: 12px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(127, 85, 224, 0.15);
   transition: all 0.2s ease;
@@ -8976,7 +8708,7 @@ body.dark .annotation-reader.is-introduction {
 }
 
 body.dark .annotation-intro-hero {
-  background: #1d2026;
+  background: var(--surface-soft);
 }
 
 body.dark .annotation-section-body,
@@ -8993,11 +8725,11 @@ body.dark .annotation-intro-eyebrow,
 body.dark .annotation-intro-section h2,
 body.dark .annotation-intro-stages > div > span,
 body.dark .annotation-entry-topic {
-  color: #f1c662;
+  color: var(--yellow);
 }
 
 body.dark .annotation-entry.is-located {
-  background: rgba(241, 198, 98, 0.12);
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
   box-shadow: 0 0 0 2px rgba(241, 198, 98, 0.35);
 }
 
@@ -9011,17 +8743,17 @@ body.dark .annotation-chapter-nav button {
 }
 
 body.dark .annotation-reference-chip {
-  background: rgba(241, 198, 98, 0.16);
-  color: #f1c662;
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  color: var(--yellow);
 }
 
 body.dark .annotation-entry.is-range {
-  background: rgba(241, 198, 98, 0.08);
+  background: color-mix(in srgb, var(--yellow) 8%, transparent);
 }
 
 body.dark .annotation-entry.is-range .annotation-reference-chip {
-  background: #f1c662;
-  color: #1c1d22;
+  background: var(--yellow);
+  color: var(--surface-soft);
 }
 
 body.dark .annotation-intro-facts,
@@ -9047,7 +8779,7 @@ body.dark .annotation-copyright-sheet {
 
 body.dark .annotation-copyright-symbol {
   background: var(--commentary-soft);
-  color: #b5c9e0;
+  color: var(--commentary);
 }
 
 body.dark .annotation-copyright-details dt {
@@ -9055,7 +8787,7 @@ body.dark .annotation-copyright-details dt {
 }
 
 body.dark .annotation-copyright-details a {
-  color: #a9c2df;
+  color: var(--commentary);
 }
 
 body.dark .annotation-copyright-trigger[aria-expanded="true"],
@@ -9073,13 +8805,6 @@ body.dark .verse-share-heading > button:hover:not(:disabled) {
   background: var(--surface-2);
 }
 
-body.dark .bible-book-option.active,
-body.dark .bible-chapter-grid button.active {
-  border-color: #655329;
-  background: var(--yellow-medium);
-  color: var(--yellow);
-}
-
 body.dark .bible-search-version,
 body.dark .bible-search-result-meta b,
 body.dark .huidu-history-kind.is-scripture,
@@ -9094,25 +8819,8 @@ body.dark .bible-search-highlight {
 }
 
 body.dark .tab-bar {
-  --tab-active-ink: var(--yellow-ink);
   --tab-active-fill: #a47b2b;
-  border-color: rgba(110, 92, 59, 0.62);
-  background: rgba(24, 25, 31, 0.96);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    0 10px 28px rgba(0, 0, 0, 0.34);
-}
-
-body.dark .tab-bar .tab {
-  color: #aeb2bc;
-}
-
-body.dark .tab-bar .tab.active {
-  border-color: rgba(193, 151, 65, 0.34);
-  background: linear-gradient(145deg, #302919, #282318);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    0 3px 9px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
 }
 
 body.dark .audio-progress::-webkit-slider-runnable-track {
@@ -9209,7 +8917,7 @@ body.dark .community-directory-list.is-featured {
 }
 
 body.dark .community-directory-row.is-official .community-directory-avatar {
-  background: rgba(241, 198, 98, 0.12) !important;
+  background: color-mix(in srgb, var(--yellow) 12%, transparent) !important;
   color: var(--yellow-ink);
 }
 
@@ -9224,18 +8932,18 @@ body.dark .community-assistant-home.is-community .community-assistant-type {
 }
 
 body.dark .community-feedback {
-  background: rgba(117, 196, 147, 0.12);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
   color: var(--success);
 }
 
 body.dark .community-post-card.is-notice {
-  border-color: rgba(241, 198, 98, 0.28);
-  background: linear-gradient(145deg, #282418, #211f19);
+  border-color: color-mix(in srgb, var(--yellow) 28%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--yellow) 8%, var(--white)), color-mix(in srgb, var(--yellow) 5%, var(--white)));
 }
 
 body.dark .community-post-card.is-prayer {
-  border-color: rgba(188, 148, 226, 0.28);
-  background: linear-gradient(145deg, #241f2a, #1f1c24);
+  border-color: color-mix(in srgb, var(--purple) 28%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--purple) 10%, var(--white)), color-mix(in srgb, var(--purple) 6%, var(--white)));
 }
 
 body.dark .community-pinned-label,
@@ -9248,8 +8956,8 @@ body.dark .community-post-kind.is-notice {
 }
 
 body.dark .community-post-kind.is-article {
-  background: rgba(141, 169, 201, 0.14);
-  color: #a9c2df;
+  background: color-mix(in srgb, var(--commentary) 14%, transparent);
+  color: var(--commentary);
 }
 
 body.dark .community-post-kind.is-media {
@@ -9258,7 +8966,7 @@ body.dark .community-post-kind.is-media {
 }
 
 body.dark .community-post-kind.is-event {
-  background: rgba(117, 196, 147, 0.13);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
   color: var(--success);
 }
 
@@ -9269,7 +8977,7 @@ body.dark .community-user-message > div {
 
 body.dark .community-confirm-card {
   border-color: color-mix(in srgb, var(--purple) 32%, transparent);
-  background: rgba(143, 76, 191, 0.12);
+  background: var(--purple-soft);
 }
 
 body.dark .community-publish-backdrop {
@@ -9287,7 +8995,12 @@ body.dark .me-data-avatar,
 body.dark .user-avatar,
 body.dark .community-directory-avatar,
 body.dark .community-person-row > span,
-body.dark .community-group-row > span {
+body.dark .community-group-row > span,
+/* 以下都是用户选的浅色头像底（黄/紫/粉/绿），字要固定深色，不能跟 --ink 翻白 */
+body.dark .community-assistant-home.is-community .community-assistant-home-mark,
+body.dark .community-join-preview-mark,
+body.dark .community-create-avatar,
+body.dark .me-group-avatar {
   color: #202229;
 }
 
@@ -9371,8 +9084,8 @@ body.dark .community-management-result button {
   border-radius: 999px;
   background: var(--purple-soft);
   color: var(--purple-deep);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .reading-plan-scope.is-community {
@@ -9425,7 +9138,7 @@ body.dark .community-management-result button {
 .reading-plan-today small,
 .reading-plan-today em {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
 }
 
@@ -9443,7 +9156,7 @@ body.dark .community-management-result button {
   border-radius: 12px;
   background: var(--purple);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .reading-plan-action.is-complete {
@@ -9471,7 +9184,7 @@ body.dark .community-management-result button {
   border: 0;
   background: transparent;
   color: inherit;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .reading-plan-empty,
@@ -9491,4 +9204,117 @@ body.dark .community-management-result button {
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+}
+
+/* 小图标键：视觉保持紧凑，点击热区用伪元素扩到 44×44（Apple HIG 最小触控尺寸） */
+:is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
+  .community-post-menu > button, .community-post-meta-tools > button,
+  .huidu-search > button, .bible-inline-note-actions button,
+  .audio-time-row button, .community-management-result button) {
+  position: relative;
+}
+
+:is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
+  .community-post-menu > button, .community-post-meta-tools > button,
+  .huidu-search > button, .bible-inline-note-actions button,
+  .audio-time-row button, .community-management-result button)::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2));
+}
+
+
+/* ── 沉浸阅读：分段标题、节号、金句、页边 ── */
+
+/* 分段标题靠留白分段：上方约一行、下方 8px；比正文小一号、半粗、次要色，不抢正文 */
+.bible-heading {
+  display: block;
+  margin: 32px 0 8px;
+  color: var(--body);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+
+.bible-verse:first-child .bible-heading {
+  margin-top: 8px;
+}
+
+/* 节号：11px 第三级色、等宽数字，紧贴所属的那一节 */
+.bible-verse-number {
+  margin: 0 2px 0 3px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.bible-verse:first-child .bible-verse-number {
+  margin-left: 0;
+}
+
+/* 金句收起态：一行，点开才是整张卡 */
+.daily-verse-peek {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 12px;
+  padding: 0 0 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.daily-verse-peek-main {
+  display: flex;
+  min-width: 0;
+  min-height: 40px;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--body);
+  font: inherit;
+  text-align: left;
+}
+
+.daily-verse-peek-main .daily-verse-kicker {
+  flex: none;
+}
+
+.daily-verse-peek-text {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-verse-peek-main > .app-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.daily-verse-peek .daily-verse-close {
+  width: 40px;
+  height: 40px;
+}
+
+button.daily-verse-kicker {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+@media (max-width: 374px) {
+  :root {
+    --reading-gutter: 20px;
+  }
 }

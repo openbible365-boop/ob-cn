@@ -127,7 +127,7 @@ export function CommunityPage() {
         // 只在真能创建时才显示入口。达到「一人一群」上限时不留禁用按钮——
         // 列表下方那行说明已经把原因讲清楚了，再摆一个点不动的图标只是噪音。
         actions={authenticated === true && canCreateCommunity ? (
-          <button
+          <button data-icon-button="default"
             className="bible-toolbar-action"
             aria-label="创建社群"
             title="创建社群"

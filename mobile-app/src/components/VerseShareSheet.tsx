@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import { Icon } from "./Icon";
 import {
   DEFAULT_SHARE_CARD_TEMPLATE,
@@ -260,6 +259,8 @@ async function paintFooter(
   context.lineTo(652, 790);
   context.stroke();
 
+  // 二维码库只在真正生成分享图时加载
+  const { default: QRCode } = await import("qrcode");
   const qrDataUrl = await QRCode.toDataURL(data.shareUrl, {
     width: 150,
     margin: 1,
@@ -487,7 +488,7 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
       <section className="verse-share-sheet">
         <div className="verse-share-heading">
           <div><small>生成分享图片</small><strong>分享经文</strong></div>
-          <button type="button" aria-label="关闭分享" onClick={onClose}><Icon name="x" size={20} /></button>
+          <button data-icon-button="default" type="button" aria-label="关闭分享" onClick={onClose}><Icon name="x" size={20} /></button>
         </div>
 
         <div className="verse-share-templates" role="group" aria-label="选择分享模板">

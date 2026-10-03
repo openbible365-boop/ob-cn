@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppBack } from "../hooks/useAppBack";
+import { EmptyState } from "../components/EmptyState";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
@@ -16,7 +17,7 @@ function readableDate(iso: string) {
 }
 
 export function PrayerListPage() {
-  const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [items, setItems] = useState<PrayerItem[]>(getPrayers);
   const [draft, setDraft] = useState("");
 
@@ -50,7 +51,7 @@ export function PrayerListPage() {
           {item.source === "community" && item.sourceLabel ? ` · 来自${item.sourceLabel}` : ""}
         </small>
       </div>
-      <button
+      <button data-icon-button="danger"
         type="button"
         className="prayer-remove"
         aria-label="删除这条祷告事项"
@@ -58,7 +59,7 @@ export function PrayerListPage() {
           if (window.confirm("删除这条祷告事项？")) setItems(removePrayer(item.id));
         }}
       >
-        <Icon name="trash" size={14} />
+        <Icon name="trash" size={16} />
       </button>
     </div>
   );
@@ -69,7 +70,7 @@ export function PrayerListPage() {
         title="祷告清单"
         subtitle={active.length ? `${active.length} 项代求中` : "常常祷告"}
         ariaLabel="祷告清单"
-        onBack={() => navigate("/me")}
+        onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll me-detail-scroll">
@@ -89,13 +90,15 @@ export function PrayerListPage() {
           />
           <button type="submit" disabled={!draft.trim()}>记下</button>
         </form>
+        {/* 存储说明紧跟输入框：写之前就知道记在哪里 */}
+        <p className="prayer-compose-note">祷告清单仅保存在本机。</p>
 
         {items.length === 0 && (
-          <div className="prayer-empty">
-            <Icon name="heart" size={22} />
-            <b>还没有祷告事项</b>
-            <p>把心里的挂念写下来，得着回应时记下那一天。社群里的代祷请求也可以一键收进来。</p>
-          </div>
+          <EmptyState
+            art="prayer"
+            title="还没有祷告事项"
+            desc="把心里的挂念写下来，得着回应时记下那一天。社群里的代祷请求也可以一键收进来。"
+          />
         )}
 
         {active.length > 0 && (
@@ -112,7 +115,6 @@ export function PrayerListPage() {
           </section>
         )}
 
-        <p className="me-data-note">祷告清单仅保存在本机。</p>
       </main>
     </div>
   );

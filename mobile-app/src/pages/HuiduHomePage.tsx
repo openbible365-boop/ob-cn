@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "../components/EmptyState";
 import { Link, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
@@ -85,7 +86,7 @@ export function HuiduHomePage() {
           </span>
         </span>
       </Link>
-      <button
+      <button data-icon-button="danger"
         type="button"
         className="huidu-history-delete"
         aria-label={translate("删除") + translate(conversation.title) + translate("对话记录")}
@@ -106,7 +107,7 @@ export function HuiduHomePage() {
         secondary={`${conversations.length} ${translate("条对话")}`}
         actions={(
           <>
-            <button
+            <button data-icon-button="default"
               className={`bible-toolbar-action${searchOpen ? " is-active" : ""}`}
               type="button"
               aria-label={searchOpen ? translate("关闭搜索") : translate("搜索慧读记录")}
@@ -134,7 +135,7 @@ export function HuiduHomePage() {
             onChange={(event) => setSearchText(event.target.value)}
           />
           {searchText && (
-            <button type="button" aria-label={translate("清空搜索")} onClick={() => setSearchText("")}>
+            <button data-icon-button="default" type="button" aria-label={translate("清空搜索")} onClick={() => setSearchText("")}>
               <Icon name="x" size={14} />
             </button>
           )}
@@ -190,11 +191,21 @@ export function HuiduHomePage() {
             </div>
           )}
           {filteredConversations.length === 0 && (
-            <div className="huidu-history-empty">
-              {normalizedSearch
-                ? translate(`没有找到与“${searchText.trim()}”相关的对话。`)
-                : translate("还没有 AI 对话。自由提问或选择一节经文即可开始。")}
-            </div>
+            normalizedSearch ? (
+              <EmptyState
+                compact
+                art="search"
+                title={translate("没有找到相关对话")}
+                desc={translate(`没有与“${searchText.trim()}”相关的记录，换个关键词试试。`)}
+              />
+            ) : (
+              <EmptyState
+                compact
+                art="huidu"
+                title={translate("还没有 AI 对话")}
+                desc={translate("自由提问，或选择一节经文即可开始。")}
+              />
+            )
           )}
         </section>
 

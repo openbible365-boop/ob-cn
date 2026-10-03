@@ -30,10 +30,11 @@ type PanelProps = {
 };
 
 // 各栏目顶部统一的新建入口。
-function PanelCreateButton({ label, onClick }: { label: string; onClick: () => void }) {
+// 图标跟动作语义走：发布 = 笔、邀请 = 人、添加资料 = 回形针，不再一律用编辑笔
+function PanelCreateButton({ label, icon = "edit", onClick }: { label: string; icon?: string; onClick: () => void }) {
   return (
     <button type="button" className="community-panel-create" onClick={onClick}>
-      <Icon name="edit" size={16} />
+      <Icon name={icon} size={16} />
       {label}
     </button>
   );
@@ -258,7 +259,7 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
                 {post.postType === "NOTICE" ? "通知" : post.postType === "ARTICLE" ? "文章" : post.postType === "MEDIA" ? mediaLabel : post.postType === "PRAYER" ? "代祷" : "动态"}
               </span>
               {post.visibility === "ADMINS" && <span className="community-post-visibility">仅管理员</span>}
-              <button type="button" aria-label={`更多操作：${post.title || "动态"}`} onClick={() => setMenuPostId(menuPostId === post.id ? "" : post.id)}><Icon name="more-horizontal" size={16} /></button>
+              <button data-icon-button="default" type="button" aria-label={`更多操作：${post.title || "动态"}`} onClick={() => setMenuPostId(menuPostId === post.id ? "" : post.id)}><Icon name="more-horizontal" size={16} /></button>
             </div>
           </div>
           {menuPostId === post.id && (
@@ -376,7 +377,7 @@ export function CommunitySharePanel({ workspace, busy, runAction }: PanelProps) 
           <div className="community-action-sheet" role="dialog" aria-modal="true" aria-label="举报群内容" onClick={(event) => event.stopPropagation()}>
             <div className="community-publish-sheet-header">
               <div><b>举报内容</b><span>请选择最符合的原因，平台管理员会复核处理</span></div>
-              <button type="button" aria-label="关闭举报" onClick={() => setReportPostId("")}><Icon name="x" size={20} /></button>
+              <button data-icon-button="default" type="button" aria-label="关闭举报" onClick={() => setReportPostId("")}><Icon name="x" size={20} /></button>
             </div>
             <div className="community-report-reasons" role="group" aria-label="举报原因">
               {["不当内容", "垃圾广告", "人身攻击", "虚假信息", "其他"].map((reason) => (
@@ -512,7 +513,7 @@ export function CommunityMembersPanel({
       )}
 
       {workspace.access.canManageMembers && (
-        <PanelCreateButton label="邀请成员" onClick={() => setInviteOpen(true)} />
+        <PanelCreateButton label="邀请成员" icon="users" onClick={() => setInviteOpen(true)} />
       )}
       {inviteOpen && (
         <CommunitySheet
@@ -630,15 +631,13 @@ export function CommunityResourcesPanel({
 
   return (
     <div className="screen-scroll community-panel-stack community-resources-panel">
-      <header className="community-resource-heading">
-        <div>
-          <b>群资料</b>
-          <span>{workspace.usage.resources}{workspace.entitlements.resourceLimit === null ? " 份" : `/${workspace.entitlements.resourceLimit}`}</span>
-        </div>
-        <p>仅供本群使用 · AI 可检索已解析资料</p>
-      </header>
+      {/* 与「成员」栏目同一条用量行：左侧计数，右侧说明 */}
+      <div className="community-usage-line">
+        <span>资料 {workspace.usage.resources}{workspace.entitlements.resourceLimit === null ? " 份" : `/${workspace.entitlements.resourceLimit}`}</span>
+        <span>仅本群可见 · AI 可检索</span>
+      </div>
       {workspace.access.canManageResources && (
-        <PanelCreateButton label="添加资料" onClick={() => setComposerOpen(true)} />
+        <PanelCreateButton label="添加资料" icon="paperclip" onClick={() => setComposerOpen(true)} />
       )}
       {composerOpen && (
         <ResourceComposer

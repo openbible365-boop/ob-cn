@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -28,6 +29,7 @@ function todayReference(plan: ReadingPlan) {
 
 export function ReadingPlansPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -79,7 +81,7 @@ export function ReadingPlansPage() {
         title="读经计划"
         subtitle={getStreak() > 0 ? `连续 ${getStreak()} 天` : plans.length ? `${plans.length} 个` : "每日同行"}
         ariaLabel="个人与社群读经计划"
-        onBack={() => navigate("/me")}
+        onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll reading-plans-scroll">

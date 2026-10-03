@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAppBack } from "../hooks/useAppBack";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
@@ -21,7 +21,7 @@ import { VERSIONS, getBookByCode, getVersion, bookName } from "../data/scripture
 type Progress = { done: number; total: number };
 
 export function ResourcesPage() {
-  const navigate = useNavigate();
+  const goBack = useAppBack("/me/account");
   const [meta, setMeta] = useState(getOfflineMeta);
   const [audioMeta, setAudioMeta] = useState(getOfflineAudioMeta);
   // 同一时刻只允许一个译本在下载：拼音和合本有 50MB，上并发只会互相拖慢
@@ -113,7 +113,7 @@ export function ResourcesPage() {
         title="资源管理"
         subtitle="译本与注释"
         ariaLabel="资源管理"
-        onBack={() => navigate("/me/account")}
+        onBack={goBack}
         backLabel="返回数据与账户"
       />
       <main className="screen-scroll me-detail-scroll">

@@ -73,7 +73,14 @@ export function CommunityErrorState({
   onBack: () => void;
   actions?: ReactNode;
 }) {
-  const showHealth = Boolean(health) && isServiceFailureStatus(status);
+  // 三项全是「未知」说明连状态接口都没连上，这块状态板不提供任何信息，只会添乱
+  const healthKnown = Boolean(health)
+    && Object.values(health!.services).some((service) => service.state !== "unknown");
+  const showHealth = healthKnown && isServiceFailureStatus(status);
+  // 各处文案习惯写成「服务暂时不可用，暂时无法读取社群」，标题已经说了前半句，正文不再重复
+  const body = message.startsWith(title)
+    ? message.slice(title.length).replace(/^[，,。\s]+/u, "") || "请检查网络连接后重试"
+    : message;
   return (
     <section className="community-error-state" role="alert">
       <span className="community-error-state-icon">
@@ -81,7 +88,7 @@ export function CommunityErrorState({
       </span>
       <div className="community-error-state-copy">
         <b>{title}</b>
-        <p>{message}</p>
+        <p>{body}</p>
       </div>
       {showHealth && health && <CommunityServiceSummary health={health} />}
       {actions}

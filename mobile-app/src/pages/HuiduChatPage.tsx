@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
@@ -63,6 +64,7 @@ function createDraftConversation(): Conversation {
 export function HuiduChatPage() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
+  const goBack = useAppBack("/huidu");
   const location = useLocation();
   const routeState = location.state as { justCreated?: boolean; initialQuestion?: string } | null;
   const justCreated = Boolean(routeState?.justCreated);
@@ -136,7 +138,7 @@ export function HuiduChatPage() {
   if (!conv) {
     return (
       <div className="screen">
-        <UnifiedHeader title="慧读" subtitle="对话不存在" ariaLabel="慧读对话状态" onBack={() => navigate("/huidu")} backLabel="返回慧读" />
+        <UnifiedHeader title="慧读" subtitle="对话不存在" ariaLabel="慧读对话状态" onBack={goBack} backLabel="返回慧读" />
         <div className="huidu-missing">这条慧读记录可能已被删除。</div>
       </div>
     );
@@ -226,7 +228,15 @@ export function HuiduChatPage() {
     <div className="screen huidu-chat-screen">
       <CompactToolbar
         ariaLabel="慧读对话"
-        primary="慧读"
+        // 返回放在左侧标题芯片里，和社群详情页（UnifiedHeader）同一个位置
+        primary={(
+          <span className="unified-header-title">
+            <Icon name="chevron-left" size={14} />
+            <span>慧读</span>
+          </span>
+        )}
+        onPrimaryClick={() => navigate("/huidu")}
+        primaryAriaLabel="返回慧读列表"
         // 经文对话用经节引用做标题：短、稳定、一眼知道在读哪一节。
         // 原来显示的模板标题太长，在顶栏里会被截成「诗篇 2:...」，等于什么都没说。
         // 改名仍然是点这里，说明放在 aria-label 里，省掉一个含义不明的铅笔图标。
@@ -242,11 +252,8 @@ export function HuiduChatPage() {
         }}
         actions={(
           <>
-            <button className="bible-toolbar-action huidu-chat-toolbar-action" type="button" aria-label="返回慧读列表" title="返回慧读" onClick={() => navigate("/huidu")}>
-              <Icon name="chevron-left" size={20} />
-            </button>
             {scriptureContext && (
-              <button className="bible-toolbar-action huidu-chat-toolbar-action is-reference" type="button" aria-label={`在圣经中查看${conv.refLabel}`} title="定位经文" onClick={openReferencedVerse}>
+              <button data-icon-button="default" className="bible-toolbar-action huidu-chat-toolbar-action is-reference" type="button" aria-label={`在圣经中查看${conv.refLabel}`} title="定位经文" onClick={openReferencedVerse}>
                 <Icon name="map-pin" size={20} />
               </button>
             )}
@@ -391,7 +398,7 @@ export function HuiduChatPage() {
             <small>{attachment.size < 1024 * 1024
               ? `${Math.max(1, Math.round(attachment.size / 1024))} KB`
               : `${(attachment.size / (1024 * 1024)).toFixed(1)} MB`} · 仅用于本次提问</small>
-            <button type="button" aria-label="移除附件" onClick={() => setAttachment(null)}>
+            <button data-icon-button="default" type="button" aria-label="移除附件" onClick={() => setAttachment(null)}>
               <Icon name="x" size={14} />
             </button>
           </div>
@@ -408,7 +415,7 @@ export function HuiduChatPage() {
               tabIndex={-1}
               onChange={handleFileSelected}
             />
-            <button
+            <button data-icon-button="default"
               type="button"
               className="huidu-attach-btn"
               aria-label="添加附件"
@@ -443,7 +450,7 @@ export function HuiduChatPage() {
               disabled={pendingAnswer}
               onClick={speechInput.toggleListening}
             />
-            <button
+            <button data-icon-button="primary"
               type="submit"
               aria-label="发送追问"
               disabled={pendingAnswer || (!question.trim() && !attachment)}
