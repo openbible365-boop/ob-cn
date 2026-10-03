@@ -2,7 +2,8 @@
 // serves /api/* by proxying to the admin app (nginx in production, the vite
 // dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
-import { clearHighlightsForLogout } from "./annotations";
+import { clearAnnotationsForLogout } from "./annotations";
+import { clearConversationsForLogout } from "./huidu";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
 import { fetchCommunityGroups } from "./community";
@@ -106,7 +107,8 @@ export async function verifyAppleLogin(credential: {
 export async function logout() {
   const result = await post("/api/mobile/auth/logout");
   if (result.ok) {
-    clearHighlightsForLogout();
+    clearAnnotationsForLogout();
+    clearConversationsForLogout();
     clearCommunityWorkspaceCache();
     await clearGoogleCredentialState().catch(() => {});
   }

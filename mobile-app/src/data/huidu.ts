@@ -103,6 +103,12 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   ];
 }
 
+export function clearConversationsForLogout() {
+  clearTimeout(syncTimer);
+  save(PENDING_KEY, []);
+  save(KEY, []);
+}
+
 export function getConversations(): Conversation[] {
   return load<Conversation[]>(KEY, []);
 }
