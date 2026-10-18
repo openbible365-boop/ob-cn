@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
 import { CompactToolbar } from "../components/CompactToolbar";
+import { AiThinking } from "../components/AiThinking";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { VoiceInputButton } from "../components/VoiceInputButton";
 import {
@@ -377,7 +378,7 @@ export function HuiduChatPage() {
 
           {pendingAnswer && (
             <div className="huidu-assistant-message is-pending">
-              <TypingDots />
+              <AiThinking />
             </div>
           )}
         </div>

@@ -23,6 +23,7 @@ import {
   bookChipName,
   loadBook,
   loadCommentary,
+  loadIntroduction,
   stripHtml,
   type CommentarySection,
   type Verse,
@@ -88,6 +89,7 @@ export function AnnotationsPage() {
   const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
   const commentaryChapterKey = `${book.code}-${chapter}`;
 
+  const [introSections, setIntroSections] = useState<CommentarySection[] | null>(null);
   const [commentary, setCommentary] = useState<CommentarySection[] | null>(null);
   const [loadedCommentaryKey, setLoadedCommentaryKey] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -206,11 +208,15 @@ export function AnnotationsPage() {
     setCommentary(null);
     setLoadedCommentaryKey(null);
     setLoadError(false);
+    setIntroSections(null);
+    let cancelled = false;
     if (isIntroduction) {
       setCommentary([]);
-      return;
+      loadIntroduction(book.order)
+        .then((sections) => { if (!cancelled) setIntroSections(sections); })
+        .catch(() => { if (!cancelled) setLoadError(true); });
+      return () => { cancelled = true; };
     }
-    let cancelled = false;
     loadCommentary(book.order, chapter)
       .then((sections) => {
         if (cancelled) return;
@@ -573,7 +579,16 @@ export function AnnotationsPage() {
                     >
                       −
                     </button>
-                    <b>{fontSize}px</b>
+                    <button
+                      type="button"
+                      className="font-size-value"
+                      aria-label={translate("恢复默认字号")}
+                      disabled={fontSize === 17}
+                      onClick={() => setFontSize(17)}
+                    >
+                      {fontSize}px
+                      {fontSize !== 17 && <small>{translate("恢复默认")}</small>}
+                    </button>
                     <button
                       type="button"
                       aria-label="放大字体"
@@ -645,6 +660,8 @@ export function AnnotationsPage() {
           <BookIntroduction
             book={book}
             displayBook={displayedBook}
+            sections={introSections}
+            loadError={loadError}
             fontSize={fontSize}
             translate={translate}
             onStart={() => gotoChapter(1)}
@@ -654,7 +671,10 @@ export function AnnotationsPage() {
               {chapter === 1 && (
                 <button type="button" className="annotation-book-intro-entry" onClick={() => gotoIntroduction()}>
                   <span className="annotation-book-intro-index">{translate("绪论")}</span>
-                  <span>{displayedBook}{translate("绪论")}</span>
+                  <span className="annotation-book-intro-copy">
+                    <b>{translate("读")}{displayedBook}{translate("前，先看这一篇")}</b>
+                    <small>{translate("书卷档案 · 综览 · 全书大纲")}</small>
+                  </span>
                   <Icon name="chevron-right" size={16} />
                 </button>
               )}

@@ -1389,7 +1389,16 @@ export function BiblePage() {
                 >
                   −
                 </button>
-                <b>{fontSize}px</b>
+                <button
+                  type="button"
+                  className="font-size-value"
+                  aria-label="恢复默认字号"
+                  disabled={fontSize === 18}
+                  onClick={() => setFontSize(18)}
+                >
+                  {fontSize}px
+                  {fontSize !== 18 && <small>恢复默认</small>}
+                </button>
                 <button
                   type="button"
                   aria-label="放大字体"
@@ -1556,12 +1565,20 @@ export function BiblePage() {
                     }
                   }}
                 >
+                  {/* 章首大字号章码（书面排版惯例）：替代第 1 节节号，首两行环绕 */}
+                  {v.verse === 1 && version.code !== "pinyin" && (
+                    <span className="chapter-dropcap" aria-hidden="true">{chapter}</span>
+                  )}
                   {/* 结尾的 U+2060 字连接符禁止在节号和经文之间断行，避免节号孤零零挂在行尾 */}
-                  <sup className="bible-verse-number">{v.label}{"\u2060"}</sup>
+                  {!(v.verse === 1 && version.code !== "pinyin") && (
+                    <sup className="bible-verse-number">{v.label}{"\u2060"}</sup>
+                  )}
                   <span
                     className="verse-text"
                     style={{
                       background: locatedVerse === v.verse ? "rgba(244, 204, 120, 0.58)" : color ?? "transparent",
+                      // 高亮底色是用户选的浅色，字固定深色——否则暗色主题下浅字压浅底看不清
+                      color: color || locatedVerse === v.verse ? "#2b2926" : undefined,
                       padding: color || locatedVerse === v.verse ? "1px 2px" : undefined,
                       textDecoration: isSelected ? "underline" : undefined,
                       textDecorationColor: isSelected ? "rgba(217, 154, 37, 0.52)" : undefined,

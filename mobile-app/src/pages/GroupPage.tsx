@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useSt
 import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { AiThinking } from "../components/AiThinking";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { UserAvatar } from "../components/UserAvatar";
 import { VoiceInputButton } from "../components/VoiceInputButton";
@@ -1045,7 +1046,7 @@ export function GroupPage() {
                 )}
               </div>
             ))}
-            {isSending && <div className="card community-assistant-message">正在思考…</div>}
+            {isSending && <div className="card community-assistant-message"><AiThinking /></div>}
             <div className="disclaimer">重要社群操作需本人确认，并由后台再次校验权限</div>
               </>
             )}

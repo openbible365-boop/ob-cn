@@ -2,20 +2,20 @@
    Warm gold = reading, violet = AI/interaction, blue-grey = commentary. */
 :root {
   color-scheme: light;
-  /* 暖纸面：正文对比 13.7:1，避免纯黑配纯白的眩光；次要 7.3:1，辅助 5.4:1 */
+  /* 浅色 = 纯白净色（暖纸的角色由「护眼」承担）：纸面纯白，周边中性微暖灰 */
   --ink: #2b2926;
   --body: #57524b;
   --muted: #6b665e;
-  /* 第三级文字：只给节号这类可有可无的定位信息，3.3:1 */
+  /* 第三级文字：只给节号这类可有可无的定位信息 */
   --ink-3: #8f897f;
-  --line: #e6e2da;
-  --surface: #f3f1ec;
+  --line: #e8e6e3;
+  --surface: #f6f5f3;
   /* 补齐被引用但未定义的令牌：不接上会静默继承 */
-  --surface-soft: #f7f5f0;
+  --surface-soft: #fafaf8;
   --danger: var(--pink);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --surface-2: #efece6;
-  --white: #faf8f3;
+  --surface-2: #f0efec;
+  --white: #ffffff;
   /* 阅读页左右页边：主流手机 24px，≤374 的小屏收到 20px */
   --reading-gutter: 24px;
 
@@ -5317,7 +5317,8 @@ body.dark .app-exit-toast {
 }
 
 .bible-verse-content .bible-verse-main.is-selected .verse-text mark {
-  text-decoration: underline dotted var(--muted);
+  /* 跟随文字色：高亮底上的深色文字，专名虚线也要同深 */
+  text-decoration: underline dotted currentColor;
 }
 
 .verse-text ruby rt {
@@ -9242,11 +9243,12 @@ body.dark .community-management-result button {
   margin-top: 8px;
 }
 
-/* 节号：11px 第三级色、等宽数字，紧贴所属的那一节 */
+/* 节号：12px 辅助灰、半粗等宽数字——11px 第三级灰在宋体正文旁偏虚看不清 */
 .bible-verse-number {
   margin: 0 2px 0 3px;
-  color: var(--ink-3);
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }

@@ -5,6 +5,7 @@ import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { useSettings } from "../context/SettingsContext";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
+import { bookName, getBookByCode, getReading, getVersion } from "../data/scripture";
 import {
   deleteConversation,
   getConversations,
@@ -60,6 +61,21 @@ export function HuiduHomePage() {
   const openNewDialog = () => {
     navigate("/huidu/new");
   };
+
+  // 问候随时段变化；灵感追问跟着当前读经位置生成
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? "夜深了" : hour < 11 ? "清晨好" : hour < 14 ? "午安" : hour < 18 ? "午后好" : "晚上好";
+  const reading = getReading();
+  const readingBook = bookName(getBookByCode(reading.book), getVersion(reading.version));
+  const sparkQuestions = [
+    `${readingBook} ${reading.chapter} 章在讲什么？`,
+    `如何把${readingBook} ${reading.chapter} 章应用到今天？`,
+    `${readingBook}的核心主题是什么？`,
+  ];
+  const askSpark = (question: string) => {
+    navigate("/huidu/new", { state: { justCreated: true, initialQuestion: question } });
+  };
+  const latest = normalizedSearch ? null : conversations[0] ?? null;
 
   const item = (conversation: Conversation, highlight: boolean) => {
     // 经文慧读的标题都是「XX 的历史背景与生活应用」这类模板句，整列看下来全是重复。
@@ -143,16 +159,33 @@ export function HuiduHomePage() {
       )}
 
       <div className="screen-scroll huidu-home-scroll">
-        <button className="huidu-start" type="button" onClick={openNewDialog}>
-          <span className="huidu-start-icon" aria-hidden="true">
-            <Icon name="sparkle" size={20} />
-          </span>
-          <span className="huidu-start-copy">
-            <b>{translate("开始新的 AI 对话")}</b>
-            <small>{translate("自由提问，或选择经文深入阅读")}</small>
-          </span>
-          <Icon name="chevron-right" size={16} />
-        </button>
+        {/* 问经台：输入先行，灵感追问随读经进度而变 */}
+        <section className="huidu-hero" aria-label={translate("发起提问")}>
+          <div className="huidu-hero-greet">{translate(greeting)}</div>
+          <h1>{translate("想明白什么？")}</h1>
+          <button type="button" className="huidu-ask" onClick={openNewDialog}>
+            <Icon name="sparkle" size={18} />
+            <span>{translate("直接提问，或选一节经文深读…")}</span>
+          </button>
+          <div className="huidu-spark-chips" aria-label={translate("灵感追问")}>
+            {sparkQuestions.map((question) => (
+              <button key={question} type="button" onClick={() => askSpark(translate(question))}>
+                {translate(question)}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {latest && (
+          <Link to={`/huidu/${latest.id}`} className="huidu-resume-card">
+            <span className="huidu-resume-kicker">
+              <Icon name={hasScriptureContext(latest) ? "book" : "sparkle"} size={13} />
+              {translate("继续上次")}
+            </span>
+            <b>{translate(hasScriptureContext(latest) ? latest.refLabel || latest.title : latest.title)}</b>
+            <Icon name="chevron-right" size={16} className="huidu-resume-caret" />
+          </Link>
+        )}
 
         <section className="huidu-history-section" aria-label={translate("AI 对话记录")}>
           <div className="huidu-history-heading">

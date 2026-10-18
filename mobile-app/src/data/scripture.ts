@@ -197,6 +197,14 @@ function zhTypeset(text: string): string {
   return PUNCT_RULES.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), text);
 }
 
+// 书卷绪论：注释包的 "0" 章键（概述/标题/作者/综览/大纲…依原书顺序）
+export async function loadIntroduction(bookOrder: number): Promise<CommentarySection[]> {
+  const file = await loadJingdu(bookOrder);
+  return (file["0"] ?? [])
+    .filter((e) => e.text?.trim())
+    .map((e) => ({ title: e.verses, body: zhTypeset(e.text.trim()) }));
+}
+
 export async function loadCommentary(
   bookOrder: number,
   chapter: number,

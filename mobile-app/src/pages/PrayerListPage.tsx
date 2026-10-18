@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
 import { EmptyState } from "../components/EmptyState";
 import { Icon } from "../components/Icon";
+import { SkeletonScreen } from "../components/SkeletonScreen";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { ANDROID_BACK_EVENT } from "../native/android-back";
+import { hapticLight } from "../native/haptics";
+import { fetchCommunityGroups } from "../data/community";
+import {
+  fetchCommunityPosts,
+  performWorkspaceAction,
+  type WorkspacePost,
+} from "../data/community-workspace";
 import {
   addPrayer,
   getPrayers,
@@ -16,10 +25,85 @@ function readableDate(iso: string) {
   return `${date.getMonth() + 1} 月 ${date.getDate()} 日`;
 }
 
+// 代祷墙条目：帖子 + 它来自哪个社群（阿门动作要带 communityId）
+type WallItem = { post: WorkspacePost; communityId: string; communityName: string };
+
+function shuffle<T>(list: T[]): T[] {
+  const next = [...list];
+  for (let i = next.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+}
+
 export function PrayerListPage() {
   const goBack = useAppBack("/me");
   const [items, setItems] = useState<PrayerItem[]>(getPrayers);
   const [draft, setDraft] = useState("");
+  const [tab, setTab] = useState<"mine" | "wall">("mine");
+  const [wall, setWall] = useState<WallItem[] | null>(null);
+  const [wallError, setWallError] = useState("");
+  const [opened, setOpened] = useState<WallItem | null>(null);
+  const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
+
+  // 代祷墙：聚合各社群的 PRAYER 帖，随机排布——每次进来看到的面孔都不同
+  useEffect(() => {
+    if (tab !== "wall" || wall !== null) return;
+    let cancelled = false;
+    (async () => {
+      const directory = await fetchCommunityGroups();
+      if (!directory.ok) {
+        if (!cancelled) setWallError(directory.message);
+        return;
+      }
+      const results = await Promise.all(
+        directory.groups.slice(0, 6).map(async (group) => {
+          const posts = await fetchCommunityPosts(group.id);
+          if (!posts.ok) return [] as WallItem[];
+          return posts.posts
+            .filter((post) => post.postType === "PRAYER")
+            .map((post) => ({ post, communityId: group.id, communityName: group.name }));
+        }),
+      );
+      if (cancelled) return;
+      setWall(shuffle(results.flat()));
+    })();
+    return () => { cancelled = true; };
+  }, [tab, wall]);
+
+  // 安卓返回键先收起代祷详情
+  useEffect(() => {
+    const close = (event: Event) => {
+      if (!opened) return;
+      event.preventDefault();
+      setOpened(null);
+    };
+    window.addEventListener(ANDROID_BACK_EVENT, close);
+    return () => window.removeEventListener(ANDROID_BACK_EVENT, close);
+  }, [opened]);
+
+  // 阿门：乐观更新墙面与详情，失败再回滚
+  const toggleAmen = async (target: WallItem) => {
+    hapticLight();
+    const apply = (liked: boolean, delta: number) => {
+      const patch = (entry: WallItem) =>
+        entry.post.id === target.post.id
+          ? { ...entry, post: { ...entry.post, likedByMe: liked, likeCount: Math.max(0, entry.post.likeCount + delta) } }
+          : entry;
+      setWall((current) => current?.map(patch) ?? current);
+      setOpened((current) => (current && current.post.id === target.post.id ? patch(current) : current));
+    };
+    const nextLiked = !target.post.likedByMe;
+    apply(nextLiked, nextLiked ? 1 : -1);
+    const result = await performWorkspaceAction(target.communityId, { action: "TOGGLE_LIKE", postId: target.post.id });
+    if (!result.ok) apply(!nextLiked, nextLiked ? -1 : 1);
+  };
+
+  const saveToMine = (target: WallItem) => {
+    setItems(addPrayer(target.post.content, "community", target.communityName));
+    setSavedPostIds((current) => new Set(current).add(target.post.id));
+  };
 
   const active = items.filter((item) => !item.answeredAt);
   const answered = items.filter((item) => item.answeredAt);
@@ -73,7 +157,43 @@ export function PrayerListPage() {
         onBack={goBack}
         backLabel="返回我的"
       />
+      <div className="record-tabs" role="tablist" aria-label="祷告栏目">
+        <button type="button" role="tab" aria-selected={tab === "mine"} className={tab === "mine" ? "active" : ""} onClick={() => setTab("mine")}>我的祷告</button>
+        <button type="button" role="tab" aria-selected={tab === "wall"} className={tab === "wall" ? "active" : ""} onClick={() => setTab("wall")}>代祷墙</button>
+      </div>
       <main className="screen-scroll me-detail-scroll">
+        {tab === "wall" ? (
+          <>
+            {wallError && (
+              <div className="annotation-status-card" role="alert">
+                {wallError}
+                <button type="button" className="empty-state-action" onClick={() => { setWallError(""); setWall(null); }}>重试</button>
+              </div>
+            )}
+            {!wallError && wall === null && <SkeletonScreen label="正在汇集代祷请求" />}
+            {wall?.length === 0 && (
+              <EmptyState
+                art="prayer"
+                title="还没有代祷请求"
+                desc="在社群的「动态」里发一条代祷帖，弟兄姊妹就能在这里为你祷告。"
+              />
+            )}
+            {wall && wall.length > 0 && (
+              <div className="prayer-wall" aria-label="社群代祷请求">
+                {wall.map((entry) => (
+                  <button type="button" className="prayer-wall-card" key={entry.post.id} onClick={() => setOpened(entry)}>
+                    <p>{entry.post.content}</p>
+                    <span className="prayer-wall-meta">{entry.post.author.name} · {entry.communityName}</span>
+                    <span className={`prayer-wall-amen${entry.post.likedByMe ? " is-mine" : ""}`}>
+                      🙏 {entry.post.likedByMe ? "已为 TA 祷告" : "阿门"}{entry.post.likeCount > 0 ? ` · ${entry.post.likeCount}` : ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+        <>
         <form
           className="prayer-compose"
           onSubmit={(event) => {
@@ -114,8 +234,42 @@ export function PrayerListPage() {
             <div className="prayer-list">{answered.map(row)}</div>
           </section>
         )}
-
+        </>
+        )}
       </main>
+
+      {/* 代祷详情：半屏抽屉，核心动作只有一个——阿门 */}
+      {opened && (
+        <>
+          <div className="audio-player-scrim" onClick={() => setOpened(null)} />
+          <section className="sheet prayer-amen-sheet" role="dialog" aria-modal="true" aria-label="代祷请求详情">
+            <div className="prayer-amen-head">
+              <span className="prayer-amen-kicker">🙏 {opened.communityName} · 代祷</span>
+              <button data-icon-button="default" type="button" aria-label="关闭" onClick={() => setOpened(null)}><Icon name="x" size={20} /></button>
+            </div>
+            <p className="prayer-amen-text">{opened.post.content}</p>
+            <div className="prayer-amen-meta">
+              {opened.post.author.name} · {readableDate(opened.post.createdAt)}
+              {opened.post.likeCount > 0 ? ` · ${opened.post.likeCount} 位弟兄姊妹已代祷` : ""}
+            </div>
+            <button
+              type="button"
+              className={`prayer-amen-button${opened.post.likedByMe ? " is-mine" : ""}`}
+              onClick={() => void toggleAmen(opened)}
+            >
+              🙏 {opened.post.likedByMe ? "已为 TA 祷告 · 阿门" : "我为你祷告 · 阿门"}
+            </button>
+            <button
+              type="button"
+              className="prayer-amen-save"
+              disabled={savedPostIds.has(opened.post.id)}
+              onClick={() => saveToMine(opened)}
+            >
+              {savedPostIds.has(opened.post.id) ? "已收进我的清单" : "收进我的清单，持续代求"}
+            </button>
+          </section>
+        </>
+      )}
     </div>
   );
 }

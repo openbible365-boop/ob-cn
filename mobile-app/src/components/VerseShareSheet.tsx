@@ -211,6 +211,8 @@ function paintShareCardBackground(
 }
 
 const CJK_FONT = "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+// 经文正文用衬线（与 App 内阅读页一致）；标题、出处等保持黑体形成对比
+const SERIF_FONT = "'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC', serif";
 
 // 四角星芒：品牌「慧读」的母题，取代通用装饰
 function paintSparkle(context: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
@@ -332,7 +334,7 @@ function paintHorizontalLayout(
   const textLength = data.verseText.length;
   const verseFontSize = textLength <= 40 ? 52 : textLength <= 80 ? 44 : textLength <= 150 ? 36 : 30;
   const lineHeight = Math.round(verseFontSize * 1.6);
-  context.font = `500 ${verseFontSize}px ${CJK_FONT}`;
+  context.font = `500 ${verseFontSize}px ${SERIF_FONT}`;
   const lines = wrapCanvasText(context, data.verseText, 584, textLength <= 80 ? 7 : 9);
 
   const chipRow = themeWords.length ? 86 : 0;        // 字牌行高（含与正文的间距）
@@ -369,7 +371,7 @@ function paintHorizontalLayout(
   context.fillText("\u201c", 52, cursor + 4);
 
   context.fillStyle = theme.ink;
-  context.font = `500 ${verseFontSize}px ${CJK_FONT}`;
+  context.font = `500 ${verseFontSize}px ${SERIF_FONT}`;
   lines.forEach((line, index) => context.fillText(line, 68, cursor + verseFontSize + index * lineHeight));
 
   // 出处：短金线起笔，出处为主、译本为辅
@@ -410,7 +412,7 @@ function paintVerticalLayout(
   const minX = 210;
 
   context.fillStyle = theme.ink;
-  context.font = `500 ${fontSize}px ${CJK_FONT}`;
+  context.font = `500 ${fontSize}px ${SERIF_FONT}`;
   context.textAlign = "center";
   let column = 0;
   let truncated = false;
