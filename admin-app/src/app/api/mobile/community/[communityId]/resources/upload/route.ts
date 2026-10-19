@@ -95,6 +95,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     .join("\n\n")
     .slice(0, MAX_COMMUNITY_KNOWLEDGE_CHARS);
   const resourceType = resourceTypeForFile(fileName, mimeType);
+  const hasKnowledge = Boolean(contentText || description);
   const resourceId = randomUUID();
   const storageKey = path.posix.join(
     access.community.id,
@@ -120,7 +121,9 @@ export async function POST(request: Request, { params }: RouteParams) {
         mimeType,
         fileSize: uploaded.size,
         storageKey,
-        indexedAt: contentText || description ? new Date() : null,
+        indexedAt: hasKnowledge ? new Date() : null,
+        knowledgeStatus: hasKnowledge ? "INDEXED" : "REINDEX_REQUIRED",
+        indexError: hasKnowledge ? null : "当前文件类型尚未提取到可检索文字",
         visibility,
       },
       select: { id: true },
@@ -138,13 +141,13 @@ export async function POST(request: Request, { params }: RouteParams) {
           visibility,
           fileName,
           fileSize: uploaded.size,
-          indexed: Boolean(contentText || description),
+          indexed: hasKnowledge,
         },
       },
     });
     return NextResponse.json({
       ok: true,
-      message: contentText || description
+      message: hasKnowledge
         ? "文件已上传并加入本群知识库"
         : "文件已上传；补充资料说明后，AI 能更准确地使用它",
       resourceId: resource.id,

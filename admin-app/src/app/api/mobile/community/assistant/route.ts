@@ -15,6 +15,7 @@ import {
 } from "@/lib/community-resource-storage";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
+import { createUserNotification } from "@/lib/user-notifications";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,7 @@ type RequestBody = {
   history?: unknown;
   visibility?: unknown;
   confirmationToken?: unknown;
+  actionChanges?: unknown;
 };
 
 type CreateCommunityAction = {
@@ -64,6 +66,7 @@ type PublishContentAction = {
   verseRef: string;
   mediaType: "IMAGE" | "AUDIO" | "VIDEO" | "";
   mediaUrl: string;
+  visibility?: "PUBLIC" | "MEMBERS" | "ADMINS";
 };
 
 type CreateEventAction = {
@@ -420,7 +423,7 @@ function extractMemberSearchQuery(message: string) {
 
 function extractPublishAction(
   message: string,
-  context: Pick<CommunityAssistantContext, "id" | "name">,
+  context: Pick<CommunityAssistantContext, "id" | "name" | "isOfficial">,
 ): PublishContentAction | null {
   const source = message.trim();
   const command = source.match(
@@ -483,8 +486,14 @@ function extractPublishAction(
     verseRef,
     mediaType,
     mediaUrl,
+    visibility: context.isOfficial ? "PUBLIC" : "MEMBERS",
   };
 }
+
+// 用户说的「19:30」是北京时间，不是服务器时区——生产环境跑 UTC 时，
+// 按服务器本地构造会让每个活动差 8 小时。固定按 Asia/Shanghai（UTC+8，
+// 无夏令时）换算成 UTC 存储。
+const EVENT_TIMEZONE_OFFSET_HOURS = 8;
 
 function dateFromParts(
   year: number,
@@ -493,11 +502,13 @@ function dateFromParts(
   hour: number,
   minute: number,
 ) {
-  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+  const date = new Date(Date.UTC(year, month - 1, day, hour - EVENT_TIMEZONE_OFFSET_HOURS, minute, 0, 0));
+  // 用回加时差后的 UTC 分量校验年月日，捕获「2 月 30 日」这类无效日期
+  const check = new Date(date.getTime() + EVENT_TIMEZONE_OFFSET_HOURS * 3_600_000);
   if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
   ) {
     return null;
   }
@@ -646,6 +657,8 @@ function formatDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "时间待补充";
   return new Intl.DateTimeFormat("zh-CN", {
+    // 与解析侧同一时区：不写的话生产的 UTC 服务器会把确认卡显示得差 8 小时
+    timeZone: "Asia/Shanghai",
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -756,12 +769,13 @@ function proposalResponse(
   scopeCommunityId: string,
   action: AssistantActionPayload,
 ) {
+  const expiresAt = Date.now() + ACTION_TTL_MS;
   const token = signAction({
     version: 1,
     actionId: randomUUID(),
     userId,
     scopeCommunityId,
-    expiresAt: Date.now() + ACTION_TTL_MS,
+    expiresAt,
     action,
   });
   if (!token) return jsonError("操作确认服务尚未完成配置", 503);
@@ -775,6 +789,13 @@ function proposalResponse(
         token,
         title: `创建社群「${action.name}」`,
         summary: `简称：${action.abbreviation}${action.description ? `\n简介：${action.description}` : "\n等级：初阶免费"}`,
+        fields: [
+          { label: "内容类型", value: "新建社群" },
+          { label: "名称", value: action.name },
+          { label: "简称", value: action.abbreviation },
+          { label: "可见范围", value: "私有社群" },
+        ],
+        expiresAt: new Date(expiresAt).toISOString(),
         confirmLabel: "确认创建",
       },
     });
@@ -789,6 +810,12 @@ function proposalResponse(
         token,
         title: `申请加入「${action.communityName}」`,
         summary: "申请会交给该社群的群主或管理员审核。",
+        fields: [
+          { label: "内容类型", value: "加入申请" },
+          { label: "社群", value: action.communityName },
+          { label: "处理方式", value: "管理员审核" },
+        ],
+        expiresAt: new Date(expiresAt).toISOString(),
         confirmLabel: "确认申请",
       },
     });
@@ -809,6 +836,13 @@ function proposalResponse(
         ]
           .filter(Boolean)
           .join("\n"),
+        fields: [
+          { label: "内容类型", value: "新建小组" },
+          { label: "所属社群", value: action.communityName },
+          { label: "小组名称", value: action.name },
+          { label: "可见范围", value: "小组成员" },
+        ],
+        expiresAt: new Date(expiresAt).toISOString(),
         confirmLabel: "确认创建",
       },
     });
@@ -824,6 +858,13 @@ function proposalResponse(
         token,
         title: `邀请成员加入「${action.communityName}」`,
         summary: `账号邮箱：${action.email}\n加入后角色：普通成员`,
+        fields: [
+          { label: "内容类型", value: "成员邀请" },
+          { label: "社群", value: action.communityName },
+          { label: "账号", value: action.email },
+          { label: "角色", value: "普通成员" },
+        ],
+        expiresAt: new Date(expiresAt).toISOString(),
         confirmLabel: "确认邀请",
       },
     });
@@ -858,6 +899,17 @@ function proposalResponse(
         ]
           .filter(Boolean)
           .join("\n"),
+        fields: [
+          { label: "内容类型", value: typeLabel },
+          { label: "标题", value: action.title || "未设置标题" },
+          { label: "正文", value: preview || "未填写" },
+          { label: "发布时间", value: "确认后立即发布" },
+          {
+            label: "可见范围",
+            value: action.visibility === "PUBLIC" ? "所有人可见" : action.visibility === "ADMINS" ? "仅管理员" : "本群成员",
+          },
+        ],
+        expiresAt: new Date(expiresAt).toISOString(),
         confirmLabel: "确认发布",
       },
     });
@@ -879,6 +931,14 @@ function proposalResponse(
       ]
         .filter(Boolean)
         .join("\n"),
+      fields: [
+        { label: "内容类型", value: "社群活动" },
+        { label: "标题", value: action.title },
+        { label: "开始时间", value: formatDateTime(action.startAt) },
+        { label: "地点", value: action.location || "待定" },
+        { label: "可见范围", value: "本群成员" },
+      ],
+      expiresAt: new Date(expiresAt).toISOString(),
       confirmLabel: "确认创建",
     },
   });
@@ -921,7 +981,6 @@ async function executeConfirmedAction(payload: SignedAction) {
           tier: "BASIC_FREE",
           tierPriceCents: 0,
           joinPolicy: "APPROVAL",
-          status: "PENDING_APPROVAL",
           memberships: { create: { userId: payload.userId, role: "OWNER" } },
         },
         select: {
@@ -931,7 +990,6 @@ async function executeConfirmedAction(payload: SignedAction) {
           description: true,
           avatarColor: true,
           tier: true,
-          status: true,
         },
       });
       return NextResponse.json({
@@ -1020,12 +1078,18 @@ async function executeConfirmedAction(payload: SignedAction) {
             : "#FFD465",
           joinPolicy: "APPROVAL",
           tier: access.community.tier,
-          status: "PENDING_APPROVAL",
           memberships: {
             create: { userId: payload.userId, role: access.role },
           },
         },
-        select: { id: true, name: true, status: true },
+        select: {
+          id: true,
+          name: true,
+          abbreviation: true,
+          description: true,
+          avatarColor: true,
+          _count: { select: { memberships: true } },
+        },
       });
       await db.communityAuditLog.create({
         data: {
@@ -1044,6 +1108,14 @@ async function executeConfirmedAction(payload: SignedAction) {
           type: "GROUP_CREATED",
           communityId: access.community.id,
           groupId: group.id,
+          group: {
+            id: group.id,
+            name: group.name,
+            abbreviation: group.abbreviation,
+            description: group.description,
+            avatarColor: group.avatarColor,
+            memberCount: group._count.memberships,
+          },
           targetTab: "groups",
         },
       });
@@ -1173,6 +1245,19 @@ async function executeConfirmedAction(payload: SignedAction) {
       if (action.postType === "NOTICE" && !isAdmin) {
         return jsonError("只有群主或管理员可以发布通知", 403);
       }
+      const postVisibility = action.visibility ?? (community.isOfficial ? "PUBLIC" : "MEMBERS");
+      if (!["PUBLIC", "MEMBERS", "ADMINS"].includes(postVisibility)) {
+        return jsonError("可见范围不正确", 400);
+      }
+      if (community.isOfficial && postVisibility !== "PUBLIC") {
+        return jsonError("公共社群内容须对所有人可见", 400);
+      }
+      if (!community.isOfficial && postVisibility === "PUBLIC") {
+        return jsonError("私有社群内容不能设为公开", 400);
+      }
+      if (postVisibility === "ADMINS" && !isAdmin) {
+        return jsonError("只有群主或管理员可以发布管理员可见内容", 403);
+      }
       if (
         !["POST", "ARTICLE", "NOTICE", "MEDIA"].includes(action.postType)
       ) {
@@ -1244,6 +1329,7 @@ async function executeConfirmedAction(payload: SignedAction) {
             ? (action.mediaType as "IMAGE" | "AUDIO" | "VIDEO")
             : null,
           mediaUrl: action.mediaUrl || null,
+          visibility: postVisibility,
           status: requiresReview ? "HIDDEN" : "VISIBLE",
         },
         select: { id: true },
@@ -1269,7 +1355,7 @@ async function executeConfirmedAction(payload: SignedAction) {
               : "ASSISTANT_POST_CREATE",
           targetType: "Post",
           targetId: post.id,
-          detail: { postType: action.postType, title: action.title },
+          detail: { postType: action.postType, title: action.title, visibility: postVisibility },
         },
       });
       return NextResponse.json({
@@ -1375,11 +1461,31 @@ async function executeConfirmedAction(payload: SignedAction) {
       effect: { type: "COMMUNITY_JOINED", communityId: community.id },
     });
   }
-  await db.communityJoinRequest.upsert({
+  const joinRequest = await db.communityJoinRequest.upsert({
     where: { userId_communityId: { userId: payload.userId, communityId: community.id } },
     update: { status: "PENDING", reviewerId: null, reviewedAt: null },
     create: { userId: payload.userId, communityId: community.id, status: "PENDING" },
+    select: { id: true, updatedAt: true },
   });
+  const requester = await db.user.findUnique({
+    where: { id: payload.userId },
+    select: { name: true },
+  });
+  const reviewers = await db.membership.findMany({
+    where: { communityId: community.id, role: { in: ["OWNER", "ADMIN"] } },
+    select: { userId: true },
+  });
+  for (const { userId } of reviewers) {
+    await createUserNotification({
+        userId,
+        preferenceKey: "join_updates",
+        type: "JOIN_REQUEST",
+        title: "收到新的入群申请",
+        body: `${requester?.name ?? "一位用户"} 申请加入「${community.name}」`,
+        href: `/community/${community.id}/settings`,
+        uniqueKey: `join-request:${joinRequest.id}:${joinRequest.updatedAt.toISOString()}`,
+      }).catch((cause) => console.error("Create assistant join notification failed", cause));
+  }
   return NextResponse.json({
     ok: true,
     answer: `加入「${community.name}」的申请已经提交，请等待群主或管理员审核。`,
@@ -1920,9 +2026,48 @@ export async function POST(request: Request) {
     if (usedActions.has(payload.actionId)) {
       return jsonError("这项操作已经处理，请勿重复提交", 409);
     }
+    let confirmedPayload = payload;
+    if (
+      payload.action.kind === "PUBLISH_CONTENT" &&
+      body.actionChanges &&
+      typeof body.actionChanges === "object"
+    ) {
+      const changes = body.actionChanges as Record<string, unknown>;
+      const title = typeof changes.title === "string"
+        ? changes.title.trim()
+        : payload.action.title;
+      const visibility = typeof changes.visibility === "string"
+        ? changes.visibility
+        : payload.action.visibility;
+      if (characterCount(title) > 120) {
+        return jsonError("标题不能超过 120 个字", 400);
+      }
+      if (visibility && !["PUBLIC", "MEMBERS", "ADMINS"].includes(visibility)) {
+        return jsonError("可见范围不正确", 400);
+      }
+      confirmedPayload = {
+        ...payload,
+        action: {
+          ...payload.action,
+          title,
+          visibility: visibility as PublishContentAction["visibility"],
+        },
+      };
+    }
     usedActions.set(payload.actionId, payload.expiresAt);
-    const response = await executeConfirmedAction(payload);
+    const response = await executeConfirmedAction(confirmedPayload);
     if (response.status >= 500) usedActions.delete(payload.actionId);
+    if (response.ok) {
+      await createUserNotification({
+        userId: user.id,
+        preferenceKey: "ai_assistant",
+        type: "AI_TASK",
+        title: "AI 任务已完成",
+        body: "你确认的社群操作已经处理完成",
+        href: `/community/${payload.scopeCommunityId}`,
+        uniqueKey: `ai-task:${payload.actionId}`,
+      }).catch((cause) => console.error("Create AI task notification failed", cause));
+    }
     return response;
   }
 
@@ -1974,7 +2119,17 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.OPENBIBLE_LLM_API_KEY ?? process.env.VLLM_API_KEY;
-  if (!apiKey) return jsonError("助手尚未完成服务配置", 503);
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "AI_UNAVAILABLE",
+        message:
+          "AI 开放式问答暂时不可用；创建活动、查找成员等社群事务仍可使用。",
+      },
+      { status: 503 },
+    );
+  }
   const baseUrl = (process.env.OPENBIBLE_LLM_BASE_URL ?? "http://127.0.0.1:8010/v1").replace(/\/+$/, "");
   const model = process.env.OPENBIBLE_LLM_MODEL ?? DEFAULT_MODEL;
   const history = parseHistory(body.history);

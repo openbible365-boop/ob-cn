@@ -128,7 +128,9 @@ export function AnnotationAudioPlayer({
     setIsPaused(false);
 
     const chunks = speechChunks(
-      `${segment.reference}，${segment.label}。${segment.text}`,
+      segment.label
+        ? `${segment.reference}，${segment.label}。${segment.text}`
+        : `${segment.reference}。${segment.text}`,
     );
     const speakChunk = (chunkIndex: number) => {
       const chunk = chunks[chunkIndex];
@@ -251,15 +253,15 @@ export function AnnotationAudioPlayer({
         aria-label={`${displayBook}${translate("第")}${chapter}${translate("章注释朗读")}`}
       >
         <div className="audio-player-kicker">
-          <Icon name="volume-2" size={18} />
+          <Icon name="volume-2" size={20} />
           <span>{translate("注释朗读")}</span>
-          <button
+          <button data-icon-button="default"
             type="button"
             className="audio-player-close"
             aria-label={translate("关闭注释朗读窗口")}
             onClick={onClose}
           >
-            <Icon name="x" size={22} />
+            <Icon name="x" size={20} />
           </button>
         </div>
 
@@ -298,23 +300,23 @@ export function AnnotationAudioPlayer({
         </div>
 
         <div className="audio-controls">
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("上一章注释")}
             disabled={chapter <= 1}
             onClick={() => changeChapter(chapter - 1)}
           >
-            <Icon name="skip-back" size={27} />
+            <Icon name="skip-back" size={24} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("上一段注释")}
             disabled={currentIndex <= 0 || segments.length === 0}
             onClick={() => gotoSegment(currentIndex - 1)}
           >
-            <Icon name="chevron-left" size={25} />
+            <Icon name="chevron-left" size={24} />
           </button>
-          <button
+          <button data-icon-button="primary"
             type="button"
             className="audio-play-button"
             disabled={segments.length === 0}
@@ -323,21 +325,21 @@ export function AnnotationAudioPlayer({
           >
             <Icon name={isPlaying ? "pause" : "play"} size={28} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("下一段注释")}
             disabled={currentIndex >= segments.length - 1 || segments.length === 0}
             onClick={() => gotoSegment(currentIndex + 1)}
           >
-            <Icon name="chevron-right" size={25} />
+            <Icon name="chevron-right" size={24} />
           </button>
-          <button
+          <button data-icon-button="default"
             type="button"
             aria-label={translate("下一章注释")}
             disabled={chapter >= maxChapter}
             onClick={() => changeChapter(chapter + 1)}
           >
-            <Icon name="skip-forward" size={27} />
+            <Icon name="skip-forward" size={24} />
           </button>
         </div>
 
@@ -377,7 +379,7 @@ export function AnnotationAudioPlayer({
                 {translate("音色")} · {translate(voicePreference === "female" ? "清晰女声 · 温柔自然" : "沉稳男声 · 清楚从容")}
               </span>
               <span className="audio-voice-chevron" aria-hidden="true">
-                <Icon name="chevron-down" size={18} />
+                <Icon name="chevron-down" size={20} />
               </span>
             </button>
             {voiceMenuOpen && (

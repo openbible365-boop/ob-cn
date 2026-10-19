@@ -1,4 +1,6 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { SkeletonScreen } from "../components/SkeletonScreen";
+import { READING_THEMES, useReadingTheme } from "../theme";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
@@ -13,10 +15,13 @@ import {
   updateAvatar,
   type SessionUser,
 } from "../data/profile";
+import { fetchReadingPlans, type ReadingPlan } from "../data/reading-plans";
+import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
 
 export function MePage() {
   const { translate } = useSettings();
+  const [theme, setTheme] = useReadingTheme();
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -26,6 +31,9 @@ export function MePage() {
   const [logoutError, setLogoutError] = useState("");
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState("");
+  // null = 还没拿到（横幅不显示，避免闪一下引导文案又变成计划卡）
+  const [plans, setPlans] = useState<ReadingPlan[] | null>(null);
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,6 +41,16 @@ export function MePage() {
     fetchMe().then((result) => { if (!cancelled) setUser(result); });
     return () => { cancelled = true; };
   }, []);
+
+  const loggedIn = Boolean(user);
+  useEffect(() => {
+    if (!loggedIn) return;
+    let cancelled = false;
+    fetchReadingPlans().then((result) => {
+      if (!cancelled && result.ok) setPlans(result.plans);
+    });
+    return () => { cancelled = true; };
+  }, [loggedIn]);
 
   useEffect(() => {
     const refresh = () => refreshLocalContent((value) => value + 1);
@@ -44,87 +62,91 @@ export function MePage() {
     return (
       <div className="screen me-screen">
         <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate("读取中")} />
-        <div className="screen-scroll me-loading" role="status">{translate("正在读取账号…")}</div>
+        <main className="screen-scroll"><SkeletonScreen label={translate("正在读取账号")} /></main>
       </div>
     );
   }
 
   if (!user) {
+    // 纯登录页：满屏只放品牌、广告语和登录按钮，不放任何数据入口。
     return (
       <div className="screen me-screen">
-        <CompactToolbar
-          ariaLabel={translate("个人中心")}
-          primary={translate("我的")}
-          secondary={translate("个人")}
-          actions={(
-            <button
-              className="bible-toolbar-action"
-              type="button"
-              aria-label={translate("登录或注册")}
-              title={translate("登录或注册")}
-              onClick={() => navigate("/me/login")}
-            >
-              <Icon name="user" size={18} />
-            </button>
-          )}
-        />
+        <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate("个人")} />
         <main className="screen-scroll me-guest-scroll">
-          <div className="me-guest-brand">
-            <div className="me-logo-shield" aria-label={translate("慧读圣经")}>
-              <svg
-                viewBox="16 8 88 88"
-                xmlns="http://www.w3.org/2000/svg"
-                width="48"
-                height="48"
-                role="img"
-                aria-hidden="true"
-                style={{ overflow: "visible" }}
-              >
-                <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C" />
-                <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor" />
-                <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor" />
-                <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
-                <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="5" strokeLinejoin="round" />
-                <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" strokeWidth="4" />
-              </svg>
+          <div className="me-guest-center">
+            <div className="me-guest-brand">
+              <div className="me-logo-shield" aria-label={translate("慧读圣经")}>
+                <svg
+                  viewBox="22 5 76 88"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="56"
+                  height="56"
+                  role="img"
+                  aria-hidden="true"
+                  style={{ overflow: "visible" }}
+                >
+                  <polygon points="60,9 63.2,15.8 72,19 63.2,22.2 60,31 56.8,22.2 48,19 56.8,15.8" fill="#E89A2C" />
+                  <polygon points="43.6,25.6 45.5,30.1 50,32 45.5,33.9 43.6,38.4 41.7,33.9 37.2,32 41.7,30.1" fill="currentColor" />
+                  <polygon points="77.9,23.6 79.8,28.1 84.3,30 79.8,31.9 77.9,36.4 76,31.9 71.5,30 76,28.1" fill="currentColor" />
+                  <path d="M60 53 C 50 45, 34 45, 26 52 L 26 88 C 34 79, 50 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
+                  <path d="M60 53 C 70 45, 86 45, 94 52 L 94 88 C 86 79, 70 79, 60 88 Z" fill="#F2C96D" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" />
+                  <line x1="60" y1="53" x2="60" y2="88" stroke="currentColor" strokeWidth="5" />
+                </svg>
+              </div>
+              <h1>
+                <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
+                <span>{translate("圣经")}</span>
+              </h1>
+              <p>{translate("智慧 · 读经 · 社群 · 共勉")}</p>
             </div>
-            <h1>
-              <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
-              <span>{translate("圣经")}</span>
-            </h1>
-            <p>{translate("智慧 · 读经 · 社群 · 共勉")}</p>
+            <button className="me-login-button" type="button" onClick={() => navigate("/me/login")}>
+              {translate("登录或注册")}
+            </button>
           </div>
 
-          <div className="me-guest-prompt">{translate("尚未登录")}</div>
-          <button className="me-login-button" type="button" onClick={() => navigate("/me/login")}>
-            {translate("登录或注册")}
-          </button>
-          <div className="me-guest-benefits" aria-label={translate("登录后可用功能")}>
-            <span><Icon name="check" size={14} />{translate("跨设备同步高亮")}</span>
-            <span><Icon name="check" size={14} />{translate("管理社群与活动")}</span>
-            <span><Icon name="check" size={14} />{translate("保留个人阅读资料")}</span>
+          <div className="me-legal-links">
+            <button type="button" onClick={() => navigate("/legal/terms")}>{translate("用户协议")}</button>
+            <button type="button" onClick={() => navigate("/legal/privacy")}>{translate("隐私政策")}</button>
           </div>
-          <small>{translate("不登录也可以在本机保存笔记和慧读记录。")}</small>
         </main>
       </div>
     );
   }
 
+  // 四宫格快捷入口：图标统一灰色线性（图标是骨架，不占用紫/金语义色），
+  // 数字作为角标；名称本身就在格子里，不再需要单位小字。
   const stats = [
-    { label: translate("高亮"), value: getHighlights().length, unit: translate("处"), to: "/me/content?t=highlights" },
-    { label: translate("笔记"), value: getNotes().length, unit: translate("条"), to: "/me/content?t=notes" },
-    { label: translate("慧读"), value: getConversations().length, unit: translate("次"), to: "/huidu" },
-    { label: translate("报名活动"), value: user.counts.eventSignups, unit: translate("项"), to: "/me/activities" },
+    { icon: "star", label: translate("高亮"), value: getHighlights().length, to: "/me/content?t=highlights" },
+    { icon: "edit", label: translate("笔记"), value: getNotes().length, to: "/me/content?t=notes" },
+    { icon: "sparkle", label: translate("慧读"), value: getConversations().length, to: "/huidu" },
+    { icon: "calendar", label: translate("活动"), value: user.counts.eventSignups, to: "/me/activities" },
   ];
 
-  const accountRows = [
-    { icon: "calendar", label: translate("读经计划"), desc: translate("管理个人与社群每日阅读"), to: "/me/plans" },
-    { icon: "align-justify", label: translate("我的内容"), desc: translate("查看高亮与笔记"), to: "/me/content" },
-    { icon: "download", label: translate("数据与账户"), desc: translate("查看同步状态并导出本机数据"), to: "/me/account" },
-    { icon: "bell", label: translate("通知设置"), desc: translate("管理本机测试提醒"), to: "/me/notifications" },
-    { icon: "file-text", label: translate("用户协议"), desc: translate("了解服务与使用规则"), to: "/legal/terms" },
-    { icon: "shield", label: translate("隐私政策"), desc: translate("查看数据与权限说明"), to: "/legal/privacy" },
+  // 菜单分组：读经内容 / 设置 / 法务三张卡（社群卡单独渲染，只有管理身份才出现）。
+  // 法务条款独立成组放最底部——注册型产品里它们该能被找到，但不该和日常设置挤在一起。
+  const menuGroups = [
+    [
+      { icon: "calendar", label: translate("读经计划"), desc: translate("个人与社群每日阅读"), to: "/me/plans" },
+      { icon: "align-justify", label: translate("我的内容"), desc: translate("高亮与笔记的汇总"), to: "/me/content" },
+      { icon: "heart", label: translate("祷告清单"), desc: translate("代求与已应允的记录"), to: "/me/prayers" },
+    ],
+    [
+      { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
+      { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
+      { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
+    ],
+    [
+      { icon: "info", label: translate("用户协议"), desc: "", to: "/legal/terms" },
+      { icon: "shield", label: translate("隐私政策"), desc: "", to: "/legal/privacy" },
+    ],
   ];
+
+  // 读经横幅：优先进行中的计划；全部读完则显示最近一个，让完成状态可见
+  const activePlan = plans?.find((plan) => plan.enrolled && !plan.completedAt)
+    ?? plans?.find((plan) => plan.enrolled);
+  const planPct = activePlan && activePlan.totalDays > 0
+    ? Math.min(100, Math.round((activePlan.completedDays / activePlan.totalDays) * 100))
+    : 0;
 
   const confirmLogout = async () => {
     setLogoutBusy(true);
@@ -162,7 +184,8 @@ export function MePage() {
 
   return (
     <div className="screen me-screen">
-      <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate(user.entitlements.label)} />
+      {/* 套餐已经跟在账号名后面，顶栏不再重复一遍。 */}
+      <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} />
 
       <main className="screen-scroll me-scroll">
         <section className="me-profile" aria-label={translate("账号信息")}>
@@ -181,7 +204,7 @@ export function MePage() {
               size={52}
             />
             <span className="me-avatar-edit" aria-hidden="true">
-              <Icon name="camera" size={11} />
+              <Icon name="camera" size={12} />
             </span>
           </button>
           <input
@@ -192,7 +215,12 @@ export function MePage() {
             onChange={handleAvatarChange}
           />
           <div className="me-profile-copy">
-            <h1>{user.name}</h1>
+            <h1>
+              {user.name}
+              {/* 套餐从顶栏挪到名字旁边：放在「我的」后面像个来路不明的标签，
+                  贴着账号才读得出这是这个账号的方案。 */}
+              <span className="me-plan-tag">{translate(user.entitlements.label)}</span>
+            </h1>
             <p>{user.email ?? translate("已登录用户")}</p>
             {avatarMessage && (
               <small
@@ -203,73 +231,134 @@ export function MePage() {
               </small>
             )}
           </div>
-          <span className="me-account-status">{translate("已登录")}</span>
         </section>
 
-        <div className="me-sync-note">
-          <Icon name="cloud" size={16} />
-          <span>{translate("高亮与活动已同步；笔记、慧读记录保存在本机")}</span>
-        </div>
-
-        <section className="me-section" aria-labelledby="me-reading-title">
-          <div className="me-section-heading">
-            <h2 id="me-reading-title">{translate("阅读与活动")}</h2>
-            <button type="button" onClick={() => navigate("/me/content")}>{translate("查看内容")}</button>
-          </div>
-          <div className="me-stats">
-            {stats.map((stat) => (
-              <button key={stat.label} type="button" onClick={() => navigate(stat.to)}>
-                <span className="me-stat-value">{stat.value}<small>{stat.unit}</small></span>
-                <span>{stat.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {user.groupAccounts.length > 0 && (
-          <section className="me-section" aria-labelledby="me-groups-title">
-            <div className="me-section-heading">
-              <h2 id="me-groups-title">{translate("管理的社群")}</h2>
-              <span>{user.groupAccounts.length} {translate("个")}</span>
-            </div>
-            <div className="me-group-list">
-              {user.groupAccounts.map((account) => (
-                <div className="me-group-item" key={account.id}>
-                  <button className="me-group-primary" type="button" onClick={() => navigate(`/community/${account.id}`)}>
-                    <span className="me-group-avatar" style={{ background: account.avatarColor }}>{account.abbreviation}</span>
-                    <span className="me-group-copy">
-                      <b>{account.name}</b>
-                      <small>{account.role === "OWNER" ? translate("群主") : translate("管理员")} · {account.usage.members} {translate("位成员")}</small>
-                    </span>
-                  </button>
-                  <button
-                    className="me-group-manage"
-                    type="button"
-                    aria-label={translate("管理") + translate(account.name)}
-                    onClick={() => navigate(`/community/${account.id}/settings`)}
-                  >
-                    {translate("管理")}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
+        {/* 读经进度横幅：金色淡底（阅读语义）。没拿到数据前不渲染，避免引导文案闪变 */}
+        {activePlan ? (
+          <button className="me-plan-banner" type="button" onClick={() => navigate("/me/plans")}>
+            <span className="me-plan-banner-head">
+              <Icon name="book" size={16} />
+              <b>{activePlan.title}</b>
+              <small>{activePlan.completedDays}/{activePlan.totalDays} {translate("天")}</small>
+              {/* 整卡可点的 affordance：没有箭头没人知道能点 */}
+              <Icon name="chevron-right" size={14} className="me-plan-banner-caret" />
+            </span>
+            <span className="me-plan-banner-bar"><span style={{ width: `${planPct}%` }} /></span>
+            <small className="me-plan-banner-today">
+              {getStreak() > 0 ? `${translate("连续")} ${getStreak()} ${translate("天")} · ` : ""}
+              {activePlan.completedAt
+                ? translate("已完成，去看看其他计划")
+                : activePlan.today
+                  ? `${translate("今日")} · ${translate("第")} ${activePlan.today.dayNumber} ${translate("天")}${activePlan.today.title ? ` · ${activePlan.today.title}` : ""}`
+                  : translate("继续读经")}
+            </small>
+          </button>
+        ) : plans !== null && (
+          <button className="me-plan-banner is-empty" type="button" onClick={() => navigate("/me/plans")}>
+            <Icon name="book" size={16} />
+            <span>{translate("还没有进行中的读经计划")}</span>
+            <b>{translate("去看看")} ›</b>
+          </button>
         )}
 
-        <section className="me-section" aria-labelledby="me-account-title">
-          <div className="me-section-heading">
-            <h2 id="me-account-title">{translate("账户与设置")}</h2>
-          </div>
-          <div className="me-account-menu">
-            {accountRows.map((row) => (
+        <div className="me-quick" aria-label={translate("我的记录")}>
+          {stats.map((stat) => (
+            <button key={stat.label} type="button" onClick={() => navigate(stat.to)}>
+              <Icon name={stat.icon} size={20} />
+              <span>{stat.label}</span>
+              {/* 零值弱化：还没有数据的格子不该和有数据的抢注意力 */}
+              <b className={`me-quick-count${stat.value === 0 ? " is-zero" : ""}`}>{stat.value}</b>
+            </button>
+          ))}
+        </div>
+
+        {menuGroups[0] && (
+          <div className="me-menu-card">
+            {menuGroups[0].map((row) => (
               <button key={row.label} type="button" onClick={() => navigate(row.to)}>
                 <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
-                <span className="me-menu-copy"><b>{row.label}</b><small>{row.desc}</small></span>
-                <Icon name="chevron-right" size={15} />
+                <span className="me-menu-copy">
+                  <b>{row.label}</b>
+                  {row.desc && <small>{row.desc}</small>}
+                </span>
+                <Icon name="chevron-right" size={16} />
               </button>
             ))}
           </div>
-        </section>
+        )}
+
+        {user.groupAccounts.length > 0 && (
+          <div className="me-menu-card">
+            <button type="button" aria-expanded={groupsOpen} onClick={() => setGroupsOpen((value) => !value)}>
+              <span className="me-menu-icon"><Icon name="users" size={16} /></span>
+              <span className="me-menu-copy">
+                <b>{translate("管理的社群")}</b>
+              </span>
+              <small className="me-menu-meta">{user.groupAccounts.length} {translate("个")}</small>
+              <Icon name="chevron-right" size={16} className={groupsOpen ? "is-rotated" : undefined} />
+            </button>
+            {groupsOpen && (
+              <div className="me-group-list is-nested">
+                {user.groupAccounts.map((account) => (
+                  <div className="me-group-item" key={account.id}>
+                    <button className="me-group-primary" type="button" onClick={() => navigate(`/community/${account.id}`)}>
+                      <span className="me-group-avatar" style={{ background: account.avatarColor }}>{account.abbreviation}</span>
+                      <span className="me-group-copy">
+                        <b>{account.name}</b>
+                        <small>{account.role === "OWNER" ? translate("群主") : translate("管理员")} · {account.usage.members} {translate("位成员")}</small>
+                      </span>
+                    </button>
+                    <button
+                      className="me-group-manage"
+                      type="button"
+                      aria-label={translate("管理") + translate(account.name)}
+                      onClick={() => navigate(`/community/${account.id}/settings`)}
+                    >
+                      {translate("管理")}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 外观：阅读主题是全局偏好，放在「我的」而不是阅读页的快捷面板里 */}
+        <div className="me-menu-card">
+          <div className="me-theme-row">
+            <span className="me-menu-icon"><Icon name="sun" size={16} /></span>
+            <span className="me-menu-copy"><b>{translate("阅读模式")}</b></span>
+            <div className="bible-setting-segment is-theme" role="radiogroup" aria-label={translate("阅读模式")}>
+              {READING_THEMES.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === option.value}
+                  className={theme === option.value ? "active" : ""}
+                  onClick={() => setTheme(option.value)}
+                >
+                  {translate(option.label)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {menuGroups.slice(1).map((group, index) => (
+          <div className="me-menu-card" key={index}>
+            {group.map((row) => (
+              <button key={row.label} type="button" onClick={() => navigate(row.to)}>
+                <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
+                <span className="me-menu-copy">
+                  <b>{row.label}</b>
+                  {row.desc && <small>{row.desc}</small>}
+                </span>
+                <Icon name="chevron-right" size={16} />
+              </button>
+            ))}
+          </div>
+        ))}
 
         {!logoutConfirm ? (
           <button className="me-logout-button" type="button" onClick={() => setLogoutConfirm(true)}>
@@ -291,7 +380,7 @@ export function MePage() {
         )}
         {logoutError && <div className="me-logout-error" role="alert">{logoutError}</div>}
 
-        <div className="me-version">OpenBible · v0.1</div>
+        <div className="me-version">慧读圣经 · v{__APP_VERSION__}</div>
       </main>
     </div>
   );

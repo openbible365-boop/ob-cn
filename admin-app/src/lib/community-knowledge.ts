@@ -55,6 +55,7 @@ export async function communityKnowledgeContext(input: {
       communityId: input.communityId,
       status: "ACTIVE",
       indexedAt: { not: null },
+      knowledgeStatus: "INDEXED",
       ...(input.includeAdminResources
         ? {}
         : { visibility: "MEMBERS" as const }),
@@ -110,7 +111,7 @@ export async function communityKnowledgeContext(input: {
     if (remaining <= 0) break;
   }
 
-  return `以下是仅属于当前社群的知识库检索结果。回答时优先依据这些资料，并用《资料标题》标明依据；资料没有明确说明的内容要如实说“不确定”，不要补造。
+  return `以下是仅属于当前社群的知识库检索结果。回答必须展示依据，优先使用“根据《资料标题》（页码或段落，如原文存在）……”的表述；资料没有明确说明的内容要如实说“不确定”，不要补造。
 
 ${excerpts.map((excerpt, index) => `[${index + 1}]\n${excerpt}`).join("\n\n")}`;
 }

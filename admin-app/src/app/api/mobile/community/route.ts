@@ -16,30 +16,25 @@ function characterCount(value: string) {
   return Array.from(value).length;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getSessionUser();
-  const [communities, ownedCommunityCount] = await Promise.all([
-    db.community.findMany({
+  // 「发现社群」以前只在前 30 条里做前端过滤，社群一多就搜不到；
+  // 有关键词时改为按名称/简称/简介在全部可加入社群里查询。
+  const keyword = new URL(request.url).searchParams.get("q")?.trim().slice(0, 60) ?? "";
+  // PGlite uses a single PostgreSQL connection in local development. Running
+  // multiple Prisma statements concurrently on that connection can make the
+  // driver reuse an unnamed prepared statement and intermittently return 500.
+  // Keep this read path sequential; production Postgres remains fast and the
+  // local directory becomes deterministic.
+  const communities = await db.community.findMany({
       where: {
-        OR: [
-          {
-            status: "ACTIVE",
-            OR: user
-              ? [
-                  { isOfficial: true },
-                  { memberships: { some: { userId: user.id } } },
-                ]
-              : [{ isOfficial: true }],
-          },
-          ...(user
-            ? [
-                {
-                  ownerId: user.id,
-                  status: "PENDING_APPROVAL" as const,
-                },
-              ]
-            : []),
-        ],
+        status: "ACTIVE",
+        OR: user
+          ? [
+              { isOfficial: true },
+              { memberships: { some: { userId: user.id } } },
+            ]
+          : [{ isOfficial: true }],
       },
       select: {
         id: true,
@@ -49,7 +44,6 @@ export async function GET() {
         avatarColor: true,
         tier: true,
         isOfficial: true,
-        status: true,
         memberships: user
           ? {
               where: { userId: user.id },
@@ -65,11 +59,44 @@ export async function GET() {
         },
       },
       orderBy: [{ isOfficial: "desc" }, { createdAt: "asc" }],
-    }),
-    user
-      ? db.community.count({ where: { ownerId: user.id } })
-      : Promise.resolve(0),
-  ]);
+    });
+  const discoverableCommunities = user
+      ? await db.community.findMany({
+          where: {
+            status: "ACTIVE",
+            isOfficial: false,
+            parentId: null,
+            joinPolicy: { not: "INVITE_ONLY" },
+            memberships: { none: { userId: user.id } },
+            ...(keyword
+              ? {
+                  OR: [
+                    { name: { contains: keyword, mode: "insensitive" as const } },
+                    { abbreviation: { contains: keyword, mode: "insensitive" as const } },
+                    { description: { contains: keyword, mode: "insensitive" as const } },
+                  ],
+                }
+              : {}),
+          },
+          select: {
+            id: true,
+            name: true,
+            abbreviation: true,
+            description: true,
+            avatarColor: true,
+            tier: true,
+            joinPolicy: true,
+            _count: { select: { memberships: true } },
+          },
+          orderBy: keyword
+            ? [{ memberships: { _count: "desc" as const } }, { createdAt: "desc" as const }]
+            : [{ dailyActivity: "desc" as const }, { createdAt: "desc" as const }],
+          take: keyword ? 50 : 30,
+        })
+      : [];
+  const ownedCommunityCount = user
+      ? await db.community.count({ where: { ownerId: user.id } })
+      : 0;
 
   return NextResponse.json({
     ok: true,
@@ -83,7 +110,6 @@ export async function GET() {
       avatarColor: community.avatarColor,
       tier: community.tier,
       isOfficial: community.isOfficial,
-      status: community.status,
       membershipRole:
         "memberships" in community
           ? community.memberships[0]?.role ?? null
@@ -94,6 +120,16 @@ export async function GET() {
         ["OWNER", "ADMIN"].includes(community.memberships[0]?.role ?? "")
           ? community._count.joinRequests
           : 0,
+    })),
+    discoverableCommunities: discoverableCommunities.map((community) => ({
+      id: community.id,
+      name: community.name,
+      abbreviation: community.abbreviation,
+      description: community.description,
+      avatarColor: community.avatarColor,
+      tier: community.tier,
+      joinPolicy: community.joinPolicy,
+      memberCount: community._count.memberships,
     })),
   });
 }
@@ -179,7 +215,6 @@ export async function POST(request: Request) {
         ownerId: user.id,
         tier: "BASIC_FREE",
         tierPriceCents: 0,
-        status: "PENDING_APPROVAL",
         memberships: {
           create: { userId: user.id, role: "OWNER" },
         },
@@ -191,7 +226,6 @@ export async function POST(request: Request) {
         description: true,
         avatarColor: true,
         tier: true,
-        status: true,
       },
     });
 

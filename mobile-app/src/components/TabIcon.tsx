@@ -7,8 +7,8 @@ type TabIconProps = {
 
 export function TabIcon({ name, active }: TabIconProps) {
   const sharedProps = {
-    width: 26,
-    height: 26,
+    width: 24,
+    height: 24,
     viewBox: "0 0 28 28",
     fill: "none",
     stroke: "currentColor",
@@ -41,16 +41,18 @@ export function TabIcon({ name, active }: TabIconProps) {
     );
   }
 
+  // 慧读星芒画在与其他图标相同的 28 画布中心（墨迹约 y 3.5–24.5），
+  // 不再靠 CSS 放大到 36px 再手工位移去对齐。
   if (name === "huidu") {
     return (
       <svg {...sharedProps}>
         <path
           className="tab-icon-surface tab-icon-sparkle-large"
-          d="M11.5 3.5c.7 4.15 3.05 6.5 7.2 7.2-4.15.7-6.5 3.05-7.2 7.2-.7-4.15-3.05-6.5-7.2-7.2 4.15-.7 6.5-3.05 7.2-7.2Z"
+          d="M12.5 6.5c.88 5.19 3.81 8.13 9 9-5.19.88-8.12 3.81-9 9-.88-5.19-3.81-8.12-9-9 5.19-.87 8.12-3.81 9-9Z"
         />
         <path
           className="tab-icon-surface tab-icon-sparkle-small"
-          d="M19.1 3.2c.24 1.4 1.08 2.25 2.5 2.5-1.42.25-2.26 1.1-2.5 2.5-.25-1.4-1.1-2.25-2.5-2.5 1.4-.25 2.25-1.1 2.5-2.5Z"
+          d="M21.2 3.5c.27 1.57 1.21 2.52 2.8 2.8-1.59.28-2.53 1.23-2.8 2.8-.28-1.57-1.23-2.52-2.8-2.8 1.57-.28 2.52-1.23 2.8-2.8Z"
         />
       </svg>
     );

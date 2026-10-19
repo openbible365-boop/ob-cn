@@ -4,6 +4,7 @@
 // book) persists to localStorage.
 import { load, save } from "./store";
 import manifest from "./manifest.json";
+import { cachedResponse } from "./offline-bible";
 
 export type Version = { code: string; label: string; lang: "zh" | "ko" | "en" };
 export type Book = {
@@ -31,6 +32,29 @@ export function getBookByCode(code: string | null | undefined): Book {
 
 export function bookName(book: Book, version: Version): string {
   return book[version.lang];
+}
+
+// 长书名在顶栏窄芯片里放不下（帖撒罗尼迦前书 7 字会把箭头挤出裁切）。
+// 芯片展示用教会通用简称；选择器、分享卡、朗读标签等场景仍用全名。
+const ZH_CHIP_ABBREVIATIONS: Record<string, string> = {
+  "1sa": "撒上",
+  "2sa": "撒下",
+  lam: "哀歌",
+  oba: "俄巴底亚",
+  zec: "撒迦利亚",
+  "1co": "林前",
+  "2co": "林后",
+  "1th": "帖前",
+  "2th": "帖后",
+  "1ti": "提前",
+  "2ti": "提后",
+};
+
+export function bookChipName(book: Book, version: Version): string {
+  if (version.lang === "zh" && ZH_CHIP_ABBREVIATIONS[book.code]) {
+    return ZH_CHIP_ABBREVIATIONS[book.code];
+  }
+  return bookName(book, version);
 }
 
 // ---------- reading position ----------
@@ -81,7 +105,10 @@ export function loadBook(versionCode: string, bookCode: string): Promise<BookDat
   let promise = bookCache.get(key);
   if (!promise) {
     const folder = versionCode === "pinyin" ? "pinyin2" : versionCode;
-    promise = fetch(`/data/bible/${folder}/${bookCode}.json`)
+    const url = `/data/bible/${folder}/${bookCode}.json`;
+    // 离线优先：在「资源管理」下载过的译本直接读本机缓存，无网络也能翻书
+    promise = cachedResponse(url)
+      .then((cached) => cached ?? fetch(url))
       .then((r) => {
         if (!r.ok) throw new Error(`load ${key}: HTTP ${r.status}`);
         return r.json() as Promise<RawBook>;
@@ -129,17 +156,54 @@ type JingduEntry = { type: string; verses: string; text: string };
 
 const commentaryCache = new Map<number, Promise<Record<string, JingduEntry[]>>>();
 
+function deobfuscate(text: string): Record<string, JingduEntry[]> {
+  const raw = atob(text.trim());
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    bytes[i] = raw.charCodeAt(i) ^ 0x2a;
+  }
+  return JSON.parse(new TextDecoder("utf-8").decode(bytes)) as Record<string, JingduEntry[]>;
+}
+
 function loadJingdu(bookOrder: number) {
   let promise = commentaryCache.get(bookOrder);
   if (!promise) {
-    promise = fetch(`/data/commentary/jingdu/${bookOrder}.json`).then((r) => {
-      if (!r.ok) throw new Error(`load jingdu ${bookOrder}: HTTP ${r.status}`);
-      return r.json() as Promise<Record<string, JingduEntry[]>>;
-    });
+    const url = `/data/commentary/jingdu/${bookOrder}.json`;
+    // 与 loadBook 同理：注释包下载过就读本机缓存，离线也能看注释
+    promise = cachedResponse(url)
+      .then((cached) => cached ?? fetch(url))
+      .then((r) => {
+        if (!r.ok) throw new Error(`load jingdu ${bookOrder}: HTTP ${r.status}`);
+        return r.text().then((text) => deobfuscate(text));
+      });
     commentaryCache.set(bookOrder, promise);
     promise.catch(() => commentaryCache.delete(bookOrder));
   }
   return promise;
+}
+
+// 注释数据源的中文标点是半角（"冬天下雨,其降雨量"），排版观感差。
+// 与网页端 zhTypeset 同一套归一规则：两个汉字之间的 , ; : ? ! 转全角。
+const CJK_CLASS = "[一-鿿　-〿？！；：、」』）]";
+const CJK_OPEN = CJK_CLASS.replace("]", "「『（]");
+const PUNCT_RULES: Array<[RegExp, string]> = [
+  [new RegExp(`(${CJK_CLASS}),(?=${CJK_OPEN})`, "g"), "$1，"],
+  [new RegExp(`(${CJK_CLASS});(?=${CJK_CLASS})`, "g"), "$1；"],
+  [new RegExp(`(${CJK_CLASS}):(?=${CJK_CLASS})`, "g"), "$1："],
+  [new RegExp(`(${CJK_CLASS})[?](?=${CJK_CLASS})`, "g"), "$1？"],
+  [new RegExp(`(${CJK_CLASS})[!](?=${CJK_CLASS})`, "g"), "$1！"],
+];
+
+function zhTypeset(text: string): string {
+  return PUNCT_RULES.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), text);
+}
+
+// 书卷绪论：注释包的 "0" 章键（概述/标题/作者/综览/大纲…依原书顺序）
+export async function loadIntroduction(bookOrder: number): Promise<CommentarySection[]> {
+  const file = await loadJingdu(bookOrder);
+  return (file["0"] ?? [])
+    .filter((e) => e.text?.trim())
+    .map((e) => ({ title: e.verses, body: zhTypeset(e.text.trim()) }));
 }
 
 export async function loadCommentary(
@@ -152,6 +216,6 @@ export async function loadCommentary(
     .filter((e) => e.text?.trim())
     .map((e) => ({
       title: e.type === "overview" ? `${e.verses} · 段落综览` : e.verses,
-      body: e.text.trim(),
+      body: zhTypeset(e.text.trim()),
     }));
 }

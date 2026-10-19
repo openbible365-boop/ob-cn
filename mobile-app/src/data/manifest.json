@@ -14,26 +14,6 @@
       "code": "pinyin",
       "label": "拼音和合本",
       "lang": "zh"
-    },
-    {
-      "code": "krv",
-      "label": "개역한글",
-      "lang": "ko"
-    },
-    {
-      "code": "keb",
-      "label": "쉬운성경",
-      "lang": "ko"
-    },
-    {
-      "code": "snr",
-      "label": "새번역",
-      "lang": "ko"
-    },
-    {
-      "code": "kjv",
-      "label": "KJV",
-      "lang": "en"
     }
   ],
   "books": [

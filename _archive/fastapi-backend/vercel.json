@@ -1,0 +1,74 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "admin-ui/dist/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "api/index.py",
+            "use": "@vercel/python",
+            "config": {
+                "maxDuration": 60,
+                "includeFiles": "data/**"
+            }
+        },
+        {
+            "src": "*.html",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "css/*.css",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "js/*.js",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "assets/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "data/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "images/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "APP/**",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/index.py"
+        },
+        {
+            "src": "/admin/assets/(.*)",
+            "dest": "/admin-ui/dist/assets/$1"
+        },
+        {
+            "src": "/app-static/(.*)",
+            "dest": "/APP/$1"
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/admin(.*)",
+            "dest": "/admin-ui/dist/index.html"
+        },
+        {
+            "src": "/app",
+            "dest": "/APP/index.html"
+        },
+        {
+            "src": "/((?!api|admin|assets|css|js|data|images|favicon.ico|sw.js|APP|app-static).*)",
+            "dest": "/index.html"
+        }
+    ]
+}

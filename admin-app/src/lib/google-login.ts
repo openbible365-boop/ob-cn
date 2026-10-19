@@ -1,7 +1,9 @@
 import { OAuth2Client, type TokenPayload } from "google-auth-library";
 import { db } from "@/lib/db";
 
-const DEFAULT_GOOGLE_WEB_CLIENT_ID =
+// 开发用的演示 client ID。生产必须通过 GOOGLE_WEB_CLIENT_ID 配置自己的凭据：
+// 用演示凭据签发的 ID Token 属于别人的 Google 项目，不能作为身份依据。
+const DEV_GOOGLE_WEB_CLIENT_ID =
   "1036636088293-gihlhd5hlur5m8btmrr077efq69v95o0.apps.googleusercontent.com";
 
 const googleClient = new OAuth2Client();
@@ -21,8 +23,17 @@ export type GoogleLoginResult =
   | { ok: true; message: string; user: GoogleLoginUser }
   | { ok: false; message: string; status: number };
 
-function googleWebClientId() {
-  return process.env.GOOGLE_WEB_CLIENT_ID?.trim() || DEFAULT_GOOGLE_WEB_CLIENT_ID;
+/**
+ * 网页版与 App 共用的 Google client ID —— 也是校验 ID Token 时的 audience。
+ * 前端通过 /api/web/config/auth 拿同一个值，两边不会再错配。
+ *
+ * 生产环境未配置时返回空串（而不是回落到演示凭据），登录入口随之隐藏：
+ * 宁可功能明确不可用，也不要用一个不属于本项目的凭据放行登录。
+ */
+export function googleWebClientId() {
+  const configured = process.env.GOOGLE_WEB_CLIENT_ID?.trim();
+  if (configured) return configured;
+  return process.env.NODE_ENV === "production" ? "" : DEV_GOOGLE_WEB_CLIENT_ID;
 }
 
 function isGoogleAuthoritativeForEmail(payload: TokenPayload) {
@@ -53,10 +64,13 @@ export async function loginWithGoogleIdToken(rawIdToken: unknown): Promise<Googl
 
   let payload: TokenPayload | undefined;
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: googleWebClientId(),
-    });
+    const audience = googleWebClientId();
+    if (!audience) {
+      // 没有 audience 就无法判断 token 是否发给本项目，只能拒绝
+      console.error("[google] 未配置 GOOGLE_WEB_CLIENT_ID，拒绝 Google 登录");
+      return { ok: false, message: "本站暂未开放 Google 登录，请使用邮箱验证码登录", status: 503 };
+    }
+    const ticket = await googleClient.verifyIdToken({ idToken, audience });
     payload = ticket.getPayload();
   } catch (error) {
     console.error("[google] ID Token 验证失败：", error);

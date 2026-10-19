@@ -1,5 +1,15 @@
 // Current session user for the mobile app (401 when logged out).
+import { randomUUID } from "node:crypto";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
+import {
+  avatarExtensionFor,
+  avatarFileNameFromPublicPath,
+  avatarPublicPath,
+  avatarUploadRoot,
+  MAX_AVATAR_BYTES,
+  resolvedAvatarPath,
+} from "@/lib/avatar-storage";
 import {
   COMMUNITY_ENTITLEMENTS,
   countCommunityPlanMembers,
@@ -7,6 +17,9 @@ import {
 } from "@/lib/community-access";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
+
+// 头像写盘需要 Node 运行时。
+export const runtime = "nodejs";
 
 const PERSONAL_ENTITLEMENTS = {
   BASIC_FREE: { label: "个人免费", savedItems: 500, aiDailyTokenLimit: 20_000 },
@@ -87,7 +100,6 @@ export async function GET() {
 }
 
 const ALLOWED_AVATAR_TYPES = new Set(["jpeg", "jpg", "png", "webp"]);
-const MAX_AVATAR_BYTES = 320 * 1024;
 
 export async function PATCH(request: Request) {
   const user = await getSessionUser();
@@ -123,11 +135,41 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const updated = await db.user.update({
+  // 落盘保存，数据库只记访问路径；旧的 base64 头像文件不存在，直接忽略。
+  const extension = avatarExtensionFor(imageType);
+  if (!extension) {
+    return NextResponse.json(
+      { ok: false, message: "仅支持 JPG、PNG 或 WebP 图片" },
+      { status: 400 },
+    );
+  }
+  const previous = await db.user.findUnique({
     where: { id: user.id },
-    data: { avatarUrl: body.avatarUrl },
     select: { avatarUrl: true },
   });
+  const fileName = `${randomUUID()}.${extension}`;
+  const targetPath = resolvedAvatarPath(fileName);
+  if (!targetPath) {
+    return NextResponse.json(
+      { ok: false, message: "头像保存失败，请稍后重试" },
+      { status: 500 },
+    );
+  }
+  await mkdir(avatarUploadRoot(), { recursive: true });
+  await writeFile(targetPath, imageBytes);
+
+  const updated = await db.user.update({
+    where: { id: user.id },
+    data: { avatarUrl: avatarPublicPath(fileName) },
+    select: { avatarUrl: true },
+  });
+
+  const previousFile = avatarFileNameFromPublicPath(previous?.avatarUrl);
+  if (previousFile && previousFile !== fileName) {
+    const previousPath = resolvedAvatarPath(previousFile);
+    if (previousPath) await unlink(previousPath).catch(() => undefined);
+  }
+
   return NextResponse.json({
     ok: true,
     message: "头像已更新",

@@ -24,8 +24,6 @@ services:
       DATABASE_URL: postgresql://openbible:${DB_PASSWORD}@db:5432/ob_cn?schema=public
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
-      AUTH_URL: https://admin.openbible.live/api/auth
-      NEXTAUTH_URL: https://admin.openbible.live
       APP_URL: https://admin.openbible.live
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-465}
@@ -49,6 +47,9 @@ services:
     volumes:
       - ./secrets/apple_sign_in_key.p8:/run/secrets/apple_sign_in_key:ro
       - community_uploads:/app/uploads/community
+      - ../web-app:/web-app:ro
+      - ../mobile-app:/mobile-app:ro
+      - ../data:/data:ro
     depends_on:
       db:
         condition: service_healthy

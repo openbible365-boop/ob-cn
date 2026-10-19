@@ -11,7 +11,10 @@ const OAUTH_COOKIE_OPTS = {
 };
 
 export async function GET(request: NextRequest) {
-  const base = process.env.APP_URL ?? request.nextUrl.origin;
+  let base = request.nextUrl.origin;
+  if ((base.includes("localhost") || base.includes("ob-cn-admin")) && process.env.APP_URL) {
+    base = process.env.APP_URL;
+  }
 
   if (!appleConfigured()) {
     return NextResponse.redirect(new URL("/me?error=apple_not_configured", base), 303);

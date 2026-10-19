@@ -42,17 +42,15 @@ export async function POST(_request: Request, { params }: RouteParams) {
     update: { lastSeenAt: now },
   });
 
-  const [, onlineCount] = await Promise.all([
-    db.communityPresence.deleteMany({
-      where: { lastSeenAt: { lt: staleBefore } },
-    }),
-    db.communityPresence.count({
-      where: {
-        communityId: access.community.id,
-        lastSeenAt: { gte: onlineSince },
-      },
-    }),
-  ]);
+  await db.communityPresence.deleteMany({
+    where: { lastSeenAt: { lt: staleBefore } },
+  });
+  const onlineCount = await db.communityPresence.count({
+    where: {
+      communityId: access.community.id,
+      lastSeenAt: { gte: onlineSince },
+    },
+  });
 
   return NextResponse.json({
     ok: true,

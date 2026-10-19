@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import {
+  COMMUNITY_ENTITLEMENTS,
   countCommunityPlanMembers,
   countCommunityPlanResources,
   findCommunityAccess,
   isHttpUrl,
   textLength,
 } from "@/lib/community-access";
+import {
+  COMMUNITY_POST_PAGE_SIZE,
+  findCommunityPosts,
+  serializeCommunityPost,
+} from "@/lib/community-posts";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
+import { createUserNotification } from "@/lib/user-notifications";
 
 type RouteParams = { params: Promise<{ communityId: string }> };
 
@@ -24,19 +31,13 @@ type WorkspaceAction =
   | "TOGGLE_SIGNUP"
   | "UPDATE_MEMBER_ROLE"
   | "REMOVE_MEMBER"
+  | "INVITE_MEMBER"
   | "CREATE_GROUP"
   | "CREATE_RESOURCE"
   | "UPDATE_RESOURCE_STATUS"
+  | "REINDEX_RESOURCE"
   | "UPDATE_JOIN_POLICY"
-  | "UPDATE_COMMUNITY"
-  | "INVITE_MEMBER"
-  | "MUTE_MEMBER"
-  | "UNMUTE_MEMBER"
-  | "TRANSFER_OWNER"
-  | "JOIN_SUBGROUP"
-  | "LEAVE_SUBGROUP"
-  | "ARCHIVE_GROUP"
-  | "TOGGLE_RESOURCE_BOOKMARK";
+  | "UPDATE_COMMUNITY";
 
 type WorkspaceInput = {
   action?: unknown;
@@ -56,6 +57,7 @@ type WorkspaceInput = {
   endAt?: unknown;
   capacity?: unknown;
   userId?: unknown;
+  email?: unknown;
   role?: unknown;
   name?: unknown;
   abbreviation?: unknown;
@@ -66,8 +68,6 @@ type WorkspaceInput = {
   resourceId?: unknown;
   status?: unknown;
   joinPolicy?: unknown;
-  email?: unknown;
-  groupId?: unknown;
 };
 
 const ACTIONS = new Set<WorkspaceAction>([
@@ -82,19 +82,13 @@ const ACTIONS = new Set<WorkspaceAction>([
   "TOGGLE_SIGNUP",
   "UPDATE_MEMBER_ROLE",
   "REMOVE_MEMBER",
+  "INVITE_MEMBER",
   "CREATE_GROUP",
   "CREATE_RESOURCE",
   "UPDATE_RESOURCE_STATUS",
+  "REINDEX_RESOURCE",
   "UPDATE_JOIN_POLICY",
   "UPDATE_COMMUNITY",
-  "INVITE_MEMBER",
-  "MUTE_MEMBER",
-  "UNMUTE_MEMBER",
-  "TRANSFER_OWNER",
-  "JOIN_SUBGROUP",
-  "LEAVE_SUBGROUP",
-  "ARCHIVE_GROUP",
-  "TOGGLE_RESOURCE_BOOKMARK",
 ]);
 
 function valueString(value: unknown) {
@@ -127,48 +121,96 @@ async function audit(
 
 export async function GET(_request: Request, { params }: RouteParams) {
   const user = await getSessionUser();
-  if (!user) return error("请先登录", 401);
-
   const { communityId: reference } = await params;
-  const access = await findCommunityAccess(user.id, reference);
-  if (!access) return error("你还不是这个社群的成员", 403);
-  const { community, role, isAdmin, isOwner, entitlements, billingCommunityId, isDirectMember } = access;
-
-  const [posts, events, members, groups, resources, counts] = await Promise.all([
-    db.post.findMany({
-      where: { communityId: community.id, status: "VISIBLE" },
+  const memberAccess = user ? await findCommunityAccess(user.id, reference) : null;
+  const publicCommunity = !user
+    ? await db.community.findFirst({
+        where:
+          reference === "official"
+            ? { isOfficial: true, status: "ACTIVE" }
+            : { id: reference, isOfficial: true, status: "ACTIVE" },
+        select: {
+          id: true,
+          parentId: true,
+          name: true,
+          abbreviation: true,
+          description: true,
+          avatarColor: true,
+          isOfficial: true,
+          joinPolicy: true,
+          tier: true,
+          aiTokenDailyLimit: true,
+        },
+      })
+    : null;
+  if (!memberAccess && !publicCommunity) {
+    if (!user) return error("请先登录", 401);
+    // 非成员看到的是「可申请加入」而不是死胡同：对公开可发现的顶层社群返回
+    // 目录里同样公开的字段，仅限邀请的社群和下属小组不返回任何信息。
+    const preview = await db.community.findFirst({
+      where: {
+        id: reference,
+        status: "ACTIVE",
+        isOfficial: false,
+        parentId: null,
+        joinPolicy: { not: "INVITE_ONLY" },
+      },
       select: {
         id: true,
-        postType: true,
-        title: true,
-        content: true,
-        verseRef: true,
-        mediaType: true,
-        mediaUrl: true,
-        pinnedAt: true,
-        likeCount: true,
-        commentCount: true,
-        createdAt: true,
-        author: {
-          select: { id: true, name: true, avatarColor: true, avatarUrl: true },
-        },
-        likes: { where: { userId: user.id }, select: { id: true }, take: 1 },
-        bookmarks: { where: { userId: user.id }, select: { id: true }, take: 1 },
-        comments: {
-          orderBy: { createdAt: "desc" },
-          take: 2,
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            author: { select: { id: true, name: true } },
-          },
+        name: true,
+        abbreviation: true,
+        description: true,
+        avatarColor: true,
+        joinPolicy: true,
+        _count: { select: { memberships: true } },
+      },
+    });
+    if (!preview) return error("你还不是这个社群的成员", 403);
+    const pendingJoinRequest = await db.communityJoinRequest.findFirst({
+      where: { communityId: preview.id, userId: user.id, status: "PENDING" },
+      select: { id: true },
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "你还不是这个社群的成员",
+        preview: {
+          id: preview.id,
+          name: preview.name,
+          abbreviation: preview.abbreviation,
+          description: preview.description,
+          avatarColor: preview.avatarColor,
+          joinPolicy: preview.joinPolicy,
+          memberCount: preview._count.memberships,
+          joinRequestPending: Boolean(pendingJoinRequest),
         },
       },
-      orderBy: [{ pinnedAt: "desc" }, { createdAt: "desc" }],
-      take: 50,
-    }),
-    db.event.findMany({
+      { status: 403 },
+    );
+  }
+  const access = memberAccess ?? {
+    community: publicCommunity!,
+    role: "GUEST" as const,
+    isAdmin: false,
+    isOwner: false,
+    billingCommunityId: publicCommunity!.id,
+    entitlements: {
+      ...COMMUNITY_ENTITLEMENTS[publicCommunity!.tier],
+      aiDailyTokenLimit:
+        publicCommunity!.aiTokenDailyLimit ??
+        COMMUNITY_ENTITLEMENTS[publicCommunity!.tier].aiDailyTokenLimit,
+    },
+  };
+  const { community, role, isAdmin, isOwner, entitlements, billingCommunityId } = access;
+  const viewerId = user?.id;
+
+  // The local PGlite adapter uses a single connection. Keep these reads
+  // sequential so prepared statements cannot collide under concurrent calls.
+  const posts = await findCommunityPosts(
+    { communityId: community.id, role, isAdmin, viewerId },
+    { take: COMMUNITY_POST_PAGE_SIZE },
+  );
+  const events = await db.event.findMany({
       where: { communityId: community.id },
       select: {
         id: true,
@@ -180,12 +222,24 @@ export async function GET(_request: Request, { params }: RouteParams) {
         createdAt: true,
         capacity: true,
         signupCount: true,
-        signups: { where: { userId: user.id }, select: { id: true }, take: 1 },
+        signups: viewerId
+          ? { where: { userId: viewerId }, select: { id: true }, take: 1 }
+          : false,
       },
-      orderBy: { startAt: "asc" },
+      // 倒序取窗口，保证历史活动堆积后仍然能拿到全部未结束的活动。
+      orderBy: { startAt: "desc" },
       take: 100,
-    }),
-    db.membership.findMany({
+    });
+  // 未结束的按时间正序排在前面，已结束的按时间倒序排在后面。
+  const orderedEvents = [...events].sort((left, right) => {
+    const leftEnded = eventState(left.startAt, left.endAt) === "ENDED";
+    const rightEnded = eventState(right.startAt, right.endAt) === "ENDED";
+    if (leftEnded !== rightEnded) return leftEnded ? 1 : -1;
+    return leftEnded
+      ? right.startAt.getTime() - left.startAt.getTime()
+      : left.startAt.getTime() - right.startAt.getTime();
+  });
+  const members = await db.membership.findMany({
       where: { communityId: community.id },
       select: {
         role: true,
@@ -198,18 +252,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
             avatarColor: true,
             avatarUrl: true,
             status: true,
-            communityPresences: {
-              where: { communityId: community.id },
-              select: { lastSeenAt: true },
-              take: 1,
-            },
           },
         },
       },
       orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
       take: 1_000,
-    }),
-    db.community.findMany({
+    });
+  const groups = await db.community.findMany({
       where: { parentId: community.id, status: "ACTIVE" },
       select: {
         id: true,
@@ -220,8 +269,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
         _count: { select: { memberships: true } },
       },
       orderBy: { createdAt: "asc" },
-    }),
-    db.communityResource.findMany({
+    });
+  const resources = await db.communityResource.findMany({
       where: {
         communityId: community.id,
         status: "ACTIVE",
@@ -238,21 +287,53 @@ export async function GET(_request: Request, { params }: RouteParams) {
         mimeType: true,
         fileSize: true,
         indexedAt: true,
+        knowledgeStatus: true,
+        indexError: true,
         visibility: true,
         createdAt: true,
-        downloadCount: true,
         uploader: { select: { id: true, name: true } },
-        bookmarks: { where: { userId: user.id }, select: { id: true }, take: 1 },
       },
       orderBy: { createdAt: "desc" },
       take: 200,
-    }),
-    Promise.all([
-      db.membership.count({ where: { communityId: community.id } }),
-      db.community.count({ where: { parentId: community.id, status: "ACTIVE" } }),
-      countCommunityPlanResources(billingCommunityId),
-    ]),
-  ]);
+    });
+  const counts = [
+    await db.membership.count({ where: { communityId: community.id } }),
+    await db.community.count({ where: { parentId: community.id, status: "ACTIVE" } }),
+    await countCommunityPlanResources(billingCommunityId),
+  ];
+
+  // 共读进度：把本群读经计划的参与情况带到社群首屏。
+  // 「今天已读」按 lastReadAt 是否落在服务器当天算——够用了，无需精确到用户时区。
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const communityPlans = await db.readingPlan.findMany({
+    where: { communityId: community.id },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+    select: {
+      id: true,
+      title: true,
+      totalDays: true,
+      enrollments: {
+        select: { userId: true, completedDays: true, lastReadAt: true, completedAt: true },
+      },
+    },
+  });
+  const readingPlans = communityPlans.map((plan) => {
+    const mine = viewerId ? plan.enrollments.find((e) => e.userId === viewerId) : undefined;
+    return {
+      id: plan.id,
+      title: plan.title,
+      totalDays: plan.totalDays,
+      enrolledCount: plan.enrollments.length,
+      readTodayCount: plan.enrollments.filter(
+        (e) => e.lastReadAt && e.lastReadAt.getTime() >= todayStart.getTime(),
+      ).length,
+      completedCount: plan.enrollments.filter((e) => e.completedAt).length,
+      myCompletedDays: mine?.completedDays ?? null,
+      myReadToday: Boolean(mine?.lastReadAt && mine.lastReadAt.getTime() >= todayStart.getTime()),
+    };
+  });
 
   return NextResponse.json({
     ok: true,
@@ -271,48 +352,49 @@ export async function GET(_request: Request, { params }: RouteParams) {
       role,
       isAdmin,
       isOwner,
-      isDirectMember,
       canPublish:
-        user.status === "ACTIVE" &&
+        user?.status === "ACTIVE" &&
         (!community.isOfficial || isAdmin),
-      canManageMembers: isAdmin,
-      canManageRoles: isOwner,
+      canManageMembers: !community.isOfficial && isAdmin,
+      canManageRoles: !community.isOfficial && isOwner,
       canCreateGroups:
         isAdmin &&
         !community.parentId &&
         !community.isOfficial,
-      canManageResources: isAdmin,
+      canManageResources: !community.isOfficial && isAdmin,
     },
     entitlements,
-    usage: { members: counts[0], groups: counts[1], resources: counts[2] },
-    posts: posts.map(({ likes, bookmarks, comments, ...post }) => ({
-      ...post,
-      likedByMe: likes.length > 0,
-      bookmarkedByMe: bookmarks.length > 0,
-      comments: [...comments].reverse(),
-    })),
-    events: events.map(({ signups, ...event }) => ({
-      ...event,
-      state: eventState(event.startAt, event.endAt),
-      signedUpByMe: signups.length > 0,
-    })),
-    members: members.map((member) => ({
+    usage: {
+      members: counts[0],
+      groups: community.isOfficial ? 0 : counts[1],
+      resources: community.isOfficial ? 0 : counts[2],
+    },
+    readingPlans,
+    posts: posts.map(serializeCommunityPost),
+    postsNextCursor:
+      posts.length === COMMUNITY_POST_PAGE_SIZE ? posts[posts.length - 1].id : null,
+    events: orderedEvents.map((event) => {
+      const signups = "signups" in event && Array.isArray(event.signups) ? event.signups : [];
+      const clean = { ...event } as Record<string, unknown>;
+      delete clean.signups;
+      return {
+        ...clean,
+        state: eventState(event.startAt, event.endAt),
+        signedUpByMe: signups.length > 0,
+      };
+    }),
+    members: role === "GUEST" || community.isOfficial ? [] : members.map((member) => ({
       ...member,
       user: {
         ...member.user,
         email: isAdmin ? member.user.email : null,
-        lastSeenAt: member.user.communityPresences[0]?.lastSeenAt?.toISOString() ?? null,
-        communityPresences: undefined,
       },
     })),
-    groups: groups.map(({ _count, ...group }) => ({
+    groups: role === "GUEST" || community.isOfficial ? [] : groups.map(({ _count, ...group }) => ({
       ...group,
       memberCount: _count.memberships,
     })),
-    resources: resources.map(({ bookmarks, ...resource }) => ({
-      ...resource,
-      bookmarkedByMe: bookmarks.length > 0,
-    })),
+    resources: role === "GUEST" || community.isOfficial ? [] : resources,
   });
 }
 
@@ -324,7 +406,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   const { communityId: reference } = await params;
   const access = await findCommunityAccess(user.id, reference);
   if (!access) return error("你还不是这个社群的成员", 403);
-  const { community, role, isAdmin, isOwner, entitlements, billingCommunityId, isDirectMember } = access;
+  const { community, role, isAdmin, isOwner, entitlements, billingCommunityId } = access;
 
   let body: WorkspaceInput;
   try {
@@ -348,7 +430,8 @@ export async function POST(request: Request, { params }: RouteParams) {
     const verseRef = valueString(body.verseRef);
     const mediaType = valueString(body.mediaType);
     const mediaUrl = valueString(body.mediaUrl);
-    if (!["POST", "ARTICLE", "NOTICE", "MEDIA"].includes(postType)) return error("动态类型不正确");
+    const visibility = valueString(body.visibility) || (community.isOfficial ? "PUBLIC" : "MEMBERS");
+    if (!["POST", "ARTICLE", "NOTICE", "MEDIA", "PRAYER"].includes(postType)) return error("动态类型不正确");
     if (postType === "NOTICE" && !isAdmin) return error("只有群主或管理员可以发布通知", 403);
     const contentLimit = postType === "ARTICLE" ? 10_000 : 2_000;
     if (!content || textLength(content) > contentLimit) return error(`内容须为 1 到 ${contentLimit} 个字`);
@@ -360,6 +443,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (mediaUrl && !["IMAGE", "AUDIO", "VIDEO"].includes(mediaType)) return error("请选择正确的媒体类型");
     if (postType !== "MEDIA" && mediaUrl && mediaType !== "IMAGE") return error("图文或文章目前仅支持图片链接");
     if (postType === "NOTICE" && mediaUrl) return error("通知暂不添加媒体，请使用图文或影音动态");
+    if (!["PUBLIC", "MEMBERS", "ADMINS"].includes(visibility)) return error("可见范围不正确");
+    if (community.isOfficial && visibility !== "PUBLIC") return error("公共社群内容须对所有人可见");
+    if (!community.isOfficial && visibility === "PUBLIC") return error("私有社群内容不能设为公开");
+    if (visibility === "ADMINS" && !isAdmin) return error("只有群主或管理员可以发布管理员可见内容", 403);
 
     const sensitiveWords = await db.sensitiveWord.findMany({
       select: { word: true, level: true },
@@ -379,6 +466,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         verseRef: verseRef || null,
         mediaType: mediaUrl ? mediaType as "IMAGE" | "AUDIO" | "VIDEO" : null,
         mediaUrl: mediaUrl || null,
+        visibility: visibility as "PUBLIC" | "MEMBERS" | "ADMINS",
         status: requiresReview ? "HIDDEN" : "VISIBLE",
       },
       select: { id: true },
@@ -454,18 +542,24 @@ export async function POST(request: Request, { params }: RouteParams) {
     const postId = valueString(body.postId);
     const post = await db.post.findFirst({ where: { id: postId, communityId: community.id, status: "VISIBLE" }, select: { id: true } });
     if (!post) return error("这条分享不存在或已下架", 404);
-    const liked = await db.$transaction(async (tx) => {
+    // 返回变更后的计数，客户端据此局部更新，不必整包重拉工作台。
+    const result = await db.$transaction(async (tx) => {
       const existing = await tx.postLike.findUnique({ where: { postId_userId: { postId, userId: user.id } } });
       if (existing) {
         await tx.postLike.delete({ where: { id: existing.id } });
-        await tx.post.update({ where: { id: postId }, data: { likeCount: { decrement: 1 } } });
-        return false;
+        const updated = await tx.post.update({ where: { id: postId }, data: { likeCount: { decrement: 1 } }, select: { likeCount: true } });
+        return { liked: false, likeCount: updated.likeCount };
       }
       await tx.postLike.create({ data: { postId, userId: user.id } });
-      await tx.post.update({ where: { id: postId }, data: { likeCount: { increment: 1 } } });
-      return true;
+      const updated = await tx.post.update({ where: { id: postId }, data: { likeCount: { increment: 1 } }, select: { likeCount: true } });
+      return { liked: true, likeCount: updated.likeCount };
     });
-    return NextResponse.json({ ok: true, message: liked ? "已点赞" : "已取消点赞" });
+    return NextResponse.json({
+      ok: true,
+      message: result.liked ? "已点赞" : "已取消点赞",
+      refresh: false,
+      patch: { post: { id: postId, likeCount: result.likeCount, likedByMe: result.liked } },
+    });
   }
 
   if (action === "TOGGLE_BOOKMARK") {
@@ -486,7 +580,12 @@ export async function POST(request: Request, { params }: RouteParams) {
       await tx.postBookmark.create({ data: { postId, userId: user.id } });
       return true;
     });
-    return NextResponse.json({ ok: true, message: bookmarked ? "已收藏" : "已取消收藏" });
+    return NextResponse.json({
+      ok: true,
+      message: bookmarked ? "已收藏" : "已取消收藏",
+      refresh: false,
+      patch: { post: { id: postId, bookmarkedByMe: bookmarked } },
+    });
   }
 
   if (action === "REPORT_POST") {
@@ -558,13 +657,47 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (commentWords.some(({ word }) => content.includes(word))) {
       return error("评论包含需要修改的词语，请调整后重试", 422);
     }
-    const post = await db.post.findFirst({ where: { id: postId, communityId: community.id, status: "VISIBLE" }, select: { id: true } });
+    const post = await db.post.findFirst({
+      where: { id: postId, communityId: community.id, status: "VISIBLE" },
+      select: { id: true, authorId: true, title: true, content: true },
+    });
     if (!post) return error("这条分享不存在或已下架", 404);
-    await db.$transaction([
-      db.postComment.create({ data: { postId, authorId: user.id, content } }),
-      db.post.update({ where: { id: postId }, data: { commentCount: { increment: 1 } } }),
+    const [comment, updatedPost] = await db.$transaction([
+      db.postComment.create({
+        data: { postId, authorId: user.id, content },
+        select: { id: true, content: true, createdAt: true },
+      }),
+      db.post.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } },
+        select: { commentCount: true },
+      }),
     ]);
-    return NextResponse.json({ ok: true, message: "评论已发布" });
+    if (post.authorId !== user.id) {
+      await createUserNotification({
+        userId: post.authorId,
+        preferenceKey: "reply",
+        type: "COMMENT_REPLY",
+        title: "你的群动态收到新评论",
+        body: `${user.name}：${content}`,
+        href: `/community/${community.id}?tab=feed&post=${post.id}`,
+        uniqueKey: `comment:${comment.id}`,
+      }).catch((cause) => console.error("Create comment notification failed", cause));
+    }
+    return NextResponse.json({
+      ok: true,
+      message: "评论已发布",
+      refresh: false,
+      patch: {
+        post: { id: postId, commentCount: updatedPost.commentCount },
+        comment: {
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          author: { id: user.id, name: user.name },
+        },
+      },
+    });
   }
 
   if (action === "CREATE_EVENT") {
@@ -593,21 +726,26 @@ export async function POST(request: Request, { params }: RouteParams) {
     const event = await db.event.findFirst({ where: { id: eventId, communityId: community.id }, select: { id: true, startAt: true, endAt: true, capacity: true, signupCount: true } });
     if (!event) return error("活动不存在", 404);
     if (eventState(event.startAt, event.endAt) === "ENDED") return error("活动已经结束", 409);
-    const signedUp = await db.$transaction(async (tx) => {
+    const signup = await db.$transaction(async (tx) => {
       const existing = await tx.eventSignup.findUnique({ where: { eventId_userId: { eventId, userId: user.id } } });
       if (existing) {
         await tx.eventSignup.delete({ where: { id: existing.id } });
-        await tx.event.update({ where: { id: eventId }, data: { signupCount: { decrement: 1 } } });
-        return false;
+        const updated = await tx.event.update({ where: { id: eventId }, data: { signupCount: { decrement: 1 } }, select: { signupCount: true } });
+        return { signedUp: false, signupCount: updated.signupCount };
       }
       const fresh = await tx.event.findUniqueOrThrow({ where: { id: eventId }, select: { capacity: true, signupCount: true } });
       if (fresh.capacity !== null && fresh.signupCount >= fresh.capacity) throw new Error("CAPACITY_FULL");
       await tx.eventSignup.create({ data: { eventId, userId: user.id } });
-      await tx.event.update({ where: { id: eventId }, data: { signupCount: { increment: 1 } } });
-      return true;
+      const updated = await tx.event.update({ where: { id: eventId }, data: { signupCount: { increment: 1 } }, select: { signupCount: true } });
+      return { signedUp: true, signupCount: updated.signupCount };
     }).catch((cause: unknown) => cause instanceof Error && cause.message === "CAPACITY_FULL" ? null : Promise.reject(cause));
-    if (signedUp === null) return error("活动名额已满", 409);
-    return NextResponse.json({ ok: true, message: signedUp ? "报名成功" : "已取消报名" });
+    if (signup === null) return error("活动名额已满", 409);
+    return NextResponse.json({
+      ok: true,
+      message: signup.signedUp ? "报名成功" : "已取消报名",
+      refresh: false,
+      patch: { event: { id: eventId, signupCount: signup.signupCount, signedUpByMe: signup.signedUp } },
+    });
   }
 
   if (action === "UPDATE_MEMBER_ROLE") {
@@ -635,6 +773,45 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ ok: true, message: "成员已移除" });
   }
 
+  if (action === "INVITE_MEMBER") {
+    // 与助手确认卡里的邀请走同一套规则，只是入口换成成员栏目。
+    if (community.isOfficial) return error("公共社群不使用成员邀请", 409);
+    if (!isAdmin) return error("只有群主或管理员可以邀请成员", 403);
+    const email = valueString(body.email).trim();
+    if (!email || email.length > 200) return error("请输入受邀成员的注册邮箱");
+    const invitedUser = await db.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" }, status: "ACTIVE" },
+      select: { id: true, name: true },
+    });
+    if (!invitedUser) return error("没有找到使用这个邮箱的可用账号", 404);
+    const existing = await db.membership.findUnique({
+      where: { userId_communityId: { userId: invitedUser.id, communityId: community.id } },
+      select: { id: true },
+    });
+    if (existing) return error("这位用户已经是社群成员", 409);
+    const memberCount = await countCommunityPlanMembers(billingCommunityId);
+    if (entitlements.memberLimit !== null && memberCount >= entitlements.memberLimit) {
+      return error(`当前方案最多允许 ${entitlements.memberLimit} 名成员`, 409);
+    }
+    await db.membership.create({
+      data: { userId: invitedUser.id, communityId: community.id, role: "MEMBER" },
+    });
+    await db.communityJoinRequest.updateMany({
+      where: { communityId: community.id, userId: invitedUser.id, status: "PENDING" },
+      data: { status: "APPROVED", reviewerId: user.id, reviewedAt: new Date() },
+    });
+    await audit(community.id, user.id, "MEMBER_INVITE", "User", invitedUser.id, { email });
+    await createUserNotification({
+      userId: invitedUser.id,
+      preferenceKey: "join_updates",
+      type: "JOIN_REVIEW",
+      title: "你已加入新社群",
+      body: `${user.name} 邀请你加入「${community.name}」`,
+      href: `/community/${community.id}`,
+    }).catch((cause) => console.error("Create invite notification failed", cause));
+    return NextResponse.json({ ok: true, message: `已邀请 ${invitedUser.name} 加入社群` });
+  }
+
   if (action === "CREATE_GROUP") {
     if (!isAdmin) return error("只有群主或管理员可以创建小组", 403);
     if (community.isOfficial) return error("公共社群不建立下属小组，请创建独立的私有社群", 409);
@@ -657,7 +834,6 @@ export async function POST(request: Request, { params }: RouteParams) {
           avatarColor,
           joinPolicy: "APPROVAL",
           tier: community.tier,
-          status: "PENDING_APPROVAL",
           memberships: { create: { userId: user.id, role } },
         },
         select: { id: true },
@@ -697,6 +873,8 @@ export async function POST(request: Request, { params }: RouteParams) {
         url: url || null,
         contentText: contentText || null,
         indexedAt: contentText || description ? new Date() : null,
+        knowledgeStatus: contentText || description ? "INDEXED" : "REINDEX_REQUIRED",
+        indexError: contentText || description ? null : "资料还没有可检索文字",
         type: type as "LINK" | "DOCUMENT" | "AUDIO" | "VIDEO" | "IMAGE" | "TEXT" | "OTHER",
         visibility: visibility as "MEMBERS" | "ADMINS",
       },
@@ -717,172 +895,28 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ ok: true, message: status === "ACTIVE" ? "资料已恢复" : "资料已下架" });
   }
 
-  if (action === "INVITE_MEMBER") {
-    if (community.isOfficial) return error("公共社群不使用成员邀请", 409);
-    if (!isAdmin) return error("只有群主或管理员可以邀请成员", 403);
-    const email = valueString(body.email);
-    if (!email) return error("请输入被邀请者的邮箱地址");
-    const invitedUser = await db.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" }, status: "ACTIVE" },
-      select: { id: true, name: true }
-    });
-    if (!invitedUser) return error("没有找到使用该邮箱的可用账号", 404);
-    const existing = await db.membership.findUnique({
-      where: { userId_communityId: { userId: invitedUser.id, communityId: community.id } }
-    });
-    if (existing) return error("该用户已经是社群成员", 409);
-    
-    if (entitlements.memberLimit !== null) {
-      const memberCount = await countCommunityPlanMembers(billingCommunityId);
-      if (memberCount >= entitlements.memberLimit) {
-        return error(`当前方案最多允许 ${entitlements.memberLimit} 名成员`, 409);
-      }
-    }
-    
-    await db.membership.create({
-      data: { userId: invitedUser.id, communityId: community.id, role: "MEMBER" }
-    });
-    
-    await audit(community.id, user.id, "MEMBER_INVITE", "User", invitedUser.id, { email });
-    return NextResponse.json({ ok: true, message: `已成功邀请 ${invitedUser.name} 加入社群` });
-  }
-
-  if (action === "MUTE_MEMBER") {
-    if (!isAdmin) return error("只有群主或管理员可以执行禁言", 403);
-    const userId = valueString(body.userId);
-    const targetMembership = await db.membership.findUnique({
-      where: { userId_communityId: { userId, communityId: community.id } }
-    });
-    if (!targetMembership) return error("该成员不在本群组中", 404);
-    if (targetMembership.role === "OWNER" || (!isOwner && targetMembership.role === "ADMIN")) {
-      return error("你没有权限禁言此成员", 403);
-    }
-    const mutedUntil = new Date();
-    mutedUntil.setDate(mutedUntil.getDate() + 7);
-    await db.user.update({
-      where: { id: userId },
-      data: { status: "MUTED", mutedUntil }
-    });
-    await audit(community.id, user.id, "MEMBER_MUTE", "User", userId, { durationDays: 7 });
-    return NextResponse.json({ ok: true, message: "该成员已被禁言 7 天" });
-  }
-
-  if (action === "UNMUTE_MEMBER") {
-    if (!isAdmin) return error("只有群主或管理员可以解除禁言", 403);
-    const userId = valueString(body.userId);
-    const targetUser = await db.user.findUnique({
-      where: { id: userId },
-      select: { status: true }
-    });
-    if (!targetUser) return error("该用户不存在", 404);
-    await db.user.update({
-      where: { id: userId },
-      data: { status: "ACTIVE", mutedUntil: null, banReason: null }
-    });
-    await audit(community.id, user.id, "MEMBER_UNMUTE", "User", userId);
-    return NextResponse.json({ ok: true, message: "已解除该成员的禁言状态" });
-  }
-
-  if (action === "TRANSFER_OWNER") {
-    if (!isOwner) return error("只有群主可以转让群所有权", 403);
-    const userId = valueString(body.userId);
-    if (userId === user.id) return error("不能转让群主给自己", 409);
-    const targetMembership = await db.membership.findUnique({
-      where: { userId_communityId: { userId, communityId: community.id } }
-    });
-    if (!targetMembership) return error("该成员不在本群组中", 404);
-    
-    await db.$transaction([
-      db.community.update({
-        where: { id: community.id },
-        data: { ownerId: userId }
-      }),
-      db.membership.update({
-        where: { userId_communityId: { userId: user.id, communityId: community.id } },
-        data: { role: "ADMIN" }
-      }),
-      db.membership.update({
-        where: { userId_communityId: { userId, communityId: community.id } },
-        data: { role: "OWNER" }
-      })
-    ]);
-    
-    await audit(community.id, user.id, "COMMUNITY_TRANSFER_OWNER", "User", userId);
-    return NextResponse.json({ ok: true, message: "群主转让成功" });
-  }
-
-  if (action === "JOIN_SUBGROUP") {
-    if (!community.parentId) return error("该操作仅适用于下属小组", 409);
-    const parentAccess = await db.membership.findUnique({
-      where: { userId_communityId: { userId: user.id, communityId: community.parentId } }
-    });
-    if (!parentAccess) return error("需要先加入主社群，才能加入其下属小组", 403);
-    
-    const existing = await db.membership.findUnique({
-      where: { userId_communityId: { userId: user.id, communityId: community.id } }
-    });
-    if (existing) return error("你已经是该小组的成员", 409);
-    
-    await db.membership.create({
-      data: { userId: user.id, communityId: community.id, role: "MEMBER" }
-    });
-    await audit(community.id, user.id, "GROUP_JOIN", "Community", community.id);
-    return NextResponse.json({ ok: true, message: "成功加入小组" });
-  }
-
-  if (action === "LEAVE_SUBGROUP") {
-    if (!community.parentId) return error("该操作仅适用于下属小组", 409);
-    const existing = await db.membership.findUnique({
-      where: { userId_communityId: { userId: user.id, communityId: community.id } }
-    });
-    if (!existing) return error("你不是该小组的成员", 404);
-    if (existing.role === "OWNER") return error("群主不能退出小组", 409);
-    
-    await db.membership.delete({
-      where: { id: existing.id }
-    });
-    await audit(community.id, user.id, "GROUP_LEAVE", "Community", community.id);
-    return NextResponse.json({ ok: true, message: "已退出小组" });
-  }
-
-  if (action === "ARCHIVE_GROUP") {
-    if (!isAdmin) return error("只有群主或管理员可以归档小组", 403);
-    const groupId = valueString(body.groupId);
-    const group = await db.community.findFirst({
-      where: { id: groupId, parentId: community.id, status: "ACTIVE" }
-    });
-    if (!group) return error("该小组不存在或已被归档/删除", 404);
-    
-    await db.community.update({
-      where: { id: groupId },
-      data: { status: "DISSOLVED" }
-    });
-    await audit(community.id, user.id, "GROUP_ARCHIVE", "Community", groupId);
-    return NextResponse.json({ ok: true, message: "小组已成功归档" });
-  }
-
-  if (action === "TOGGLE_RESOURCE_BOOKMARK") {
+  if (action === "REINDEX_RESOURCE") {
+    if (!isAdmin) return error("只有群主或管理员可以重新索引资料", 403);
     const resourceId = valueString(body.resourceId);
     const resource = await db.communityResource.findFirst({
-      where: { id: resourceId, communityId: community.id, status: "ACTIVE" }
+      where: { id: resourceId, communityId: community.id, status: "ACTIVE" },
+      select: { id: true, title: true, contentText: true, description: true },
     });
-    if (!resource) return error("该资料不存在或已被下架", 404);
-    
-    const bookmarked = await db.$transaction(async (tx) => {
-      const existing = await tx.resourceBookmark.findUnique({
-        where: { resourceId_userId: { resourceId, userId: user.id } }
-      });
-      if (existing) {
-        await tx.resourceBookmark.delete({ where: { id: existing.id } });
-        return false;
-      }
-      await tx.resourceBookmark.create({
-        data: { resourceId, userId: user.id }
-      });
-      return true;
+    if (!resource) return error("资料不存在或已下架", 404);
+    const canIndex = Boolean(resource.contentText?.trim() || resource.description?.trim());
+    await db.communityResource.update({
+      where: { id: resource.id },
+      data: {
+        knowledgeStatus: canIndex ? "INDEXED" : "FAILED",
+        indexedAt: canIndex ? new Date() : null,
+        indexError: canIndex ? null : "没有提取到文字，请补充资料说明后再试",
+      },
     });
-    
-    return NextResponse.json({ ok: true, message: bookmarked ? "资料已收藏" : "资料已取消收藏" });
+    await audit(community.id, user.id, "RESOURCE_REINDEX", "CommunityResource", resource.id, { success: canIndex });
+    return NextResponse.json({
+      ok: canIndex,
+      message: canIndex ? `《${resource.title}》已重新加入知识库` : "解析失败：没有可检索文字，请补充资料说明",
+    }, { status: canIndex ? 200 : 422 });
   }
 
   return error("不支持的社群操作");

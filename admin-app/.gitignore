@@ -36,6 +36,9 @@ yarn-error.log*
 # local development database
 /.local/
 
+# user uploads (community resources and avatars)
+/uploads/
+
 # vercel
 .vercel
 

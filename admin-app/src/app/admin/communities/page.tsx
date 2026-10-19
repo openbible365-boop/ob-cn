@@ -1,73 +1,64 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
+import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
+
+const COMMUNITY_COLUMNS: Column[] = [
+  { key: "community", label: "社群", width: "1.6fr" },
+  { key: "owner", label: "群主", width: "100px" },
+  { key: "members", label: "成员数", width: "80px", align: "right" },
+  { key: "status", label: "状态", width: "90px" },
+  { key: "created", label: "创建时间", width: "110px" },
+  { key: "tier", label: "群组等级", width: "160px" },
+  { key: "ops", label: "操作", width: "220px" },
+];
 import { formatTier } from "@/lib/format";
-import {
-  warnCommunity,
-  banCommunity,
-  unbanCommunity,
-  dissolveCommunity,
-  changeCommunityTier,
-  approveCommunity,
-  rejectCommunity,
-} from "@/lib/actions/communities";
+import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { auth } from "@/auth";
-import Link from "next/link";
 
 export default async function CommunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; showMembers?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const { q, showMembers, status } = await searchParams;
+  const { q, page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
   const session = await auth();
   const canChangeTier = session?.user?.role === "SUPER_ADMIN";
 
-  let activeMembers: any[] = [];
-  let targetCommunityName = "";
-  if (showMembers) {
-    const communityInfo = await db.community.findUnique({
-      where: { id: showMembers },
-      select: {
-        name: true,
-        memberships: {
-          include: { user: true },
-          orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
-        },
-      },
-    });
-    if (communityInfo) {
-      targetCommunityName = communityInfo.name;
-      activeMembers = communityInfo.memberships;
-    }
-  }
-
-  const filter: any = {};
-  if (q) {
-    filter.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { abbreviation: { contains: q, mode: "insensitive" } },
-      { owner: { name: { contains: q, mode: "insensitive" } } },
-    ];
-  }
-  if (status) {
-    filter.status = status;
-  }
+  const where = q
+    ? {
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { abbreviation: { contains: q, mode: "insensitive" as const } },
+          { owner: { name: { contains: q, mode: "insensitive" as const } } },
+        ],
+      }
+    : undefined;
 
   const [communities, total] = await Promise.all([
     db.community.findMany({
-      where: filter,
+      where,
       include: {
         owner: true,
         parent: { select: { id: true, name: true } },
         _count: { select: { memberships: true, groups: true } },
       },
       orderBy: { createdAt: "asc" },
+      ...pageQuery(page),
     }),
-    db.community.count({ where: filter }),
+    // 统计跟随筛选条件，搜索后总数才对得上
+    db.community.count({ where }),
   ]);
+  const info = pageInfo(page, total);
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">社群管理</div>
         <div style={{ flex: 1 }} />
@@ -81,14 +72,6 @@ export default async function CommunitiesPage({
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <Link href="/admin/communities" className={`pill ${!status ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>全部</Link>
-          <Link href="/admin/communities?status=PENDING_APPROVAL" className={`pill ${status === "PENDING_APPROVAL" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>待审核</Link>
-          <Link href="/admin/communities?status=ACTIVE" className={`pill ${status === "ACTIVE" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>正常</Link>
-          <Link href="/admin/communities?status=BANNED" className={`pill ${status === "BANNED" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>已封禁</Link>
-          <Link href="/admin/communities?status=DISSOLVED" className={`pill ${status === "DISSOLVED" ? "pill-purple" : "pill-muted"}`} style={{ cursor: "pointer" }}>已解散</Link>
-        </div>
-
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 800 }}>全网分社群清单 · {total} 个</div>
           <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
@@ -96,63 +79,38 @@ export default async function CommunitiesPage({
           </div>
         </div>
 
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 100px 90px 100px 110px 110px 220px" }}>
-          <div>社群</div><div>群主</div><div>成员数</div><div>状态</div><div>创建时间</div><div>群组等级</div><div>操作</div>
-        </div>
+        <DataTable columns={COMMUNITY_COLUMNS} label="社群列表">
+        <DataTable.Head />
 
         {communities.map((c) => {
           const statusLabel =
-            c.status === "DISSOLVED"
-              ? "已解散"
-              : c.status === "BANNED"
-                ? "已封禁"
-                : c.status === "PENDING_APPROVAL"
-                  ? "待审核"
-                  : "正常";
+            c.status === "DISSOLVED" ? "已解散" : c.status === "BANNED" ? "已封禁" : "正常";
 
           return (
-            <div key={c.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 100px 90px 100px 110px 110px 220px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 26, height: 26, background: c.avatarColor, borderRadius: 8,
-                  fontSize: 11, fontWeight: 800,
-                }}>
-                  {c.name.slice(0, 1)}
+            <DataTable.Row key={c.id} tone={c.status !== "ACTIVE" ? "err" : c.warningCount > 0 ? "warn" : undefined}>
+              <DataTable.Cell>
+                <div className="entity-cell">
+                  <span className="entity-mark" style={{ background: c.avatarColor }}>{c.name.slice(0, 1)}</span>
+                  <span className="entity-name" title={c.name}>{c.name}</span>
+                  <Badge>简称 · {c.abbreviation}</Badge>
+                  {c.parent ? (
+                    <Badge>群组 · {c.parent.name}</Badge>
+                  ) : c._count.groups > 0 ? (
+                    <Badge tone="info">{c._count.groups} 个群组</Badge>
+                  ) : null}
+                  {c.isOfficial ? <Badge tone="warn">官方</Badge> : null}
+                  {c.warningCount > 0 ? <Badge tone="warn">已警告 {c.warningCount} 次</Badge> : null}
                 </div>
-                <div style={{ fontWeight: 700 }}>{c.name}</div>
-                <span className="pill pill-muted">简称 · {c.abbreviation}</span>
-                {c.parent ? (
-                  <span className="pill pill-muted">群组 · {c.parent.name}</span>
-                ) : c._count.groups > 0 ? (
-                  <span className="pill pill-purple">{c._count.groups} 个群组</span>
-                ) : null}
-                {c.isOfficial ? <span className="pill pill-yellow">官方</span> : null}
-                {c.warningCount > 0 ? (
-                  <span className="pill pill-orange">已警告 {c.warningCount} 次</span>
-                ) : null}
-              </div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>{c.owner?.name ?? "—"}</div>
-              <div style={{ fontWeight: 700 }}>
-                <a href={`/admin/communities?showMembers=${c.id}${q ? `&q=${q}` : ""}`} style={{ color: "var(--purple)", textDecoration: "underline" }}>
-                  {c._count.memberships}
-                </a>
-              </div>
-              <div>
-                <span className={`pill ${
-                  c.status === "ACTIVE"
-                    ? "pill-muted"
-                    : c.status === "PENDING_APPROVAL"
-                      ? "pill-yellow"
-                      : "pill-pink"
-                }`}>{statusLabel}</span>
-              </div>
-              <div style={{ fontWeight: 600, color: "var(--body)" }}>
-                {c.createdAt.toISOString().slice(0, 10)}
-              </div>
-              <div>
+              </DataTable.Cell>
+              <DataTable.Cell truncate title={c.owner?.name ?? "—"}>{c.owner?.name ?? "—"}</DataTable.Cell>
+              <DataTable.Cell align="right"><strong>{c._count.memberships}</strong></DataTable.Cell>
+              <DataTable.Cell>
+                <Badge tone={c.status === "ACTIVE" ? "ok" : "err"}>{statusLabel}</Badge>
+              </DataTable.Cell>
+              <DataTable.Cell>{c.createdAt.toISOString().slice(0, 10)}</DataTable.Cell>
+              <DataTable.Cell>
                 {c.isOfficial || c.parent || !canChangeTier ? (
-                  <span className="pill pill-purple">{formatTier(c.tier, c.tierPriceCents)}</span>
+                  <Badge tone="info">{formatTier(c.tier, c.tierPriceCents)}</Badge>
                 ) : (
                   <form action={changeCommunityTier} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <input type="hidden" name="communityId" value={c.id} />
@@ -164,26 +122,11 @@ export default async function CommunitiesPage({
                     <ConfirmSubmitButton className="action-purple" confirmMessage={`确认调整「${c.name}」的会员方案吗？此操作只修改权益，不会自动扣费。`}>保存</ConfirmSubmitButton>
                   </form>
                 )}
-              </div>
+              </DataTable.Cell>
+              <DataTable.Cell>
               <div className="row-actions">
                 {c.status === "DISSOLVED" ? (
                   <span className="action-body">已解散</span>
-                ) : c.status === "PENDING_APPROVAL" ? (
-                  <>
-                    <form action={approveCommunity}>
-                      <input type="hidden" name="communityId" value={c.id} />
-                      <button type="submit" className="action-purple">通过</button>
-                    </form>
-                    <form action={rejectCommunity}>
-                      <input type="hidden" name="communityId" value={c.id} />
-                      <ConfirmSubmitButton
-                        className="action-pink"
-                        confirmMessage={`确定要拒绝「${c.name}」的创建申请吗？拒绝后该社群将被直接删除且不可恢复。`}
-                      >
-                        拒绝
-                      </ConfirmSubmitButton>
-                    </form>
-                  </>
                 ) : (
                   <>
                     <form action={warnCommunity}>
@@ -213,140 +156,21 @@ export default async function CommunitiesPage({
                   </>
                 )}
               </div>
-            </div>
+              </DataTable.Cell>
+            </DataTable.Row>
           );
         })}
-      </div>
 
-      {showMembers && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0, 0, 0, 0.4)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: "var(--white)",
-            borderRadius: 16,
-            padding: 24,
-            width: 480,
-            maxWidth: "95%",
-            maxHeight: "80vh",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.15)",
-            border: "1px solid var(--line)"
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>成员清单</h3>
-                <span style={{ fontSize: 11, color: "var(--body)", fontWeight: 600 }}>{targetCommunityName || "当前社群"}</span>
-              </div>
-              <a
-                href={`/admin/communities${q ? `?q=${q}` : ""}`}
-                style={{
-                  border: 0,
-                  background: "transparent",
-                  color: "var(--body)",
-                  cursor: "pointer",
-                  fontSize: 18,
-                  fontWeight: 700,
-                  textDecoration: "none"
-                }}
-              >
-                ×
-              </a>
-            </div>
-            
-            <div style={{
-              overflowY: "auto",
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              paddingRight: 4
-            }}>
-              {activeMembers.length === 0 ? (
-                <div style={{ fontSize: 12, color: "var(--body)", textAlign: "center", padding: "20px 0" }}>没有成员。</div>
-              ) : (
-                activeMembers.map((m) => {
-                  const roleLabel = m.role === "OWNER" ? "群主" : m.role === "ADMIN" ? "管理员" : "成员";
-                  const roleColor = m.role === "OWNER" ? "rgba(225,49,125,.11)" : m.role === "ADMIN" ? "rgba(191,120,246,.15)" : "var(--surface-2)";
-                  const roleTextColor = m.role === "OWNER" ? "var(--pink)" : m.role === "ADMIN" ? "var(--purple)" : "var(--body)";
-                  
-                  return (
-                    <div key={m.id} style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "10px 12px",
-                      borderRadius: 12,
-                      border: "1px solid var(--line)",
-                      background: "var(--surface)"
-                    }}>
-                      <div style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 100,
-                        background: m.user.avatarColor,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 12,
-                        fontWeight: 800,
-                        flexShrink: 0
-                      }}>
-                        {m.user.name.slice(0, 1)}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>{m.user.name}</span>
-                          <span style={{
-                            fontSize: 9,
-                            padding: "1px 5px",
-                            background: roleColor,
-                            color: roleTextColor,
-                            borderRadius: 6,
-                            fontWeight: 800
-                          }}>{roleLabel}</span>
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--body)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {m.user.email ?? "无邮箱"} · 加入于 {m.joinedAt.toISOString().slice(0, 10)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-            
-             <a
-              href={`/admin/communities${q ? `?q=${q}` : ""}`}
-              style={{
-                marginTop: 18,
-                textAlign: "center",
-                display: "block",
-                background: "var(--surface-2)",
-                color: "var(--ink)",
-                textDecoration: "none",
-                padding: "10px",
-                borderRadius: 10,
-                fontSize: 13,
-                fontWeight: 700,
-                border: "1px solid var(--line)"
-              }}
-            >
-              关闭成员列表
-            </a>
-          </div>
-        </div>
-      )}
+        {communities.length === 0 && (
+          <EmptyState
+            title={q ? "没有找到匹配的社群" : "还没有社群"}
+            hint={q ? "换个关键词试试，或清除搜索条件" : "用户在 App 端创建社群后会出现在这里"}
+          />
+        )}
+        </DataTable>
+
+        <Pagination info={info} basePath="/admin/communities" params={{ q }} />
+      </div>
     </>
   );
 }

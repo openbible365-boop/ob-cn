@@ -18,7 +18,7 @@ export function VoiceInputButton({
       : "开始语音输入";
 
   return (
-    <button
+    <button data-icon-button="default"
       type="button"
       aria-label={label}
       aria-pressed={isListening}
@@ -27,7 +27,7 @@ export function VoiceInputButton({
       onClick={onClick}
       className={`icon-btn voice-input-btn${isListening ? " is-listening" : ""}`}
     >
-      <Icon name="mic" size={19} />
+      <Icon name="mic" size={20} />
     </button>
   );
 }

@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useParams } from "react-router-dom";
-import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { CommunityErrorState } from "../components/community/CommunityServiceState";
+import { resolveAvatarUrl } from "../data/api";
 import {
   fetchCommunityJoinRequests,
   getGroup,
@@ -14,6 +16,10 @@ import {
   performWorkspaceAction,
   type CommunityWorkspace,
 } from "../data/community-workspace";
+import {
+  fetchCommunityServiceHealth,
+  type CommunityServiceHealth,
+} from "../data/community-health";
 
 function requestTime(value: string) {
   const date = new Date(value);
@@ -30,17 +36,20 @@ function requestTime(value: string) {
 export function GroupSettingsPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const group = getGroup(groupId ?? "");
-  const [name, setName] = useState(group?.name ?? "");
-  const [description, setDescription] = useState(
-    (group?.desc ?? "").replace(/^\d+ 成员(?: · )?/, ""),
-  );
+  const goBack = useAppBack(`/community/${groupId ?? ""}`);
+  // 本地目录缓存只用于首屏占位，社群是否存在一律以服务端结果为准。
+  const cachedGroup = getGroup(groupId ?? "");
+  const [community, setCommunity] =
+    useState<CommunityWorkspace["community"] | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [joinPolicy, setJoinPolicy] =
     useState<CommunityWorkspace["community"]["joinPolicy"]>("APPROVAL");
   const [accessAllowed, setAccessAllowed] = useState<boolean | null>(null);
   const [accessRole, setAccessRole] =
     useState<CommunityWorkspace["access"]["role"] | null>(null);
   const [accessError, setAccessError] = useState("");
+  const [accessErrorStatus, setAccessErrorStatus] = useState<number | null>(null);
   const [planLabel, setPlanLabel] = useState("当前方案");
   const [saved, setSaved] = useState(false);
   const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
@@ -50,92 +59,114 @@ export function GroupSettingsPage() {
   const [reviewMessage, setReviewMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [serviceHealth, setServiceHealth] = useState<CommunityServiceHealth | null>(null);
 
-  useEffect(() => {
+  const loadJoinRequests = useCallback(async () => {
     if (!groupId) return;
-    let active = true;
     setRequestsLoading(true);
     setRequestsError("");
-    fetchCommunityJoinRequests(groupId).then((result) => {
-      if (!active) return;
-      if (result.ok) {
-        setJoinRequests(result.requests);
-      } else {
-        setRequestsError(result.message);
-      }
-      setRequestsLoading(false);
-    });
-    return () => {
-      active = false;
-    };
+    const result = await fetchCommunityJoinRequests(groupId);
+    if (result.ok) setJoinRequests(result.requests);
+    else setRequestsError(result.message);
+    setRequestsLoading(false);
   }, [groupId]);
 
-  useEffect(() => {
+  const loadAccess = useCallback(async () => {
     if (!groupId) return;
-    let active = true;
     setAccessAllowed(null);
     setAccessError("");
-    void fetchCommunityWorkspace(groupId).then((result) => {
-      if (!active) return;
-      if (result.ok) {
-        setAccessAllowed(result.workspace.access.isAdmin);
-        setAccessRole(result.workspace.access.role);
-        setPlanLabel(result.workspace.entitlements.label);
-        if (!result.workspace.community.isOfficial) {
-          setJoinPolicy(result.workspace.community.joinPolicy);
-        }
-      } else {
-        setAccessAllowed(false);
-        setAccessError(result.message);
+    setAccessErrorStatus(null);
+    const result = await fetchCommunityWorkspace(groupId);
+    if (result.ok) {
+      setCommunity(result.workspace.community);
+      setName(result.workspace.community.name);
+      setDescription(result.workspace.community.description ?? "");
+      setAccessAllowed(result.workspace.access.isAdmin);
+      setAccessRole(result.workspace.access.role);
+      setPlanLabel(result.workspace.entitlements.label);
+      if (!result.workspace.community.isOfficial) {
+        setJoinPolicy(result.workspace.community.joinPolicy);
       }
-    });
-    return () => {
-      active = false;
-    };
+    } else {
+      setAccessAllowed(false);
+      setAccessError(result.message);
+      setAccessErrorStatus(result.status ?? null);
+    }
   }, [groupId]);
 
-  useEffect(() => {
-    if (!saved || !group) return;
-    const timer = window.setTimeout(() => navigate(`/community/${group.id}`), 600);
-    return () => window.clearTimeout(timer);
-  }, [saved, group, navigate]);
+  const loadHealth = useCallback(async () => {
+    const result = await fetchCommunityServiceHealth();
+    setServiceHealth(result.health);
+  }, []);
 
-  if (!group) {
-    return (
-      <div className="screen">
-        <UnifiedHeader title="社群设置" subtitle="不存在" ariaLabel="社群设置状态" onBack={() => navigate("/community")} backLabel="返回社群" />
-        <div style={{ padding: 24, fontSize: 13, color: "var(--body)" }}>群组不存在。</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    void loadJoinRequests();
+    void loadAccess();
+    void loadHealth();
+  }, [loadAccess, loadHealth, loadJoinRequests]);
+
+  useEffect(() => {
+    if (!saved || !groupId) return;
+    const timer = window.setTimeout(() => navigate(`/community/${groupId}`), 600);
+    return () => window.clearTimeout(timer);
+  }, [saved, groupId, navigate]);
 
   if (accessAllowed === null) {
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <UnifiedHeader title="社群设置" subtitle="确认权限" ariaLabel="社群管理" onBack={() => navigate(-1)} backLabel="返回社群" />
+        <UnifiedHeader title="社群设置" subtitle="确认权限" ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
         <div className="route-status">正在确认管理权限…</div>
       </div>
     );
   }
 
   if (!accessAllowed) {
+    const notFound = accessErrorStatus === 404;
+    const forbidden = accessErrorStatus === 403 || accessErrorStatus === null;
     return (
       <div className="screen" style={{ background: "var(--surface)" }}>
-        <div className="page-header">
-          <button className="icon-btn" aria-label="返回社群" onClick={() => navigate(`/community/${group.id}`)}><Icon name="chevron-left" size={18} /></button>
-          <div className="title">社群设置</div>
-        </div>
-          <div className="route-status"><Icon name="lock" size={20} /><b>无法进入社群管理</b><span>{accessError || "仅群主或管理员可以管理此群组。"}</span></div>
+        <UnifiedHeader title="社群设置" subtitle={notFound ? "不存在" : "不可用"} ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
+        <CommunityErrorState
+          title={
+            accessErrorStatus === 401
+              ? "请先登录"
+              : notFound
+                ? "社群不存在"
+                : forbidden
+                  ? "无法进入社群管理"
+                  : "无法读取管理权限"
+          }
+          message={
+            forbidden && !accessError
+              ? "仅群主或管理员可以管理此群组。"
+              : accessError
+          }
+          status={accessErrorStatus}
+          health={serviceHealth}
+          onRetry={() => {
+            void loadAccess();
+            void loadHealth();
+          }}
+          onBack={goBack}
+        />
       </div>
     );
   }
 
+  const groupColor = community?.avatarColor ?? cachedGroup?.color ?? "var(--yellow)";
+  const groupLetter = community?.abbreviation ?? cachedGroup?.letter ?? "群";
+
   const save = async () => {
-    if (saving) return;
+    if (saving || !groupId) return;
     setSaving(true);
     setSaveError("");
-    const nextName = name.trim() || group.name;
-    const result = await performWorkspaceAction(group.id, {
+    const nextName = name.trim() || community?.name || "";
+    if (!nextName) {
+      setSaveError("请填写社群名称");
+      setSaving(false);
+      return;
+    }
+    const result = await performWorkspaceAction(groupId, {
       action: "UPDATE_COMMUNITY",
       name: nextName,
       description: description.trim() || undefined,
@@ -145,16 +176,20 @@ export function GroupSettingsPage() {
       setSaving(false);
       return;
     }
-    const policyResult = await performWorkspaceAction(group.id, {
-      action: "UPDATE_JOIN_POLICY",
-      joinPolicy,
-    });
-    if (!policyResult.ok) {
-      setSaveError(policyResult.message);
-      setSaving(false);
-      return;
+    if (!community?.isOfficial) {
+      const policyResult = await performWorkspaceAction(groupId, {
+        action: "UPDATE_JOIN_POLICY",
+        joinPolicy,
+      });
+      if (!policyResult.ok) {
+        setSaveError(`社群资料已保存，但加入方式未能更新：${policyResult.message}`);
+        setSaving(false);
+        return;
+      }
     }
-    updateGroup(group.id, { name: nextName, tier: group.tier ?? "初阶" });
+    if (cachedGroup) {
+      updateGroup(groupId, { name: nextName, tier: cachedGroup.tier ?? "初阶" });
+    }
     setSaved(true);
     setSaving(false);
   };
@@ -184,35 +219,31 @@ export function GroupSettingsPage() {
   }
 
   return (
-    <div className="screen" style={{ background: "var(--surface)" }}>
-      <UnifiedHeader title="社群设置" subtitle={accessRole === "ADMIN" ? "管理员" : "群主"} ariaLabel="社群管理" onBack={() => navigate(-1)} backLabel="返回社群" />
+    <div className="screen community-settings-screen">
+      <UnifiedHeader title="社群设置" subtitle={accessRole === "ADMIN" ? "管理员" : "群主"} ariaLabel="社群管理" onBack={goBack} backLabel="返回社群" />
 
-      <div className="screen-scroll" style={{ padding: "18px 20px 24px", display: "flex", flexDirection: "column", gap: 18 }}>
-        {/* avatar + name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ flex: "none" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 64, height: 64, background: group.color, border: "1px solid var(--line)", borderRadius: 18, boxShadow: "var(--shadow-card)", fontSize: 24, fontWeight: 800 }}>
-              {group.letter}
-            </div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--body)", marginBottom: 5 }}>社群名称</div>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 20))}
-              style={{ width: "100%", height: 44, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 12, fontSize: 14, fontWeight: 700, background: "var(--white)" }}
-            />
-          </div>
+      <div className="screen-scroll community-settings-scroll">
+        <div className="community-settings-identity">
+          <span className="community-settings-avatar" style={{ background: groupColor }}>{groupLetter}</span>
+          <label className="community-form-field">
+            <span>社群名称</span>
+            <input value={name} onChange={(event) => setName(event.target.value.slice(0, 20))} />
+          </label>
         </div>
 
-        <label style={{ display: "flex", flexDirection: "column", gap: 6, color: "var(--body)", fontSize: 12, fontWeight: 700 }}>
-          社群简介
-          <textarea value={description} onChange={(event) => setDescription(event.target.value.slice(0, 200))} rows={3} style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: 12, background: "var(--white)", color: "var(--ink)", font: "inherit", fontSize: 13, lineHeight: 1.6, resize: "vertical" }} />
+        <label className="community-form-field">
+          <span>社群简介</span>
+          <textarea
+            value={description}
+            rows={3}
+            placeholder="一句话介绍这个社群…"
+            onChange={(event) => setDescription(event.target.value.slice(0, 200))}
+          />
         </label>
 
-        <section>
-          <div style={{ marginBottom: 9, fontSize: 12, fontWeight: 800, color: "var(--body)" }}>加入方式</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 7 }}>
+        <section className="community-settings-section">
+          <h2>加入方式</h2>
+          <div className="community-policy-grid">
             {([
               ["OPEN", "直接加入", "无需审核"],
               ["APPROVAL", "申请加入", "管理员审核"],
@@ -222,68 +253,43 @@ export function GroupSettingsPage() {
                 type="button"
                 key={value}
                 aria-pressed={joinPolicy === value}
+                className={joinPolicy === value ? "is-active" : ""}
                 onClick={() => setJoinPolicy(value)}
-                style={{
-                  minWidth: 0,
-                  minHeight: 58,
-                  padding: "8px 5px",
-                  border: 0,
-                  borderRadius: 12,
-                  background: joinPolicy === value ? "rgba(191,120,246,.13)" : "var(--surface-2)",
-                  color: joinPolicy === value ? "var(--purple)" : "var(--body)",
-                  textAlign: "center",
-                }}
               >
-                <b style={{ display: "block", fontSize: 11 }}>{label}</b>
-                <small style={{ display: "block", marginTop: 3, fontSize: 8, fontWeight: 650 }}>{detail}</small>
+                <b>{label}</b>
+                <small>{detail}</small>
               </button>
             ))}
           </div>
         </section>
 
-        {/* join requests */}
-        <section>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "var(--body)" }}>加入申请</div>
-            {!requestsLoading && (
-              <div style={{ minWidth: 20, height: 20, padding: "0 6px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 100, background: joinRequests.length ? "rgba(225,49,125,.11)" : "var(--surface-2)", color: joinRequests.length ? "var(--pink)" : "var(--body)", fontSize: 12, fontWeight: 800 }}>
-                {joinRequests.length}
-              </div>
-            )}
-          </div>
+        <section className="community-settings-section">
+          <h2>加入申请{!requestsLoading && <em className={joinRequests.length ? "is-pending" : ""}>{joinRequests.length}</em>}</h2>
 
-          {requestsLoading && (
-            <div className="card" style={{ padding: "16px", fontSize: 12, color: "var(--body)" }}>正在读取加入申请…</div>
-          )}
+          {requestsLoading && <div className="card community-settings-note">正在读取加入申请…</div>}
           {!requestsLoading && joinRequests.length === 0 && !requestsError && (
-            <div className="card" style={{ padding: "16px", fontSize: 12, color: "var(--body)" }}>目前没有待处理的加入申请</div>
+            <div className="card community-settings-note">目前没有待处理的加入申请</div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="community-settings-request-list">
             {joinRequests.map((joinRequest) => {
               const busy = reviewingId === joinRequest.id;
               return (
-                <div key={joinRequest.id} className="card" style={{ padding: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div key={joinRequest.id} className="card community-settings-request">
+                  <div className="community-person-row">
                     {joinRequest.user.avatarUrl ? (
-                      <img src={joinRequest.user.avatarUrl} alt="" style={{ width: 42, height: 42, flex: "none", borderRadius: 100, objectFit: "cover" }} />
+                      <img src={resolveAvatarUrl(joinRequest.user.avatarUrl) ?? ""} alt="" />
                     ) : (
-                      <div style={{ width: 42, height: 42, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 100, background: joinRequest.user.avatarColor, fontSize: 16, fontWeight: 800 }}>
+                      <span style={{ background: joinRequest.user.avatarColor }}>
                         {Array.from(joinRequest.user.name)[0] ?? "友"}
-                      </div>
+                      </span>
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800 }}>{joinRequest.user.name}</div>
-                      <div style={{ marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 12, color: "var(--body)" }}>
-                        {joinRequest.user.email ?? "已注册用户"} · {requestTime(joinRequest.createdAt)}
-                      </div>
+                    <div>
+                      <b>{joinRequest.user.name}</b>
+                      <small>{joinRequest.user.email ?? "已注册用户"} · {requestTime(joinRequest.createdAt)}</small>
                     </div>
                   </div>
-                  {joinRequest.message && (
-                    <div style={{ marginTop: 10, padding: "9px 10px", borderRadius: 10, background: "var(--surface-2)", fontSize: 12, color: "var(--body)", lineHeight: 1.55 }}>
-                      {joinRequest.message}
-                    </div>
-                  )}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+                  {joinRequest.message && <p>{joinRequest.message}</p>}
+                  <div className="community-join-request-actions">
                     <button className="compact-action-btn" disabled={Boolean(reviewingId)} onClick={() => reviewRequest(joinRequest, "REJECT")}>
                       {busy ? "处理中…" : "拒绝"}
                     </button>
@@ -295,26 +301,27 @@ export function GroupSettingsPage() {
               );
             })}
           </div>
-          {reviewMessage && (
-            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "#267A45" }}>{reviewMessage}</div>
-          )}
+          {reviewMessage && <div className="community-settings-success" role="status">{reviewMessage}</div>}
           {requestsError && (
-            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "var(--pink)" }}>{requestsError}</div>
+            <div role="alert" className="community-settings-error">
+              <span>{requestsError}</span>
+              <button type="button" className="compact-action-btn" onClick={() => void loadJoinRequests()}>重试</button>
+            </div>
           )}
         </section>
 
-        <section>
-          <div style={{ marginBottom: 9, fontSize: 12, fontWeight: 800, color: "var(--body)" }}>当前方案</div>
-          <div className="card" style={{ display: "flex", minHeight: 54, alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 14px" }}>
+        <section className="community-settings-section">
+          <h2>当前方案</h2>
+          <div className="card community-settings-plan">
             <div>
-              <b style={{ display: "block", fontSize: 14 }}>{planLabel}</b>
-              <small style={{ display: "block", marginTop: 3, color: "var(--body)", fontSize: 11, fontWeight: 650 }}>当前社群服务方案</small>
+              <b>{planLabel}</b>
+              <small>当前社群服务方案</small>
             </div>
-            <span style={{ padding: "4px 8px", borderRadius: 99, background: "var(--yellow)", fontSize: 10, fontWeight: 800 }}>使用中</span>
+            <span>使用中</span>
           </div>
         </section>
 
-        {saveError && <div role="alert" style={{ color: "var(--pink)", fontSize: 12, fontWeight: 700 }}>{saveError}</div>}
+        {saveError && <div role="alert" className="community-settings-error"><span>{saveError}</span></div>}
         <button className="btn-primary" onClick={save} disabled={saving}>
           {saved ? "已保存 ✓" : saving ? "保存中…" : "保存修改"}
         </button>

@@ -1,9 +1,25 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
+import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, type Tone } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 
 type Status = "UPCOMING" | "ONGOING" | "ENDED";
 
 const STATUS_LABEL: Record<Status, string> = { UPCOMING: "未开始", ONGOING: "进行中", ENDED: "已结束" };
-const STATUS_PILL: Record<Status, string> = { UPCOMING: "pill-purple", ONGOING: "pill-yellow", ENDED: "pill-muted" };
+// 语义映射：进行中是需要关注的状态，用告警色；未开始是中性信息；已结束淡化
+const STATUS_TONE: Record<Status, Tone> = { UPCOMING: "info", ONGOING: "warn", ENDED: "neutral" };
+
+const EVENT_COLUMNS: Column[] = [
+  { key: "title", label: "活动名称", width: "1.6fr" },
+  { key: "community", label: "所属社群", width: "140px" },
+  { key: "start", label: "开始时间", width: "160px" },
+  { key: "end", label: "结束时间", width: "160px" },
+  { key: "signups", label: "已报名", width: "90px", align: "right" },
+  { key: "status", label: "状态", width: "90px" },
+];
 
 function computeStatus(startAt: Date, endAt: Date | null, now: Date): Status {
   if (now < startAt) return "UPCOMING";
@@ -18,26 +34,43 @@ function formatDateTime(d: Date) {
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
-  const { q, status } = await searchParams;
-
-  const events = await db.event.findMany({
-    where: q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { community: { name: { contains: q, mode: "insensitive" } } },
-          ],
-        }
-      : undefined,
-    include: { community: true },
-    orderBy: { startAt: "asc" },
-  });
+  const { q, status, page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
 
   const now = new Date();
-  const withStatus = events.map((e) => ({ ...e, computedStatus: computeStatus(e.startAt, e.endAt, now) }));
-  const filtered = status && status !== "all" ? withStatus.filter((e) => e.computedStatus === status) : withStatus;
+  // 活动状态由起止时间推导，原先是「取全表再在内存里过滤」——活动一多就会把整表拉进内存。
+  // 这里把状态翻译成时间条件下推给数据库，配合分页。
+  const statusWhere =
+    status === "ONGOING" ? { startAt: { lte: now }, endAt: { gte: now } }
+    : status === "UPCOMING" ? { startAt: { gt: now } }
+    : status === "ENDED" ? { endAt: { lt: now } }
+    : {};
+  const where = {
+    ...statusWhere,
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" as const } },
+            { community: { name: { contains: q, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+
+  const [events, total] = await Promise.all([
+    db.event.findMany({
+      where,
+      include: { community: true },
+      orderBy: { startAt: "asc" },
+      ...pageQuery(page),
+    }),
+    db.event.count({ where }),
+  ]);
+  const info = pageInfo(page, total);
+
+  const filtered = events.map((e) => ({ ...e, computedStatus: computeStatus(e.startAt, e.endAt, now) }));
 
   const STATUS_TABS: { key: string; label: string }[] = [
     { key: "all", label: "全部" },
@@ -48,6 +81,7 @@ export default async function EventsPage({
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">活动监管</div>
         <div className="meta">全站活动列表 · 共 {events.length} 场</div>
@@ -81,22 +115,29 @@ export default async function EventsPage({
       </div>
 
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.6fr 140px 170px 170px 100px 100px" }}>
-          <div>活动名称</div><div>所属社群</div><div>开始时间</div><div>结束时间</div><div>已报名</div><div>状态</div>
-        </div>
-        {filtered.map((e) => (
-          <div key={e.id} className="admin-table-row" style={{ gridTemplateColumns: "1.6fr 140px 170px 170px 100px 100px" }}>
-            <div style={{ fontWeight: 700 }}>{e.title}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{e.community.name}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{formatDateTime(e.startAt)}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{e.endAt ? formatDateTime(e.endAt) : "长期"}</div>
-            <div style={{ fontWeight: 700 }}>{e.signupCount}</div>
-            <div><span className={`pill ${STATUS_PILL[e.computedStatus]}`}>{STATUS_LABEL[e.computedStatus]}</span></div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <div style={{ padding: "24px 0", textAlign: "center", fontSize: 12, color: "var(--body)" }}>没有符合条件的活动</div>
-        )}
+        <DataTable columns={EVENT_COLUMNS} label="活动列表">
+          <DataTable.Head />
+          {filtered.map((e) => (
+            <DataTable.Row key={e.id} tone={e.computedStatus === "ONGOING" ? "warn" : undefined}>
+              <DataTable.Cell truncate title={e.title}><strong>{e.title}</strong></DataTable.Cell>
+              <DataTable.Cell truncate title={e.community.name}>{e.community.name}</DataTable.Cell>
+              <DataTable.Cell>{formatDateTime(e.startAt)}</DataTable.Cell>
+              <DataTable.Cell>{e.endAt ? formatDateTime(e.endAt) : "长期"}</DataTable.Cell>
+              <DataTable.Cell align="right"><strong>{e.signupCount}</strong></DataTable.Cell>
+              <DataTable.Cell>
+                <Badge tone={STATUS_TONE[e.computedStatus]}>{STATUS_LABEL[e.computedStatus]}</Badge>
+              </DataTable.Cell>
+            </DataTable.Row>
+          ))}
+          {filtered.length === 0 && (
+            <EmptyState
+              title="没有符合条件的活动"
+              hint={q || (status && status !== "all") ? "换个关键词或状态筛选试试" : "社群管理员在 App 端创建活动后会出现在这里"}
+            />
+          )}
+        </DataTable>
+
+        <Pagination info={info} basePath="/admin/events" params={{ q, status }} />
       </div>
     </>
   );

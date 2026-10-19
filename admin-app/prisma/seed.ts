@@ -61,6 +61,9 @@ async function main() {
   await ensureLocalTestAccounts();
   await seedAiAndDashboard();
   await seedContentModerationEventsAudit();
+  if (process.env.NODE_ENV !== "production" || process.env.SEED_COMMUNITY_VALIDATION_FIXTURES === "true") {
+    await seedCommunityValidationFixtures();
+  }
   await seedBibleAndCommentary();
   await seedPersonalSamples();
 
@@ -76,6 +79,472 @@ async function ensureLocalTestAccounts() {
     where: { name: "陈姊妹", email: null },
     data: { email: "member@openbible.local" },
   });
+}
+
+async function ensureValidationUser(input: {
+  email: string;
+  name: string;
+  avatarColor: string;
+  status?: "ACTIVE" | "MUTED" | "BANNED";
+}) {
+  return db.user.upsert({
+    where: { email: input.email },
+    update: {
+      name: input.name,
+      avatarColor: input.avatarColor,
+      status: input.status ?? "ACTIVE",
+    },
+    create: {
+      email: input.email,
+      name: input.name,
+      avatarColor: input.avatarColor,
+      status: input.status ?? "ACTIVE",
+      authAccounts: { create: [{ provider: "EMAIL" }] },
+    },
+  });
+}
+
+async function seedCommunityValidationFixtures() {
+  const users = {
+    owner: await ensureValidationUser({
+      email: "owner.community@openbible.local",
+      name: "验收群主",
+      avatarColor: "#FFD465",
+    }),
+    admin: await ensureValidationUser({
+      email: "admin.community@openbible.local",
+      name: "验收管理员",
+      avatarColor: "#D9C2F0",
+    }),
+    member: await ensureValidationUser({
+      email: "member.community@openbible.local",
+      name: "验收成员",
+      avatarColor: "#8FCFB0",
+    }),
+    applicant: await ensureValidationUser({
+      email: "applicant.community@openbible.local",
+      name: "待审核成员",
+      avatarColor: "#8FB8E8",
+    }),
+    muted: await ensureValidationUser({
+      email: "muted.community@openbible.local",
+      name: "受限成员",
+      avatarColor: "#F0C7B7",
+      status: "MUTED",
+    }),
+  };
+
+  const community = await db.community.upsert({
+    where: { abbreviation: "验收" },
+    update: {
+      name: "功能验证社群",
+      description: "本地功能验收专用：覆盖角色、动态、活动、小组、资料与通知",
+      avatarColor: "#FFD465",
+      joinPolicy: "APPROVAL",
+      tier: "MID",
+      ownerId: users.owner.id,
+      status: "ACTIVE",
+    },
+    create: {
+      name: "功能验证社群",
+      abbreviation: "验收",
+      description: "本地功能验收专用：覆盖角色、动态、活动、小组、资料与通知",
+      avatarColor: "#FFD465",
+      joinPolicy: "APPROVAL",
+      tier: "MID",
+      ownerId: users.owner.id,
+    },
+  });
+
+  for (const [userId, role] of [
+    [users.owner.id, "OWNER"],
+    [users.admin.id, "ADMIN"],
+    [users.member.id, "MEMBER"],
+    [users.muted.id, "MEMBER"],
+  ] as const) {
+    await db.membership.upsert({
+      where: { userId_communityId: { userId, communityId: community.id } },
+      update: { role },
+      create: { userId, communityId: community.id, role },
+    });
+  }
+
+  await db.communityJoinRequest.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.applicant.id,
+        communityId: community.id,
+      },
+    },
+    update: {
+      status: "PENDING",
+      message: "希望参加每周查经并加入服事安排。",
+      reviewerId: null,
+      reviewedAt: null,
+    },
+    create: {
+      userId: users.applicant.id,
+      communityId: community.id,
+      status: "PENDING",
+      message: "希望参加每周查经并加入服事安排。",
+    },
+  });
+
+  const subgroup = await db.community.upsert({
+    where: { abbreviation: "验组" },
+    update: {
+      parentId: community.id,
+      name: "验证查经小组",
+      description: "用于验证父子社群与小组权限继承",
+      avatarColor: "#D9C2F0",
+      joinPolicy: "APPROVAL",
+      tier: community.tier,
+      status: "ACTIVE",
+    },
+    create: {
+      parentId: community.id,
+      name: "验证查经小组",
+      abbreviation: "验组",
+      description: "用于验证父子社群与小组权限继承",
+      avatarColor: "#D9C2F0",
+      joinPolicy: "APPROVAL",
+      tier: community.tier,
+    },
+  });
+  await db.membership.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.admin.id,
+        communityId: subgroup.id,
+      },
+    },
+    update: { role: "ADMIN" },
+    create: {
+      userId: users.admin.id,
+      communityId: subgroup.id,
+      role: "ADMIN",
+    },
+  });
+  await db.membership.upsert({
+    where: {
+      userId_communityId: {
+        userId: users.member.id,
+        communityId: subgroup.id,
+      },
+    },
+    update: { role: "MEMBER" },
+    create: {
+      userId: users.member.id,
+      communityId: subgroup.id,
+      role: "MEMBER",
+    },
+  });
+
+  async function ensurePost(input: {
+    title: string;
+    postType: "POST" | "ARTICLE" | "NOTICE" | "MEDIA";
+    content: string;
+    status?: "VISIBLE" | "HIDDEN";
+    pinnedAt?: Date | null;
+    mediaType?: "IMAGE" | "AUDIO" | "VIDEO";
+    mediaUrl?: string;
+    verseRef?: string;
+  }) {
+    const existing = await db.post.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      authorId: input.postType === "POST" ? users.member.id : users.admin.id,
+      title: input.title,
+      postType: input.postType,
+      content: input.content,
+      status: input.status ?? "VISIBLE",
+      pinnedAt: input.pinnedAt ?? null,
+      mediaType: input.mediaType ?? null,
+      mediaUrl: input.mediaUrl ?? null,
+      verseRef: input.verseRef ?? null,
+    } as const;
+    return existing
+      ? db.post.update({ where: { id: existing.id }, data })
+      : db.post.create({ data });
+  }
+
+  const notice = await ensurePost({
+    title: "【验收】周五查经通知",
+    postType: "NOTICE",
+    content: "周五 20:00 查考约翰福音第 3 章，请提前阅读并在活动页报名。",
+    pinnedAt: new Date(),
+    verseRef: "约翰福音 3:16",
+  });
+  await ensurePost({
+    title: "【验收】如何预备查经分享",
+    postType: "ARTICLE",
+    content: "先观察经文，再理解上下文，最后写下一个可以实践的回应。",
+  });
+  await ensurePost({
+    title: "【验收】音频分享演示",
+    postType: "MEDIA",
+    content: "用于验证音频动态的展示和播放状态。",
+    mediaType: "AUDIO",
+    mediaUrl: "https://example.com/openbible-validation.mp3",
+  });
+  await ensurePost({
+    title: "【验收】待审核内容",
+    postType: "POST",
+    content: "这条内容用于验证管理员隐藏内容后的成员可见性。",
+    status: "HIDDEN",
+  });
+  const memberPost = await ensurePost({
+    title: "【验收】成员经文分享",
+    postType: "POST",
+    content: "你的话是我脚前的灯，是我路上的光。",
+    verseRef: "诗篇 119:105",
+  });
+  await db.postLike.upsert({
+    where: {
+      postId_userId: { postId: memberPost.id, userId: users.admin.id },
+    },
+    update: {},
+    create: { postId: memberPost.id, userId: users.admin.id },
+  });
+  await db.postBookmark.upsert({
+    where: {
+      postId_userId: { postId: notice.id, userId: users.member.id },
+    },
+    update: {},
+    create: { postId: notice.id, userId: users.member.id },
+  });
+  if (!await db.postComment.findFirst({
+    where: {
+      postId: memberPost.id,
+      authorId: users.admin.id,
+      content: "谢谢分享，周五一起继续讨论。",
+    },
+  })) {
+    await db.postComment.create({
+      data: {
+        postId: memberPost.id,
+        authorId: users.admin.id,
+        content: "谢谢分享，周五一起继续讨论。",
+      },
+    });
+  }
+  await db.post.update({
+    where: { id: memberPost.id },
+    data: {
+      likeCount: await db.postLike.count({ where: { postId: memberPost.id } }),
+      commentCount: await db.postComment.count({ where: { postId: memberPost.id } }),
+    },
+  });
+
+  const now = Date.now();
+  async function ensureEvent(input: {
+    title: string;
+    startAt: Date;
+    endAt: Date;
+    capacity?: number;
+  }) {
+    const existing = await db.event.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      title: input.title,
+      description: "本地验收活动，用于验证状态、报名和提醒。",
+      location: "线上会议室",
+      startAt: input.startAt,
+      endAt: input.endAt,
+      capacity: input.capacity ?? 20,
+    };
+    return existing
+      ? db.event.update({ where: { id: existing.id }, data })
+      : db.event.create({ data });
+  }
+  const upcomingEvent = await ensureEvent({
+    title: "【验收】报名中的查经活动",
+    startAt: new Date(now + 3 * 86_400_000),
+    endAt: new Date(now + 3 * 86_400_000 + 90 * 60_000),
+  });
+  await ensureEvent({
+    title: "【验收】进行中的线上活动",
+    startAt: new Date(now - 30 * 60_000),
+    endAt: new Date(now + 60 * 60_000),
+  });
+  await ensureEvent({
+    title: "【验收】已经结束的活动",
+    startAt: new Date(now - 7 * 86_400_000),
+    endAt: new Date(now - 7 * 86_400_000 + 90 * 60_000),
+  });
+  const fullEvent = await ensureEvent({
+    title: "【验收】名额已满的活动",
+    startAt: new Date(now + 5 * 86_400_000),
+    endAt: new Date(now + 5 * 86_400_000 + 60 * 60_000),
+    capacity: 2,
+  });
+  for (const userId of [users.owner.id, users.admin.id]) {
+    await db.eventSignup.upsert({
+      where: { eventId_userId: { eventId: fullEvent.id, userId } },
+      update: {},
+      create: { eventId: fullEvent.id, userId },
+    });
+  }
+  await db.event.update({
+    where: { id: fullEvent.id },
+    data: {
+      signupCount: await db.eventSignup.count({ where: { eventId: fullEvent.id } }),
+    },
+  });
+  await db.eventSignup.upsert({
+    where: {
+      eventId_userId: {
+        eventId: upcomingEvent.id,
+        userId: users.member.id,
+      },
+    },
+    update: {},
+    create: { eventId: upcomingEvent.id, userId: users.member.id },
+  });
+  await db.event.update({
+    where: { id: upcomingEvent.id },
+    data: {
+      signupCount: await db.eventSignup.count({ where: { eventId: upcomingEvent.id } }),
+    },
+  });
+
+  async function ensureResource(input: {
+    title: string;
+    type: "TEXT" | "DOCUMENT" | "AUDIO" | "VIDEO";
+    knowledgeStatus: "PARSING" | "INDEXED" | "FAILED" | "REINDEX_REQUIRED";
+    visibility?: "MEMBERS" | "ADMINS";
+    contentText?: string;
+    indexError?: string;
+  }) {
+    const existing = await db.communityResource.findFirst({
+      where: { communityId: community.id, title: input.title },
+    });
+    const data = {
+      communityId: community.id,
+      uploaderId: users.admin.id,
+      title: input.title,
+      description: "本地知识库状态验收资料",
+      type: input.type,
+      contentText: input.contentText ?? null,
+      knowledgeStatus: input.knowledgeStatus,
+      indexedAt: input.knowledgeStatus === "INDEXED" ? new Date() : null,
+      indexError: input.indexError ?? null,
+      visibility: input.visibility ?? "MEMBERS",
+      status: "ACTIVE" as const,
+    };
+    return existing
+      ? db.communityResource.update({ where: { id: existing.id }, data })
+      : db.communityResource.create({ data });
+  }
+  await ensureResource({
+    title: "【验收】青年查经计划",
+    type: "TEXT",
+    knowledgeStatus: "INDEXED",
+    contentText: "第 3 页：每周查经采用观察、解释、应用三个步骤。",
+  });
+  await ensureResource({
+    title: "【验收】正在解析的讲义",
+    type: "DOCUMENT",
+    knowledgeStatus: "PARSING",
+  });
+  await ensureResource({
+    title: "【验收】解析失败的音频",
+    type: "AUDIO",
+    knowledgeStatus: "FAILED",
+    indexError: "未识别到可索引的语音内容",
+  });
+  await ensureResource({
+    title: "【验收】需要重新索引的视频",
+    type: "VIDEO",
+    knowledgeStatus: "REINDEX_REQUIRED",
+    indexError: "资料内容已经更新",
+  });
+  await ensureResource({
+    title: "【验收】管理员带领说明",
+    type: "TEXT",
+    knowledgeStatus: "INDEXED",
+    visibility: "ADMINS",
+    contentText: "仅管理员可见：处理成员申请前先核对申请说明和社群规则。",
+  });
+
+  for (const notification of [
+    {
+      userId: users.member.id,
+      type: "EVENT_REMINDER" as const,
+      title: "活动即将开始",
+      body: "【验收】报名中的查经活动将在两小时后开始。",
+      href: `/community/${community.id}?tab=events`,
+      uniqueKey: "validation:event-reminder",
+    },
+    {
+      userId: users.member.id,
+      type: "COMMENT_REPLY" as const,
+      title: "你的动态收到新评论",
+      body: "验收管理员回复了你的经文分享。",
+      href: `/community/${community.id}?tab=feed`,
+      uniqueKey: "validation:comment-reply",
+    },
+    {
+      userId: users.owner.id,
+      type: "JOIN_REQUEST" as const,
+      title: "收到新的入群申请",
+      body: "待审核成员申请加入功能验证社群。",
+      href: `/community/${community.id}/settings`,
+      uniqueKey: "validation:join-request",
+    },
+    {
+      userId: users.admin.id,
+      type: "AI_TASK" as const,
+      title: "资料索引任务已完成",
+      body: "《【验收】青年查经计划》已经加入知识库。",
+      href: `/community/${community.id}?tab=resources`,
+      uniqueKey: "validation:ai-task",
+    },
+    {
+      userId: users.applicant.id,
+      type: "JOIN_REVIEW" as const,
+      title: "入群申请已通过",
+      body: "你的功能验证社群加入申请已通过审核。",
+      href: `/community/${community.id}`,
+      uniqueKey: "validation:join-review",
+    },
+    {
+      userId: users.member.id,
+      type: "DAILY_VERSE" as const,
+      title: "今日金句",
+      body: "你的话是我脚前的灯，是我路上的光。— 诗篇 119:105",
+      href: "/bible?t=cuv&bk=psa&c=119&v=105",
+      uniqueKey: "validation:daily-verse",
+    },
+  ]) {
+    await db.userNotification.upsert({
+      where: { uniqueKey: notification.uniqueKey },
+      update: notification,
+      create: notification,
+    });
+  }
+
+  if (!await db.communityAuditLog.findFirst({
+    where: {
+      communityId: community.id,
+      action: "VALIDATION_FIXTURES_READY",
+    },
+  })) {
+    await db.communityAuditLog.create({
+      data: {
+        communityId: community.id,
+        actorId: users.owner.id,
+        action: "VALIDATION_FIXTURES_READY",
+        targetType: "Community",
+        targetId: community.id,
+        detail: { localOnly: true, fixtureVersion: 1 },
+      },
+    });
+  }
 }
 
 // Sample highlights/notes for the test account so /me and /me/content have

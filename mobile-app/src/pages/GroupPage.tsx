@@ -1,9 +1,15 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
+import { AiThinking } from "../components/AiThinking";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { UserAvatar } from "../components/UserAvatar";
 import { VoiceInputButton } from "../components/VoiceInputButton";
+import {
+  CommunityDegradedNotice,
+  CommunityErrorState,
+} from "../components/community/CommunityServiceState";
 import {
   CommunityEventsPanel,
   CommunityGroupsPanel,
@@ -16,16 +22,33 @@ import {
   askCommunityAssistantWithAttachment,
   confirmCommunityAssistantAction,
   type AssistantAction,
+  type AssistantActionChanges,
   type AssistantRole,
   type AssistantStructuredResult,
   type AssistantVisibility,
 } from "../data/assistant";
-import { cacheCommunityWorkspace, fetchCommunityGroups, getGroup, upsertAssistantCommunity } from "../data/community";
 import {
+  cacheCommunityWorkspace,
+  fetchCommunityGroups,
+  fetchCommunityJoinRequests,
+  getGroup,
+  requestCommunityJoin,
+  reviewCommunityJoinRequest,
+  upsertAssistantCommunity,
+  type CommunityJoinRequest,
+} from "../data/community";
+import { resolveAvatarUrl } from "../data/api";
+import {
+  fetchCommunityServiceHealth,
+  type CommunityServiceHealth,
+} from "../data/community-health";
+import {
+  applyWorkspacePatch,
   fetchCommunityWorkspace,
   heartbeatCommunityPresence,
   performWorkspaceAction,
   uploadCommunityResource,
+  type CommunityPreview,
   type CommunityWorkspace,
   type WorkspaceActionInput,
   type WorkspaceResource,
@@ -60,8 +83,162 @@ type ChatMessage = {
   operation?: boolean;
 };
 
+type PendingAssistantAction = {
+  groupId: string;
+  action: AssistantAction;
+  createdAt: string;
+};
+
+const PENDING_ACTIONS_KEY = "ob.community.pending-actions.v1";
+
+function readPendingActions(groupId: string) {
+  try {
+    const value = JSON.parse(localStorage.getItem(PENDING_ACTIONS_KEY) ?? "[]") as PendingAssistantAction[];
+    const now = Date.now();
+    return value.filter((item) =>
+      item.groupId === groupId &&
+      (!item.action.expiresAt || Date.parse(item.action.expiresAt) > now),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writePendingActions(groupId: string, nextForGroup: PendingAssistantAction[]) {
+  try {
+    const current = JSON.parse(localStorage.getItem(PENDING_ACTIONS_KEY) ?? "[]") as PendingAssistantAction[];
+    const now = Date.now();
+    const otherGroups = current.filter((item) =>
+      item.groupId !== groupId &&
+      (!item.action.expiresAt || Date.parse(item.action.expiresAt) > now),
+    );
+    localStorage.setItem(PENDING_ACTIONS_KEY, JSON.stringify([...otherGroups, ...nextForGroup]));
+  } catch {
+    // A blocked local store should not prevent the confirmation flow.
+  }
+}
+
+function AssistantDraftCard({
+  action,
+  busy,
+  isOfficial,
+  canUseAdminVisibility,
+  onModify,
+  onConfirm,
+}: {
+  action: AssistantAction;
+  busy: boolean;
+  isOfficial: boolean;
+  canUseAdminVisibility: boolean;
+  onModify: () => void;
+  onConfirm: (changes?: AssistantActionChanges) => void;
+}) {
+  const originalTitle = action.fields?.find((field) => field.label === "标题")?.value ?? "";
+  const initialTitle = originalTitle === "未设置标题" ? "" : originalTitle;
+  const initialVisibility: NonNullable<AssistantActionChanges["visibility"]> = isOfficial
+    ? "PUBLIC"
+    : action.fields?.find((field) => field.label === "可见范围")?.value === "仅管理员"
+      ? "ADMINS"
+      : "MEMBERS";
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(initialTitle);
+  const [draftVisibility, setDraftVisibility] = useState(initialVisibility);
+  const [savedTitle, setSavedTitle] = useState(initialTitle);
+  const [savedVisibility, setSavedVisibility] = useState(initialVisibility);
+  const isPublishDraft = action.kind === "PUBLISH_CONTENT";
+
+  function beginModify() {
+    if (!isPublishDraft) {
+      onModify();
+      return;
+    }
+    setDraftTitle(savedTitle);
+    setDraftVisibility(savedVisibility);
+    setEditing(true);
+  }
+
+  function cancelModify() {
+    setDraftTitle(savedTitle);
+    setDraftVisibility(savedVisibility);
+    setEditing(false);
+  }
+
+  function saveModify() {
+    setSavedTitle(draftTitle.trim());
+    setSavedVisibility(draftVisibility);
+    setEditing(false);
+  }
+
+  function displayFieldValue(label: string, value: string) {
+    if (label === "标题") return savedTitle || "未设置标题";
+    if (label === "可见范围") {
+      return savedVisibility === "PUBLIC" ? "所有人可见" : savedVisibility === "ADMINS" ? "仅管理员" : "本群成员";
+    }
+    return value;
+  }
+
+  return (
+    <div className="community-confirm-card">
+      <span className="community-confirm-kicker">预览草稿</span>
+      <b>{action.title}</b>
+      {action.fields?.length ? (
+        <dl>
+          {action.fields.map((field, index) => (
+            <div key={`${field.label}-${index}`}>
+              <dt>{field.label}</dt>
+              <dd>
+                {editing && isPublishDraft && field.label === "标题" ? (
+                  <input
+                    className="community-confirm-field"
+                    value={draftTitle}
+                    maxLength={120}
+                    placeholder="输入标题（普通动态可留空）"
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                  />
+                ) : editing && isPublishDraft && field.label === "可见范围" ? (
+                  <select
+                    className="community-confirm-field"
+                    value={draftVisibility}
+                    onChange={(event) => setDraftVisibility(event.target.value as NonNullable<AssistantActionChanges["visibility"]>)}
+                  >
+                    {isOfficial ? (
+                      <option value="PUBLIC">所有人可见</option>
+                    ) : (
+                      <>
+                        <option value="MEMBERS">本群成员</option>
+                        {canUseAdminVisibility && <option value="ADMINS">仅管理员</option>}
+                      </>
+                    )}
+                  </select>
+                ) : displayFieldValue(field.label, field.value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : <p>{action.summary}</p>}
+      <div className="community-confirm-actions">
+        {editing ? (
+          <>
+            <button disabled={busy} onClick={cancelModify} className="compact-action-btn">取消</button>
+            <button disabled={busy} onClick={saveModify} className="compact-action-btn is-primary">保存修改</button>
+          </>
+        ) : (
+          <>
+            <button disabled={busy} onClick={beginModify} className="compact-action-btn">修改</button>
+            <button
+              disabled={busy}
+              onClick={() => onConfirm(isPublishDraft ? { title: savedTitle, visibility: savedVisibility } : undefined)}
+              className="compact-action-btn is-primary"
+            >{busy ? "正在执行…" : action.confirmLabel}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function isAssistantOperationPrompt(value: string) {
-  return /^(?:请(?:帮我)?|帮我)?(?:发布|发表|发一条|发个|创建|新建|安排|管理|进入|前往|查找|搜索|寻找|找一下|查看|列出|申请加入)/u.test(
+  return /^(?:请(?:帮我)?|帮我)?(?:发布|发表|发一条|发个|创建|新建|安排|管理|进入|前往|查找|搜索|寻找|找一下|查看|列出|申请加入|邀请|移除|设置|审核|批准|拒绝|报名)/u.test(
     value.trim(),
   );
 }
@@ -77,23 +254,33 @@ function readableFileSize(value: number) {
   return `${(value / (1_024 * 1_024)).toFixed(1)} MB`;
 }
 
-function workspaceRoleLabel(role?: "OWNER" | "ADMIN" | "MEMBER") {
-  return role === "OWNER" ? "群主" : role === "ADMIN" ? "管理员" : "成员";
+function workspaceRoleLabel(role?: "OWNER" | "ADMIN" | "MEMBER" | "GUEST") {
+  return role === "OWNER" ? "群主" : role === "ADMIN" ? "管理员" : role === "GUEST" ? "游客" : "成员";
 }
 
 export function GroupPage() {
   const sessionUser = useSessionUser();
   const { groupId = "" } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const goBack = useAppBack("/community");
+  const [searchParams, setSearchParams] = useSearchParams();
   const cachedGroup = getGroup(groupId);
   const requestedTab = searchParams.get("tab");
   const [tab, setTab] = useState<TabId>(() => tabFromParam(requestedTab));
   const [workspace, setWorkspace] = useState<CommunityWorkspace | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(true);
   const [workspaceError, setWorkspaceError] = useState("");
+  const [workspaceErrorStatus, setWorkspaceErrorStatus] = useState<number | null>(null);
+  const [preview, setPreview] = useState<CommunityPreview | null>(null);
+  const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
+  const [joinRequestsLoading, setJoinRequestsLoading] = useState(true);
+  const [canCreateCommunity, setCanCreateCommunity] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [joinMessage, setJoinMessage] = useState("");
+  const [workspaceIsStale, setWorkspaceIsStale] = useState(false);
   const [workspaceMessage, setWorkspaceMessage] = useState("");
   const [workspaceBusy, setWorkspaceBusy] = useState(false);
+  const [serviceHealth, setServiceHealth] = useState<CommunityServiceHealth | null>(null);
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -108,27 +295,27 @@ export function GroupPage() {
   const [confirmingMessageId, setConfirmingMessageId] = useState("");
   const [chatError, setChatError] = useState("");
   const [pendingResourceFile, setPendingResourceFile] = useState<File | null>(null);
+  const [pendingActions, setPendingActions] = useState<PendingAssistantAction[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const resourceFileInputRef = useRef<HTMLInputElement>(null);
-
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadDesc, setUploadDesc] = useState("");
-  const [uploadKnowledge, setUploadKnowledge] = useState(true);
-  const [uploadVisibility, setUploadVisibility] = useState<"MEMBERS" | "ADMINS">("MEMBERS");
   const speechInput = useSpeechInput({
     value: question,
     onChange: setQuestion,
-    disabled: isSending || !workspace,
+    disabled: isSending || !workspace || workspaceIsStale,
   });
 
+  // 只有切换社群才重置会话；切换栏目会改写 URL，不能连带清空助手对话。
   useEffect(() => {
     setWorkspace(null);
+    setWorkspaceIsStale(false);
+    setWorkspaceErrorStatus(null);
+    setPreview(null);
+    setJoinMessage("");
     setOnlineCount(null);
-    setTab(tabFromParam(requestedTab));
     setQuestion("");
     setChatError("");
     setPendingResourceFile(null);
+    setPendingActions(readPendingActions(groupId));
     setChatMessages([
       {
         id: "welcome",
@@ -136,16 +323,37 @@ export function GroupPage() {
         content: assistantWelcomeMessage(groupId, getGroup(groupId)?.name),
       },
     ]);
-  }, [groupId, requestedTab]);
+  }, [groupId]);
+
+  useEffect(() => {
+    setTab(tabFromParam(requestedTab));
+  }, [requestedTab]);
+
+  function updatePendingActions(
+    updater: (current: PendingAssistantAction[]) => PendingAssistantAction[],
+  ) {
+    setPendingActions((current) => {
+      const next = updater(current);
+      writePendingActions(groupId, next);
+      return next;
+    });
+  }
 
   const loadWorkspace = useCallback(async (showLoading = true) => {
     if (!groupId) return;
     if (showLoading) setWorkspaceLoading(true);
     setWorkspaceError("");
-    const result = await fetchCommunityWorkspace(groupId);
+    setWorkspaceErrorStatus(null);
+    const result = await fetchCommunityWorkspace(groupId, { allowStale: true });
     if (result.ok) {
       setWorkspace(result.workspace);
-      if (groupId !== "official") {
+      setWorkspaceIsStale(result.stale === true);
+      if (result.stale) {
+        setWorkspaceError(
+          result.warning ?? "服务暂时不可用，正在显示上次加载的社群内容",
+        );
+      }
+      if (groupId !== "official" && result.workspace.access.role !== "GUEST") {
         cacheCommunityWorkspace({
           community: result.workspace.community,
           role: result.workspace.access.role,
@@ -154,18 +362,94 @@ export function GroupPage() {
         });
       }
     }
-    else setWorkspaceError(result.message);
+    else {
+      setWorkspaceIsStale(false);
+      setWorkspaceError(result.message);
+      setWorkspaceErrorStatus(result.status ?? null);
+      setPreview(result.preview ?? null);
+    }
     setWorkspaceLoading(false);
   }, [groupId]);
 
+  async function submitJoinRequest() {
+    if (!preview || joining) return;
+    setJoining(true);
+    setJoinMessage("");
+    const result = await requestCommunityJoin(preview.id);
+    if (result.status === 401) {
+      navigate("/me/login");
+      setJoining(false);
+      return;
+    }
+    setJoinMessage(result.message);
+    if (result.ok) {
+      if (result.state === "JOINED") await loadWorkspace();
+      else setPreview({ ...preview, joinRequestPending: true });
+    }
+    setJoining(false);
+  }
+
+  const loadServiceHealth = useCallback(async () => {
+    const result = await fetchCommunityServiceHealth();
+    setServiceHealth(result.health);
+  }, []);
+
+  const loadJoinRequests = useCallback(async () => {
+    if (!groupId) return;
+    setJoinRequestsLoading(true);
+    const result = await fetchCommunityJoinRequests(groupId);
+    setJoinRequests(result.ok ? result.requests : []);
+    setJoinRequestsLoading(false);
+  }, [groupId]);
+
+  async function reviewJoinRequest(requestId: string, decision: "APPROVE" | "REJECT") {
+    if (!groupId) return false;
+    setWorkspaceError("");
+    setWorkspaceMessage("");
+    const result = await reviewCommunityJoinRequest(groupId, requestId, decision);
+    if (result.ok) {
+      setJoinRequests((current) => current.filter((item) => item.id !== requestId));
+      setWorkspaceMessage(result.message);
+      if (decision === "APPROVE") await loadWorkspace(false);
+    } else {
+      setWorkspaceError(result.message);
+    }
+    return result.ok;
+  }
+
   useEffect(() => {
     let active = true;
-    void fetchCommunityGroups();
-    if (active) void loadWorkspace();
+    void fetchCommunityGroups().then((result) => {
+      if (active && result.ok) setCanCreateCommunity(result.canCreateCommunity);
+    });
+    if (active) {
+      void loadWorkspace();
+      void loadServiceHealth();
+    }
     return () => { active = false; };
-  }, [loadWorkspace]);
+  }, [loadServiceHealth, loadWorkspace]);
 
-  const displayName = workspace?.community.name ?? cachedGroup?.name ?? "社群";
+  // 只有能管理成员的身份才需要加入申请列表。
+  useEffect(() => {
+    if (!workspace?.access.canManageMembers) {
+      setJoinRequests([]);
+      setJoinRequestsLoading(false);
+      return;
+    }
+    void loadJoinRequests();
+  }, [workspace?.access.canManageMembers, loadJoinRequests]);
+
+  const displayName = workspace?.community.name ?? preview?.name ?? cachedGroup?.name ?? "社群";
+  const subtitle = workspaceLoading
+    ? "读取中"
+    : workspace
+      // 首次心跳返回前不谎报在线人数。
+      ? onlineCount === null
+        ? `${workspace.usage.members} 成员`
+        : `${onlineCount} 在线`
+      : preview
+        ? "未加入"
+        : "不可用";
   const displayId = workspace?.community.id ?? cachedGroup?.id ?? groupId;
   const isOfficial =
     groupId === "official" ||
@@ -173,17 +457,32 @@ export function GroupPage() {
     workspace?.community.tier === "OFFICIAL_FREE" ||
     cachedGroup?.badgeStyle === "official";
   const usesPrivateConversationAttachments = isOfficial && !workspace?.access.canManageResources;
-  const canAttachFiles = Boolean(workspace?.access.canManageResources || isOfficial);
+  const aiUnavailable =
+    serviceHealth?.services.ai.state === "unavailable" ||
+    serviceHealth?.services.ai.state === "unconfigured";
+  const uploadUnavailable = serviceHealth?.services.upload.state === "unavailable";
+  const canAttachFiles = Boolean(
+    (workspace?.access.canManageResources || isOfficial) &&
+      !uploadUnavailable &&
+      !workspaceIsStale,
+  );
   const visibleTabs = isOfficial
     ? TABS.filter((item) => item.id === "assistant" || item.id === "feed" || item.id === "events")
     : TABS.filter((item) => item.id !== "groups" || Boolean(workspace?.access.isAdmin));
+  const visibleTabIds = visibleTabs.map((item) => item.id).join(",");
   const isAssistantHome =
     Boolean(workspace) &&
     chatMessages.length === 1 &&
     !isSending;
 
+  // 深链或降级后落在一个当前身份看不到的栏目时，回到助手而不是空白页。
   useEffect(() => {
-    if (!workspace || !groupId) return;
+    if (!workspace || visibleTabIds.split(",").includes(tab)) return;
+    setTab("assistant");
+  }, [workspace, visibleTabIds, tab]);
+
+  useEffect(() => {
+    if (!workspace || !groupId || workspace.access.role === "GUEST") return;
     let active = true;
 
     async function heartbeat() {
@@ -230,8 +529,16 @@ export function GroupPage() {
     return () => cancelAnimationFrame(frame);
   }, [tab, chatMessages, isSending]);
 
+  // 栏目状态写回 URL，返回键可以退回上一个栏目，刷新也停在原处。
   function selectPrimaryTab(nextTab: TabId) {
+    if (nextTab === tab) return;
     setTab(nextTab);
+    // 用函数式更新，连续切换栏目时不会读到上一次渲染的旧参数。
+    setSearchParams((current) => {
+      const nextParams = new URLSearchParams(current);
+      nextParams.set("tab", nextTab);
+      return nextParams;
+    });
   }
 
   function askAboutResource(resource: WorkspaceResource) {
@@ -241,12 +548,25 @@ export function GroupPage() {
 
   async function runWorkspaceAction(input: WorkspaceActionInput) {
     if (!groupId || workspaceBusy) return false;
+    if (workspace?.access.role === "GUEST") {
+      navigate("/me/login");
+      return false;
+    }
+    if (workspaceIsStale) {
+      setWorkspaceError("服务恢复后才能修改社群内容，请先重试");
+      return false;
+    }
     setWorkspaceBusy(true);
     setWorkspaceError("");
     setWorkspaceMessage("");
     const result = await performWorkspaceAction(groupId, input);
     if (result.ok) {
       setWorkspaceMessage(result.message);
+      // 点赞、收藏、评论、报名只回传增量，直接改本地状态。
+      if (result.patch) {
+        const patch = result.patch;
+        setWorkspace((current) => current ? applyWorkspacePatch(current, patch) : current);
+      }
       if (result.refresh !== false) await loadWorkspace(false);
     } else {
       setWorkspaceError(result.message);
@@ -259,7 +579,15 @@ export function GroupPage() {
     event.preventDefault();
     const prompt = question.trim();
     const resourceFile = pendingResourceFile;
-    if (!displayId || (!prompt && !resourceFile) || isSending) return;
+    if (!displayId || (!prompt && !resourceFile) || isSending || workspaceIsStale) return;
+    if (workspace?.access.role === "GUEST") {
+      navigate("/me/login");
+      return;
+    }
+    if (aiUnavailable && !resourceFile && !isAssistantOperationPrompt(prompt)) {
+      setChatError("AI 开放式问答暂时不可用；创建活动、查找成员等社群事务仍可使用。");
+      return;
+    }
     speechInput.stopListening();
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -300,10 +628,38 @@ export function GroupPage() {
         setIsSending(false);
         return;
       }
+      const result = await uploadCommunityResource(groupId || displayId, {
+        file: resourceFile,
+        title: resourceFile.name.replace(/\.[^.]+$/, "") || resourceFile.name,
+        description: prompt || undefined,
+        knowledgeText: prompt || undefined,
+        visibility: "MEMBERS",
+      });
+      if (result.ok) {
+        setChatMessages((current) => [...current, {
+          id: `assistant-upload-${Date.now()}`,
+          role: "assistant",
+          content: `${result.message} 已保存到${displayName}资料库，并加入本群知识库。`,
+          operation: true,
+        }]);
+        await loadWorkspace(false);
+      } else {
+        setChatMessages((current) => current.filter((message) => message.id !== userMessage.id));
+        setPendingResourceFile(resourceFile);
+        setQuestion(prompt);
+        setChatError(result.message);
+      }
+      setIsSending(false);
       return;
     }
     const result = await askCommunityAssistant({ groupId: groupId || displayId, message: prompt, history, visibility });
     if (result.ok) {
+      if (result.action) {
+        updatePendingActions((current) => [
+          ...current.filter((item) => item.action.token !== result.action!.token),
+          { groupId, action: result.action!, createdAt: new Date().toISOString() },
+        ]);
+      }
       setChatMessages((current) => [...current, {
         id: `assistant-${Date.now()}`,
         role: "assistant",
@@ -330,71 +686,59 @@ export function GroupPage() {
     const file = event.target.files?.[0] ?? null;
     event.target.value = "";
     if (!file) return;
+    if (uploadUnavailable) {
+      setChatError("文件上传暂时不可用，请稍后重试");
+      return;
+    }
     if (file.size > 50 * 1_024 * 1_024) {
       setChatError("单个文件不能超过 50 MB");
       return;
     }
     setPendingResourceFile(file);
-    if (!usesPrivateConversationAttachments) {
-      setUploadTitle(file.name.replace(/\.[^.]+$/, "") || file.name);
-      setUploadDesc("");
-      setUploadKnowledge(true);
-      setUploadVisibility("MEMBERS");
-      setShowUploadModal(true);
-    }
+    setChatError("");
+    setTab("assistant");
   }
 
-  const handleCancelUpload = () => {
-    setPendingResourceFile(null);
-    setShowUploadModal(false);
-  };
-
-  const handleRealUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pendingResourceFile || !displayId || isSending) return;
-    setIsSending(true);
-    setChatError("");
-    
-    const userMessage: ChatMessage = {
-      id: `user-upload-${Date.now()}`,
-      role: "user",
-      content: `上传资料：《${uploadTitle}》${uploadDesc ? `\n说明：${uploadDesc}` : ""}`,
-      visibility,
-    };
-    setChatMessages((current) => [...current, userMessage]);
-    setShowUploadModal(false);
-
-    const result = await uploadCommunityResource(groupId || displayId, {
-      file: pendingResourceFile,
-      title: uploadTitle.trim(),
-      description: uploadDesc.trim() || undefined,
-      knowledgeText: uploadKnowledge ? (uploadDesc.trim() || "群资料内容") : undefined,
-      visibility: uploadVisibility,
+  // 资料栏目直接上传文件，与助手里的上传走同一个接口。
+  async function uploadResourceFile(input: {
+    file: File;
+    title: string;
+    description?: string;
+    visibility: "MEMBERS" | "ADMINS";
+  }) {
+    if (!groupId || workspaceBusy) return false;
+    if (input.file.size > 50 * 1_024 * 1_024) {
+      setWorkspaceError("单个文件不能超过 50 MB");
+      return false;
+    }
+    setWorkspaceBusy(true);
+    setWorkspaceError("");
+    setWorkspaceMessage("");
+    const result = await uploadCommunityResource(groupId, {
+      ...input,
+      knowledgeText: input.description,
     });
-
     if (result.ok) {
-      setChatMessages((current) => [...current, {
-        id: `assistant-upload-${Date.now()}`,
-        role: "assistant",
-        content: `资料《${uploadTitle}》上传成功，已加入${displayName}资料库${uploadKnowledge ? "并完成 AI 索引" : ""}。`,
-        operation: true,
-      }]);
-      setPendingResourceFile(null);
+      setWorkspaceMessage(result.message);
       await loadWorkspace(false);
     } else {
-      setChatMessages((current) => current.filter((message) => message.id !== userMessage.id));
-      setChatError(result.message);
-      setShowUploadModal(true);
+      setWorkspaceError(result.message);
     }
-    setIsSending(false);
-  };
+    setWorkspaceBusy(false);
+    return result.ok;
+  }
 
-  async function handleActionConfirm(messageId: string, action: AssistantAction) {
+  async function handleActionConfirm(messageId: string, action: AssistantAction, changes?: AssistantActionChanges) {
     if (!displayId || confirmingMessageId) return;
     setConfirmingMessageId(messageId);
     setChatError("");
-    const result = await confirmCommunityAssistantAction({ groupId: groupId || displayId, confirmationToken: action.token });
+    const result = await confirmCommunityAssistantAction({
+      groupId: groupId || displayId,
+      confirmationToken: action.token,
+      actionChanges: changes,
+    });
     if (result.ok) {
+      updatePendingActions((current) => current.filter((item) => item.action.token !== action.token));
       setChatMessages((current) => [
         ...current.map((message) => message.id === messageId ? { ...message, action: undefined } : message),
         {
@@ -408,90 +752,187 @@ export function GroupPage() {
       if (result.effect?.type === "COMMUNITY_CREATED" && result.effect.community) upsertAssistantCommunity(result.effect.community);
       if (result.effect?.targetTab) selectPrimaryTab(result.effect.targetTab);
       await loadWorkspace(false);
-    } else setChatError(result.message);
+      if (
+        result.effect?.type === "GROUP_CREATED" &&
+        result.effect.group &&
+        result.effect.communityId === displayId
+      ) {
+        const createdGroup = result.effect.group;
+        setWorkspace((current) => {
+          if (!current || current.community.id !== result.effect?.communityId) return current;
+          const groups = [
+            ...current.groups.filter((group) => group.id !== createdGroup.id),
+            createdGroup,
+          ];
+          return {
+            ...current,
+            groups,
+            usage: { ...current.usage, groups: groups.length },
+          };
+        });
+      }
+    } else {
+      if ([400, 403, 409].includes(result.status ?? 0)) {
+        updatePendingActions((current) =>
+          current.filter((item) => item.action.token !== action.token),
+        );
+        setChatMessages((current) =>
+          current.map((message) =>
+            message.id === messageId ? { ...message, action: undefined } : message,
+          ),
+        );
+      }
+      setChatError(result.message);
+    }
     setConfirmingMessageId("");
   }
 
-  function handleActionCancel(messageId: string) {
+  function handleActionModify(messageId: string, action: AssistantAction) {
+    updatePendingActions((current) => current.filter((item) => item.action.token !== action.token));
+    setQuestion(`请修改这项草稿：${action.title}。需要调整：`);
     setChatMessages((current) => [
       ...current.map((message) => message.id === messageId ? { ...message, action: undefined } : message),
-      { id: `assistant-cancel-${Date.now()}`, role: "assistant", content: "这次操作已经取消，没有修改任何资料。", operation: true },
+      { id: `assistant-modify-${Date.now()}`, role: "assistant", content: "请在输入框中说明需要修改的内容，我会重新生成草稿。", operation: true },
     ]);
   }
+
+  const messageActionTokens = new Set(
+    chatMessages.flatMap((message) => message.action ? [message.action.token] : []),
+  );
+  const detachedPendingActions = pendingActions.filter(
+    (item) => !messageActionTokens.has(item.action.token),
+  );
 
   return (
     <div className={`screen community-group-screen${isOfficial ? " is-official" : ""}`}>
       <UnifiedHeader
         title={displayName}
-        subtitle={workspaceLoading ? "读取中" : workspace ? `${onlineCount ?? 1} 在线` : "不可用"}
+        subtitle={subtitle}
         ariaLabel={`${displayName}${isOfficial ? "公共社群" : "私有社群"}概览`}
-        onBack={() => navigate("/community")}
+        onBack={goBack}
         backLabel="返回社群列表"
         actions={workspace?.access.isAdmin ? (
-          <button className="bible-toolbar-action" aria-label={isOfficial ? "平台管理" : "社群管理"} title={isOfficial ? "平台管理" : "社群管理"} onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
+          <button data-icon-button="default" className="bible-toolbar-action" aria-label={isOfficial ? "平台管理" : "社群管理"} title={isOfficial ? "平台管理" : "社群管理"} onClick={() => navigate(`/community/${groupId}/settings`)}><Icon name="settings" size={20} /></button>
         ) : undefined}
       />
 
-      {workspace && workspace.community.parentId && (
-        <div style={{ background: "rgba(191,120,246,0.08)", padding: "10px 16px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink)", fontWeight: 600 }}>
-            <span style={{ display: "flex", alignItems: "center", color: "var(--purple)" }}>
-              <Icon name="users" size={14} />
-            </span>
-            <span>{workspace.access.isDirectMember ? "已加入该小组" : "目前通过主社群访问此小组"}</span>
+      {/* 没有工作台数据时不展示空栏目，避免点进去只有空白。 */}
+      {(workspace || workspaceLoading) && (
+        <div className={`community-tabs${isOfficial ? " is-official" : workspace?.access.isAdmin ? " has-groups" : ""}`} role="tablist" aria-label="社群功能">
+          {visibleTabs.map((item) => (
+            <button key={item.id} role="tab" aria-selected={tab === item.id} onClick={() => selectPrimaryTab(item.id)} className={tab === item.id ? "active" : ""}>{item.label}</button>
+          ))}
+        </div>
+      )}
+
+      {preview && !workspace && (
+        <section className="community-join-preview" aria-label={`${preview.name}社群介绍`}>
+          <span className="community-join-preview-mark" style={{ background: preview.avatarColor }}>
+            {preview.abbreviation}
+          </span>
+          <h2>{preview.name}</h2>
+          <p>{preview.description || "这个社群还没有填写简介。"}</p>
+          <div className="community-join-preview-meta">
+            <span>{preview.memberCount} 位成员</span>
+            <span>{preview.joinPolicy === "OPEN" ? "无需审核" : "管理员审核"}</span>
           </div>
+          {joinMessage && <div className="community-feedback" role="status">{joinMessage}</div>}
           <button
             type="button"
-            disabled={workspaceBusy}
-            onClick={() => {
-              if (workspace.access.isDirectMember) {
-                if (window.confirm("确定退出该小组吗？")) {
-                  void runWorkspaceAction({ action: "LEAVE_SUBGROUP" });
-                }
-              } else {
-                void runWorkspaceAction({ action: "JOIN_SUBGROUP" });
-              }
-            }}
-            style={{
-              padding: "4px 10px",
-              background: workspace.access.isDirectMember ? "transparent" : "var(--purple)",
-              color: workspace.access.isDirectMember ? "var(--pink)" : "var(--white)",
-              border: workspace.access.isDirectMember ? "1px solid var(--line)" : 0,
-              borderRadius: 8,
-              fontSize: 11,
-              fontWeight: 800,
-              cursor: "pointer"
-            }}
+            className="btn-primary"
+            disabled={joining || preview.joinRequestPending}
+            onClick={() => void submitJoinRequest()}
           >
-            {workspace.access.isDirectMember ? "退出小组" : "加入小组"}
+            {preview.joinRequestPending
+              ? "申请已提交，等待管理员审核"
+              : joining
+                ? "处理中…"
+                : preview.joinPolicy === "OPEN"
+                  ? "加入社群"
+                  : "申请加入"}
           </button>
-        </div>
+          <small>加入后才能查看动态、活动、成员与群资料。</small>
+        </section>
       )}
 
-      <div className={`community-tabs${isOfficial ? " is-official" : workspace?.access.isAdmin ? " has-groups" : ""}`} role="tablist" aria-label="社群功能">
-        {visibleTabs.map((item) => (
-          <button key={item.id} role="tab" aria-selected={tab === item.id} onClick={() => selectPrimaryTab(item.id)} className={tab === item.id ? "active" : ""}>{item.label}</button>
-        ))}
-      </div>
-
-      {(workspaceError || workspaceMessage) && (
-        <div className={`community-feedback${workspaceError ? " is-error" : ""}`} role={workspaceError ? "alert" : "status"}>
-          {workspaceError || workspaceMessage}
-          {workspaceError && <button onClick={() => loadWorkspace()}>重试</button>}
-        </div>
+      {workspaceError && !workspace && !preview && (
+        <CommunityErrorState
+          title={
+            workspaceErrorStatus === 401
+              ? "请先登录"
+              : workspaceErrorStatus === 403
+                ? "无法访问社群"
+                : workspaceErrorStatus === 404
+                  ? "社群不存在"
+                  : undefined
+          }
+          message={workspaceError}
+          status={workspaceErrorStatus}
+          health={serviceHealth}
+          onRetry={() => {
+            void loadWorkspace();
+            void loadServiceHealth();
+          }}
+          onBack={goBack}
+        />
       )}
 
-      {workspaceLoading && !workspace && <div className="route-status"><Icon name="users" size={22} /><b>正在读取社群</b><span>同步成员权限和栏目内容…</span></div>}
+      {workspaceError && workspace && (
+        <CommunityDegradedNotice
+          health={serviceHealth}
+          onRetry={() => {
+            void loadWorkspace(false);
+            void loadServiceHealth();
+          }}
+          onBack={goBack}
+        >
+          {workspaceError}
+        </CommunityDegradedNotice>
+      )}
 
-      {workspace && tab === "feed" && <CommunitySharePanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
-      {workspace && tab === "events" && <CommunityEventsPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
-      {workspace && tab === "members" && <CommunityMembersPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
-      {workspace && tab === "groups" && workspace.access.isAdmin && <CommunityGroupsPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} />}
-      {workspace && tab === "resources" && <CommunityResourcesPanel workspace={workspace} busy={workspaceBusy} runAction={runWorkspaceAction} onAskAssistant={askAboutResource} />}
+      {workspaceMessage && (
+        <div className="community-feedback" role="status">{workspaceMessage}</div>
+      )}
 
-      {tab === "assistant" && (
+      {workspaceLoading && !workspace && <div className="route-status"><Icon name="users" size={20} /><b>正在读取社群</b><span>同步成员权限和栏目内容…</span></div>}
+
+      {workspace && tab === "feed" && <CommunitySharePanel workspace={workspace} busy={workspaceBusy || workspaceIsStale} runAction={runWorkspaceAction} />}
+      {workspace && tab === "events" && <CommunityEventsPanel workspace={workspace} busy={workspaceBusy || workspaceIsStale} runAction={runWorkspaceAction} />}
+      {workspace && tab === "members" && (
+        <CommunityMembersPanel
+          workspace={workspace}
+          busy={workspaceBusy || workspaceIsStale}
+          runAction={runWorkspaceAction}
+          joinRequests={joinRequests}
+          joinRequestsLoading={joinRequestsLoading}
+          onReviewJoinRequest={reviewJoinRequest}
+        />
+      )}
+      {workspace && tab === "groups" && workspace.access.isAdmin && <CommunityGroupsPanel workspace={workspace} busy={workspaceBusy || workspaceIsStale} runAction={runWorkspaceAction} />}
+      {workspace && tab === "resources" && <CommunityResourcesPanel workspace={workspace} busy={workspaceBusy || workspaceIsStale} runAction={runWorkspaceAction} onAskAssistant={askAboutResource} onUploadFile={uploadResourceFile} />}
+
+      {tab === "assistant" && workspace && (
         <>
           <div ref={chatScrollRef} className="screen-scroll community-chat-scroll">
+            {detachedPendingActions.length > 0 && (
+              <section className="community-pending-actions" aria-label="待确认事项">
+                <header><b>待确认事项</b><span>{detachedPendingActions.length}</span></header>
+                {detachedPendingActions.map((item) => (
+                  <AssistantDraftCard
+                    key={item.action.token}
+                    action={item.action}
+                    busy={confirmingMessageId === item.action.token}
+                    isOfficial={isOfficial}
+                    canUseAdminVisibility={Boolean(workspace?.access.isAdmin)}
+                    onModify={() => {
+                      updatePendingActions((current) => current.filter((entry) => entry.action.token !== item.action.token));
+                      setQuestion(`请修改这项草稿：${item.action.title}。需要调整：`);
+                    }}
+                    onConfirm={(changes) => void handleActionConfirm(item.action.token, item.action, changes)}
+                  />
+                ))}
+              </section>
+            )}
             {isAssistantHome ? (
               <section className={`community-assistant-home${isOfficial ? " is-official" : " is-community"}`} aria-labelledby="community-assistant-title">
                 <span
@@ -499,13 +940,13 @@ export function GroupPage() {
                   style={isOfficial ? undefined : { background: workspace?.community.avatarColor }}
                 >
                   {isOfficial
-                    ? <Icon name="sparkle" size={22} />
+                    ? <Icon name="sparkle" size={20} />
                     : (workspace?.community.abbreviation ?? cachedGroup?.letter ?? "群").slice(0, 2)}
                 </span>
                 <h2 id="community-assistant-title">
                   {isOfficial ? "今天想一起做什么？" : `${displayName}助手`}
                   <span className="community-assistant-type">
-                    {isOfficial ? "公共社群" : `私有社群 · ${workspaceRoleLabel(workspace?.access.role)}`}
+                    {isOfficial ? workspace.access.role === "GUEST" ? "公共社群 · 游客浏览" : "公共社群" : `私有社群 · ${workspaceRoleLabel(workspace?.access.role)}`}
                   </span>
                 </h2>
                 <p>{isOfficial ? "问经文、查总群资料，或用一句话办理社群事务。" : `问经文、查${displayName}资料，或用一句话办理群事务。`}</p>
@@ -514,7 +955,7 @@ export function GroupPage() {
                     <>
                       <button onClick={() => setQuestion("请解释这段经文的背景、重点和生活应用：")}>解释一段经文</button>
                       <button onClick={() => setQuestion("请根据慧读总群资料回答：")}>查询总群资料</button>
-                      <button onClick={() => setQuestion("创建社群“”，简称“”，简介“”")}>创建我的社群</button>
+                      {canCreateCommunity && <button onClick={() => setQuestion("创建社群“”，简称“”，简介“”")}>创建我的社群</button>}
                       <button onClick={() => setQuestion("管理我的社群")}>管理我的社群</button>
                       <button onClick={() => setQuestion("搜索适合我的社群：")}>查找可加入社群</button>
                       <button onClick={() => setQuestion("申请加入社群“”")}>申请加入社群</button>
@@ -538,7 +979,7 @@ export function GroupPage() {
                     </>
                   )}
                 </div>
-                <small>{isOfficial ? "公共内容由平台维护，管理操作会先确认权限" : "本群资料独立隔离，管理操作会先请你确认"}</small>
+                <small>{isOfficial ? workspace.access.role === "GUEST" ? "动态和活动可直接浏览，互动与提问需要登录" : "公共内容由平台维护，管理操作会先确认权限" : "本群资料独立隔离，管理操作会先请你确认"}</small>
               </section>
             ) : (
               <>
@@ -546,7 +987,7 @@ export function GroupPage() {
               <div key={message.id} className="community-user-message-row">
                 <div className="community-user-message">
                   <div>{message.content}</div>
-                  <small><Icon name="eye" size={11} />仅自己可见</small>
+                  <small><Icon name="eye" size={12} />仅自己可见</small>
                 </div>
                 <UserAvatar
                   name={sessionUser?.name ?? "我"}
@@ -559,10 +1000,14 @@ export function GroupPage() {
               <div key={message.id} className="card community-assistant-message">
                 <div>{message.content}</div>
                 {message.action && (
-                  <div className="community-confirm-card">
-                    <b>{message.action.title}</b><p>{message.action.summary}</p>
-                    <div><button disabled={Boolean(confirmingMessageId)} onClick={() => handleActionCancel(message.id)} className="compact-action-btn">取消</button><button disabled={Boolean(confirmingMessageId)} onClick={() => handleActionConfirm(message.id, message.action!)} className="compact-action-btn is-primary">{confirmingMessageId === message.id ? "正在执行…" : message.action.confirmLabel}</button></div>
-                  </div>
+                  <AssistantDraftCard
+                    action={message.action}
+                    busy={confirmingMessageId === message.id}
+                    isOfficial={isOfficial}
+                    canUseAdminVisibility={Boolean(workspace?.access.isAdmin)}
+                    onModify={() => handleActionModify(message.id, message.action!)}
+                    onConfirm={(changes) => void handleActionConfirm(message.id, message.action!, changes)}
+                  />
                 )}
                 {message.result?.kind === "MEMBER_LIST" && (
                   <div className="community-assistant-result">
@@ -572,7 +1017,7 @@ export function GroupPage() {
                         <div key={item.id} className="community-member-result-row">
                           <span style={{ background: item.avatarColor }}>
                             {item.avatarUrl
-                              ? <img src={item.avatarUrl} alt="" />
+                              ? <img src={resolveAvatarUrl(item.avatarUrl) ?? ""} alt="" />
                               : item.name.slice(0, 1)}
                           </span>
                           <strong>{item.name}</strong>
@@ -593,7 +1038,7 @@ export function GroupPage() {
                             <strong>{item.name}</strong>
                             <small>{item.role === "OWNER" ? "群主" : "管理员"} · {item.memberCount} 人</small>
                           </div>
-                          <Icon name="chevron-right" size={15} />
+                          <Icon name="chevron-right" size={16} />
                         </button>
                       ))}
                     </div>
@@ -601,7 +1046,7 @@ export function GroupPage() {
                 )}
               </div>
             ))}
-            {isSending && <div className="card community-assistant-message">正在思考…</div>}
+            {isSending && <div className="card community-assistant-message"><AiThinking /></div>}
             <div className="disclaimer">重要社群操作需本人确认，并由后台再次校验权限</div>
               </>
             )}
@@ -620,78 +1065,18 @@ export function GroupPage() {
             <span className="community-chat-row">
               <span className="community-chat-field">
                 {canAttachFiles && (
-                  <button type="button" aria-label="添加附件" title="添加附件" disabled={isSending} className="icon-btn composer-icon-btn community-attachment-btn" onClick={() => resourceFileInputRef.current?.click()}>
-                    <Icon name="paperclip" size={18} />
+                  <button data-icon-button="default" type="button" aria-label="添加附件" title="添加附件" disabled={isSending} className="icon-btn composer-icon-btn community-attachment-btn" onClick={() => resourceFileInputRef.current?.click()}>
+                    <Icon name="paperclip" size={20} />
                   </button>
                 )}
-                <input value={question} onChange={(event) => { setQuestion(event.target.value); if (chatError) setChatError(""); if (speechInput.error) speechInput.clearError(); }} disabled={isSending || !workspace} maxLength={1200} aria-label="向社群助手提问" placeholder={speechInput.isListening ? "正在聆听…" : pendingResourceFile ? usesPrivateConversationAttachments ? "可补充问题，发送后分析附件…" : "可补充资料说明，发送后上传…" : `提问或办理${displayName}事务…`} />
-                <VoiceInputButton isSupported={speechInput.isSupported} isListening={speechInput.isListening} disabled={isSending || !workspace} onClick={speechInput.toggleListening} />
+                <input value={question} onChange={(event) => { setQuestion(event.target.value); if (chatError) setChatError(""); if (speechInput.error) speechInput.clearError(); }} disabled={isSending || !workspace || workspaceIsStale} maxLength={1200} aria-label="向社群助手提问" placeholder={workspaceIsStale ? "服务恢复后可继续使用助手" : speechInput.isListening ? "正在聆听…" : pendingResourceFile ? usesPrivateConversationAttachments ? "可补充问题，发送后分析附件…" : "可补充资料说明，发送后上传…" : `提问或办理${displayName}事务…`} />
+                <VoiceInputButton isSupported={speechInput.isSupported} isListening={speechInput.isListening} disabled={isSending || !workspace || workspaceIsStale} onClick={speechInput.toggleListening} />
+                {/* 与慧读输入栏同构：发送键收进框内，圆形上箭头 */}
+                <button data-icon-button="primary" type="submit" aria-label={pendingResourceFile ? usesPrivateConversationAttachments ? "发送附件" : "确认上传资料" : "发送问题"} disabled={isSending || !workspace || workspaceIsStale || (!question.trim() && !pendingResourceFile)} className="huidu-send-btn"><Icon name="arrow-up" size={17} /></button>
               </span>
-              <button type="submit" aria-label={pendingResourceFile ? usesPrivateConversationAttachments ? "发送附件" : "确认上传资料" : "发送问题"} disabled={isSending || !workspace || (!question.trim() && !pendingResourceFile)} className="icon-btn icon-btn-primary composer-icon-btn community-send-btn"><Icon name="send" size={18} /></button>
             </span>
           </form>
         </>
-      )}
-      {showUploadModal && pendingResourceFile && (
-        <div className="community-publish-backdrop" onClick={handleCancelUpload} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div className="community-action-sheet" role="dialog" aria-modal="true" aria-label="资料上传详情" onClick={(event) => event.stopPropagation()} style={{ maxWidth: 400, width: "95%", borderRadius: 18, padding: 22 }}>
-            <div className="community-publish-sheet-header" style={{ marginBottom: 15 }}>
-              <div><b>上传群资料</b><span>补充资料详细信息，使群成员及 AI 更易检索</span></div>
-              <button type="button" aria-label="关闭" onClick={handleCancelUpload}><Icon name="x" size={19} /></button>
-            </div>
-            <form onSubmit={handleRealUpload} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
-                资料标题 (最多 100 字)
-                <input
-                  required
-                  value={uploadTitle}
-                  onChange={(e) => setUploadTitle(e.target.value.slice(0, 100))}
-                  style={{ width: "100%", height: 40, padding: "0 12px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)" }}
-                />
-              </label>
-
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
-                资料简介 (说明)
-                <textarea
-                  value={uploadDesc}
-                  onChange={(e) => setUploadDesc(e.target.value.slice(0, 500))}
-                  rows={3}
-                  placeholder="填写资料摘要、用途，有助于小组成员阅读"
-                  style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)", resize: "vertical", font: "inherit" }}
-                />
-              </label>
-
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700, color: "var(--body)", cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={uploadKnowledge}
-                  onChange={(e) => setUploadKnowledge(e.target.checked)}
-                  style={{ width: 16, height: 16, cursor: "pointer" }}
-                />
-                同步至 AI 知识库 (允许助手引用此内容)
-              </label>
-
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--body)" }}>
-                可见范围
-                <select
-                  value={uploadVisibility}
-                  onChange={(e) => setUploadVisibility(e.target.value as "MEMBERS" | "ADMINS")}
-                  style={{ width: "100%", height: 40, padding: "0 10px", border: "1px solid var(--line)", borderRadius: 10, fontSize: 13, background: "var(--white)" }}
-                >
-                  <option value="MEMBERS">全体成员可见 (MEMBERS)</option>
-                  <option value="ADMINS">仅管理员可见 (ADMINS)</option>
-                </select>
-              </label>
-
-              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                <button type="button" className="btn-secondary" onClick={handleCancelUpload} style={{ flex: 1, minHeight: 40, border: "1px solid var(--line)" }}>取消</button>
-                <button type="submit" className="btn-primary" disabled={isSending} style={{ flex: 1, minHeight: 40 }}>
-                  {isSending ? "正在上传..." : "确认上传"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
     </div>
   );

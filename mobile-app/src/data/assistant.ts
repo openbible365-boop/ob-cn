@@ -19,7 +19,17 @@ type AssistantSuccess = {
 type AssistantFailure = {
   ok: false;
   message?: string;
+  code?: "AI_UNAVAILABLE" | string;
 };
+
+function assistantFailureMessage(status: number, fallback?: string) {
+  if (status === 401) return "请先登录后再使用社群助手";
+  if (status === 403) return "当前账号没有执行此操作的权限";
+  if (status === 413) return "附件过大，请选择较小的文件";
+  if (fallback && !/^服务器返回异常/u.test(fallback)) return fallback;
+  if (status === 503) return "AI 开放式问答暂时不可用；社群事务仍可继续办理";
+  return "社群助手暂时不可用，请稍后重试";
+}
 
 export type AssistantResult =
   | {
@@ -29,7 +39,7 @@ export type AssistantResult =
       effect?: AssistantEffect;
       result?: AssistantStructuredResult;
     }
-  | { ok: false; message: string; status?: number };
+  | { ok: false; message: string; status?: number; code?: string };
 
 export type AssistantAction = {
   kind:
@@ -42,7 +52,14 @@ export type AssistantAction = {
   token: string;
   title: string;
   summary: string;
+  fields?: Array<{ label: string; value: string }>;
+  expiresAt?: string;
   confirmLabel: string;
+};
+
+export type AssistantActionChanges = {
+  title?: string;
+  visibility?: "PUBLIC" | "MEMBERS" | "ADMINS";
 };
 
 export type AssistantEffect = {
@@ -61,6 +78,14 @@ export type AssistantEffect = {
     description: string | null;
     avatarColor: string;
     tier: "OFFICIAL_FREE" | "BASIC_FREE" | "MID" | "HIGH";
+    memberCount: number;
+  };
+  group?: {
+    id: string;
+    name: string;
+    abbreviation: string;
+    description: string | null;
+    avatarColor: string;
     memberCount: number;
   };
   communityId?: string;
@@ -116,11 +141,12 @@ export async function askCommunityAssistant(input: {
     if (!response.ok || !result?.ok) {
       return {
         ok: false,
-        message:
-          result && "message" in result && result.message
-            ? result.message
-            : "平台小助手暂时不可用，请稍后再试",
+        message: assistantFailureMessage(
+          response.status,
+          result && "message" in result ? result.message : undefined,
+        ),
         status: response.status,
+        code: result && "code" in result ? result.code : undefined,
       };
     }
 
@@ -161,11 +187,12 @@ export async function askCommunityAssistantWithAttachment(input: {
     if (!response.ok || !result?.ok) {
       return {
         ok: false,
-        message:
-          result && "message" in result && result.message
-            ? result.message
-            : `服务器返回异常（${response.status}）`,
+        message: assistantFailureMessage(
+          response.status,
+          result && "message" in result ? result.message : undefined,
+        ),
         status: response.status,
+        code: result && "code" in result ? result.code : undefined,
       };
     }
     return result;
@@ -177,6 +204,7 @@ export async function askCommunityAssistantWithAttachment(input: {
 export async function confirmCommunityAssistantAction(input: {
   groupId: string;
   confirmationToken: string;
+  actionChanges?: AssistantActionChanges;
 }): Promise<AssistantResult> {
   try {
     const response = await apiRequest<AssistantSuccess | AssistantFailure>(
@@ -190,11 +218,12 @@ export async function confirmCommunityAssistantAction(input: {
     if (!response.ok || !result?.ok) {
       return {
         ok: false,
-        message:
-          result && "message" in result && result.message
-            ? result.message
-            : "操作执行失败，请重新发起",
+        message: assistantFailureMessage(
+          response.status,
+          result && "message" in result ? result.message : "操作执行失败，请重新发起",
+        ),
         status: response.status,
+        code: result && "code" in result ? result.code : undefined,
       };
     }
     return {

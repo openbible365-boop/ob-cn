@@ -1,5 +1,6 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { Icon } from "../components/Icon";
+import { useParams } from "react-router-dom";
+import { useAppBack } from "../hooks/useAppBack";
+import { UnifiedHeader } from "../components/UnifiedHeader";
 
 const CONTENT = {
   terms: {
@@ -23,16 +24,19 @@ const CONTENT = {
 } as const;
 
 export function LegalPage() {
-  const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const { type } = useParams();
   const content = type === "privacy" ? CONTENT.privacy : CONTENT.terms;
 
   return (
     <div className="screen" style={{ background: "var(--surface)" }}>
-      <div className="page-header">
-        <button className="icon-btn" aria-label="返回登录" onClick={() => navigate(-1)}><Icon name="chevron-left" size={18} /></button>
-        <div className="title">{content.title}</div>
-      </div>
+      {/* 与其他二级页同一顶栏：左侧芯片内返回 + 标题，右段放产品名 */}
+      <UnifiedHeader
+        ariaLabel={content.title}
+        title={content.title}
+        subtitle="慧读圣经"
+        onBack={goBack}
+      />
       <main className="screen-scroll legal-page">
         <div className="card legal-card">
           <p className="legal-updated">简明版 · 更新于 2026 年 7 月</p>

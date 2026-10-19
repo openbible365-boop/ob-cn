@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE } from "@/lib/current-user";
+import { createSession } from "@/lib/current-user";
 import { loginWithGoogleIdToken } from "@/lib/google-login";
 
 export async function POST(request: Request) {
@@ -19,12 +18,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const store = await cookies();
-  store.set(SESSION_COOKIE, result.user.id, {
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+  await createSession(result.user.id, request.headers.get("user-agent"));
   return NextResponse.json(result);
 }

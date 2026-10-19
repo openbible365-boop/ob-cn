@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { countCommunityPlanMembers, findCommunityAccess } from "@/lib/community-access";
 import { getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
+import { createUserNotification } from "@/lib/user-notifications";
 
 type RouteParams = {
   params: Promise<{ communityId: string }>;
@@ -166,6 +167,19 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 409 },
     );
   }
+
+  await createUserNotification({
+    userId: result.userId,
+    preferenceKey: "join_updates",
+    type: "JOIN_REVIEW",
+    title: decision === "APPROVE" ? "入群申请已通过" : "入群申请未通过",
+    body:
+      decision === "APPROVE"
+        ? `你已成为「${access.community.name}」的成员`
+        : `你加入「${access.community.name}」的申请未通过`,
+    href: decision === "APPROVE" ? `/community/${access.community.id}` : "/community",
+    uniqueKey: `join-review:${requestId}:${decision}`,
+  }).catch((cause) => console.error("Create join review notification failed", cause));
 
   return NextResponse.json({
     ok: true,

@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, type Tone } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
 import { formatCents, formatTokensPerDay } from "@/lib/format";
 import { toggleAutoFallback, toggleRateLimit, expandCanary, rollbackToVersion } from "@/lib/actions/ai";
 import { ApiKeyControl } from "@/components/ApiKeyControl";
@@ -15,11 +18,21 @@ const STATUS_LABELS: Record<string, string> = {
   DEGRADED: "异常",
 };
 
-const PROMPT_STATUS_PILL: Record<string, string> = {
-  CANARY: "pill-purple",
-  GA: "pill-yellow",
-  ARCHIVED: "pill-muted",
+// 语义映射：灰度中需要盯着看=告警，全量=正常，已归档=中性
+const PROMPT_STATUS_TONE: Record<string, Tone> = {
+  CANARY: "warn",
+  GA: "ok",
+  ARCHIVED: "neutral",
 };
+
+const PROMPT_COLUMNS: Column[] = [
+  { key: "version", label: "版本", width: "90px" },
+  { key: "desc", label: "说明", width: "1fr" },
+  { key: "status", label: "状态", width: "130px" },
+  { key: "like", label: "点赞率", width: "100px", align: "right" },
+  { key: "dislike", label: "点踩率", width: "100px", align: "right" },
+  { key: "ops", label: "操作", width: "200px" },
+];
 
 function promptStatusLabel(status: string, rolloutPercent: number) {
   if (status === "GA") return `全量 ${rolloutPercent}%`;
@@ -59,6 +72,9 @@ export default async function AiManagementPage() {
             <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "var(--purple)" }}>变更不停服生效</div>
           </div>
 
+          {[primary, backup].filter(Boolean).length === 0 && (
+            <EmptyState title="尚未配置模型" hint="在数据库 AiModel 表中配置主/备模型后显示" />
+          )}
           {[primary, backup].filter(Boolean).map((m) => (
             <div key={m!.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 12, marginBottom: 8 }}>
               <div style={{ width: 8, height: 8, background: m!.status === "NORMAL" ? "var(--purple)" : "var(--line)", borderRadius: 100 }} />
@@ -127,6 +143,11 @@ export default async function AiManagementPage() {
           </div>
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--surface-2)" }}>
             <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>社群 AI 助理 Token 消耗 Top</div>
+            {tokenTop.length === 0 && (
+              <div style={{ padding: "12px 0", color: "var(--body)", fontSize: 12, fontWeight: 600 }}>
+                今日暂无社群 AI 助理消耗
+              </div>
+            )}
             {tokenTop.map((c) => (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "5px 0" }}>
                 <div style={{ flex: 1, fontWeight: 700 }}>{c.name}</div>
@@ -143,20 +164,20 @@ export default async function AiManagementPage() {
           <div style={{ fontSize: 13, fontWeight: 800 }}>系统 Prompt 版本管理</div>
           <CreatePromptVersionControl />
         </div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "90px 1fr 130px 110px 110px 200px" }}>
-          <div>版本</div><div>说明</div><div>状态</div><div>点赞率</div><div>点踩率</div><div>操作</div>
-        </div>
+        <DataTable columns={PROMPT_COLUMNS} label="提示词版本列表">
+        {versions.length === 0 && (
+          <EmptyState title="还没有提示词版本" hint="用上方表单新建第一个版本，灰度发布后可在此对比点赞率" />
+        )}
         {versions.map((v) => (
-          <div key={v.id} className="admin-table-row" style={{ gridTemplateColumns: "90px 1fr 130px 110px 110px 200px" }}>
-            <div style={{ fontWeight: 800, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>{v.version}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{v.description}</div>
-            <div><span className={`pill ${PROMPT_STATUS_PILL[v.status]}`}>{promptStatusLabel(v.status, v.rolloutPercent)}</span></div>
-            <div style={{ fontWeight: 700, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>
-              {v.likeRatePct != null ? `${v.likeRatePct}%` : "—"}
-            </div>
-            <div style={{ fontWeight: 700, color: v.status === "ARCHIVED" ? "var(--body)" : "var(--ink)" }}>
-              {v.dislikeRatePct != null ? `${v.dislikeRatePct}%` : "—"}
-            </div>
+          <DataTable.Row key={v.id}>
+            <DataTable.Cell><strong>{v.version}</strong></DataTable.Cell>
+            <DataTable.Cell truncate title={v.description}>{v.description}</DataTable.Cell>
+            <DataTable.Cell>
+              <Badge tone={PROMPT_STATUS_TONE[v.status]}>{promptStatusLabel(v.status, v.rolloutPercent)}</Badge>
+            </DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{v.likeRatePct != null ? `${v.likeRatePct}%` : "—"}</strong></DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{v.dislikeRatePct != null ? `${v.dislikeRatePct}%` : "—"}</strong></DataTable.Cell>
+            <DataTable.Cell>
             <div className="row-actions">
               {v.status === "CANARY" && (
                 <form action={expandCanary}>
@@ -179,8 +200,10 @@ export default async function AiManagementPage() {
                 </form>
               )}
             </div>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
+        </DataTable>
       </div>
     </>
   );

@@ -108,10 +108,15 @@ export function syncHighlights(): Promise<boolean> {
   return syncPromise;
 }
 
-export function clearHighlightsForLogout() {
+// 退出登录时清掉所有本机批注数据：高亮、笔记和两条待同步队列。
+// 不清笔记队列的话，残留的操作会同步进下一个登录的账号。
+export function clearAnnotationsForLogout() {
   clearTimeout(syncTimer);
+  clearTimeout(noteSyncTimer);
   save(PENDING_KEY, []);
+  save(NOTE_PENDING_KEY, []);
   saveHighlights([]);
+  saveNotes([]);
 }
 
 export function getNotes(): Note[] {

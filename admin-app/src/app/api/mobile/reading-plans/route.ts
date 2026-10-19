@@ -93,6 +93,15 @@ export async function GET() {
         completedDays,
         completedAt: enrollment?.completedAt ?? null,
         today,
+        // 完整日程：客户端据此展开「全部 N 天」并逐日跳转到对应经文
+        days: plan.days.map((day) => ({
+          dayNumber: day.dayNumber,
+          title: day.title,
+          book: day.book,
+          chapter: day.chapter,
+          verseStart: day.verseStart,
+          verseEnd: day.verseEnd,
+        })),
       };
     }),
   });

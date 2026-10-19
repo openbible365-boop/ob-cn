@@ -1,4 +1,37 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
+import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { Badge, type Tone } from "@/components/ui/Primitives";
+import { EmptyState } from "@/components/ui/States";
+
+const POST_COLUMNS: Column[] = [
+  { key: "content", label: "内容", width: "1.6fr" },
+  { key: "author", label: "作者", width: "120px" },
+  { key: "community", label: "社群", width: "130px" },
+  { key: "likes", label: "点赞", width: "70px", align: "right" },
+  { key: "comments", label: "评论", width: "70px", align: "right" },
+  { key: "status", label: "状态", width: "90px" },
+  { key: "ops", label: "操作", width: "200px" },
+];
+
+const COMMENT_COLUMNS: Column[] = [
+  { key: "content", label: "评论", width: "1.8fr" },
+  { key: "author", label: "作者", width: "120px" },
+  { key: "community", label: "社群", width: "140px" },
+  { key: "ops", label: "操作", width: "120px" },
+];
+
+const RESOURCE_COLUMNS: Column[] = [
+  { key: "title", label: "资料", width: "1.5fr" },
+  { key: "kind", label: "类型", width: "90px" },
+  { key: "community", label: "社群", width: "140px" },
+  { key: "uploader", label: "上传者", width: "120px" },
+  { key: "status", label: "状态", width: "100px" },
+  { key: "ops", label: "操作", width: "180px" },
+];
+
 import {
   deleteCommunityResource,
   deletePost,
@@ -13,7 +46,8 @@ import { AddSensitiveWordControl } from "@/components/AddSensitiveWordControl";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 
 const STATUS_LABEL: Record<string, string> = { VISIBLE: "正常", HIDDEN: "已屏蔽", DELETED: "已删除" };
-const STATUS_PILL: Record<string, string> = { VISIBLE: "pill-muted", HIDDEN: "pill-orange", DELETED: "pill-pink" };
+// 语义映射：可见=正常，已屏蔽=告警，已删除=错误
+const STATUS_TONE: Record<string, Tone> = { VISIBLE: "ok", HIDDEN: "warn", DELETED: "err" };
 const LEVEL_LABEL: Record<string, string> = { BLOCK: "拦截级", REVIEW: "待审级", LOG: "仅记录" };
 const LEVEL_PILL: Record<string, string> = { BLOCK: "pill-pink", REVIEW: "pill-orange", LOG: "pill-muted" };
 const RESOURCE_STATUS_LABEL: Record<string, string> = { ACTIVE: "正常", HIDDEN: "已下架", DELETED: "已删除" };
@@ -23,25 +57,30 @@ const POST_TYPE_LABEL: Record<string, string> = { POST: "图文", ARTICLE: "文�
 export default async function ContentManagementPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
 
-  const [posts, words, comments, resources] = await Promise.all([
+  const postWhere = q
+    ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" as const } },
+          { content: { contains: q, mode: "insensitive" as const } },
+          { author: { name: { contains: q, mode: "insensitive" as const } } },
+          { community: { name: { contains: q, mode: "insensitive" as const } } },
+        ],
+      }
+    : undefined;
+
+  const [posts, postTotal, words, comments, resources] = await Promise.all([
     db.post.findMany({
-      where: q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } },
-              { content: { contains: q, mode: "insensitive" } },
-              { author: { name: { contains: q, mode: "insensitive" } } },
-              { community: { name: { contains: q, mode: "insensitive" } } },
-            ],
-          }
-        : undefined,
+      where: postWhere,
       include: { author: true, community: true },
       orderBy: { createdAt: "desc" },
+      ...pageQuery(page),
     }),
+    db.post.count({ where: postWhere }),
     db.sensitiveWord.findMany({ orderBy: [{ level: "asc" }, { word: "asc" }] }),
     db.postComment.findMany({
       where: q ? { content: { contains: q, mode: "insensitive" } } : undefined,
@@ -62,9 +101,11 @@ export default async function ContentManagementPage({
       take: 200,
     }),
   ]);
+  const info = pageInfo(page, postTotal);
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">内容管理</div>
         <div className="meta">共 {posts.length} 条动态</div>
@@ -79,23 +120,28 @@ export default async function ContentManagementPage({
       </div>
 
       <div className="card" style={{ borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto", marginBottom: 12 }}>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.6fr 130px 130px 90px 90px 100px 200px" }}>
-          <div>内容</div><div>作者</div><div>社群</div><div>点赞</div><div>评论</div><div>状态</div><div>操作</div>
-        </div>
+        <DataTable columns={POST_COLUMNS} label="社群动态列表">
         {posts.map((p) => (
-          <div key={p.id} className="admin-table-row" style={{ gridTemplateColumns: "1.6fr 130px 130px 90px 90px 100px 200px" }}>
-            <div style={{ display: "flex", minWidth: 0, alignItems: "center", gap: 8 }}>
-              {p.pinnedAt && <span className="pill pill-orange">置顶</span>}
-              <span className={`pill ${p.postType === "NOTICE" ? "pill-orange" : p.postType === "MEDIA" ? "pill-purple" : "pill-muted"}`}>{POST_TYPE_LABEL[p.postType]}</span>
-              <span style={{ minWidth: 0, fontWeight: 600, color: "var(--body)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {p.title ? `${p.title} · ` : ""}{p.content}
-              </span>
-            </div>
-            <div style={{ fontWeight: 700 }}>{p.author.name}</div>
-            <div style={{ fontWeight: 600, color: "var(--body)" }}>{p.community.name}</div>
-            <div style={{ fontWeight: 700 }}>{p.likeCount}</div>
-            <div style={{ fontWeight: 700 }}>{p.commentCount}</div>
-            <div><span className={`pill ${STATUS_PILL[p.status]}`}>{STATUS_LABEL[p.status]}</span></div>
+          <DataTable.Row key={p.id}>
+            <DataTable.Cell>
+              <div className="entity-cell">
+                {p.pinnedAt && <Badge tone="warn">置顶</Badge>}
+                <Badge tone={p.postType === "NOTICE" ? "warn" : p.postType === "MEDIA" ? "info" : "neutral"}>
+                  {POST_TYPE_LABEL[p.postType]}
+                </Badge>
+                <span className="entity-name" title={`${p.title ? p.title + " · " : ""}${p.content}`}>
+                  {p.title ? `${p.title} · ` : ""}{p.content}
+                </span>
+              </div>
+            </DataTable.Cell>
+            <DataTable.Cell truncate title={p.author.name}><strong>{p.author.name}</strong></DataTable.Cell>
+            <DataTable.Cell truncate title={p.community.name}>{p.community.name}</DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{p.likeCount}</strong></DataTable.Cell>
+            <DataTable.Cell align="right"><strong>{p.commentCount}</strong></DataTable.Cell>
+            <DataTable.Cell>
+              <Badge tone={STATUS_TONE[p.status]}>{STATUS_LABEL[p.status]}</Badge>
+            </DataTable.Cell>
+            <DataTable.Cell>
             <div className="row-actions">
               {p.status === "VISIBLE" && (
                 <>
@@ -116,48 +162,69 @@ export default async function ContentManagementPage({
                 </form>
               )}
             </div>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
+
+        {posts.length === 0 && (
+          <EmptyState
+            title={q ? "没有找到匹配的动态" : "还没有社群动态"}
+            hint={q ? "换个关键词试试，或清除搜索条件" : "用户在社群里发布动态后会出现在这里"}
+          />
+        )}
+        </DataTable>
+
+        <Pagination info={info} basePath="/admin/content" params={{ q }} />
       </div>
 
       <div className="card" style={{ padding: "16px 18px", overflow: "auto", marginBottom: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>评论管理 · {comments.length} 条</div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.8fr 120px 140px 120px" }}>
-          <div>评论</div><div>作者</div><div>社群</div><div>操作</div>
-        </div>
+        <DataTable columns={COMMENT_COLUMNS} label="评论列表">
         {comments.map((comment) => (
-          <div key={comment.id} className="admin-table-row" style={{ gridTemplateColumns: "1.8fr 120px 140px 120px" }}>
-            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--body)", fontWeight: 600 }}>{comment.content}</div>
-            <div style={{ fontWeight: 700 }}>{comment.author.name}</div>
-            <div style={{ color: "var(--body)", fontWeight: 600 }}>{comment.post.community.name}</div>
+          <DataTable.Row key={comment.id}>
+            <DataTable.Cell truncate title={comment.content}>{comment.content}</DataTable.Cell>
+            <DataTable.Cell truncate title={comment.author.name}><strong>{comment.author.name}</strong></DataTable.Cell>
+            <DataTable.Cell truncate title={comment.post.community.name}>{comment.post.community.name}</DataTable.Cell>
+            <DataTable.Cell>
             <form action={deletePostComment}>
               <input type="hidden" name="commentId" value={comment.id} />
               <ConfirmSubmitButton className="action-pink" confirmMessage="确定删除这条评论吗？">删除</ConfirmSubmitButton>
             </form>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
-        {comments.length === 0 && <div style={{ padding: "18px 0", color: "var(--body)", fontSize: 12 }}>暂无评论</div>}
+        {comments.length === 0 && (
+          <EmptyState title="暂无评论" hint="用户在社群动态下发表评论后会出现在这里" />
+        )}
+        </DataTable>
       </div>
 
       <div className="card" style={{ padding: "16px 18px", overflow: "auto", marginBottom: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>社群资料管理 · {resources.length} 份</div>
-        <div className="admin-table-head" style={{ gridTemplateColumns: "1.5fr 90px 140px 120px 100px 180px" }}>
-          <div>资料</div><div>类型</div><div>社群</div><div>上传者</div><div>状态</div><div>操作</div>
-        </div>
+        <DataTable columns={RESOURCE_COLUMNS} label="社群资料列表">
         {resources.map((resource) => (
-          <div key={resource.id} className="admin-table-row" style={{ gridTemplateColumns: "1.5fr 90px 140px 120px 100px 180px" }}>
-            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 700 }}>{resource.title}</div>
-            <div><span className="pill pill-muted">{RESOURCE_TYPE_LABEL[resource.type]}</span></div>
-            <div style={{ color: "var(--body)", fontWeight: 600 }}>{resource.community.name}</div>
-            <div style={{ fontWeight: 700 }}>{resource.uploader.name}</div>
-            <div><span className={`pill ${resource.status === "ACTIVE" ? "pill-muted" : resource.status === "HIDDEN" ? "pill-orange" : "pill-pink"}`}>{RESOURCE_STATUS_LABEL[resource.status]}</span></div>
+          <DataTable.Row key={resource.id}>
+            <DataTable.Cell truncate title={resource.title}><strong>{resource.title}</strong></DataTable.Cell>
+            <DataTable.Cell><Badge>{RESOURCE_TYPE_LABEL[resource.type]}</Badge></DataTable.Cell>
+            <DataTable.Cell truncate title={resource.community.name}>{resource.community.name}</DataTable.Cell>
+            <DataTable.Cell truncate title={resource.uploader.name}><strong>{resource.uploader.name}</strong></DataTable.Cell>
+            <DataTable.Cell>
+              <Badge tone={resource.status === "ACTIVE" ? "ok" : resource.status === "HIDDEN" ? "warn" : "err"}>
+                {RESOURCE_STATUS_LABEL[resource.status]}
+              </Badge>
+            </DataTable.Cell>
+            <DataTable.Cell>
             <div className="row-actions">
               {resource.status === "ACTIVE" ? <form action={hideCommunityResource}><input type="hidden" name="resourceId" value={resource.id} /><button className="action-orange">下架</button></form> : <form action={restoreCommunityResource}><input type="hidden" name="resourceId" value={resource.id} /><button className="action-purple">恢复</button></form>}
               {resource.status !== "DELETED" && <form action={deleteCommunityResource}><input type="hidden" name="resourceId" value={resource.id} /><ConfirmSubmitButton className="action-pink" confirmMessage="确定删除这份资料吗？">删除</ConfirmSubmitButton></form>}
             </div>
-          </div>
+            </DataTable.Cell>
+          </DataTable.Row>
         ))}
-        {resources.length === 0 && <div style={{ padding: "18px 0", color: "var(--body)", fontSize: 12 }}>暂无社群资料</div>}
+        {resources.length === 0 && (
+          <EmptyState title="暂无社群资料" hint="群主或管理员上传资料后会出现在这里，可在此下架或删除" />
+        )}
+        </DataTable>
       </div>
 
       <div id="words" className="card" style={{ padding: "16px 18px", overflow: "auto" }}>

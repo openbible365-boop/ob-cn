@@ -1,108 +1,162 @@
 import { Icon } from "./Icon";
-import type { Book } from "../data/scripture";
+import { SkeletonScreen } from "./SkeletonScreen";
+import type { Book, CommentarySection } from "../data/scripture";
 
-type IntroductionProfile = {
-  category: string;
-  subtitle: string;
-  description: string;
-  themes: string[];
-};
+// 精读本各卷绪论，数据来自注释包的 "0" 章键（PDF 原书提取）。
+// 版面对应原书的三段式：档案框表（标题/作者/年代…）→ 论述专文 → 大纲。
 
-function introductionProfile(book: Book, displayBook: string): IntroductionProfile {
-  const profiles = [
-    { end: 5, category: "摩西五经", subtitle: "创造、圣约与救赎的开端", description: "从神的创造与拣选出发，认识圣约、救赎以及神子民蒙召的根基。", themes: ["神的作为与启示", "圣约与救赎历史", "神子民的身份与使命"] },
-    { end: 17, category: "历史书", subtitle: "在历史中看见神的信实", description: "透过以色列民族的兴衰，观察信靠、悖逆、管教与恢复交织的救赎历史。", themes: ["应许之地", "信靠与顺服", "管教与恢复"] },
-    { end: 22, category: "诗歌智慧书", subtitle: "敬拜、苦难与智慧人生", description: "从祷告、诗歌和智慧教导中，学习在真实人生里敬畏神、认识自己。", themes: ["敬畏与智慧", "敬拜与祷告", "苦难中的信心"] },
-    { end: 27, category: "大先知书", subtitle: "审判中的盼望与复兴", description: "聆听先知对罪恶的责备，也看见神对余民、救赎与复兴不改变的应许。", themes: ["圣洁与公义", "审判与悔改", "弥赛亚与复兴"] },
-    { end: 39, category: "小先知书", subtitle: "归向神，重寻信实与公义", description: "在不同历史处境中聆听先知的呼召，重新理解悔改、公义与盟约之爱。", themes: ["悔改归向神", "社会公义", "盟约之爱"] },
-    { end: 43, category: "福音书", subtitle: "认识耶稣基督与天国福音", description: "从耶稣的生平、教导、受死与复活，认识福音的核心以及门徒的道路。", themes: ["耶稣基督", "天国福音", "十字架与复活"] },
-    { end: 44, category: "教会历史", subtitle: "福音从耶路撒冷传到地极", description: "跟随圣灵在初代教会中的工作，看见福音如何跨越地域与文化不断扩展。", themes: ["圣灵的工作", "教会的建立", "福音的扩展"] },
-    { end: 57, category: "保罗书信", subtitle: "福音真理与教会生活", description: "从福音的教义根基出发，思想信徒生命、群体关系以及教会使命。", themes: ["因信得生", "在基督里的生命", "教会与使命"] },
-    { end: 65, category: "普通书信", subtitle: "持守真道，活出真实信仰", description: "在试炼与挑战中坚守信仰，让所信的真理落实在品格、关系和盼望里。", themes: ["信心与行为", "苦难中的忍耐", "真理与相爱"] },
-    { end: 66, category: "启示文学", subtitle: "在终末盼望中忠心到底", description: "在象征性的异象中看见基督最终的得胜，并以敬拜与忠心回应神。", themes: ["基督掌权", "审判与得胜", "新天新地的盼望"] },
-  ];
-  const profile = profiles.find((item) => book.order <= item.end) ?? profiles[profiles.length - 1];
-  return { ...profile, description: `${displayBook}属于${profile.category}。${profile.description}` };
+// 档案栏目：原书绪论开头的框表，App 里合成一张档案卡
+const FACT_LABELS = ["标题", "作者", "写作年代", "写作目的", "写作背景", "特点"];
+
+// 大纲行的层级：第一部 → 一．→ 1．→ 1）
+function outlineLevel(line: string): number {
+  if (/^第[一二三四五六七八九十]+部/.test(line)) return 0;
+  if (/^[一二三四五六七八九十]+[．.、]/.test(line)) return 1;
+  if (/^\d+[．.]/.test(line)) return 2;
+  if (/^\d+[）)]/.test(line)) return 3;
+  return 2;
 }
 
-function readingStages(chapters: number) {
-  if (chapters <= 3) return [{ label: "全书", range: `1–${chapters}章` }];
-  const firstEnd = Math.ceil(chapters / 3);
-  const secondEnd = Math.ceil((chapters * 2) / 3);
-  return [
-    { label: "开篇 · 主题展开", range: `1–${firstEnd}章` },
-    { label: "中篇 · 信息推进", range: `${firstEnd + 1}–${secondEnd}章` },
-    { label: "结篇 · 回应与盼望", range: `${secondEnd + 1}–${chapters}章` },
-  ];
+// 行尾的经文范围（…/1:1-2:25）拆出来弱化显示
+function splitOutlineRef(line: string): [string, string] {
+  const at = line.lastIndexOf("/");
+  if (at > 0 && /^\d+:\d/.test(line.slice(at + 1))) {
+    return [line.slice(0, at), line.slice(at + 1)];
+  }
+  return [line, ""];
+}
+
+function OutlineBlock({ body, fontSize }: { body: string; fontSize: number }) {
+  return (
+    <div className="intro-outline" style={{ fontSize: Math.max(13, fontSize - 3) }}>
+      {body.split("\n").map((line, index) => {
+        const [name, ref] = splitOutlineRef(line.trim());
+        if (!name) return null;
+        return (
+          <div className={`intro-outline-row is-l${outlineLevel(name)}`} key={index}>
+            <span>{name}</span>
+            {ref && <small>{ref}</small>}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function BookIntroduction({
   book,
   displayBook,
+  sections,
+  loadError,
   fontSize,
   translate = (text) => text,
   onStart,
 }: {
   book: Book;
   displayBook: string;
+  sections: CommentarySection[] | null;
+  loadError: boolean;
   fontSize: number;
   translate?: (text: string) => string;
   onStart: () => void;
 }) {
-  const profile = introductionProfile(book, displayBook);
+  const facts = (sections ?? []).filter((s) => FACT_LABELS.includes(s.title));
+  const articles = (sections ?? []).filter((s) => !FACT_LABELS.includes(s.title));
+
+  const jumpTo = (index: number) => {
+    document.getElementById(`intro-article-${index}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="annotation-introduction">
+      {/* 扉页式卷首：渐变纸面渐隐入正文，底纹用书名首字，与分享卡同一套品牌语言 */}
       <header className="annotation-intro-hero">
-        <div className="annotation-intro-eyebrow">{displayBook} · {translate("绪论")}</div>
-        <div className="annotation-intro-title-row">
-          <h1>{displayBook}</h1>
-          <span>{translate(profile.category)}</span>
+        <span className="intro-hero-watermark" aria-hidden="true">{Array.from(displayBook)[0]}</span>
+        <div className="annotation-intro-eyebrow">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+            <path d="M12 2.5c.9 5.2 3.4 7.7 8.6 8.6-5.2.9-7.7 3.4-8.6 8.6-.9-5.2-3.4-7.7-8.6-8.6 5.2-.9 7.7-3.4 8.6-8.6Z" />
+          </svg>
+          {translate("精读本注释")} · {translate("绪论")}
         </div>
-        <p>{translate(profile.subtitle)}</p>
+        <h1>{displayBook}</h1>
         <div className="annotation-intro-meta">
-          {translate(book.order <= 39 ? "旧约" : "新约")} · {translate("共")} {book.chapters} {translate("章")}
+          <span>{translate(book.order <= 39 ? "旧约" : "新约")} · {translate("共")} {book.chapters} {translate("章")}</span>
+          {/* 想直接读经的人不必滚到底 */}
+          <button type="button" className="intro-start-inline" onClick={onStart}>
+            {translate("进入第 1 章")} <Icon name="chevron-right" size={14} />
+          </button>
         </div>
       </header>
 
-      <section className="annotation-intro-section">
-        <h2><span>{translate("概述")}</span></h2>
-        <p style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}>{translate(profile.description)}</p>
-      </section>
+      {loadError && (
+        <div className="annotation-status-card" role="alert">{translate("绪论加载失败，请检查网络后重试。")}</div>
+      )}
+      {sections === null && !loadError && <SkeletonScreen variant="verses" label={translate("正在加载绪论")} />}
 
-      <div className="annotation-intro-facts" aria-label={translate("书卷基本信息")}>
-        <div><small>{translate("卷别")}</small><strong>{translate(book.order <= 39 ? "旧约" : "新约")}</strong></div>
-        <div><small>{translate("类别")}</small><strong>{translate(profile.category)}</strong></div>
-        <div><small>{translate("篇幅")}</small><strong>{book.chapters} {translate("章")}</strong></div>
-      </div>
+      {facts.length > 0 && (
+        <section className="intro-facts-card" aria-label={translate("书卷档案")}>
+          {facts.map((fact) => {
+            const [value, ...rest] = fact.body.split("\n");
+            const detail = rest.join("\n").trim();
+            // 只有这三项有真正的「值」（书名/人名/年代）；目的与特点是整段论述，
+            // 首行只是折行产物，加粗会把句子劈断
+            const VALUED = ["标题", "作者", "写作年代"];
+            const hasValue = VALUED.includes(fact.title) && value.length <= 24 && detail;
+            return (
+              <div className="intro-fact-row" key={fact.title}>
+                <small>{translate(fact.title)}</small>
+                <div>
+                  {hasValue ? (
+                    <>
+                      <b>{translate(value)}</b>
+                      <p>{translate(detail)}</p>
+                    </>
+                  ) : (
+                    <p>{translate(fact.body.replace(/\n/g, ""))}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
-      <section className="annotation-intro-section">
-        <h2><span>{translate("关键词")}</span></h2>
-        <ul className="annotation-intro-themes">
-          {profile.themes.map((theme) => <li key={theme}>{translate(theme)}</li>)}
-        </ul>
-      </section>
-
-      <section className="annotation-intro-section">
-        <h2><span>{translate("全书大纲")}</span></h2>
-        <div className="annotation-intro-stages">
-          {readingStages(book.chapters).map((stage, index) => (
-            <div key={stage.label}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{translate(stage.label)}</strong>
-              <small>{translate(stage.range)}</small>
-            </div>
+      {articles.length > 1 && (
+        <nav className="intro-toc" aria-label={translate("绪论目录")}>
+          {articles.map((section, index) => (
+            <button type="button" key={`${section.title}-${index}`} onClick={() => jumpTo(index)}>
+              {translate(section.title)}
+            </button>
           ))}
-        </div>
-      </section>
+        </nav>
+      )}
 
-      <aside className="annotation-intro-note">
-        {translate("本页为移动端阅读导览。逐卷历史背景与写作信息仍以正式精读本绪论为准；各章内容请继续阅读「本章综览」与逐节注释。")}
-      </aside>
+      {articles.map((section, index) => (
+        <section
+          className="annotation-intro-section"
+          id={`intro-article-${index}`}
+          key={`${section.title}-${index}`}
+        >
+          <h2><span>{translate(section.title)}</span></h2>
+          {section.title === "大纲" ? (
+            <OutlineBlock body={translate(section.body)} fontSize={fontSize} />
+          ) : (
+            <p
+              className="annotation-intro-body"
+              style={{ fontSize, lineHeight: fontSize >= 19 ? 1.76 : 1.85 }}
+            >
+              {translate(section.body)}
+            </p>
+          )}
+        </section>
+      ))}
 
-      <button className="annotation-intro-start" type="button" onClick={onStart}>
-        <span><small>{translate("绪论读完")}</small>{translate("进入第 1 章")}</span>
-        <Icon name="chevron-right" size={20} />
-      </button>
+      {sections !== null && (
+        <button className="annotation-intro-start" type="button" onClick={onStart}>
+          <span><small>{translate("绪论读完")}</small>{translate("进入第 1 章")}</span>
+          <Icon name="chevron-right" size={20} />
+        </button>
+      )}
     </div>
   );
 }

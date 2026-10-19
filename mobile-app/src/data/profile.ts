@@ -2,11 +2,15 @@
 // serves /api/* by proxying to the admin app (nginx in production, the vite
 // dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
-import { clearHighlightsForLogout } from "./annotations";
+import { clearAnnotationsForLogout } from "./annotations";
+import { clearConversationsForLogout } from "./huidu";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
 import { fetchCommunityGroups } from "./community";
-import { fetchCommunityWorkspace } from "./community-workspace";
+import {
+  clearCommunityWorkspaceCache,
+  fetchCommunityWorkspace,
+} from "./community-workspace";
 
 export type SessionUser = {
   id: string;
@@ -76,28 +80,36 @@ export function sendLoginCode(email: string) {
   return post("/api/mobile/auth/send-code", { email });
 }
 
-export function verifyLoginCode(email: string, code: string) {
-  return post("/api/mobile/auth/verify", { email, code });
+export async function verifyLoginCode(email: string, code: string) {
+  const result = await post("/api/mobile/auth/verify", { email, code });
+  if (result.ok) clearCommunityWorkspaceCache();
+  return result;
 }
 
-export function verifyGoogleLogin(idToken: string) {
-  return post("/api/mobile/auth/google", { idToken });
+export async function verifyGoogleLogin(idToken: string) {
+  const result = await post("/api/mobile/auth/google", { idToken });
+  if (result.ok) clearCommunityWorkspaceCache();
+  return result;
 }
 
-export function verifyAppleLogin(credential: {
+export async function verifyAppleLogin(credential: {
   identityToken: string;
   authorizationCode: string;
   nonce: string;
   givenName?: string;
   familyName?: string;
 }) {
-  return post("/api/mobile/auth/apple", credential);
+  const result = await post("/api/mobile/auth/apple", credential);
+  if (result.ok) clearCommunityWorkspaceCache();
+  return result;
 }
 
 export async function logout() {
   const result = await post("/api/mobile/auth/logout");
   if (result.ok) {
-    clearHighlightsForLogout();
+    clearAnnotationsForLogout();
+    clearConversationsForLogout();
+    clearCommunityWorkspaceCache();
     await clearGoogleCredentialState().catch(() => {});
   }
   return result;
@@ -212,7 +224,7 @@ export async function fetchMyActivities(): Promise<
   }
 }
 
-// ---------- notification preferences (still device-local) ----------
+// ---------- notification preferences and account notification center ----------
 
 const PREFS_KEY = "ob.notificationPrefs";
 
@@ -220,7 +232,8 @@ export const NOTIFICATION_PREFS = [
   { key: "daily_verse", title: "每日金句推送", desc: "每天早上 7:30 推送一节经文", defaultEnabled: false },
   { key: "event_reminder", title: "社群活动提醒", desc: "已报名活动开始前 2 小时提醒", defaultEnabled: true },
   { key: "reply", title: "留言回复通知", desc: "我的帖子收到评论或回复时", defaultEnabled: true },
-  { key: "ai_assistant", title: "AI 助理相关通知", desc: "社群 AI 助理的公开问答动态", defaultEnabled: false },
+  { key: "join_updates", title: "入群申请与审核", desc: "收到加入申请或审核结果时", defaultEnabled: true },
+  { key: "ai_assistant", title: "AI 助理相关通知", desc: "AI 后台任务完成时", defaultEnabled: false },
 ] as const;
 
 export function getPrefs(): Record<string, boolean> {
@@ -235,4 +248,74 @@ export function getPrefs(): Record<string, boolean> {
 export function togglePref(key: string) {
   const current = getPrefs();
   save(PREFS_KEY, { ...load<Record<string, boolean>>(PREFS_KEY, {}), [key]: !current[key] });
+}
+
+export type AccountNotification = {
+  id: string;
+  type: "EVENT_REMINDER" | "COMMENT_REPLY" | "JOIN_REQUEST" | "JOIN_REVIEW" | "AI_TASK" | "DAILY_VERSE";
+  title: string;
+  body: string;
+  href: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type NotificationCenter = {
+  preferences: Record<string, boolean>;
+  notifications: AccountNotification[];
+  unreadCount: number;
+};
+
+export async function fetchNotificationCenter(): Promise<
+  | ({ ok: true } & NotificationCenter)
+  | { ok: false; message: string }
+> {
+  try {
+    const response = await apiRequest<{
+      ok: boolean;
+      message?: string;
+      preferences?: Record<string, boolean>;
+      notifications?: AccountNotification[];
+      unreadCount?: number;
+    }>("/api/mobile/me/notifications");
+    if (!response.ok || !response.data?.ok) {
+      return { ok: false, message: response.data?.message ?? `服务器返回异常（${response.status}）` };
+    }
+    return {
+      ok: true,
+      preferences: response.data.preferences ?? getPrefs(),
+      notifications: response.data.notifications ?? [],
+      unreadCount: response.data.unreadCount ?? 0,
+    };
+  } catch {
+    return { ok: false, message: "网络错误，请稍后重试" };
+  }
+}
+
+export async function updateAccountNotificationPreference(key: string, enabled: boolean) {
+  try {
+    const response = await apiRequest<{ ok: boolean; message?: string }>("/api/mobile/me/notifications", {
+      method: "POST",
+      body: { action: "UPDATE_PREFERENCE", key, enabled },
+    });
+    return response.ok && response.data?.ok
+      ? { ok: true as const }
+      : { ok: false as const, message: response.data?.message ?? `服务器返回异常（${response.status}）` };
+  } catch {
+    return { ok: false as const, message: "网络错误，请稍后重试" };
+  }
+}
+
+export async function markAccountNotificationRead(notificationId?: string) {
+  try {
+    const response = await apiRequest<{ ok: boolean }>("/api/mobile/me/notifications", {
+      method: "POST",
+      body: notificationId
+        ? { action: "MARK_READ", notificationId }
+        : { action: "MARK_ALL_READ" },
+    });
+    return response.ok && Boolean(response.data?.ok);
+  } catch {
+    return false;
+  }
 }

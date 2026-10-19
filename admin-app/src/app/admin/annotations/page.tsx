@@ -1,4 +1,25 @@
 import { db } from "@/lib/db";
+import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
+import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
+import { Pagination } from "@/components/Pagination";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/States";
+
+const HIGHLIGHT_COLUMNS: Column[] = [
+  { key: "user", label: "用户", width: "1.4fr" },
+  { key: "ref", label: "经文位置", width: "1.2fr" },
+  { key: "color", label: "高亮颜色", width: "1fr" },
+  { key: "time", label: "标注时间", width: "1.2fr" },
+  { key: "ops", label: "操作", width: "150px" },
+];
+
+const NOTE_COLUMNS: Column[] = [
+  { key: "user", label: "用户", width: "1.4fr" },
+  { key: "ref", label: "经文位置", width: "1.2fr" },
+  { key: "content", label: "笔记内容", width: "2.4fr" },
+  { key: "time", label: "记录时间", width: "1.2fr" },
+  { key: "ops", label: "操作", width: "120px" },
+];
 import { UserAvatar } from "@/components/UserAvatar";
 import { deleteNote, deleteHighlight } from "@/lib/actions/content";
 import Link from "next/link";
@@ -7,9 +28,10 @@ import type { Prisma } from "@/generated/prisma/client";
 export default async function AnnotationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tab?: string }>;
+  searchParams: Promise<{ q?: string; tab?: string; page?: string }>;
 }) {
-  const { q, tab = "highlights" } = await searchParams;
+  const { q, tab = "highlights", page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
 
   // Global statistics
   const [totalHighlights, totalNotes, annotatingUsersCount] = await Promise.all([
@@ -32,37 +54,50 @@ export default async function AnnotationsPage({
   let highlights: Prisma.HighlightGetPayload<{ include: { user: true } }>[] = [];
   let notes: Prisma.NoteGetPayload<{ include: { user: true } }>[] = [];
 
+  let listTotal = 0;
   if (tab === "highlights") {
-    highlights = await db.highlight.findMany({
-      where: q
-        ? {
-            OR: [
-              { user: { name: { contains: q, mode: "insensitive" } } },
-              { book: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
-      include: { user: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const where = q
+      ? {
+          OR: [
+            { user: { name: { contains: q, mode: "insensitive" as const } } },
+            { book: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined;
+    [highlights, listTotal] = await Promise.all([
+      db.highlight.findMany({
+        where,
+        include: { user: true },
+        orderBy: { createdAt: "desc" },
+        ...pageQuery(page),
+      }),
+      db.highlight.count({ where }),
+    ]);
   } else {
-    notes = await db.note.findMany({
-      where: q
-        ? {
-            OR: [
-              { user: { name: { contains: q, mode: "insensitive" } } },
-              { book: { contains: q, mode: "insensitive" } },
-              { content: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
-      include: { user: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const where = q
+      ? {
+          OR: [
+            { user: { name: { contains: q, mode: "insensitive" as const } } },
+            { book: { contains: q, mode: "insensitive" as const } },
+            { content: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : undefined;
+    [notes, listTotal] = await Promise.all([
+      db.note.findMany({
+        where,
+        include: { user: true },
+        orderBy: { createdAt: "desc" },
+        ...pageQuery(page),
+      }),
+      db.note.count({ where }),
+    ]);
   }
+  const info = pageInfo(page, listTotal);
 
   return (
     <>
+      <SearchShortcut />
       <div className="admin-header">
         <div className="title">用户标注管理</div>
         <div className="meta">记录并统计所有登录用户的阅读标注数据</div>
@@ -125,72 +160,76 @@ export default async function AnnotationsPage({
       <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
         {tab === "highlights" ? (
           <>
-            <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 1.2fr 1fr 1.2fr 150px" }}>
-              <div>用户</div><div>经文位置</div><div>高亮颜色</div><div>标注时间</div><div>操作</div>
-            </div>
-            {highlights.map((h) => (
-              <div key={h.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 1.2fr 1fr 1.2fr 150px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <UserAvatar name={h.user.name} avatarColor={h.user.avatarColor} avatarUrl={h.user.avatarUrl} />
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{h.user.name}</div>
-                    <div style={{ fontSize: 10, color: "var(--body)" }}>UID {h.user.uid}</div>
-                  </div>
-                </div>
-                <div style={{ fontWeight: 700 }}>{h.book.toUpperCase()} {h.chapter}:{h.verse}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: h.color, border: "1px solid var(--line)" }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>{h.color}</span>
-                </div>
-                <div style={{ fontWeight: 600, color: "var(--body)" }}>{fmtTime(h.createdAt)}</div>
-                <div className="row-actions">
-                  <form action={deleteHighlight}>
-                    <input type="hidden" name="highlightId" value={h.id} />
-                    <button type="submit" className="action-pink">清除高亮</button>
-                  </form>
-                </div>
-              </div>
-            ))}
-            {highlights.length === 0 && (
-              <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--body)", fontWeight: 600 }}>
-                没有找到对应的高亮记录
-              </div>
-            )}
+            <DataTable columns={HIGHLIGHT_COLUMNS} label="用户高亮列表">
+              {highlights.map((h) => (
+                <DataTable.Row key={h.id}>
+                  <DataTable.Cell>
+                    <div className="user-cell">
+                      <UserAvatar name={h.user.name} avatarColor={h.user.avatarColor} avatarUrl={h.user.avatarUrl} />
+                      <div className="user-cell-text">
+                        <div className="user-cell-name" title={h.user.name}>{h.user.name}</div>
+                        <div className="user-cell-sub">UID {h.user.uid}</div>
+                      </div>
+                    </div>
+                  </DataTable.Cell>
+                  <DataTable.Cell><strong>{h.book.toUpperCase()} {h.chapter}:{h.verse}</strong></DataTable.Cell>
+                  <DataTable.Cell>
+                    <span className="color-chip">
+                      <span className="color-dot" style={{ background: h.color }} />
+                      {h.color}
+                    </span>
+                  </DataTable.Cell>
+                  <DataTable.Cell>{fmtTime(h.createdAt)}</DataTable.Cell>
+                  <DataTable.Cell>
+                    <div className="row-actions">
+                      <form action={deleteHighlight}>
+                        <input type="hidden" name="highlightId" value={h.id} />
+                        <button type="submit" className="action-pink">清除高亮</button>
+                      </form>
+                    </div>
+                  </DataTable.Cell>
+                </DataTable.Row>
+              ))}
+              {highlights.length === 0 && (
+                <EmptyState title="没有找到高亮记录" hint="用户在 App 或网页端标记经文颜色后，记录会出现在这里" />
+              )}
+            </DataTable>
           </>
         ) : (
           <>
-            <div className="admin-table-head" style={{ gridTemplateColumns: "1.4fr 1.2fr 2.4fr 1.2fr 120px" }}>
-              <div>用户</div><div>经文位置</div><div>笔记内容</div><div>记录时间</div><div>操作</div>
-            </div>
-            {notes.map((n) => (
-              <div key={n.id} className="admin-table-row" style={{ gridTemplateColumns: "1.4fr 1.2fr 2.4fr 1.2fr 120px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <UserAvatar name={n.user.name} avatarColor={n.user.avatarColor} avatarUrl={n.user.avatarUrl} />
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{n.user.name}</div>
-                    <div style={{ fontSize: 10, color: "var(--body)" }}>UID {n.user.uid}</div>
-                  </div>
-                </div>
-                <div style={{ fontWeight: 700 }}>{n.book.toUpperCase()} {n.chapter}:{n.verse}</div>
-                <div style={{ fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={n.content}>
-                  {n.content}
-                </div>
-                <div style={{ fontWeight: 600, color: "var(--body)" }}>{fmtTime(n.createdAt)}</div>
-                <div className="row-actions">
-                  <form action={deleteNote}>
-                    <input type="hidden" name="noteId" value={n.id} />
-                    <button type="submit" className="action-pink">删除笔记</button>
-                  </form>
-                </div>
-              </div>
-            ))}
-            {notes.length === 0 && (
-              <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--body)", fontWeight: 600 }}>
-                没有找到匹配的笔记记录
-              </div>
-            )}
+            <DataTable columns={NOTE_COLUMNS} label="用户笔记列表">
+              {notes.map((n) => (
+                <DataTable.Row key={n.id}>
+                  <DataTable.Cell>
+                    <div className="user-cell">
+                      <UserAvatar name={n.user.name} avatarColor={n.user.avatarColor} avatarUrl={n.user.avatarUrl} />
+                      <div className="user-cell-text">
+                        <div className="user-cell-name" title={n.user.name}>{n.user.name}</div>
+                        <div className="user-cell-sub">UID {n.user.uid}</div>
+                      </div>
+                    </div>
+                  </DataTable.Cell>
+                  <DataTable.Cell><strong>{n.book.toUpperCase()} {n.chapter}:{n.verse}</strong></DataTable.Cell>
+                  <DataTable.Cell truncate title={n.content}>{n.content}</DataTable.Cell>
+                  <DataTable.Cell>{fmtTime(n.createdAt)}</DataTable.Cell>
+                  <DataTable.Cell>
+                    <div className="row-actions">
+                      <form action={deleteNote}>
+                        <input type="hidden" name="noteId" value={n.id} />
+                        <button type="submit" className="action-pink">删除笔记</button>
+                      </form>
+                    </div>
+                  </DataTable.Cell>
+                </DataTable.Row>
+              ))}
+              {notes.length === 0 && (
+                <EmptyState title="没有找到笔记记录" hint="用户在经文上写笔记后，记录会出现在这里" />
+              )}
+            </DataTable>
           </>
         )}
+
+        <Pagination info={info} basePath="/admin/annotations" params={{ q, tab }} />
       </div>
     </>
   );

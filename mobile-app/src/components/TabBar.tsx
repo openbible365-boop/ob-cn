@@ -14,12 +14,11 @@ export function TabBar({ hidden = false }: { hidden?: boolean }) {
   const { translate } = useSettings();
 
   return (
-    <nav className={`tab-bar${hidden ? " is-hidden" : ""}`} aria-label="主导航" aria-hidden={hidden || undefined}>
+    <nav className={`tab-bar${hidden ? " is-hidden" : ""}`} aria-label="主导航" inert={hidden || undefined}>
       {TABS.map((t) => (
         <NavLink
           key={t.to}
           to={t.to}
-          tabIndex={hidden ? -1 : undefined}
           className={({ isActive }) => `tab${isActive ? " active" : ""}`}
         >
           {({ isActive }) => (

@@ -25,7 +25,8 @@ model Operator {
   role         OperatorRole @default(SUPER_ADMIN)
   createdAt    DateTime     @default(now())
 
-  auditLogs AuditLog[]
+  auditLogs           AuditLog[]
+  commentaryRevisions CommentaryRevision[]
 }
 
 // ---------- End-users of the OpenBible app ----------
@@ -65,25 +66,26 @@ model User {
 
   authAccounts          AuthAccount[]
   memberships           Membership[]
-  ownedCommunities      Community[]            @relation("CommunityOwner")
+  ownedCommunities      Community[]             @relation("CommunityOwner")
   posts                 Post[]
   postComments          PostComment[]
   postLikes             PostLike[]
   postBookmarks         PostBookmark[]
-  submittedReports      Report[]               @relation("ReportSubmitter")
+  submittedReports      Report[]                @relation("ReportSubmitter")
   eventSignups          EventSignup[]
   uploadedResources     CommunityResource[]
   communityAuditLogs    CommunityAuditLog[]
   communityPresences    CommunityPresence[]
   highlights            Highlight[]
   notes                 Note[]
+  sessions              Session[]
   conversations         Conversation[]
   createdReadingPlans   ReadingPlan[]           @relation("ReadingPlanCreator")
   readingPlanProgress   ReadingPlanEnrollment[]
   notificationSettings  NotificationSetting[]
-  communityJoinRequests CommunityJoinRequest[] @relation("CommunityJoinRequester")
-  reviewedJoinRequests  CommunityJoinRequest[] @relation("CommunityJoinReviewer")
-  resourceBookmarks     ResourceBookmark[]
+  userNotifications     UserNotification[]
+  communityJoinRequests CommunityJoinRequest[]  @relation("CommunityJoinRequester")
+  reviewedJoinRequests  CommunityJoinRequest[]  @relation("CommunityJoinReviewer")
 }
 
 model AuthAccount {
@@ -108,7 +110,6 @@ enum CommunityTier {
 }
 
 enum CommunityStatus {
-  PENDING_APPROVAL
   ACTIVE
   BANNED
   DISSOLVED
@@ -319,12 +320,20 @@ enum CommunityPostType {
   ARTICLE
   NOTICE
   MEDIA
+  // 代祷请求：教会社群的核心互动类型，点赞在此类型上语义为「我为你祷告」
+  PRAYER
 }
 
 enum CommunityPostMediaType {
   IMAGE
   AUDIO
   VIDEO
+}
+
+enum CommunityPostVisibility {
+  PUBLIC
+  MEMBERS
+  ADMINS
 }
 
 model Post {
@@ -337,6 +346,7 @@ model Post {
   verseRef     String?
   mediaType    CommunityPostMediaType?
   mediaUrl     String?
+  visibility   CommunityPostVisibility @default(MEMBERS)
   pinnedAt     DateTime?
   likeCount    Int                     @default(0)
   commentCount Int                     @default(0)
@@ -353,6 +363,7 @@ model Post {
 
   @@index([communityId, status, pinnedAt, createdAt])
   @@index([communityId, status, createdAt])
+  @@index([communityId, visibility, status, createdAt])
 }
 
 model PostComment {
@@ -478,29 +489,36 @@ enum CommunityResourceStatus {
   DELETED
 }
 
-model CommunityResource {
-  id            String                      @id @default(cuid())
-  communityId   String
-  uploaderId    String
-  title         String
-  description   String?
-  type          CommunityResourceType       @default(LINK)
-  url           String?
-  contentText   String?                     @db.Text
-  fileName      String?
-  mimeType      String?
-  fileSize      Int?
-  storageKey    String?
-  indexedAt     DateTime?
-  visibility    CommunityResourceVisibility @default(MEMBERS)
-  status        CommunityResourceStatus     @default(ACTIVE)
-  downloadCount Int                         @default(0)
-  createdAt     DateTime                    @default(now())
-  updatedAt     DateTime                    @updatedAt
+enum CommunityKnowledgeStatus {
+  PARSING
+  INDEXED
+  FAILED
+  REINDEX_REQUIRED
+}
 
-  community Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  uploader  User               @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
-  bookmarks ResourceBookmark[]
+model CommunityResource {
+  id              String                      @id @default(cuid())
+  communityId     String
+  uploaderId      String
+  title           String
+  description     String?
+  type            CommunityResourceType       @default(LINK)
+  url             String?
+  contentText     String?                     @db.Text
+  fileName        String?
+  mimeType        String?
+  fileSize        Int?
+  storageKey      String?
+  indexedAt       DateTime?
+  knowledgeStatus CommunityKnowledgeStatus    @default(PARSING)
+  indexError      String?
+  visibility      CommunityResourceVisibility @default(MEMBERS)
+  status          CommunityResourceStatus     @default(ACTIVE)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  uploader  User      @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
 
   @@index([communityId, status, createdAt])
 }
@@ -660,9 +678,9 @@ model ReadingPlan {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
-  creator    User?                   @relation("ReadingPlanCreator", fields: [creatorId], references: [id], onDelete: SetNull)
-  community  Community?              @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  days       ReadingPlanDay[]
+  creator     User?                   @relation("ReadingPlanCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  community   Community?              @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  days        ReadingPlanDay[]
   enrollments ReadingPlanEnrollment[]
 
   @@index([creatorId, scope])
@@ -670,11 +688,11 @@ model ReadingPlan {
 }
 
 model ReadingPlanDay {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   planId      String
   dayNumber   Int
   title       String?
-  translation String @default("cuv")
+  translation String  @default("cuv")
   book        String
   chapter     Int
   verseStart  Int
@@ -715,6 +733,32 @@ model NotificationSetting {
   @@unique([userId, key])
 }
 
+enum UserNotificationType {
+  EVENT_REMINDER
+  COMMENT_REPLY
+  JOIN_REQUEST
+  JOIN_REVIEW
+  AI_TASK
+  DAILY_VERSE
+}
+
+model UserNotification {
+  id        String               @id @default(cuid())
+  userId    String
+  type      UserNotificationType
+  title     String
+  body      String
+  href      String?
+  uniqueKey String?              @unique
+  readAt    DateTime?
+  createdAt DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
 // ---------- Email verification codes (登录/注册) ----------
 // Codes are stored hashed; a code is valid for 10 minutes, allows 5 attempts,
 // and is consumed on successful login.
@@ -731,15 +775,206 @@ model VerificationCode {
   @@index([email, createdAt])
 }
 
-model ResourceBookmark {
-  id         String   @id @default(cuid())
-  resourceId String
-  userId     String
+// ============================================================================
+// 从网页版（openbible-main / FastAPI）迁移过来的内容模块。
+// 这四块原本只有网页版有，整合后网页版与 App 共用同一套数据与后台。
+// 标题、摘要、正文保留中英韩三语字段，跟随前端语言切换显示。
+// ============================================================================
+
+enum EncyclopediaEntryType {
+  DICTIONARY // 词典条目
+  ARTICLE // 文章
+  DEVOTIONAL // 灵修短文
+}
+
+/// 圣经百科：词典、文章、灵修短文三类长文内容。
+model EncyclopediaEntry {
+  id          String                @id @default(cuid())
+  entryType   EncyclopediaEntryType
+  category    String?
+  /// 词典首字母索引（A-Z / #），其它类型可空
+  indexLetter String?
+  /// 封面：CSS 渐变、图片 URL 或图标名
+  coverStyle  String?
+  author      String?
+  sortOrder   Int                   @default(0)
+  isActive    Boolean               @default(true)
+
+  titleZh   String?
+  titleEn   String?
+  titleKo   String?
+  summaryZh String?
+  summaryEn String?
+  summaryKo String?
+  contentZh String?
+  contentEn String?
+  contentKo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entryType, isActive, sortOrder])
+  @@index([indexLetter])
+}
+
+enum MediaItemType {
+  VIDEO
+  AUDIO
+}
+
+/// 影音库：讲道视频与音频节目。文件本身放外部链接，不占用本站存储。
+model MediaItem {
+  id          String        @id @default(cuid())
+  mediaType   MediaItemType
+  title       String
+  series      String?
+  category    String
+  /// 显示用时长，例如 "45:32"
+  duration    String?
+  /// 讲员或主讲人
+  teacher     String?
+  description String?
+  coverStyle  String?
+  url         String?
+  sortOrder   Int           @default(0)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([mediaType, isActive, sortOrder])
+}
+
+/// 属灵阶段：慕道、初信、成长、成熟等，用于引导问题分组。
+model SpiritualStage {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions SpiritualQuestion[]
+}
+
+/// 属灵阶段下的引导问题。category 区分通用问题与经文抽屉问题。
+model SpiritualQuestion {
+  id           String   @id @default(cuid())
+  stageId      String
+  questionText String
+  category     String   @default("general")
+  description  String?
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stage SpiritualStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([stageId, isActive, sortOrder])
+  @@index([category])
+}
+
+/// 研经笔记：按经节存放的注释语料，供后台维护与 AI 检索。
+/// 与 Commentary 的区别：Commentary 是阅读页展示用的段落式注释（带标题、经节范围），
+/// StudyNote 是逐节语料，键为 "gen-1-1" 形式的经节引用。
+model StudyNote {
+  id        String   @id @default(cuid())
+  verseRef  String   @unique
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verseRef])
+}
+
+/// 支持计划（会员方案）。按当前阶段的约定：目录可维护，但不接通真实扣费。
+model SupportPlan {
+  id            String   @id
+  name          String
+  nameEn        String?
+  nameKo        String?
+  priceMonthly  Float    @default(0)
+  priceOnce     Float    @default(0)
+  badge         String?
+  badgeEn       String?
+  badgeKo       String?
+  /// 权益列表，按换行分隔
+  features      String
+  featuresEn    String?
+  featuresKo    String?
+  dialogueLimit Int      @default(20)
+  sortOrder     Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/// 精读本注释正文（data/commentary/jingdu/*.json 的数据库副本）。
+/// 数据库为编辑与校对的唯一真相来源；前端仍读静态 JSON，
+/// 由后台的「发布」动作把库内容导出回文件（见 lib/actions/commentary.ts）。
+model CommentaryEntry {
+  id         String @id @default(cuid())
+  /// 1–66，对应 data/commentary/jingdu/<bookOrder>.json
+  bookOrder  Int
+  chapter    Int
+  /// "overview"（段落综览）| "commentary"（逐节注释）
+  entryType  String
+  /// 原始引用串，如 "3:1-21"；原始数据同章内可能重复，故不作唯一键
+  verses     String
+  /// 从引用解析出的起止节，用于按开始节排序
+  rangeStart Int
+  rangeEnd   Int
+  /// 同章内的原始顺序，导出时据此还原文件次序
+  sortOrder  Int
+  text       String
+  html       String
+  /// DRAFT 草稿中 / REVIEWED 已校对 / PUBLISHED 已发布
+  status     String   @default("PUBLISHED")
+  updatedAt  DateTime @updatedAt
   createdAt  DateTime @default(now())
 
-  resource CommunityResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revisions CommentaryRevision[]
 
-  @@unique([resourceId, userId])
+  @@unique([bookOrder, chapter, sortOrder])
+  @@index([bookOrder, chapter])
+  @@index([status])
+}
+
+/// 注释每次修改的留痕，可回溯与还原。
+model CommentaryRevision {
+  id         String          @id @default(cuid())
+  entryId    String
+  entry      CommentaryEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  beforeText String
+  afterText  String
+  operatorId String?
+  operator   Operator?       @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime        @default(now())
+
+  @@index([entryId, createdAt])
+}
+
+
+/// 终端用户会话。
+///
+/// Cookie 里放的是不可猜测的随机 token，库里只存它的 SHA-256——
+/// 即便数据库泄露也无法据此伪造登录态。
+/// 早期版本 cookie 直接存明文 user id，任何人拿到他人 id（社群接口会返回作者 id）
+/// 即可冒充该账号，此模型即为修复该问题而引入。
+model Session {
+  id         String   @id @default(cuid())
+  /// token 的 SHA-256 十六进制串，不存原文
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  /// 便于用户在「登录设备」里辨认，也便于排查异常登录
+  userAgent  String?
+
   @@index([userId])
+  @@index([expiresAt])
 }

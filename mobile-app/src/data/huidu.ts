@@ -2,9 +2,10 @@
 // existing three-part presentation; follow-up questions are answered by the
 // authenticated Qwen API and then stored in the same local thread.
 import { load, save, uid } from "./store";
-import { apiRequest } from "./api";
+import { apiFormRequest, apiRequest } from "./api";
 
-export type HuiduBlock = { tag: string; color: string; dark: boolean; text: string };
+// 分段标签只保留语义名，配色交给样式表统一处理，避免每处各写一个色值。
+export type HuiduBlock = { tag: string; text: string };
 export type HuiduSource = {
   id: string;
   kind: "scripture" | "commentary" | "community";
@@ -67,20 +68,14 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
     return [
       {
         tag: "逐节深入解读",
-        color: "#8750B6",
-        dark: true,
         text: "“神爱世人，甚至将祂的独生子赐给他们，叫一切信祂的，不至灭亡，反得永生。”经文首先展现了神爱的无限范围（世人），以及祂倾其所有的无私给予（赐下独生子）。“一切信祂的”指明了救恩的普遍性与白白的应许，通过信靠而非行为，指引我们免于最终的失丧（不至灭亡），进入那永恒的、与神同在的丰盛生命（反得永生）。",
       },
       {
         tag: "神学核心和现实意义",
-        color: "#27AE60",
-        dark: true,
         text: "这节经文宣告了救恩完全由神主动并发起的爱（God's active love）。神学核心在于：神并非冷眼旁观，而是用重价完成救赎。在现实中，这带给我们绝不动摇的安全感：无论我们身处顺境还是面临现实中的重重忧虑，只要确信这深沉的爱，就能驱散恐惧，并在人际交往中活出无条件接纳与付出的爱。",
       },
       {
         tag: "总结",
-        color: "#E89A2C",
-        dark: true,
         text: "约翰福音 3:16 是整本圣经福音核心的缩影。它不仅是一个神学概念，更是一份随时随地活水般的呼召，呼召我们带着感恩、凭着信心在每一天的选择中，活出蒙爱、自由的永生生命样式。",
       },
     ];
@@ -95,23 +90,23 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   return [
     {
       tag: "逐节深入解读",
-      color: "#8750B6",
-      dark: true,
       text: detailedInterpretations,
     },
     {
       tag: "神学核心和现实意义",
-      color: "#27AE60",
-      dark: true,
       text: `这段经文折射出了极其宝贵的神学核心真理（如神的恩典、主权或救赎心意），并对今天的我们提出具体的要求：在面临职场、人际关系、内心焦虑或生活抉择时，我们应当把该核心真理切实应用到现实生活中，以此更新我们的信心与日常行事为人。`,
     },
     {
       tag: "总结",
-      color: "#E89A2C",
-      dark: true,
       text: `总之，这几节经文不仅是一句警醒或应许，更是一个在信仰旅程中随时的指引。建议今天以“${mainSnippet}…”这部分宝贵真理进行默想与祷告，使其切实在您的日常中发芽结实。`,
     },
   ];
+}
+
+export function clearConversationsForLogout() {
+  clearTimeout(syncTimer);
+  save(PENDING_KEY, []);
+  save(KEY, []);
 }
 
 export function getConversations(): Conversation[] {
@@ -247,27 +242,42 @@ function messageContent(message: Message) {
 export async function requestHuiduFollowup(
   conversation: Conversation,
   question: string,
+  file?: File | null,
 ): Promise<HuiduAssistantResult> {
   try {
-    const response = await apiRequest<
-      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string }
-    >("/api/mobile/huidu/assistant", {
-      method: "POST",
-      body: {
-        conversationId: conversation.id,
-        refLabel: conversation.refLabel,
-        verseText: conversation.verseText,
-        bookCode: conversation.bookCode,
-        versionCode: conversation.versionCode,
-        chapter: conversation.chapter,
-        verse: conversation.verse,
-        question,
-        history: conversation.messages.map((message) => ({
-          role: message.role,
-          content: messageContent(message),
-        })),
-      },
-    });
+    const history = conversation.messages.map((message) => ({
+      role: message.role,
+      content: messageContent(message),
+    }));
+    type AssistantReply =
+      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string };
+    let response;
+    if (file) {
+      // 带附件走 multipart：服务端提取纯文本并入本次提问的上下文，不落库
+      const form = new FormData();
+      form.append("conversationId", conversation.id);
+      form.append("refLabel", conversation.refLabel);
+      form.append("verseText", conversation.verseText);
+      form.append("question", question);
+      form.append("history", JSON.stringify(history));
+      form.append("file", file);
+      response = await apiFormRequest<AssistantReply>("/api/mobile/huidu/assistant", form);
+    } else {
+      response = await apiRequest<AssistantReply>("/api/mobile/huidu/assistant", {
+        method: "POST",
+        body: {
+          conversationId: conversation.id,
+          refLabel: conversation.refLabel,
+          verseText: conversation.verseText,
+          bookCode: conversation.bookCode,
+          versionCode: conversation.versionCode,
+          chapter: conversation.chapter,
+          verse: conversation.verse,
+          question,
+          history,
+        },
+      });
+    }
     const result = response.data;
 
     if (!response.ok || !result?.ok) {

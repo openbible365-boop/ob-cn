@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { getStreak, markTodayRead } from "../data/streak";
 import { bookName, getBookByCode, getVersion } from "../data/scripture";
 import {
   fetchReadingPlans,
@@ -27,6 +29,7 @@ function todayReference(plan: ReadingPlan) {
 
 export function ReadingPlansPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,6 +56,8 @@ export function ReadingPlansPage() {
       plan.id,
     );
     if (result.ok) {
+      // 打卡成功计入连续读经天数（本机 streak）
+      if (plan.enrolled) markTodayRead();
       setMessage(result.message);
       await loadPlans();
     } else setError(result.message);
@@ -74,14 +79,14 @@ export function ReadingPlansPage() {
     <div className="screen reading-plans-screen">
       <UnifiedHeader
         title="读经计划"
-        subtitle={plans.length ? `${plans.length} 个` : "每日同行"}
+        subtitle={getStreak() > 0 ? `连续 ${getStreak()} 天` : plans.length ? `${plans.length} 个` : "每日同行"}
         ariaLabel="个人与社群读经计划"
-        onBack={() => navigate("/me")}
+        onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll reading-plans-scroll">
         <header className="reading-plans-intro">
-          <span><Icon name="calendar" size={19} /></span>
+          <span><Icon name="calendar" size={20} /></span>
           <div>
             <h1>每天一段，持续读下去</h1>
             <p>个人计划只属于你；社群计划与群成员一起完成。</p>
@@ -121,7 +126,7 @@ export function ReadingPlansPage() {
                     <b>{plan.today.title || reference}</b>
                     {plan.today.title && <em>{reference}</em>}
                   </span>
-                  <Icon name="chevron-right" size={17} />
+                  <Icon name="chevron-right" size={16} />
                 </button>
               )}
               <button
@@ -131,7 +136,7 @@ export function ReadingPlansPage() {
                 onClick={() => void runAction(plan)}
               >
                 {plan.completedAt
-                  ? <><Icon name="check" size={15} />计划已完成</>
+                  ? <><Icon name="check" size={16} />计划已完成</>
                   : busyId === plan.id
                     ? "正在更新…"
                     : plan.enrolled

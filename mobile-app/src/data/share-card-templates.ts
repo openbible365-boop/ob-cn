@@ -3,6 +3,7 @@ export const SHARE_CARD_TEMPLATES = [
   { id: "paper", name: "书卷", colors: ["#f4ead2", "#8d6643", "#28342d"] },
   { id: "dawn", name: "晨光", colors: ["#f8d6ba", "#e9c6e8", "#6f4f92"] },
   { id: "night", name: "夜读", colors: ["#131a2b", "#d9b65d", "#f6f0df"] },
+  { id: "study", name: "书房", colors: ["#221509", "#c98a3b", "#f3e3c2"] },
 ] as const;
 
 export type ShareCardTemplateId = (typeof SHARE_CARD_TEMPLATES)[number]["id"];

@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:avatars": "tsx scripts/migrate-avatars.ts",
+    "verify:community": "tsx scripts/verify-community.ts",
+    "verify:community:api": "tsx scripts/verify-community-api.ts",
+    "test": "vitest run",
+    "import:commentary": "tsx scripts/import-commentary.ts",
+    "check:config": "tsx scripts/check-config.ts",
+    "verify:web:community": "tsx scripts/verify-web-community.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -32,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tsx": "^4.23.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
