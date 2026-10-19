@@ -104,7 +104,8 @@ export function loadBook(versionCode: string, bookCode: string): Promise<BookDat
   const key = `${versionCode}/${bookCode}`;
   let promise = bookCache.get(key);
   if (!promise) {
-    const url = `/data/bible/${versionCode}/${bookCode}.json`;
+    const folder = versionCode === "pinyin" ? "pinyin2" : versionCode;
+    const url = `/data/bible/${folder}/${bookCode}.json`;
     // 离线优先：在「资源管理」下载过的译本直接读本机缓存，无网络也能翻书
     promise = cachedResponse(url)
       .then((cached) => cached ?? fetch(url))
