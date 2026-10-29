@@ -1532,21 +1532,22 @@ a {
 /* 章尾导航：读完直接切章 */
 .annotation-chapter-nav {
   display: flex;
-  gap: 10px;
+  justify-content: center;
   margin: 22px 0 4px;
 }
 
+/* 单颗轻量「下一章」：读完注释的顺手延续，不抢内容 */
 .annotation-chapter-nav button {
   display: flex;
-  height: 42px;
-  flex: 1;
+  height: 40px;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  padding: 0 26px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--white);
-  color: var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--body);
   font-size: 13px;
   font-weight: 600;
 }
@@ -1651,14 +1652,6 @@ a {
   margin-bottom: 3px;
   color: var(--ink);
   font-weight: 600;
-}
-
-.annotation-swipe-hint {
-  padding: 30px 0 6px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
 }
 
 .annotation-copyright-layer {
@@ -2570,11 +2563,13 @@ a {
 }
 
 .audio-player-sheet {
-  --audio-accent: var(--purple);
-  --audio-accent-deep: var(--purple-deep);
-  --audio-accent-soft: var(--purple-soft);
-  --audio-purple: var(--purple);
-  --audio-purple-soft: var(--purple-soft);
+  /* 播放器主色改用 logo 品牌金（书页金 #F2C96D / 星芒 #E89A2C）：
+     语音读的是经文本身，归金色（经文语义色），紫色留给 AI */
+  --audio-accent: #e89a2c;
+  --audio-accent-deep: var(--yellow-ink);
+  --audio-accent-soft: var(--yellow-soft);
+  --audio-purple: #c8821f;
+  --audio-purple-soft: var(--yellow-soft);
   --audio-line: var(--line);
   position: fixed;
   top: 50%;
@@ -2732,7 +2727,7 @@ a {
 .audio-player-status.loading .audio-status-indicator {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(130, 80, 171, 0.22);
+  border: 2px solid color-mix(in srgb, currentColor 24%, transparent);
   border-top-color: currentColor;
   background: transparent;
   animation: audio-status-spin 700ms linear infinite;
@@ -2827,9 +2822,9 @@ a {
   height: 46px;
   margin: 0 auto;
   border-radius: 50%;
-  background: var(--purple);
+  background: var(--audio-accent);
   color: #ffffff;
-  box-shadow: 0 5px 14px rgba(130, 80, 171, 0.22);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--audio-accent) 24%, transparent);
 }
 
 .audio-play-button svg { fill: currentColor; stroke-width: 1.6; }
@@ -3132,7 +3127,7 @@ a {
 
 .audio-voice-select-wrap.open,
 .audio-voice-select-wrap:focus-visible {
-  outline: 2px solid rgba(130, 80, 171, 0.38);
+  outline: 2px solid color-mix(in srgb, var(--audio-accent) 40%, transparent);
   outline-offset: 2px;
 }
 
@@ -5123,7 +5118,23 @@ body.dark .app-exit-toast {
 }
 
 .huidu-composer-status.is-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   color: var(--danger);
+}
+
+/* 失败即可一键重发：问题已回填，按钮只是替用户再按一次发送 */
+.huidu-retry-button {
+  flex: none;
+  padding: 3px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .huidu-chat-row {
@@ -5361,12 +5372,12 @@ body.dark .app-exit-toast {
 }
 
 .bible-verse-main.is-audio-current {
-  background: rgba(130, 80, 171, 0.09);
-  box-shadow: 0 0 0 3px rgba(130, 80, 171, 0.09);
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 16%, transparent);
 }
 
 .bible-verse-main.is-audio-current .bible-verse-number {
-  color: var(--purple-deep) !important;
+  color: var(--yellow-ink) !important;
 }
 
 .bible-verse-content.is-pinyin .verse-text ruby rt {
@@ -8740,7 +8751,7 @@ body.dark .annotation-scripture-quote {
 }
 
 body.dark .annotation-chapter-nav button {
-  background: var(--surface-2);
+  background: transparent;
 }
 
 body.dark .annotation-reference-chip {

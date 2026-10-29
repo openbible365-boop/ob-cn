@@ -59,7 +59,8 @@ export function bookChipName(book: Book, version: Version): string {
 
 // ---------- reading position ----------
 
-type Reading = { version: string; book: string; chapter: number };
+// verse 是章内书签：滚动时记录视口顶部的节号，下次进同一章时静默定位回去
+type Reading = { version: string; book: string; chapter: number; verse?: number };
 const READING_KEY = "ob.reading";
 
 export function getReading(): Reading {
@@ -68,6 +69,7 @@ export function getReading(): Reading {
     version: r.version ?? "cuv",
     book: r.book ?? "jhn",
     chapter: r.chapter ?? defaultChapterFor(r.book ?? "jhn"),
+    verse: typeof r.verse === "number" && r.verse > 1 ? r.verse : undefined,
   };
 }
 

@@ -698,18 +698,13 @@ export function AnnotationsPage() {
                   <div>{translate("可以切换到其他章节继续阅读。")}</div>
                 </div>
               )}
-              {/* 长注释读到底后直接切章，不必回顶部或依赖滑动手势 */}
+              {/* 读到底的顺手延续：只留轻量「下一章」，回看走顶部章节芯片或左右滑动 */}
               <div className="annotation-chapter-nav">
-                <button type="button" onClick={() => gotoAdjacentChapter(-1)}>
-                  <Icon name="chevron-left" size={15} />
-                  {chapter > 1 ? translate("上一章") : translate("绪论")}
-                </button>
                 <button type="button" onClick={() => gotoAdjacentChapter(1)}>
                   {chapter < maxChapter ? translate("下一章") : translate("下一卷")}
                   <Icon name="chevron-right" size={15} />
                 </button>
               </div>
-              <div className="annotation-swipe-hint">{translate("也可以左右滑动切换章节")}</div>
           </section>
         )}
       </div>
