@@ -52,6 +52,7 @@ import {
   updateAndroidMedia,
 } from "../data/android-media";
 import { useSettings } from "../context/SettingsContext";
+import { FirstRunGuide, shouldShowFirstRunGuide } from "../components/FirstRunGuide";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
 
 const PlayingAudioIcon = () => (
@@ -169,6 +170,9 @@ export function BiblePage() {
     const saved = localStorage.getItem("ob.bible.showHeadings");
     return saved === null ? true : saved === "true";
   });
+  // 经文字体：宋体（默认，印刷正排）/ 黑体（系统苹方/思源黑体，现代清晰）
+  const [scriptFont, setScriptFont] = useState<"song" | "hei">(() =>
+    localStorage.getItem("ob.bible.scriptFont") === "hei" ? "hei" : "song");
   const displayBook = bookName(book, version);
   const displayedBook = translate(displayBook);
 
@@ -181,6 +185,18 @@ export function BiblePage() {
   const chapterFallback =
     book.code === reading.book ? reading.chapter : defaultChapterFor(book.code);
   const chapter = Math.min(Math.max(Number(params.get("c")) || chapterFallback, 1), maxChapter);
+
+  // 章内书签：仅在「回到上次同一章、且不是 ?v= 定位链接」时恢复一次
+  const [resumeVerse] = useState<number | null>(() => (
+    !params.get("v") && book.code === reading.book && chapter === reading.chapter && reading.verse
+      ? reading.verse
+      : null
+  ));
+  const resumeDoneRef = useRef(false);
+  const verseSaveTimerRef = useRef<number | null>(null);
+
+  // 首次启动的三步引导：圣经页是落地页，在这里出现一次
+  const [showFirstRunGuide, setShowFirstRunGuide] = useState(shouldShowFirstRunGuide);
 
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
   const [picker, setPicker] = useState<null | "book" | "version" | "chapter" | "search" | "audio" | "font">(null);
@@ -305,8 +321,28 @@ export function BiblePage() {
   }, [version.code, book.code, chapter]);
 
   useEffect(() => {
+    // 换章清掉旧章未落盘的书签计时器，避免把旧节号写进新章
+    if (verseSaveTimerRef.current) {
+      window.clearTimeout(verseSaveTimerRef.current);
+      verseSaveTimerRef.current = null;
+    }
     readingScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [book.code, chapter]);
+
+  // 恢复章内书签：经文渲染完成后静默定位，并用定位底纹轻闪提示「上次读到这里」
+  useEffect(() => {
+    if (!data || !resumeVerse || resumeDoneRef.current) return;
+    resumeDoneRef.current = true;
+    setLocatedVerse(resumeVerse);
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`bible-verse-${resumeVerse}`)?.scrollIntoView({ behavior: "auto", block: "center" });
+    });
+    const timeout = window.setTimeout(() => setLocatedVerse((value) => value === resumeVerse ? null : value), 2200);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
+    };
+  }, [data, resumeVerse]);
 
   useEffect(() => {
     setData(null);
@@ -332,6 +368,10 @@ export function BiblePage() {
   useEffect(() => {
     localStorage.setItem("ob.bible.showHeadings", String(showHeadings));
   }, [showHeadings]);
+
+  useEffect(() => {
+    localStorage.setItem("ob.bible.scriptFont", scriptFont);
+  }, [scriptFont]);
 
   useEffect(() => {
     if (picker !== "audio" && !continueAudioAfterLoadRef.current) return;
@@ -1411,6 +1451,14 @@ export function BiblePage() {
             </div>
 
             <div className="bible-reading-setting-row">
+              <span>经文字体</span>
+              <div className="bible-setting-segment">
+                <button type="button" className={scriptFont === "song" ? "active" : ""} onClick={() => setScriptFont("song")}>宋体</button>
+                <button type="button" className={scriptFont === "hei" ? "active" : ""} onClick={() => setScriptFont("hei")}>黑体</button>
+              </div>
+            </div>
+
+            <div className="bible-reading-setting-row">
               <span>语言简繁</span>
               <div className="bible-setting-segment">
                 <button type="button" className={!isTraditional ? "active" : ""} onClick={() => setIsTraditional(false)}>简</button>
@@ -1432,7 +1480,7 @@ export function BiblePage() {
       {/* verses */}
       <div
         ref={readingScrollRef}
-        className={`screen-scroll bible-reading-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}${selectedVerses.length > 0 ? " has-verse-action-sheet" : ""}`}
+        className={`screen-scroll bible-reading-scroll${version.code === "pinyin" ? " is-pinyin-reader" : ""}${version.lang === "ko" ? " is-korean-reader" : ""}${scriptFont === "hei" ? " is-font-hei" : ""}${selectedVerses.length > 0 ? " has-verse-action-sheet" : ""}`}
         style={{ padding: version.code === "pinyin" ? "12px 22px 24px" : version.lang === "ko" ? "14px 22px 24px" : "8px var(--reading-gutter) 24px" }}
         onClick={() => picker && setPicker(null)}
         onScroll={(event) => {
@@ -1452,6 +1500,22 @@ export function BiblePage() {
           } else if (delta < -6) {
             setToolbarHidden(false);
           }
+          // 章内书签：停止滚动 400ms 后把视口顶部的节号写入阅读位置
+          const container = event.currentTarget;
+          if (verseSaveTimerRef.current) window.clearTimeout(verseSaveTimerRef.current);
+          verseSaveTimerRef.current = window.setTimeout(() => {
+            verseSaveTimerRef.current = null;
+            const containerTop = container.getBoundingClientRect().top;
+            for (const node of container.querySelectorAll('[id^="bible-verse-"]')) {
+              if (node.getBoundingClientRect().bottom > containerTop + 40) {
+                const verseNumber = Number(node.id.slice("bible-verse-".length));
+                if (Number.isFinite(verseNumber)) {
+                  setReading({ version: version.code, book: book.code, chapter, verse: verseNumber > 1 ? verseNumber : undefined });
+                }
+                return;
+              }
+            }
+          }, 400);
         }}
         onPointerDown={handleReadingPointerDown}
         onPointerUp={handleReadingPointerUp}
@@ -1848,6 +1912,14 @@ export function BiblePage() {
               </form>
             ) : (
               <div className="verse-dock-body">
+                <div className="verse-dock-actions">
+                  <button type="button" onClick={() => openNoteEditor(selectedVerse.verse, selectedNotes[0], true)}><Icon name="edit" /><span>笔记</span></button>
+                  <button type="button" onClick={() => navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`)}><Icon name="book" /><span>注释</span></button>
+                  <button type="button" className="is-huidu" onClick={askHuidu}><Icon name="sparkle" /><span>慧读</span></button>
+                  <button type="button" onClick={() => setShareOpen(true)}><Icon name="share" /><span>分享</span></button>
+                  <button type="button" onClick={() => void copyVerse()}><Icon name="copy" /><span>复制经文</span></button>
+                </div>
+                {/* 高亮色板放在动作行之下：取色是次级操作，主动作先触手可及 */}
                 <div className="verse-dock-highlight"><span>高亮</span>
                 <div className="verse-compact-swatches" role="group" aria-label="高亮颜色">
                   {HIGHLIGHT_COLORS.map((color, colorIndex) => {
@@ -1874,13 +1946,6 @@ export function BiblePage() {
                   })}
                 </div>
                 </div>
-                <div className="verse-dock-actions">
-                  <button type="button" onClick={() => openNoteEditor(selectedVerse.verse, selectedNotes[0], true)}><Icon name="edit" /><span>笔记</span></button>
-                  <button type="button" onClick={() => navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`)}><Icon name="book" /><span>注释</span></button>
-                  <button type="button" onClick={askHuidu}><Icon name="sparkle" /><span>慧读</span></button>
-                  <button type="button" onClick={() => setShareOpen(true)}><Icon name="share" /><span>分享</span></button>
-                  <button type="button" onClick={() => void copyVerse()}><Icon name="copy" /><span>复制经文</span></button>
-                </div>
               </div>
             )}
           </div>
@@ -1898,6 +1963,8 @@ export function BiblePage() {
           onClose={() => setDailyShareOpen(false)}
         />
       )}
+
+      {showFirstRunGuide && <FirstRunGuide onClose={() => setShowFirstRunGuide(false)} />}
 
       {shareOpen && selectedVerses.length > 0 && (
         <VerseShareSheet

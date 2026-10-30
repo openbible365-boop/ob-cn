@@ -385,7 +385,15 @@ export function HuiduChatPage() {
       </main>
 
       <div className="huidu-chat-composer">
-        {requestError && <div role="alert" className="huidu-composer-status is-error">{requestError}</div>}
+        {requestError && (
+          <div role="alert" className="huidu-composer-status is-error">
+            <span>{requestError}</span>
+            {/* 失败时问题已回填进输入框，重试即原样再发一次 */}
+            <button type="button" className="huidu-retry-button" onClick={() => void submit(question)}>
+              重试
+            </button>
+          </div>
+        )}
         {speechInput.error && <div role="alert" className="huidu-composer-status is-error">{speechInput.error}</div>}
         {speechInput.isListening && (
           <div role="status" className="huidu-composer-status voice-listening-status">

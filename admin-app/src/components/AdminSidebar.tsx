@@ -6,16 +6,16 @@ import { signOut } from "next-auth/react";
 
 type Role = "SUPER_ADMIN" | "MODERATOR";
 
-type Scope = "shared" | "app" | "web";
+type Scope = "shared" | "app";
 
 // 后台按「这块内容归哪一端用」分组：
 //   共用   —— 两端读写同一份数据（笔记、高亮已互通）
 //   App 端 —— 网页版没有对应功能（网页版无社群，也就没有群活动）
-//   网页版 —— App 没有对应入口（百科 / 影音 / 灵修）
+// 原「网页版」组（研经笔记/百科/影音/灵修）因全部为零内容空壳已裁撤——
+// 对应 /api/web 只读接口保留，待网页版真正启用这些栏目时再恢复管理页
 const SCOPE_LABEL: Record<Scope, string> = {
   shared: "两端共用",
   app: "App 端",
-  web: "网页版",
 };
 
 const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope }[] = [
@@ -32,14 +32,9 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope }[] 
   { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app" },
-
-  { href: "/admin/study-notes", label: "研经笔记", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },
-  { href: "/admin/encyclopedia", label: "圣经百科", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },
-  { href: "/admin/media", label: "影音库", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },
-  { href: "/admin/spiritual", label: "灵修引导", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "web" },
 ];
 
-const SCOPE_ORDER: Scope[] = ["shared", "app", "web"];
+const SCOPE_ORDER: Scope[] = ["shared", "app"];
 
 export function AdminSidebar({ operatorName, role }: { operatorName: string; role?: string }) {
   const pathname = usePathname();

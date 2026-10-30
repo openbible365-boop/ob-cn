@@ -77,7 +77,12 @@ export default async function CommentaryPage({
   });
   const draftByChapter = new Map(draftRows.map((r) => [r.chapter, r._count._all]));
 
-  const activeChapter = Number(chapter) || chapterRows[0]?.chapter || 1;
+  // 绪论存在「第 0 章」键下，0 是合法章号——不能用 || 链（0 为 falsy 会跌落到第 1 章）
+  const chapterParam = chapter !== undefined && chapter !== "" ? Number(chapter) : NaN;
+  const activeChapter = Number.isInteger(chapterParam) && chapterParam >= 0
+    ? chapterParam
+    : chapterRows[0]?.chapter ?? 1;
+  const chapterLabel = activeChapter === 0 ? "绪论" : `第 ${activeChapter} 章`;
 
   // 当前章的注释条目 + 经文原文（校对时左右对照）
   const [entries, verses] = await Promise.all([
@@ -94,7 +99,7 @@ export default async function CommentaryPage({
     <>
       <PageHeader
         title="注释校对"
-        meta={`${activeBook.zh} 第 ${activeChapter} 章 · ${entries.length} 条`}
+        meta={`${activeBook.zh} ${chapterLabel} · ${entries.length} 条`}
         actions={canPublish ? (
           <form action={publishCommentary}>
             <input type="hidden" name="bookOrder" value={bookOrder} />
@@ -134,7 +139,7 @@ export default async function CommentaryPage({
                   className={`commentary-chapter${row.chapter === activeChapter ? " is-active" : ""}${pending ? " has-pending" : ""}`}
                   title={pending ? `${pending} 条待发布` : `${row._count._all} 条`}
                 >
-                  {row.chapter}
+                  {row.chapter === 0 ? "绪" : row.chapter}
                 </Link>
               );
             })}
@@ -145,7 +150,7 @@ export default async function CommentaryPage({
         <section className="card commentary-editor">
           <div className="commentary-editor-head">
             <div style={{ fontSize: 13, fontWeight: 800 }}>
-              {activeBook.zh} 第 {activeChapter} 章
+              {activeBook.zh} {chapterLabel}
             </div>
             <div style={{ flex: 1 }} />
             {["REVIEWED", "DRAFT"].map((s) => (

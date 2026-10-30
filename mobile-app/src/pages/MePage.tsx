@@ -42,6 +42,18 @@ export function MePage() {
     return () => { cancelled = true; };
   }, []);
 
+  // 意见反馈：优先唤起系统邮件；900ms 后页面仍有焦点说明没有邮件应用接管，
+  // 兜底把邮箱复制进剪贴板并提示（安卓上未配置邮件客户端的情况很常见）
+  const openFeedback = () => {
+    const FEEDBACK_EMAIL = "mushengbooks@gmail.com";
+    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("慧读圣经反馈")}`;
+    window.setTimeout(() => {
+      if (!document.hasFocus()) return;
+      navigator.clipboard?.writeText(FEEDBACK_EMAIL).catch(() => {});
+      window.alert(translate("未能唤起邮件应用。反馈邮箱已复制，可粘贴到任意邮箱发送：") + FEEDBACK_EMAIL);
+    }, 900);
+  };
+
   const loggedIn = Boolean(user);
   useEffect(() => {
     if (!loggedIn) return;
@@ -107,6 +119,7 @@ export function MePage() {
           <div className="me-legal-links">
             <button type="button" onClick={() => navigate("/legal/terms")}>{translate("用户协议")}</button>
             <button type="button" onClick={() => navigate("/legal/privacy")}>{translate("隐私政策")}</button>
+            <button type="button" onClick={openFeedback}>{translate("意见反馈")}</button>
           </div>
         </main>
       </div>
@@ -134,6 +147,8 @@ export function MePage() {
       { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
       { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
       { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
+      // 反馈走系统邮件：协议与隐私政策里承诺的联系渠道
+      { icon: "mail", label: translate("意见反馈"), desc: "mushengbooks@gmail.com", to: "", href: `mailto:mushengbooks@gmail.com?subject=${encodeURIComponent("慧读圣经反馈")}` },
     ],
     [
       { icon: "info", label: translate("用户协议"), desc: "", to: "/legal/terms" },
@@ -348,7 +363,11 @@ export function MePage() {
         {menuGroups.slice(1).map((group, index) => (
           <div className="me-menu-card" key={index}>
             {group.map((row) => (
-              <button key={row.label} type="button" onClick={() => navigate(row.to)}>
+              <button
+                key={row.label}
+                type="button"
+                onClick={() => ("href" in row && row.href ? openFeedback() : navigate(row.to))}
+              >
                 <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
                 <span className="me-menu-copy">
                   <b>{row.label}</b>
@@ -368,7 +387,8 @@ export function MePage() {
           <section className="me-logout-confirm" aria-label={translate("确认退出登录")}>
             <div>
               <b>{translate("退出当前账号？")}</b>
-              <small>{translate("本机笔记和慧读记录不会删除。")}</small>
+              {/* 与实际行为一致：clearAnnotationsForLogout 等会清本机个人数据，防止串进下一个账号 */}
+              <small>{translate("退出后本机的笔记、高亮与慧读记录将被清除；已同步到账号的内容在下次登录后自动恢复。")}</small>
             </div>
             <div className="me-logout-actions">
               <button type="button" disabled={logoutBusy} onClick={() => setLogoutConfirm(false)}>{translate("取消")}</button>

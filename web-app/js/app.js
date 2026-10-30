@@ -6523,8 +6523,6 @@
             ['daily', t('profile.sub.daily') || '每日经文', t('profile.sub.dailyDesc') || '每天推送一段经文'],
             ['commentary', t('profile.sub.commentary') || '注释更新', t('profile.sub.commentaryDesc') || '新增注释与研经资料'],
             ['devotional', t('profile.sub.devotional') || '灵修计划', t('profile.sub.devotionalDesc') || '读经计划进度提醒'],
-            ['video', t('profile.sub.video') || '视频推荐', ''],
-            ['podcast', t('profile.sub.podcast') || '音频节目', ''],
         ];
         return `<div class="mep-switches">
             ${items.map(([k, label, desc]) => `<label class="mep-switch">
@@ -8451,7 +8449,8 @@
 
         // 恢复上次所在的页面（刷新后停留在原页，而非总跳回阅读视图）。
         // 'plan' 需登录，排除以免刷新时弹登录框；未知值回退到阅读。
-        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'video', 'audio', 'donate'];
+        // video/donate 视图已随「与 App 端功能统一」撤下，不再恢复
+        const RESTORE_VIEWS = ['reading', 'about', 'privacy', 'settings', 'audio'];
         const lastView = localStorage.getItem('ob_last_view');
         switchView(RESTORE_VIEWS.includes(lastView) ? lastView : 'reading');
         switchPanelTab('ai');
