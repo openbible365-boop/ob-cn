@@ -329,13 +329,24 @@ export function BiblePage() {
     readingScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [book.code, chapter]);
 
+  useEffect(() => {
+    // 换译本同样作废旧计时器（不滚回顶部——就地切换续读是刻意行为），
+    // 否则迟到的保存会用旧译本代码覆盖掉刚写入的新译本
+    if (verseSaveTimerRef.current) {
+      window.clearTimeout(verseSaveTimerRef.current);
+      verseSaveTimerRef.current = null;
+    }
+  }, [version.code]);
+
   // 恢复章内书签：经文渲染完成后静默定位，并用定位底纹轻闪提示「上次读到这里」
   useEffect(() => {
     if (!data || !resumeVerse || resumeDoneRef.current) return;
     resumeDoneRef.current = true;
     setLocatedVerse(resumeVerse);
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`bible-verse-${resumeVerse}`)?.scrollIntoView({ behavior: "auto", block: "center" });
+      // block:'start' 让书签节落在视口顶部——与保存逻辑（记录顶部节号）同一基准，
+      // 恢复后随即发生的那次自动保存会写回同一节，不会逐次向前漂移
+      document.getElementById(`bible-verse-${resumeVerse}`)?.scrollIntoView({ behavior: "auto", block: "start" });
     });
     const timeout = window.setTimeout(() => setLocatedVerse((value) => value === resumeVerse ? null : value), 2200);
     return () => {
