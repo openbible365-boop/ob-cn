@@ -379,7 +379,7 @@ export function AudioBiblePlayer({
           >
             <div className="audio-player-handle" />
             <div className="audio-player-kicker">
-              <Icon name="volume-2" size={18} />
+              <Icon name="volume-2" size={20} />
               <span>语音圣经</span>
               <button
                 type="button"
@@ -387,7 +387,7 @@ export function AudioBiblePlayer({
                 aria-label="关闭语音圣经"
                 onClick={onClose}
               >
-                <Icon name="x" size={22} />
+                <Icon name="x" size={20} />
               </button>
             </div>
             <h2 className="audio-player-title">{displayBook} {chapter}</h2>
@@ -437,7 +437,7 @@ export function AudioBiblePlayer({
                 disabled={chapter <= 1 || audioLoading}
                 onClick={() => gotoAudioChapter(chapter - 1)}
               >
-                <Icon name="skip-back" size={27} />
+                <Icon name="skip-back" size={24} />
               </button>
               <button type="button" aria-label="后退30秒" disabled={!audioUrl} onClick={() => seekAudio(-30)}>
                 <span className="audio-seek-icon"><Icon name="rotate-ccw" size={24} /><b>30</b></span>
@@ -460,7 +460,7 @@ export function AudioBiblePlayer({
                 disabled={chapter >= maxChapter || audioLoading}
                 onClick={() => gotoAudioChapter(chapter + 1)}
               >
-                <Icon name="skip-forward" size={27} />
+                <Icon name="skip-forward" size={24} />
               </button>
             </div>
 
@@ -498,7 +498,7 @@ export function AudioBiblePlayer({
                     音色 · {displayedAudioVoice === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳"}
                   </span>
                   <span className="audio-voice-chevron" aria-hidden="true">
-                    <Icon name="chevron-down" size={18} />
+                    <Icon name="chevron-down" size={20} />
                   </span>
                 </button>
                 {voiceMenuOpen && (

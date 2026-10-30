@@ -90,6 +90,7 @@ export type WorkspaceResource = {
 export type CommunityWorkspace = {
   community: {
     id: string;
+    parentId: string | null;
     name: string;
     abbreviation: string;
     description: string | null;
@@ -98,7 +99,6 @@ export type CommunityWorkspace = {
     isOfficial: boolean;
     kind: "PUBLIC" | "PRIVATE";
     joinPolicy: "OPEN" | "APPROVAL" | "INVITE_ONLY";
-    parentId?: string | null;
   };
   access: {
     role: WorkspaceRole;

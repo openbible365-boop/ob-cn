@@ -258,6 +258,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     ok: true,
     community: {
       id: community.id,
+      parentId: community.parentId,
       name: community.name,
       abbreviation: community.abbreviation,
       description: community.description,

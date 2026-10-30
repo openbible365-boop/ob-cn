@@ -48,6 +48,11 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum PushPlatform {
+  ANDROID
+  IOS
+}
+
 model User {
   id             String     @id @default(cuid())
   uid            Int        @unique @default(autoincrement())
@@ -81,6 +86,7 @@ model User {
   createdReadingPlans   ReadingPlan[]           @relation("ReadingPlanCreator")
   readingPlanProgress   ReadingPlanEnrollment[]
   notificationSettings  NotificationSetting[]
+  pushDevices           DevicePushToken[]
   communityJoinRequests CommunityJoinRequest[] @relation("CommunityJoinRequester")
   reviewedJoinRequests  CommunityJoinRequest[] @relation("CommunityJoinReviewer")
   resourceBookmarks     ResourceBookmark[]
@@ -713,6 +719,31 @@ model NotificationSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, key])
+}
+
+// ---------- Native device tokens used by FCM (Android) and APNs (iOS) ----------
+
+model DevicePushToken {
+  id          String       @id @default(cuid())
+  userId      String
+  token       String       @unique
+  platform    PushPlatform
+  deviceId    String?
+  appVersion  String?
+  ipAddress   String?
+  country     String?
+  countryCode String?
+  region      String?
+  city        String?
+  enabled     Boolean      @default(true)
+  lastSeenAt  DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@index([deviceId])
 }
 
 // ---------- Email verification codes (登录/注册) ----------

@@ -1,7 +1,7 @@
 {
   "name": "mobile-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,14 +13,19 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.4.1",
+    "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.4.1",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/status-bar": "^8.0.3",
     "@capawesome/capacitor-google-sign-in": "^0.1.2",
     "opencc-js": "^1.4.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.1",
+    "@capacitor/push-notifications": "^8.1.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",

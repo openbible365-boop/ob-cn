@@ -8,6 +8,15 @@ export function resolveApiUrl(path: string) {
   return `${NATIVE_API_ORIGIN}${path}`;
 }
 
+/**
+ * 头像现在由服务端以文件返回路径；历史数据仍可能是 base64 data URI，
+ * 两种都能直接当 img.src 用，只有相对路径需要在原生端补上来源。
+ */
+export function resolveAvatarUrl(value: string | null | undefined) {
+  if (!value) return null;
+  return resolveApiUrl(value);
+}
+
 type ApiRequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;

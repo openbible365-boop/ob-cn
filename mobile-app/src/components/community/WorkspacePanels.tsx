@@ -89,7 +89,6 @@ function readableTime(value: string) {
   }).format(date);
 }
 
-
 function resourceTypeLabel(type: WorkspaceResource["type"]) {
   return {
     LINK: "链接",

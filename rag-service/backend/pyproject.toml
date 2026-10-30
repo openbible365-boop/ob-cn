@@ -1,0 +1,51 @@
+[project]
+name = "llm-backend"
+version = "0.1.0"
+description = "LLM 聊天服务后端"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "pyjwt>=2.9",
+    "bcrypt>=4.2",
+    "python-multipart>=0.0.12",
+    "email-validator>=2.2",
+    "slowapi>=0.1.9",
+    "httpx>=0.27",
+    "pypdf>=5.0",
+    "python-docx>=1.2.0",
+    "qdrant-client>=1.15,<2",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+]
+
+# 应用而非可分发包: uv sync 不尝试 build 本项目 (Dockerfile 也用 --no-install-project)
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# 所有 fixture/test 共用一个 session-scoped event loop。
+# 否则 SQLAlchemy 引擎(模块级单例)会被绑在第一个 loop 上,
+# 后续测试用新 loop 时 asyncpg 连接报 "Event loop is closed"。
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+filterwarnings = [
+    # bcrypt 5 在 passlib-less 直接用法上偶尔抛弃用警告;不影响功能,在 CI 噪音里压一下
+    "ignore::DeprecationWarning",
+]

@@ -1,8 +1,9 @@
-// 慧读 conversations are persisted locally. Opening explanations keep the
-// existing three-part presentation; follow-up questions are answered by the
-// authenticated Qwen API and then stored in the same local thread.
+// 慧读 conversations are persisted locally. Both opening explanations and
+// follow-up questions are answered by the authenticated RAG + Qwen API and
+// then stored in the same local thread.
 import { load, save, uid } from "./store";
-import { apiRequest } from "./api";
+import { Capacitor } from "@capacitor/core";
+import { apiFormRequest, apiRequest, resolveApiUrl } from "./api";
 
 export type HuiduBlock = { tag: string; color: string; dark: boolean; text: string };
 export type HuiduSource = {
@@ -36,9 +37,33 @@ export type Conversation = {
 
 const KEY = "ob.conversations";
 const PENDING_KEY = "ob.conversationPendingOps";
+const LEGACY_COMMENTARY_NAME = /Cross BW jdb(?:\.pdf)?/gi;
 type PendingConversationOperation = { id: string; type: "upsert" | "delete"; conversationId: string };
 let syncPromise: Promise<boolean> | null = null;
 let syncTimer: ReturnType<typeof setTimeout> | undefined;
+
+function normalizeCommentaryName(value: string) {
+  return value
+    .replace(LEGACY_COMMENTARY_NAME, "《精读本注释》")
+    .replace(/真实资料名/g, "《精读本注释》");
+}
+
+function normalizeMessage(message: Message): Message {
+  if (message.role === "user") return message;
+  return {
+    ...message,
+    content: message.content ? normalizeCommentaryName(message.content) : undefined,
+    blocks: message.blocks?.map((block) => ({
+      ...block,
+      text: normalizeCommentaryName(block.text),
+    })),
+    sources: message.sources?.map((source) => ({
+      ...source,
+      label: normalizeCommentaryName(source.label),
+      title: source.title ? normalizeCommentaryName(source.title) : undefined,
+    })),
+  };
+}
 
 export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[] {
   const lines = verseText.split("\n\n").filter(Boolean);
@@ -114,8 +139,17 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   ];
 }
 
+export function clearConversationsForLogout() {
+  clearTimeout(syncTimer);
+  save(PENDING_KEY, []);
+  save(KEY, []);
+}
+
 export function getConversations(): Conversation[] {
-  return load<Conversation[]>(KEY, []);
+  return load<Conversation[]>(KEY, []).map((conversation) => ({
+    ...conversation,
+    messages: conversation.messages.map(normalizeMessage),
+  }));
 }
 
 function saveConversations(conversations: Conversation[]) {
@@ -205,26 +239,7 @@ export function startConversation(
     verseText,
     title: `${refLabel} 的历史背景与生活应用`,
     createdAt: new Date().toISOString(),
-    messages: [
-      { role: "user", content: "请为我解释这节经文" },
-      {
-        role: "assistant",
-        blocks: generateBlocks(refLabel, verseText),
-        sources: [
-          {
-            id: `scripture-${context?.versionCode ?? "cuv"}-${context?.bookCode ?? ""}-${chapter}-${verse}`,
-            kind: "scripture",
-            label: refLabel,
-            title: "本轮经文",
-            bookCode: context?.bookCode,
-            versionCode: context?.versionCode,
-            chapter,
-            verseStart: verse,
-            verseEnd: verse,
-          },
-        ],
-      },
-    ],
+    messages: [],
   };
   saveConversations([conv, ...getConversations()]);
   queueOperation("upsert", conv.id);
@@ -233,8 +248,284 @@ export function startConversation(
 }
 
 export type HuiduAssistantResult =
-  | { ok: true; answer: string; sources: HuiduSource[] }
+  | { ok: true; answer: string; blocks?: HuiduBlock[]; sources: HuiduSource[] }
   | { ok: false; message: string; status?: number };
+
+type HuiduAssistantResponse =
+  | { ok: true; answer: string; blocks?: HuiduBlock[]; sources?: HuiduSource[] }
+  | { ok: false; message?: string };
+
+type HuiduStreamEvent =
+  | { type: "meta"; sources?: HuiduSource[] }
+  | { type: "delta"; text?: string }
+  | ({ type: "done" } & Extract<HuiduAssistantResponse, { ok: true }>)
+  | { type: "error"; message?: string };
+
+type HuiduRequestOptions = {
+  file?: File | null;
+  mode?: "opening" | "followup";
+  onDelta?: (answer: string) => void;
+};
+
+type StreamCapableWindow = Window & {
+  // Capacitor keeps the original browser fetch here before its native HTTP
+  // patch is installed. Unlike CapacitorHttp, it exposes response.body.
+  CapacitorWebFetch?: typeof window.fetch;
+};
+
+const HIDDEN_OPENING_HEADINGS = [
+  "逐节深入解读",
+  "神学核心和现实意义",
+  "总结",
+] as const;
+
+function visibleStreamingAnswer(value: string, hideOpeningHeadings: boolean) {
+  let normalized = normalizeCommentaryName(value);
+  normalized = normalized.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const openThink = normalized.toLowerCase().lastIndexOf("<think>");
+  const closeThink = normalized.toLowerCase().lastIndexOf("</think>");
+  if (openThink > closeThink) normalized = normalized.slice(0, openThink);
+
+  if (!hideOpeningHeadings) return normalized.trimStart();
+
+  return normalized
+    .split("\n")
+    .filter((line) => {
+      const clean = line.trim();
+      if (!clean) return true;
+      return !HIDDEN_OPENING_HEADINGS.some((heading) => {
+        const variants = [`【${heading}】`, `## ${heading}`, `### ${heading}`];
+        return variants.some((variant) => (
+          variant === clean || (clean.length > 0 && variant.startsWith(clean))
+        ));
+      });
+    })
+    .join("\n")
+    .trimStart();
+}
+
+function assistantRequestBody(
+  conversation: Conversation,
+  question: string,
+  mode: "opening" | "followup",
+) {
+  return {
+    conversationId: conversation.id,
+    refLabel: conversation.refLabel,
+    verseText: conversation.verseText,
+    bookCode: conversation.bookCode,
+    versionCode: conversation.versionCode,
+    chapter: conversation.chapter,
+    verse: conversation.verse,
+    question,
+    mode,
+    history: conversation.messages.map((message) => ({
+      role: message.role,
+      content: messageContent(message),
+    })),
+  };
+}
+
+function normalizeAssistantSuccess(result: Extract<HuiduAssistantResponse, { ok: true }>) {
+  return {
+    ok: true as const,
+    answer: normalizeCommentaryName(result.answer),
+    blocks: Array.isArray(result.blocks)
+      ? result.blocks.map((block) => ({
+          ...block,
+          text: normalizeCommentaryName(block.text),
+        }))
+      : undefined,
+    sources: Array.isArray(result.sources)
+      ? result.sources.map((source) => ({
+          ...source,
+          label: normalizeCommentaryName(source.label),
+          title: source.title ? normalizeCommentaryName(source.title) : undefined,
+        }))
+      : [],
+  } satisfies HuiduAssistantResult;
+}
+
+async function readHuiduStream(
+  response: Response,
+  onDelta: (answer: string) => void,
+  hideOpeningHeadings: boolean,
+): Promise<HuiduAssistantResult> {
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as HuiduAssistantResponse | null;
+    return {
+      ok: false,
+      message: result && !result.ok && result.message
+        ? result.message
+        : "慧读模型暂时不可用，请稍后再试",
+      status: response.status,
+    };
+  }
+
+  // Deployments that do not stream yet return the same answer as JSON.
+  if (response.headers.get("content-type")?.includes("application/json")) {
+    const result = (await response.json().catch(() => null)) as HuiduAssistantResponse | null;
+    if (result?.ok) return normalizeAssistantSuccess(result);
+    return { ok: false, message: result?.message ?? "慧读回答未完整返回，请重新提问" };
+  }
+
+  if (!response.body) {
+    return { ok: false, message: "当前设备无法接收流式回答，请稍后再试" };
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let answer = "";
+  let finalResult: Extract<HuiduAssistantResponse, { ok: true }> | undefined;
+  let visibleTarget = "";
+  let visibleLength = 0;
+  let renderTimer: number | undefined;
+  let renderWaiter: (() => void) | undefined;
+
+  const renderNextSlice = () => {
+    renderTimer = undefined;
+    if (visibleLength < visibleTarget.length) {
+      // Keep cached and very fast upstream responses visibly progressive
+      // without adding more than about one second for a typical answer.
+      const remaining = visibleTarget.length - visibleLength;
+      const step = Math.min(18, Math.max(3, Math.ceil(remaining / 24)));
+      visibleLength = Math.min(visibleTarget.length, visibleLength + step);
+      onDelta(visibleTarget.slice(0, visibleLength));
+      renderTimer = window.setTimeout(renderNextSlice, 24);
+      return;
+    }
+    renderWaiter?.();
+    renderWaiter = undefined;
+  };
+
+  const queueVisibleAnswer = (next: string) => {
+    visibleTarget = next;
+    if (visibleLength > visibleTarget.length) visibleLength = visibleTarget.length;
+    if (renderTimer === undefined && visibleLength < visibleTarget.length) {
+      renderNextSlice();
+    }
+  };
+
+  const finishVisibleAnswer = async () => {
+    if (visibleLength >= visibleTarget.length) return;
+    await new Promise<void>((resolve) => {
+      renderWaiter = resolve;
+      if (renderTimer === undefined) renderNextSlice();
+    });
+  };
+
+  const handleLine = (line: string) => {
+    if (!line.trim()) return undefined;
+    const event = JSON.parse(line) as HuiduStreamEvent;
+    if (event.type === "delta" && event.text) {
+      answer += event.text;
+      queueVisibleAnswer(visibleStreamingAnswer(answer, hideOpeningHeadings));
+    } else if (event.type === "done") {
+      finalResult = event;
+    } else if (event.type === "error") {
+      return event.message || "慧读回答传输中断，请稍后再试";
+    }
+    return undefined;
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const message = handleLine(line);
+        if (message) return { ok: false, message };
+      }
+      if (done) break;
+    }
+    if (buffer.trim()) {
+      const message = handleLine(buffer);
+      if (message) return { ok: false, message };
+    }
+  } catch {
+    return { ok: false, message: "慧读回答传输中断，请稍后再试" };
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!finalResult) {
+    return { ok: false, message: "慧读回答未完整返回，请重新提问" };
+  }
+  queueVisibleAnswer(visibleStreamingAnswer(finalResult.answer, hideOpeningHeadings));
+  await finishVisibleAnswer();
+  return normalizeAssistantSuccess(finalResult);
+}
+
+async function requestStreamingAnswer(
+  body: ReturnType<typeof assistantRequestBody>,
+  onDelta: (answer: string) => void,
+): Promise<HuiduAssistantResult> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 180_000);
+
+  try {
+    let response: Response;
+    if (Capacitor.isNativePlatform()) {
+      const ticketResponse = await apiRequest<
+        { ok: true; ticket: string } | HuiduAssistantResponse
+      >("/api/mobile/huidu/assistant", {
+        method: "POST",
+        headers: { "X-OpenBible-Stream-Ticket": "request" },
+        readTimeout: 30_000,
+        body,
+      });
+      const ticketResult = ticketResponse.data;
+      if (!ticketResponse.ok || !ticketResult?.ok) {
+        return {
+          ok: false,
+          message: ticketResult && !ticketResult.ok && ticketResult.message
+            ? ticketResult.message
+            : "无法建立慧读流式连接，请稍后再试",
+          status: ticketResponse.status,
+        };
+      }
+
+      if ("answer" in ticketResult) return normalizeAssistantSuccess(ticketResult);
+
+      const webFetch = (window as StreamCapableWindow).CapacitorWebFetch
+        ?? window.fetch.bind(window);
+      response = await webFetch(resolveApiUrl("/api/mobile/huidu/assistant"), {
+        method: "GET",
+        headers: {
+          Accept: "application/x-ndjson",
+          "X-OpenBible-Stream-Ticket": ticketResult.ticket,
+        },
+        mode: "cors",
+        signal: controller.signal,
+      });
+    } else {
+      response = await fetch("/api/mobile/huidu/assistant", {
+        method: "POST",
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    }
+
+    return await readHuiduStream(response, onDelta, body.mode === "opening");
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error && error.name === "AbortError"
+        ? "慧读模型响应超时，请稍后再试"
+        : "网络连接失败，请检查网络后重试",
+    };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 function messageContent(message: Message) {
   if (message.role === "user") return message.content;
@@ -247,27 +538,34 @@ function messageContent(message: Message) {
 export async function requestHuiduFollowup(
   conversation: Conversation,
   question: string,
+  options?: HuiduRequestOptions,
 ): Promise<HuiduAssistantResult> {
+  const mode = options?.mode ?? "followup";
+  const body = assistantRequestBody(conversation, question, mode);
+  if (options?.onDelta && !options.file) {
+    return requestStreamingAnswer(body, options.onDelta);
+  }
+
   try {
-    const response = await apiRequest<
-      { ok: true; answer: string; sources?: HuiduSource[] } | { ok: false; message?: string }
-    >("/api/mobile/huidu/assistant", {
-      method: "POST",
-      body: {
-        conversationId: conversation.id,
-        refLabel: conversation.refLabel,
-        verseText: conversation.verseText,
-        bookCode: conversation.bookCode,
-        versionCode: conversation.versionCode,
-        chapter: conversation.chapter,
-        verse: conversation.verse,
-        question,
-        history: conversation.messages.map((message) => ({
-          role: message.role,
-          content: messageContent(message),
-        })),
+    const form = options?.file ? new FormData() : null;
+    if (form && options?.file) {
+      for (const [key, value] of Object.entries(body)) {
+        if (value !== undefined) form.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+      }
+      form.append("file", options.file);
+    }
+    const response = form
+      ? await apiFormRequest<HuiduAssistantResponse>("/api/mobile/huidu/assistant", form, 180_000)
+      : await apiRequest<HuiduAssistantResponse>(
+      "/api/mobile/huidu/assistant",
+      {
+        method: "POST",
+        // RAG retrieval and Qwen generation can legitimately take longer than
+        // the 20-second default used by ordinary API requests.
+        readTimeout: 180_000,
+        body,
       },
-    });
+    );
     const result = response.data;
 
     if (!response.ok || !result?.ok) {
@@ -281,11 +579,7 @@ export async function requestHuiduFollowup(
       };
     }
 
-    return {
-      ok: true,
-      answer: result.answer,
-      sources: Array.isArray(result.sources) ? result.sources : [],
-    };
+    return normalizeAssistantSuccess(result);
   } catch {
     return {
       ok: false,
@@ -299,6 +593,7 @@ export function appendFollowup(
   question: string,
   answer: string,
   sources: HuiduSource[] = [],
+  blocks?: HuiduBlock[],
 ): Conversation | null {
   const all = getConversations();
   const conv = all.find((c) => c.id === id);
@@ -309,7 +604,12 @@ export function appendFollowup(
   conv.messages = [
     ...conv.messages,
     { role: "user", content: question },
-    { role: "assistant", content: answer, sources },
+    {
+      role: "assistant",
+      content: blocks?.length ? undefined : answer,
+      blocks: blocks?.length ? blocks : undefined,
+      sources,
+    },
   ];
   saveConversations(all);
   queueOperation("upsert", id);

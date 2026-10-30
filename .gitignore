@@ -1,7 +1,15 @@
 .DS_Store
 .tools/
 .claude/settings.local.json
+tmp/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
 *.p8
+*-firebase-adminsdk-*.json
+firebase-admin*.json
 deploy/secrets/
 mobile-app/build/
 mobile-app/releases/

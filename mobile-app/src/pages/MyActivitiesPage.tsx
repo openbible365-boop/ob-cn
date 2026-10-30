@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAppBack } from "../hooks/useAppBack";
+import { EmptyState } from "../components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -18,6 +20,7 @@ function activityTime(activity: MyActivity) {
 
 export function MyActivitiesPage() {
   const navigate = useNavigate();
+  const goBack = useAppBack("/me");
   const [activities, setActivities] = useState<MyActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,7 +58,7 @@ export function MyActivitiesPage() {
         title="我的活动"
         subtitle={`${activities.length} 项`}
         ariaLabel="我的活动"
-        onBack={() => navigate("/me")}
+        onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll me-detail-scroll">
@@ -67,12 +70,12 @@ export function MyActivitiesPage() {
           </div>
         )}
         {!loading && !error && activities.length === 0 && (
-          <div className="me-detail-empty">
-            <Icon name="calendar" size={22} />
-            <b>还没有报名活动</b>
-            <span>在社群的「活动」页面报名后，会汇总显示在这里。</span>
-            <button type="button" onClick={() => navigate("/community")}>浏览社群</button>
-          </div>
+          <EmptyState
+            art="activity"
+            title="还没有报名活动"
+            desc="在社群的「活动」页面报名后，会汇总显示在这里。"
+            action={<button type="button" className="empty-state-action" onClick={() => navigate("/community")}>浏览社群</button>}
+          />
         )}
         {grouped.map((group) => (
           <section className="me-activity-group" key={group.label}>
@@ -90,7 +93,7 @@ export function MyActivitiesPage() {
                     {activity.community.name}
                     {activity.location ? ` · ${activity.location}` : ""}
                   </small>
-                  <Icon name="chevron-right" size={15} />
+                  <Icon name="chevron-right" size={16} />
                 </button>
               ))}
             </div>

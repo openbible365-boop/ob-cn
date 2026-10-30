@@ -2,13 +2,22 @@
    Warm gold = reading, violet = AI/interaction, blue-grey = commentary. */
 :root {
   color-scheme: light;
-  --ink: #202229;
-  --body: #545b66;
-  --muted: #6f7681;
-  --line: #e0e3e8;
-  --surface: #f6f7f8;
-  --surface-2: #eef0f3;
-  --white: #fffefc;
+  /* 浅色 = 纯白净色（暖纸的角色由「护眼」承担）：纸面纯白，周边中性微暖灰 */
+  --ink: #2b2926;
+  --body: #57524b;
+  --muted: #6b665e;
+  /* 第三级文字：只给节号这类可有可无的定位信息 */
+  --ink-3: #8f897f;
+  --line: #e8e6e3;
+  --surface: #f6f5f3;
+  /* 补齐被引用但未定义的令牌：不接上会静默继承 */
+  --surface-soft: #fafaf8;
+  --danger: var(--pink);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --surface-2: #f0efec;
+  --white: #ffffff;
+  /* 阅读页左右页边：主流手机 24px，≤374 的小屏收到 20px */
+  --reading-gutter: 24px;
 
   --yellow: #f4c75f;
   --yellow-soft: #fff3d2;
@@ -46,6 +55,13 @@ body,
 #root {
   height: 100%;
   overflow: hidden;
+}
+
+/* 字重体系：400 正文 · 500 标签 · 600 标题与强调。
+   <b>/<strong> 不走浏览器默认 700，统一落在 600。 */
+b,
+strong {
+  font-weight: 600;
 }
 
 body {
@@ -145,7 +161,7 @@ a {
   margin-bottom: 8px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-picker-heading button {
@@ -154,7 +170,7 @@ a {
   gap: 4px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-chapter-grid {
@@ -170,7 +186,7 @@ a {
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-chapter-grid button.active {
@@ -180,7 +196,7 @@ a {
 
 .annotation-reader.is-introduction {
   padding-top: 0;
-  background: #fffefa;
+  background: var(--white);
 }
 
 .annotation-introduction {
@@ -192,14 +208,14 @@ a {
 .annotation-intro-hero {
   margin: 0 -20px;
   padding: 20px 22px 18px;
-  background: #f4f0e6;
+  background: var(--yellow-soft);
 }
 
 .annotation-intro-eyebrow {
   margin-bottom: 9px;
-  color: #4e6d94;
+  color: var(--commentary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
@@ -213,7 +229,7 @@ a {
 .annotation-intro-hero h1 {
   font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
   font-size: 32px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1.18;
 }
@@ -222,24 +238,24 @@ a {
   flex: none;
   padding: 4px 9px;
   border-radius: 999px;
-  background: rgba(78, 109, 148, 0.1);
-  color: #4e6d94;
+  background: var(--commentary-soft);
+  color: var(--commentary);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-intro-hero > p {
   margin-top: 5px;
-  color: #333841;
+  color: var(--ink);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-intro-meta {
   margin-top: 10px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-intro-section {
@@ -248,19 +264,19 @@ a {
 
 .annotation-intro-section h2 {
   margin-bottom: 13px;
-  color: #3f5f88;
+  color: var(--commentary);
   font-size: 14px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .annotation-intro-section h2 span {
   display: inline-block;
   padding-bottom: 5px;
-  border-bottom: 2px solid #5c7da6;
+  border-bottom: 2px solid var(--commentary);
 }
 
 .annotation-intro-section > p {
-  color: #26272d;
+  color: var(--ink);
   text-align: justify;
   word-break: break-word;
 }
@@ -270,8 +286,8 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 22px 0 0;
   padding: 14px 0;
-  border-top: 1px solid #e8e3d8;
-  border-bottom: 1px solid #e8e3d8;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .annotation-intro-facts > div {
@@ -283,13 +299,13 @@ a {
 }
 
 .annotation-intro-facts > div + div {
-  border-left: 1px solid #e8e3d8;
+  border-left: 1px solid var(--line);
 }
 
 .annotation-intro-facts small {
   color: var(--body);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-facts strong {
@@ -311,10 +327,10 @@ a {
 .annotation-intro-themes li {
   padding: 7px 10px;
   border-radius: 8px;
-  background: #f0f2f5;
-  color: #39414c;
+  background: var(--commentary-soft);
+  color: var(--ink);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .annotation-intro-stages {
@@ -328,18 +344,18 @@ a {
   align-items: center;
   gap: 10px;
   min-height: 49px;
-  border-top: 1px solid #e8e3d8;
+  border-top: 1px solid var(--line);
 }
 
 .annotation-intro-stages > div:last-child {
-  border-bottom: 1px solid #e8e3d8;
+  border-bottom: 1px solid var(--line);
 }
 
 .annotation-intro-stages > div > span {
-  color: #5c7da6;
+  color: var(--commentary);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-stages small {
@@ -354,11 +370,11 @@ a {
 .annotation-intro-note {
   margin-top: 24px;
   padding-left: 12px;
-  border-left: 2px solid #9aacc1;
+  border-left: 2px solid color-mix(in srgb, var(--commentary) 55%, transparent);
   color: var(--body);
   font-size: 12px;
   font-style: normal;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.7;
 }
 
@@ -381,13 +397,13 @@ a {
   gap: 2px;
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .annotation-intro-start small {
   color: #cbd7e6;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .annotation-intro-start > .app-icon {
@@ -408,7 +424,7 @@ a {
 
 .page-header .title {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .icon-btn {
@@ -433,7 +449,7 @@ a {
 
 .icon-btn:hover:not(:disabled) {
   border-color: #aaa8a4;
-  background: #fffdf8;
+  background: var(--white);
 }
 
 .icon-btn:active:not(:disabled),
@@ -518,12 +534,133 @@ a {
   position: relative;
   flex: none;
   display: flex;
+  height: 50px;
   min-height: 50px;
   align-items: center;
   justify-content: space-between;
   padding: 5px 16px;
   border-bottom: 0.5px solid var(--line);
   background: var(--white);
+  transition: margin-top 220ms ease, opacity 180ms ease;
+}
+
+/* 今日金句卡：金色淡底的每日仪式感入口 */
+.daily-verse-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 14px;
+  background: linear-gradient(160deg, var(--yellow-soft), var(--white) 90%);
+}
+
+.daily-verse-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-verse-kicker {
+  flex: 1;
+  color: var(--yellow-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.daily-verse-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.daily-verse-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+.daily-verse-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.daily-verse-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.daily-verse-foot > b {
+  flex: 1;
+  color: var(--yellow-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.daily-verse-actions {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+.daily-verse-actions button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 章内阅读进度线：紧贴顶栏下缘，收起顶栏后仍在，保持位置感 */
+.bible-read-progress {
+  position: absolute;
+  right: 0;
+  bottom: -0.5px;
+  left: 0;
+  height: 2px;
+  background: var(--surface-2);
+}
+
+.bible-read-progress > div {
+  height: 2px;
+  background: var(--yellow);
+  transition: width 120ms linear;
+}
+
+/* 合并芯片与下拉箭头 */
+.bible-reader-selector .selector-caret {
+  margin-left: 5px;
+  opacity: 0.7;
+}
+
+.bible-reader-selector.is-combined {
+  border-radius: 10px;
+}
+
+/* 向下滚阅读时收起顶栏，把竖向空间还给正文；向上滚随即恢复 */
+.bible-toolbar.is-hidden {
+  margin-top: -50px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bible-reader-selectors {
@@ -545,7 +682,7 @@ a {
   background: var(--yellow-soft);
   color: var(--tab-active-ink, var(--yellow-ink));
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -553,15 +690,20 @@ a {
 
 .bible-reader-selector.chapter {
   max-width: 118px;
-  border-radius: 17px 0 0 17px;
+  border-radius: 999px 0 0 999px;
   font-size: 14px;
+}
+
+/* 只有一段的标题芯片（我的、社群空态等）两端都要圆 */
+.bible-reader-selector:only-child {
+  border-radius: 999px;
 }
 
 .bible-reader-selector.book {
   max-width: 118px;
   padding-right: 8px;
   padding-left: 8px;
-  border-radius: 17px 0 0 17px;
+  border-radius: 999px 0 0 999px;
   font-size: 13px;
 }
 
@@ -582,18 +724,15 @@ a {
 
 .bible-reader-selector.version {
   max-width: 104px;
-  border-radius: 0 17px 17px 0;
+  border-radius: 0 999px 999px 0;
 }
 
+/* 展开态只加深一档黄色，不再整块反黑，和弹层的选中色同一套 */
 .bible-reader-selector.book.is-open,
-.bible-reader-selector.chapter-number.is-open {
-  background: var(--ink);
-  color: var(--yellow);
-}
-
+.bible-reader-selector.chapter-number.is-open,
 .bible-reader-selector.version.is-open {
-  background: var(--ink);
-  color: var(--yellow);
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
 .bible-chapter-picker {
@@ -645,8 +784,8 @@ a {
 .bible-book-group-title {
   margin-bottom: 4px;
   color: var(--body);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .bible-book-grid {
@@ -661,10 +800,10 @@ a {
   padding: 0 3px;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--white);
   color: var(--ink);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   text-overflow: clip;
@@ -675,14 +814,15 @@ a {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--yellow);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-toolbar-actions {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
+  gap: 0;
+  margin-left: auto;
 }
 
 .bible-toolbar-action {
@@ -719,7 +859,8 @@ a {
 }
 
 .unified-header {
-  min-height: 51px;
+  height: 50px;
+  min-height: 50px;
 }
 
 .unified-header .bible-reader-selector.version {
@@ -759,7 +900,7 @@ a {
   align-items: baseline;
   gap: 1px;
   color: currentColor;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.2px;
 }
@@ -838,16 +979,6 @@ a {
   box-shadow: 0 12px 32px rgba(48, 49, 51, 0.16);
 }
 
-.bible-reading-settings-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 29;
-  background: transparent;
-}
-
 .bible-search-panel {
   position: fixed;
   top: 0;
@@ -885,7 +1016,7 @@ a {
   align-items: center;
   gap: 8px;
   padding: 0 8px 0 15px;
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--surface-2);
   color: var(--body);
 }
@@ -923,7 +1054,7 @@ a {
   padding: 0 2px;
   color: var(--purple);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-search-filters {
@@ -949,9 +1080,13 @@ a {
   min-height: 44px;
   align-items: center;
   padding-right: 8px;
-  border-radius: 14px;
-  background: var(--yellow-soft);
-  color: var(--yellow-ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  /* 描边白底把「下拉选择器」和右侧的范围标签区分开；
+     黄色在这里没有语义（它是控件，不是阅读内容），
+     还会让下拉看起来像一个被选中的标签。 */
+  background: var(--white);
+  color: var(--ink);
 }
 
 .bible-search-version select {
@@ -965,7 +1100,7 @@ a {
   color: inherit;
   font: inherit;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -992,11 +1127,11 @@ a {
   min-width: max-content;
   min-height: 44px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--body);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .bible-search-scopes button::after {
@@ -1029,7 +1164,7 @@ a {
   margin: 0;
   color: var(--ink);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-search-section-heading > button {
@@ -1056,10 +1191,11 @@ a {
   gap: 8px;
   padding: 8px 14px;
   border-radius: 16px;
-  background: var(--surface);
+  background: var(--white);
+  border: 1px solid var(--line);
   color: var(--ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -1085,26 +1221,33 @@ a {
 .bible-search-results-heading > span {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
+/* 结果不加外框：留白 + 细分隔线分行，引用徽章本身就是视觉锚点，
+   胶囊外框只会跟徽章抢注意力、还压缩了正文宽度 */
 .bible-search-result-list {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
   padding: 0 14px 24px;
 }
 
 .bible-search-result-list > button {
   display: flex;
   width: 100%;
-  min-height: 88px;
   flex-direction: column;
-  gap: 9px;
-  padding: 14px 15px;
-  border-radius: 17px;
-  background: var(--surface);
+  gap: 8px;
+  padding: 14px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
   color: var(--ink);
   text-align: left;
+}
+
+.bible-search-result-list > button + button {
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
 }
 
 .bible-search-result-list > button:active,
@@ -1131,7 +1274,7 @@ a {
   flex: none;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .bible-search-result-text {
@@ -1156,7 +1299,7 @@ a {
 .bible-search-error {
   min-height: 48px;
   margin: 0 14px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(219, 77, 132, 0.09);
   color: #b63168;
 }
@@ -1174,29 +1317,8 @@ a {
   to { transform: rotate(360deg); }
 }
 
-.bible-search-empty {
-  display: flex;
-  min-height: 180px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 28px 20px;
-  color: var(--body);
-  text-align: center;
-}
 
-.bible-search-empty p {
-  margin: 3px 0 0;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 750;
-}
 
-.bible-search-empty small {
-  font-size: 12px;
-  line-height: 1.6;
-}
 
 .bible-search-limit {
   margin: 0;
@@ -1212,7 +1334,7 @@ a {
   border-radius: 4px;
   background: var(--yellow-medium);
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-reading-settings {
@@ -1234,7 +1356,7 @@ a {
 .bible-reading-setting-row > span {
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .bible-reading-settings .bible-font-size-control {
@@ -1274,7 +1396,7 @@ a {
 .bible-setting-segment button {
   color: var(--ink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .bible-setting-segment button + button {
@@ -1287,18 +1409,18 @@ a {
 
 /* 精读本注释：保留纸本的绪论、综览和经节锚点，转换为手机单栏阅读。 */
 .annotation-reader-screen {
-  background: #fffefa;
+  background: var(--white);
 }
 
 .annotation-copyright-trigger[aria-expanded="true"] {
-  background: #eef3f9;
-  color: #526f96;
+  background: var(--commentary-soft);
+  color: var(--commentary);
 }
 
 .annotation-audio-trigger[aria-expanded="true"],
 .annotation-font-trigger[aria-expanded="true"] {
-  background: #f4f0e6;
-  color: #72531c;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
 }
 
 .annotation-reader-screen .bible-toolbar-action:disabled {
@@ -1306,242 +1428,221 @@ a {
 }
 
 .annotation-reader-screen > .bible-toolbar {
-  min-height: 54px;
+  height: 50px;
+  min-height: 50px;
 }
 
 .annotation-reader-screen .bible-toolbar-action {
-  width: 44px;
-  height: 44px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
 }
 
 .annotation-reader-screen .bible-reading-settings {
-  top: 54px;
+  top: 50px;
 }
 
 .annotation-reader-scroll {
   padding: 0 20px 32px;
-  background: #fffefa;
+  background: var(--white);
   touch-action: pan-y;
 }
 
-.annotation-chapter-overviews {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0 15px 4px;
-}
-
-.annotation-chapter-overview {
-  padding: 14px 0 17px;
-  border-top: 1px solid rgba(82, 112, 151, 0.18);
-  transition: background-color 220ms ease, box-shadow 220ms ease;
-}
-
-.annotation-chapter-overview:first-child {
-  border-top: 0;
-}
-
-.annotation-chapter-overview.is-located,
-.annotation-comparison-card.is-located {
-  background: #eef3f9;
-  box-shadow: 0 0 0 2px rgba(76, 111, 154, 0.25);
-}
-
-.annotation-section-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  color: #344861;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.4;
-}
-
+/* 经节范围排在注释正文左侧，随正文一起换行，不占独立标题行。 */
 .annotation-reference-chip {
-  display: inline-flex;
-  min-height: 22px;
-  align-items: center;
+  display: inline-block;
+  margin-right: 8px;
   padding: 2px 7px;
-  border-radius: 6px;
-  background: #526f96;
-  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  /* 与网页端注释一致：金族徽章（单节淡金；多节实金见 is-range 覆盖）。
+     现在是按钮：点它就地展开对应经文 */
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.5;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+
+.annotation-reference-chip.is-expanded {
+  background: var(--yellow);
+  color: var(--ink);
 }
 
 .annotation-section-body {
   margin: 0;
-  color: #292d33;
+  color: var(--ink);
   font-weight: 400;
   line-height: 1.85;
   overflow-wrap: anywhere;
   text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
+  hanging-punctuation: allow-end;
   word-break: break-word;
 }
 
-.annotation-comparison-section {
-  padding-top: 0;
-}
-
-.annotation-comparison-heading {
+/* 注释↔经文对照：金竖条引用块，视觉上明确「这是圣经原文」 */
+.annotation-scripture-quote {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 -20px 0;
-  padding: 16px 22px 15px;
-  background: #f4f0e6;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 4px;
+  padding: 9px 12px 10px;
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 10px 10px 0;
+  background: var(--yellow-soft);
+  color: var(--ink);
+  line-height: 1.85;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
 }
 
-.annotation-paper-kicker {
-  display: block;
-  margin-bottom: 5px;
-  color: #4e6d94;
-  font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.06em;
+.annotation-scripture-verse sup {
+  margin-right: 3px;
+  color: var(--yellow-ink);
+  font-size: 0.7em;
+  font-weight: 600;
 }
 
-.annotation-comparison-heading h1 {
-  margin: 0 0 3px;
-  font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
-  font-size: 25px;
-  font-weight: 850;
-  letter-spacing: 0.03em;
-}
-
-.annotation-comparison-heading p,
-.annotation-comparison-heading > span {
-  color: var(--body);
+.annotation-scripture-loading {
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.annotation-comparison-heading > span {
+/* 章内阅读进度：紧贴顶栏下缘的 2px 金线，与圣经页一致 */
+.annotation-read-progress {
+  position: relative;
+  z-index: 6;
+  height: 2px;
+  margin-bottom: -2px;
   flex: none;
-  margin-top: 14px;
+  background: transparent;
+}
+
+.annotation-read-progress > div {
+  height: 2px;
+  background: var(--yellow);
+  transition: width 120ms linear;
+}
+
+/* 章尾导航：读完直接切章 */
+.annotation-chapter-nav {
+  display: flex;
+  justify-content: center;
+  margin: 22px 0 4px;
+}
+
+/* 单颗轻量「下一章」：读完注释的顺手延续，不抢内容 */
+.annotation-chapter-nav button {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.annotation-comparison-section {
+  padding-top: 12px;
 }
 
 .annotation-book-intro-entry {
   display: grid;
   width: 100%;
-  min-height: 62px;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 11px;
-  margin: 18px 0 16px;
-  padding: 8px 3px;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
   text-align: left;
 }
 
 .annotation-book-intro-index {
   display: grid;
-  min-width: 48px;
-  height: 38px;
+  min-width: 40px;
+  height: 26px;
   place-items: center;
-  border-radius: 9px;
-  background: #526f96;
+  border-radius: 8px;
+  background: var(--commentary);
   color: #fff;
   font-size: 12px;
-  font-weight: 850;
-}
-
-.annotation-book-intro-entry > span:nth-child(2) {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.annotation-book-intro-entry strong {
-  font-size: 14px;
-}
-
-.annotation-book-intro-entry small {
-  color: var(--body);
-  font-size: 11px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .annotation-book-intro-entry > .app-icon {
-  color: #75808d;
+  color: var(--muted);
 }
 
-.annotation-overview-details {
-  margin: 18px 0 24px;
-  border-left: 3px solid #526f96;
-  background: #edf2f7;
+/* 综览段落：用注释色的浅底块与逐节注释区分，不再需要标题文字。 */
+/* 跨多节的条目（段落综览、11:8-10 这类范围注释）给底色，
+   与只讲一节的注释区分；它们按开始节排在正文流里。 */
+.annotation-entry.is-range {
+  margin: 8px -10px;
+  padding: 14px 12px 16px;
+  border-top: 0;
+  border-left: 3px solid var(--yellow);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
 }
 
-.annotation-overview-details summary {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 15px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.annotation-overview-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.annotation-overview-details summary span {
-  color: #344861;
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.annotation-overview-details summary small {
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.annotation-overview-details[open] summary {
-  padding-bottom: 0;
+.annotation-entry.is-range .annotation-reference-chip {
+  background: var(--yellow);
+  color: var(--ink);
 }
 
 .annotation-comparison-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
-.annotation-comparison-card {
-  padding: 1px 0 2px 13px;
-  border-left: 2px solid #7990ad;
+.annotation-entry {
+  margin: 0 -10px;
+  padding: 15px 10px 13px;
+  border-radius: 8px;
   transition: background-color 220ms ease, box-shadow 220ms ease;
 }
 
-.annotation-entry-heading {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 10px;
+.annotation-entry + .annotation-entry:not(.is-range) {
+  border-top: 1px solid var(--line);
 }
 
-.annotation-entry-heading h2 {
-  color: #344861;
-  font-size: 14px;
-  font-weight: 850;
-  line-height: 1.35;
+/* 多节卡片自身有底色，紧跟其后的条目不再画分隔线 */
+.annotation-entry.is-range + .annotation-entry {
+  border-top: 0;
 }
 
-.annotation-commentary-panel {
-  padding: 0 2px;
+.annotation-entry.is-located {
+  background: var(--yellow-soft);
+  box-shadow: 0 0 0 2px rgba(244, 199, 95, 0.55);
+}
+
+.annotation-entry-topic {
+  margin-right: 6px;
+  color: var(--yellow-ink);
+  font-weight: 600;
 }
 
 .annotation-status-card {
   margin-bottom: 12px;
   padding: 18px 16px;
-  border-radius: 14px;
-  background: var(--surface-2);
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
   color: var(--body);
   font-size: 13px;
   line-height: 1.6;
@@ -1550,15 +1651,7 @@ a {
 .annotation-empty-title {
   margin-bottom: 3px;
   color: var(--ink);
-  font-weight: 800;
-}
-
-.annotation-swipe-hint {
-  padding: 30px 0 6px;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 650;
-  text-align: center;
+  font-weight: 600;
 }
 
 .annotation-copyright-layer {
@@ -1586,9 +1679,9 @@ a {
   max-height: calc(100dvh - 44px);
   overflow-y: auto;
   padding: 20px 22px 22px;
-  border: 1px solid rgba(82, 111, 150, 0.16);
-  border-radius: 20px;
-  background: #fffefa;
+  border: 1px solid color-mix(in srgb, var(--commentary) 16%, transparent);
+  border-radius: 16px;
+  background: var(--white);
   box-shadow: 0 20px 52px rgba(38, 41, 48, 0.22);
 }
 
@@ -1614,16 +1707,16 @@ a {
   flex: none;
   place-items: center;
   border-radius: 12px;
-  background: #eef3f9;
-  color: #526f96;
+  background: var(--commentary-soft);
+  color: var(--commentary);
   font-family: Georgia, serif;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-copyright-heading h2 {
   font-size: 17px;
-  font-weight: 850;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -1631,7 +1724,7 @@ a {
   margin-top: 2px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .annotation-copyright-close {
@@ -1658,35 +1751,28 @@ a {
 }
 
 .annotation-copyright-details dt {
-  color: #777b84;
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .annotation-copyright-details dd {
   min-width: 0;
-  color: #292d33;
+  color: var(--ink);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
 .annotation-copyright-details a {
-  color: #526f96;
+  color: var(--commentary);
 }
 
 @media (max-width: 360px) {
   .annotation-reader-scroll {
     padding-right: 16px;
     padding-left: 16px;
-  }
-
-  .annotation-comparison-heading {
-    margin-right: -16px;
-    margin-left: -16px;
-    padding-right: 18px;
-    padding-left: 18px;
   }
 
   .annotation-copyright-sheet {
@@ -1747,103 +1833,216 @@ a {
   box-shadow: var(--shadow-card);
 }
 
-.notification-daily-verse-demo {
-  position: relative;
+.notification-screen {
+  background: var(--surface);
+}
+
+.notification-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px calc(42px + env(safe-area-inset-bottom));
+  scroll-padding-bottom: calc(42px + env(safe-area-inset-bottom));
+}
+
+.notification-login-note,
+.notification-feedback {
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.notification-section {
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+
+.notification-preferences-section {
+  padding: 0;
+  background: transparent;
+}
+
+.notification-preferences-section > .notification-section-heading {
+  padding: 0 2px;
+}
+
+.notification-system-section,
+.notification-inbox-section {
+  border: 1px solid rgba(86, 91, 105, 0.06);
+}
+
+.notification-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.notification-section-heading.compact {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.notification-section-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.notification-section-heading h2 span {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  margin-left: 4px;
+  border-radius: 8px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 12px;
+}
+
+.notification-section-heading p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notification-preference-list,
+.notification-inbox-list {
+  display: grid;
+  gap: 6px;
+}
+
+.notification-preference-row,
+.notification-inbox-item {
   display: flex;
   width: 100%;
-  min-height: 178px;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow: hidden;
-  padding: 20px;
-  border: 1px solid rgba(188, 142, 61, 0.22);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.2), transparent 34%),
-    linear-gradient(145deg, #fff5d9 0%, #fffaf0 52%, #f5edf9 100%);
-  color: #25201a;
-  text-align: left;
-  box-shadow: 0 10px 26px rgba(75, 62, 43, 0.08);
-}
-
-.notification-daily-verse-demo::after {
-  position: absolute;
-  top: 18px;
-  right: 20px;
-  color: rgba(143, 76, 193, 0.18);
-  content: "“";
-  font-family: Georgia, serif;
-  font-size: 86px;
-  line-height: 0.8;
-  pointer-events: none;
-}
-
-.notification-daily-verse-kicker {
-  position: relative;
-  z-index: 1;
-  color: #805516;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
-.notification-daily-verse-demo > strong {
-  position: relative;
-  z-index: 1;
-  max-width: 90%;
-  margin-top: 18px;
-  font-family: "Songti SC", "STSong", serif;
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1.55;
-}
-
-.notification-daily-verse-reference {
-  position: relative;
-  z-index: 1;
-  margin-top: 8px;
-  color: #675f54;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.notification-daily-verse-action {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  min-height: 32px;
+  min-height: 50px;
   align-items: center;
-  gap: 3px;
-  margin-top: 16px;
-  padding: 0 11px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #74409a;
+  gap: 11px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  text-align: left;
+}
+
+.notification-preference-copy,
+.notification-inbox-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.notification-preference-copy strong,
+.notification-inbox-copy strong {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.notification-preference-copy small,
+.notification-inbox-copy small,
+.notification-inbox-copy time {
+  overflow: hidden;
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 750;
+  line-height: 1.45;
+  text-overflow: ellipsis;
 }
 
-body.dark .notification-daily-verse-demo {
-  border-color: rgba(226, 184, 90, 0.2);
-  background:
-    radial-gradient(circle at 92% 8%, rgba(160, 108, 201, 0.26), transparent 36%),
-    linear-gradient(145deg, #2a2418 0%, #211f1b 50%, #241c2a 100%);
-  color: #f6f0e6;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+.notification-inbox-copy small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-body.dark .notification-daily-verse-kicker {
-  color: #e6bd61;
+.notification-switch {
+  display: block;
+  width: 44px;
+  height: 26px;
+  flex: none;
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--line);
+  transition: background 150ms ease;
 }
 
-body.dark .notification-daily-verse-reference {
-  color: #bcb4a8;
+.notification-switch i {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+  transition: transform 150ms ease;
 }
 
-body.dark .notification-daily-verse-action {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d5acee;
+.notification-switch.is-on {
+  background: var(--purple);
 }
+
+.notification-switch.is-on i {
+  transform: translateX(18px);
+}
+
+.notification-permission-button,
+.notification-text-action {
+  min-height: 40px;
+  flex: none;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.notification-permission-button:disabled {
+  color: var(--muted);
+}
+
+.notification-inbox-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.notification-inbox-item.is-unread {
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .btn-primary {
   display: flex;
@@ -1855,7 +2054,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 12px;
   color: #fff;
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
   box-shadow: var(--shadow-card);
   transition: background-color 160ms ease, opacity 160ms ease, transform 120ms ease;
 }
@@ -1876,17 +2075,17 @@ body.dark .notification-daily-verse-action {
   min-height: 38px;
   padding: 0 14px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--white);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease, transform 120ms ease;
 }
 
 .compact-action-btn:hover:not(:disabled) {
   border-color: #aaa8a4;
-  background: #fffdf8;
+  background: var(--white);
 }
 
 .compact-action-btn.is-primary {
@@ -1920,7 +2119,7 @@ body.dark .notification-daily-verse-action {
   color: var(--ink);
   box-shadow: var(--shadow-card);
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 600;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 
@@ -1934,7 +2133,9 @@ body.dark .notification-daily-verse-action {
   transform: translateY(1px);
 }
 
-/* tab bar */
+/* tab bar
+   悬浮底栏：与正文同宽页边、不透明纸面 + 毛玻璃兜底、1px 细线、单层轻阴影。
+   选中态只保留三个信号：图标填色、文字变色、极浅的平底块（无描边、无阴影、无放大）。 */
 .tab-bar {
   --tab-active-ink: var(--yellow-ink);
   --tab-active-fill: var(--yellow);
@@ -1942,21 +2143,21 @@ body.dark .notification-daily-verse-action {
   right: auto;
   bottom: max(8px, env(safe-area-inset-bottom));
   left: 50%;
-  width: min(calc(100vw - 20px), 680px);
+  width: min(calc(100vw - 32px), 680px);
   z-index: 30;
   flex: none;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  min-height: 58px;
+  min-height: 56px;
   margin-top: 20px;
   padding: 3px;
-  border: 1px solid rgba(191, 174, 142, 0.58);
-  border-radius: 17px;
-  background: rgba(255, 254, 252, 0.96);
-  box-shadow:
-    0 -1px 1px rgba(255, 255, 255, 0.9),
-    0 8px 24px rgba(63, 52, 35, 0.12);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--white) 92%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 6px 20px rgba(43, 41, 38, 0.1);
   transform: translateX(-50%);
   transition:
     transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1970,60 +2171,36 @@ body.dark .notification-daily-verse-action {
   transform: translate(-50%, calc(100% + 16px + env(safe-area-inset-bottom)));
 }
 
-.app.has-tab-bar .screen-scroll {
-  padding-bottom: calc(74px + env(safe-area-inset-bottom)) !important;
-  scroll-padding-bottom: calc(74px + env(safe-area-inset-bottom));
+/* 悬浮标签栏 bottom 8px + 栏高 56px，实际遮挡约 66px；统一留 96px 呼吸空间 */
+.app.has-tab-bar .screen-scroll:not(.has-verse-action-sheet) {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .tab-bar .tab {
   display: flex;
   min-width: 0;
-  height: 50px;
+  height: 48px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border: 1px solid transparent;
-  border-radius: 13px;
-  color: var(--body);
-  transition:
-    color 180ms ease,
-    background-color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+  gap: 4px;
+  border-radius: 12px;
+  color: var(--muted);
+  transition: color 180ms ease, background-color 180ms ease;
 }
 
 .tab-bar .tab .tab-icon {
   display: grid;
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   place-items: center;
   color: currentColor;
-  transform-origin: 50% 78%;
-  transition: transform 220ms ease;
 }
 
 .tab-bar .tab-icon-svg {
   display: block;
   overflow: visible;
-}
-
-.tab-bar .tab-icon-svg-huidu {
-  width: 36px;
-  height: 36px;
-  align-self: center;
-  justify-self: center;
-  transform: translate(-4.5px, -7px);
-  transform-origin: center;
-}
-
-.tab-bar .tab-icon-svg-huidu * {
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-.tab-bar .tab-icon-svg-huidu .tab-icon-sparkle-large {
-  stroke-width: 2;
 }
 
 .tab-bar .tab-icon-surface {
@@ -2036,29 +2213,15 @@ body.dark .notification-daily-verse-action {
 }
 
 .tab-bar .tab .tab-label {
-  font-size: 11.5px;
-  font-weight: 560;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.01em;
   color: currentColor;
-  transition: font-weight 180ms ease;
 }
 
 .tab-bar .tab.active {
   color: var(--tab-active-ink);
-  border-color: rgba(226, 175, 70, 0.38);
-  background: linear-gradient(145deg, #fff9e8, var(--yellow-soft));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.86),
-    0 3px 8px rgba(179, 122, 20, 0.1);
-}
-
-.tab-bar .tab.active .tab-icon {
-  transform: translateY(-1px) scale(1.04);
-}
-
-.tab-bar .tab.active .tab-icon-huidu {
-  transform: translateY(-1px);
+  background: var(--yellow-soft);
 }
 
 .tab-bar .tab.active .tab-icon-surface {
@@ -2066,20 +2229,17 @@ body.dark .notification-daily-verse-action {
 }
 
 .tab-bar .tab.active .tab-label {
-  font-weight: 760;
-  color: var(--tab-active-ink);
+  font-weight: 600;
 }
 
 .tab-bar .tab:focus-visible {
-  outline: 2px solid #d99a25;
+  outline: 2px solid var(--yellow-ink);
   outline-offset: -2px;
 }
 
 @media (max-width: 360px) {
   .tab-bar {
-    width: calc(100vw - 14px);
-    padding-right: 3px;
-    padding-left: 3px;
+    width: calc(100vw - 24px);
   }
 }
 
@@ -2098,8 +2258,152 @@ body.dark .notification-daily-verse-action {
 .verse-action-sheet {
   padding: 11px 16px calc(10px + env(safe-area-inset-bottom));
   border-top: 0;
-  border-radius: 18px 18px 0 0;
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 -10px 34px rgba(39, 34, 24, 0.12);
+}
+
+/* 紧凑单行操作条：悬浮胶囊，停靠在标签栏上方（与设计画布一致） */
+.verse-action-sheet.is-compact {
+  left: 12px;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-overlay);
+}
+
+.verse-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.verse-compact-ref {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verse-compact-swatches {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+}
+
+.verse-compact-swatches button {
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border: 0;
+  background: none;
+}
+
+.verse-compact-swatches .verse-highlight-swatch {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  color: rgba(32, 34, 41, 0.62);
+}
+
+.verse-compact-swatches .verse-highlight-swatch.active {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3.5px var(--purple);
+}
+
+.verse-compact-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.verse-compact-actions button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.verse-compact-actions button:disabled {
+  color: var(--muted);
+}
+
+/* 操作条「更多」：省略号小键 + 上方弹出的第二行（对照/复制的容身处） */
+.verse-compact-more {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+.verse-compact-more[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.verse-compact-extra {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 8px 6px 2px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+
+.verse-compact-extra button {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.verse-compact-extra button:disabled {
+  color: var(--muted);
+}
+
+.verse-compact-note-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.verse-compact-note-form input {
+  height: 40px;
+  min-width: 0;
+  flex: 1;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.verse-compact-note-form button {
+  height: 36px;
+  flex: none;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .verse-action-sheet-header {
@@ -2121,7 +2425,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--ink);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2129,8 +2433,8 @@ body.dark .notification-daily-verse-action {
 .verse-action-reference span {
   flex: none;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .verse-action-sheet .sheet-close-btn {
@@ -2151,7 +2455,7 @@ body.dark .notification-daily-verse-action {
   flex: none;
   color: var(--body);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .verse-highlight-choice {
@@ -2226,7 +2530,7 @@ body.dark .notification-daily-verse-action {
   height: 34px;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--ink);
 }
@@ -2239,15 +2543,15 @@ body.dark .notification-daily-verse-action {
 .verse-action-label {
   overflow: hidden;
   max-width: 100%;
-  font-size: 11px;
-  font-weight: 720;
+  font-size: 12px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .verse-action-button.primary .verse-action-label {
   color: var(--purple-deep);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* audio Bible player */
@@ -2259,11 +2563,13 @@ body.dark .notification-daily-verse-action {
 }
 
 .audio-player-sheet {
-  --audio-accent: var(--purple);
-  --audio-accent-deep: var(--purple-deep);
-  --audio-accent-soft: var(--purple-soft);
-  --audio-purple: var(--purple);
-  --audio-purple-soft: var(--purple-soft);
+  /* 播放器主色改用 logo 品牌金（书页金 #F2C96D / 星芒 #E89A2C）：
+     语音读的是经文本身，归金色（经文语义色），紫色留给 AI */
+  --audio-accent: #e89a2c;
+  --audio-accent-deep: var(--yellow-ink);
+  --audio-accent-soft: var(--yellow-soft);
+  --audio-purple: #c8821f;
+  --audio-purple-soft: var(--yellow-soft);
   --audio-line: var(--line);
   position: fixed;
   top: 50%;
@@ -2273,8 +2579,8 @@ body.dark .notification-daily-verse-action {
   max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
   padding: 12px 14px 14px;
-  border: 1px solid rgba(196, 196, 196, 0.72);
-  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   background: var(--white);
   box-shadow: var(--shadow-overlay);
   transform: translate(-50%, -50%);
@@ -2297,14 +2603,60 @@ body.dark .notification-daily-verse-action {
   display: none;
 }
 
+/* 配色语义：听经属于「阅读」场景，题眉走金色；紫色只留给
+   播放键 / 进度条这类可交互主操作，两个色相不再混用。 */
 .audio-player-kicker {
   display: flex;
   align-items: center;
   gap: 7px;
   min-height: 26px;
-  color: var(--purple-deep);
+  color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
+}
+
+.audio-player-kicker > .app-icon {
+  color: var(--yellow-ink);
+}
+
+/* 下载本章音频：与关闭键同排的弱化图标按钮 */
+.audio-player-download {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  margin-left: auto;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--purple-deep);
+  transition: background-color 160ms ease;
+}
+
+.audio-player-download:hover:not(:disabled),
+.audio-player-download:active:not(:disabled) {
+  background: var(--purple-soft);
+}
+
+.audio-player-download:disabled {
+  color: var(--muted);
+}
+
+.audio-player-download.is-done {
+  color: var(--success);
+}
+
+/* 整卷缓存进度：图标位显示 x/y 章 */
+.audio-cache-progress {
+  color: var(--purple-deep);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.audio-player-download + .audio-player-close {
+  margin-left: 0;
 }
 
 .audio-player-close {
@@ -2313,7 +2665,7 @@ body.dark .notification-daily-verse-action {
   height: 28px;
   place-items: center;
   margin-left: auto;
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--body);
   transition: background-color 160ms ease, transform 120ms ease;
 }
@@ -2344,20 +2696,20 @@ body.dark .notification-daily-verse-action {
   margin: 0 0 9px;
   padding: 0 11px;
   overflow: hidden;
-  border: 0;
-  border-radius: 9px;
-  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
   transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
 .audio-player-status.error {
-  border-color: #f0cfd1;
-  background: #fff0f0;
-  color: #c8494d;
+  border-color: rgba(201, 56, 112, 0.24);
+  background: rgba(201, 56, 112, 0.08);
+  color: var(--pink);
 }
 
 .audio-player-status.ready {
@@ -2375,7 +2727,7 @@ body.dark .notification-daily-verse-action {
 .audio-player-status.loading .audio-status-indicator {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(145, 104, 191, 0.22);
+  border: 2px solid color-mix(in srgb, currentColor 24%, transparent);
   border-top-color: currentColor;
   background: transparent;
   animation: audio-status-spin 700ms linear infinite;
@@ -2411,8 +2763,8 @@ body.dark .notification-daily-verse-action {
 
 .audio-progress::-webkit-slider-runnable-track {
   height: 2px;
-  border-radius: 99px;
-  background: linear-gradient(to right, var(--audio-accent) var(--audio-progress), #dddfe5 var(--audio-progress));
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--audio-accent) var(--audio-progress), var(--line) var(--audio-progress));
 }
 
 .audio-progress::-webkit-slider-thumb {
@@ -2433,17 +2785,17 @@ body.dark .notification-daily-verse-action {
   gap: 10px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .audio-time-row button {
   min-width: 46px;
   height: 25px;
   border: 0;
-  border-radius: 99px;
+  border-radius: 999px;
   background: var(--audio-purple-soft);
   color: var(--audio-purple);
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .audio-controls {
@@ -2470,9 +2822,9 @@ body.dark .notification-daily-verse-action {
   height: 46px;
   margin: 0 auto;
   border-radius: 50%;
-  background: var(--purple);
+  background: var(--audio-accent);
   color: #ffffff;
-  box-shadow: 0 5px 14px rgba(111, 60, 157, 0.22);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--audio-accent) 24%, transparent);
 }
 
 .audio-play-button svg { fill: currentColor; stroke-width: 1.6; }
@@ -2495,41 +2847,248 @@ body.dark .notification-daily-verse-action {
   background: var(--white);
   font-size: 7px;
   line-height: 1;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .audio-current-passage {
   display: grid;
-  grid-template-columns: 1fr 18px;
+  /* 图标 / 文案 / 箭头三列——少写一列会把文案挤进 18px 里竖排成单字 */
+  grid-template-columns: 32px minmax(0, 1fr) 18px;
   align-items: center;
   gap: 9px;
   width: 100%;
   padding: 8px 12px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
   text-align: left;
   box-shadow: none;
 }
 
-.annotation-audio-player .audio-current-passage {
-  grid-template-columns: auto 1fr 18px;
+.audio-current-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.audio-current-copy { min-width: 0; }
+.audio-current-copy b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
+/* 迷你播放条：关掉播放器面板后停靠在标签栏上方，点击展开完整面板 */
+.audio-mini-bar {
+  position: fixed;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: min(calc(100vw - 28px), 366px);
+  padding: 6px 8px 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  transform: translateX(-50%);
+}
+
+.audio-mini-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.audio-mini-eq {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  border-radius: 50%;
+}
+
+.audio-mini-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.audio-mini-copy b {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.audio-mini-copy small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.audio-mini-play {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
+}
+
+/* ── 歌词式播放器：三节紧凑窗口（上一节 / 当前节 / 下一节） ── */
+.audio-player-sheet.is-lyrics {
+  display: flex;
+  flex-direction: column;
+  width: min(calc(100% - 28px), 460px);
+  max-height: calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow: hidden auto;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom) / 2);
+  /* 暖纸渐变：顶部一抹金，往下过渡回纸白——阅读场景的底色 */
+  background: linear-gradient(180deg, var(--yellow-soft) 0%, var(--white) 26%);
+}
+
+.audio-player-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+
+.audio-player-sheet.is-lyrics .audio-player-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.audio-locate-btn {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--body);
+}
+
+.audio-locate-btn:active {
+  background: var(--surface-2);
+  color: var(--purple-deep);
+}
+
+/* 歌词区：只有三行，随内容自适应，不需要滚动 */
+.audio-lyrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px -6px 8px;
+  padding: 4px 6px;
+}
+
+.audio-lyric {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--body);
+  text-align: left;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.audio-lyric:disabled {
+  opacity: 0.85;
+}
+
+/* 相邻两节弱化成上下文预览，视觉重心留给当前节 */
+.audio-lyric:not(.is-current) {
+  opacity: 0.55;
+}
+
+.audio-lyric:not(.is-current) .audio-lyric-text {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.audio-lyric-num {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.audio-lyric-text {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.85;
+  word-break: break-word;
+}
+
+/* 当前朗读节：金底 + 左金条 + 深字，全文完整展开 */
+.audio-lyric.is-current {
+  background: var(--yellow-soft);
+  box-shadow: inset 3px 0 0 var(--yellow);
+  color: var(--ink);
+}
+
+.audio-lyric.is-current .audio-lyric-num {
+  color: var(--yellow-ink);
+}
+
+.audio-lyric.is-current .audio-lyric-text {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.9;
+}
+
+.audio-player-sheet.is-lyrics .audio-progress-wrap,
+.audio-player-sheet.is-lyrics .audio-controls,
+.audio-player-sheet.is-lyrics .audio-voice-section {
+  flex: none;
+}
+
+/* 正在朗读的是「经文」——图标与引用走金色阅读语义，和经文引用芯片一家人 */
 .audio-current-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  background: var(--audio-purple-soft);
-  color: var(--audio-purple);
+  border-radius: 8px;
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
-.audio-current-passage b { display: block; font-size: 12px; margin-bottom: 3px; color: var(--purple-deep); }
+.audio-current-passage {
+  border-color: var(--yellow-medium);
+  background: var(--yellow-soft);
+}
+
+.audio-current-passage b { display: block; font-size: 12px; margin-bottom: 3px; color: var(--yellow-ink); }
 .audio-current-passage small {
   display: -webkit-box;
   height: 1.35em;
@@ -2558,9 +3117,9 @@ body.dark .notification-daily-verse-action {
   width: 100%;
   min-height: 38px;
   padding: 4px 9px 4px 6px;
-  border: 0;
-  border-radius: 13px;
-  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
   box-shadow: none;
   color: var(--audio-purple);
   text-align: left;
@@ -2568,7 +3127,7 @@ body.dark .notification-daily-verse-action {
 
 .audio-voice-select-wrap.open,
 .audio-voice-select-wrap:focus-visible {
-  outline: 2px solid rgba(145, 104, 191, 0.38);
+  outline: 2px solid color-mix(in srgb, var(--audio-accent) 40%, transparent);
   outline-offset: 2px;
 }
 
@@ -2577,7 +3136,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2599,9 +3158,9 @@ body.dark .notification-daily-verse-action {
   width: 100%;
   overflow: hidden;
   padding: 6px;
-  border: 1px solid #d9c7ef;
+  border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fffefd;
+  background: var(--white);
   box-shadow: 0 14px 34px rgba(44, 35, 50, 0.2);
   animation: audio-voice-menu-in 140ms ease-out;
 }
@@ -2614,14 +3173,14 @@ body.dark .notification-daily-verse-action {
   width: 100%;
   min-height: 54px;
   padding: 7px 10px;
-  border-radius: 11px;
-  color: #34322f;
+  border-radius: 12px;
+  color: var(--ink);
   text-align: left;
 }
 
 .audio-voice-menu > button.active { background: var(--audio-purple-soft); }
 .audio-voice-menu b { display: block; font-size: 13px; }
-.audio-voice-menu small { display: block; margin-top: 3px; color: #817b82; font-size: 12px; }
+.audio-voice-menu small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 .audio-voice-menu-check { display: flex; justify-content: center; color: var(--audio-purple); }
 
 @keyframes audio-voice-menu-in {
@@ -2636,10 +3195,10 @@ body.dark .notification-daily-verse-action {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #eadcf7;
+  background: var(--purple-soft);
   color: var(--audio-purple);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .sr-only {
@@ -2693,8 +3252,9 @@ body.dark .notification-daily-verse-action {
   gap: 12px;
   width: 100%;
   padding: 12px 13px;
-  border-radius: 18px;
-  background: var(--yellow-soft);
+  border-radius: 16px;
+  /* 慧读的语义色是紫，入口卡片跟随，不再用阅读的黄。 */
+  background: var(--purple-soft);
   color: var(--ink);
   text-align: left;
 }
@@ -2704,8 +3264,8 @@ body.dark .notification-daily-verse-action {
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 14px;
-  background: var(--yellow-medium);
+  border-radius: 12px;
+  background: var(--white);
   color: var(--purple);
 }
 
@@ -2718,7 +3278,7 @@ body.dark .notification-daily-verse-action {
 
 .huidu-start-copy b {
   font-size: 15px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .huidu-start-copy small {
@@ -2765,13 +3325,13 @@ body.dark .notification-daily-verse-action {
 
 .huidu-history-heading b {
   font-size: 14px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .huidu-history-heading span {
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-history-sort {
@@ -2779,7 +3339,7 @@ body.dark .notification-daily-verse-action {
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface-2);
 }
 
@@ -2787,23 +3347,23 @@ body.dark .notification-daily-verse-action {
   min-width: 46px;
   min-height: 28px;
   padding: 0 10px;
-  border-radius: 9px;
+  border-radius: 8px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-history-sort button.active {
   background: var(--white);
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-history-label {
   padding-left: 2px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .huidu-history-list {
@@ -2815,10 +3375,11 @@ body.dark .notification-daily-verse-action {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px;
   align-items: center;
-  min-height: 62px;
+  min-height: 48px;
   overflow: hidden;
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--white);
+  border: 1px solid var(--line);
 }
 
 .huidu-history-row-shell.is-current {
@@ -2826,64 +3387,76 @@ body.dark .notification-daily-verse-action {
 }
 
 .huidu-history-row {
-  display: flex;
+  display: grid;
   min-width: 0;
   height: 100%;
+  grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
-  padding: 9px 5px 9px 12px;
+  gap: 10px;
+  padding: 8px 5px 8px 12px;
+}
+
+/* 用一个小图标区分「经文慧读」和「自由对话」，
+   比原来在副行塞一个彩色胶囊更省位置，也更容易一眼扫过。 */
+.huidu-history-mark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+.huidu-history-mark.is-scripture {
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
 .huidu-history-copy {
   display: flex;
   min-width: 0;
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 5px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .huidu-history-title {
   min-width: 0;
-  width: 100%;
+  /* 经文引用是这一行的识别信息，不参与收缩；省略压力交给右侧摘要 */
+  flex: none;
+  max-width: 100%;
   overflow: hidden;
   color: var(--ink);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.huidu-history-detail {
-  display: flex;
+.huidu-history-copy.is-single .huidu-history-title {
+  flex: 1 1 auto;
+}
+
+.huidu-history-summary {
   min-width: 0;
-  align-items: center;
-  gap: 7px;
-}
-
-.huidu-history-kind {
-  max-width: 130px;
+  flex: 1 1 auto;
   overflow: hidden;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
+  color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.huidu-history-kind.is-scripture {
-  background: var(--yellow-medium);
-  color: var(--yellow-ink);
 }
 
 .huidu-history-meta {
   flex: none;
+  margin-left: auto;
+  padding-left: 2px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2892,23 +3465,17 @@ body.dark .notification-daily-verse-action {
   width: 30px;
   height: 30px;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 8px;
   color: var(--muted);
   opacity: 0.72;
 }
 
 .huidu-history-delete:hover {
-  background: rgba(225, 49, 125, 0.08);
+  background: color-mix(in srgb, var(--pink) 8%, transparent);
   color: var(--pink);
   opacity: 1;
 }
 
-.huidu-history-empty {
-  padding: 18px 4px;
-  color: var(--body);
-  font-size: 12px;
-  line-height: 1.65;
-}
 
 .huidu-home-scroll > .disclaimer {
   margin-top: -4px;
@@ -2948,7 +3515,7 @@ body.dark .notification-daily-verse-action {
   background: transparent;
   color: var(--ink);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .huidu-search input::placeholder {
@@ -2961,7 +3528,7 @@ body.dark .notification-daily-verse-action {
   height: 28px;
   flex: none;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--surface-2);
   color: var(--body);
 }
@@ -2989,7 +3556,7 @@ body.dark .notification-daily-verse-action {
   z-index: 1;
   width: min(100%, 320px);
   padding: 17px;
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--white);
   box-shadow: 0 18px 48px rgba(24, 25, 31, 0.24);
   animation: huidu-new-in 180ms ease-out;
@@ -3005,7 +3572,7 @@ body.dark .notification-daily-verse-action {
   margin: 6px 0 16px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .huidu-delete-dialog > div,
@@ -3018,11 +3585,11 @@ body.dark .notification-daily-verse-action {
 .huidu-delete-dialog button,
 .huidu-rename-dialog button {
   min-height: 38px;
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface-2);
   color: var(--body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-delete-dialog button.is-danger {
@@ -3036,13 +3603,13 @@ body.dark .notification-daily-verse-action {
   margin: 12px 0;
   padding: 0 11px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 12px;
   outline: 0;
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-rename-dialog button.is-primary {
@@ -3070,7 +3637,7 @@ body.dark .notification-daily-verse-action {
   padding: 52px 24px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .me-scroll {
@@ -3095,7 +3662,7 @@ body.dark .notification-daily-verse-action {
   border-radius: 50%;
   color: #202229;
   font-size: 13px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .user-avatar img {
@@ -3145,8 +3712,8 @@ body.dark .notification-daily-verse-action {
   display: block;
   margin-top: 3px;
   color: var(--orange-deep);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-avatar-message.is-success {
@@ -3159,12 +3726,30 @@ body.dark .notification-daily-verse-action {
 }
 
 .me-profile-copy h1 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 3px;
-  overflow: hidden;
   font-size: 18px;
   line-height: 1.25;
+}
+
+.me-profile-copy h1 > :not(.me-plan-tag) {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 套餐标签跟在账号名后面，说明这个账号用的是哪个方案。 */
+.me-plan-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-profile-copy p {
@@ -3175,30 +3760,6 @@ body.dark .notification-daily-verse-action {
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.me-account-status {
-  flex: none;
-  padding: 4px 8px;
-  border-radius: 99px;
-  background: var(--surface-2);
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.me-sync-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: -10px;
-  color: var(--purple-deep);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.me-sync-note .app-icon {
-  flex: none;
 }
 
 .me-section {
@@ -3217,14 +3778,22 @@ body.dark .notification-daily-verse-action {
 .me-section-heading h2 {
   margin: 0;
   font-size: 14px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .me-section-heading > button,
 .me-section-heading > span {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+}
+
+/* 「查看内容」这类栏目右侧的文字入口原来只有 17px 高，
+   移动端点不准；撑出上下热区，视觉字号不变。 */
+.me-section-heading > button {
+  min-height: 40px;
+  padding: 0 4px;
+  margin: -11px -4px;
 }
 
 .me-stats {
@@ -3243,25 +3812,202 @@ body.dark .notification-daily-verse-action {
   gap: 4px;
   padding: 7px 2px;
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--white);
+  border: 1px solid var(--line);
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
 .me-stat-value {
   color: var(--ink);
   font-size: 16px;
-  font-weight: 850;
+  font-weight: 600;
   line-height: 1;
 }
 
-.me-stat-value small {
-  margin-left: 2px;
+/* 读经进度横幅：金色淡底承载阅读语义，整卡可点跳读经计划 */
+.me-plan-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 14px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  text-align: left;
+}
+
+.me-plan-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.me-plan-banner-head b {
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-plan-banner-head small {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.me-plan-banner-caret {
+  flex: none;
+  opacity: 0.7;
+}
+
+.me-plan-banner-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(113, 74, 8, 0.14);
+}
+
+.me-plan-banner-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--yellow);
+}
+
+.me-plan-banner-today {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.me-plan-banner.is-empty {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.me-plan-banner.is-empty span {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-plan-banner.is-empty b {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 四宫格快捷入口：灰图标 + 名称 + 数字角标 */
+.me-quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.me-quick > button {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 66px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
   color: var(--body);
-  font-size: 7px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-quick > button .app-icon {
+  color: var(--body);
+}
+
+.me-quick-count {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.me-quick-count.is-zero {
+  opacity: 0.4;
+  font-weight: 600;
+}
+
+/* 分组菜单卡：一张卡装一组行，行间用分隔线（原来每行各自一张卡，组感不强）。
+   flex-shrink:0 —— me-scroll 是 flex 列，不锁的话内容超高时整卡会被压扁，
+   行溢出再被 overflow:hidden 裁掉。横幅与宫格同理。 */
+.me-plan-banner,
+.me-quick,
+.me-menu-card {
+  flex-shrink: 0;
+}
+
+.me-menu-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.me-menu-card > button {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.me-menu-card > button + button,
+.me-menu-card > .me-group-list.is-nested {
+  border-top: 1px solid var(--line);
+}
+
+.me-menu-card > button > .app-icon {
+  flex: none;
+  color: var(--body);
+}
+
+.me-menu-card .app-icon.is-rotated {
+  transform: rotate(90deg);
+}
+
+.me-menu-meta {
+  flex: none;
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-group-list.is-nested {
+  padding: 8px;
+  gap: 6px;
 }
 
 .me-group-list,
@@ -3279,8 +4025,9 @@ body.dark .notification-daily-verse-action {
   align-items: center;
   gap: 10px;
   padding: 9px 11px;
-  border-radius: 14px;
-  background: var(--surface-2);
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
   color: var(--ink);
   text-align: left;
 }
@@ -3305,11 +4052,11 @@ body.dark .notification-daily-verse-action {
   min-width: 52px;
   min-height: 44px;
   flex: none;
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--white);
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-group-avatar,
@@ -3320,9 +4067,9 @@ body.dark .notification-daily-verse-action {
   flex: none;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
+  border-radius: 12px;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .me-menu-icon {
@@ -3343,7 +4090,7 @@ body.dark .notification-daily-verse-action {
 .me-menu-copy b {
   overflow: hidden;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3353,7 +4100,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3363,13 +4110,34 @@ body.dark .notification-daily-verse-action {
   color: var(--body);
 }
 
-.me-logout-button {
-  align-self: center;
-  margin-top: -4px;
-  padding: 8px 16px;
-  color: var(--body);
+/* 条款链接：低频、非功能性，用一行文字承载即可，
+   不必和「读经计划」这类入口一样占一张卡片。 */
+.me-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: -8px;
+}
+
+.me-legal-links > button {
+  /* 视觉仍是一行小字，靠内边距把触控热区撑到 44px */
+  min-height: 44px;
+  padding: 4px 10px;
+  color: var(--muted);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
+}
+
+.me-logout-button {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  color: var(--orange-deep);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .me-logout-confirm {
@@ -3377,8 +4145,9 @@ body.dark .notification-daily-verse-action {
   flex-direction: column;
   gap: 10px;
   padding: 13px 14px;
-  border-radius: 14px;
-  background: var(--surface-2);
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
 }
 
 .me-logout-confirm b,
@@ -3406,10 +4175,10 @@ body.dark .notification-daily-verse-action {
 .me-logout-actions button {
   min-height: 32px;
   padding: 0 12px;
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--white);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .me-logout-actions .is-danger {
@@ -3421,15 +4190,15 @@ body.dark .notification-daily-verse-action {
   margin-top: -12px;
   color: var(--pink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
 .me-version {
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -3452,7 +4221,7 @@ body.dark .notification-daily-verse-action {
   gap: 12px;
   color: var(--body);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .me-detail-state.is-error {
@@ -3461,38 +4230,9 @@ body.dark .notification-daily-verse-action {
 }
 
 .me-detail-state button,
-.me-detail-empty button {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 800;
-}
 
-.me-detail-empty {
-  display: flex;
-  min-height: 280px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: var(--body);
-  text-align: center;
-}
 
-.me-detail-empty b {
-  color: var(--ink);
-  font-size: 15px;
-}
 
-.me-detail-empty span {
-  max-width: 280px;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.65;
-}
 
 .me-activity-group {
   display: flex;
@@ -3520,8 +4260,9 @@ body.dark .notification-daily-verse-action {
   justify-content: center;
   gap: 4px;
   padding: 13px 42px 13px 14px;
-  border-radius: 15px;
-  background: var(--surface-2);
+  border-radius: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
   color: var(--ink);
   text-align: left;
 }
@@ -3536,8 +4277,8 @@ body.dark .notification-daily-verse-action {
 
 .me-activity-date {
   color: var(--purple-deep);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-activity-list b {
@@ -3546,8 +4287,8 @@ body.dark .notification-daily-verse-action {
 
 .me-activity-list small {
   color: var(--body);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .me-data-account {
@@ -3563,9 +4304,9 @@ body.dark .notification-daily-verse-action {
   flex: none;
   align-items: center;
   justify-content: center;
-  border-radius: 15px;
+  border-radius: 16px;
   font-size: 17px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .me-data-account > div:last-child {
@@ -3583,7 +4324,7 @@ body.dark .notification-daily-verse-action {
   overflow: hidden;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3594,7 +4335,8 @@ body.dark .notification-daily-verse-action {
   gap: 12px;
   padding: 15px;
   border-radius: 16px;
-  background: var(--surface-2);
+  background: var(--white);
+  border: 1px solid var(--line);
 }
 
 .me-data-heading {
@@ -3616,151 +4358,436 @@ body.dark .notification-daily-verse-action {
 .me-data-heading p {
   margin-top: 3px;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.5;
 }
 
 .me-data-heading > span {
   flex: none;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.me-data-counts {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+/* 本机数据宫格只有三项（无「活动」——那是云端数据），等分三列 */
+.me-quick.is-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.me-data-counts span {
+/* 云端同步：只读状态卡。头部与菜单行同构，数字行不带箭头不做 hover */
+.me-cloud-head {
   display: flex;
-  min-height: 50px;
-  flex-direction: column;
+  min-height: 54px;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  border-radius: 11px;
-  background: var(--white);
-  color: var(--body);
-  font-size: 10px;
-  font-weight: 700;
+  gap: 10px;
+  padding: 8px 12px;
 }
 
-.me-data-counts b {
-  color: var(--ink);
-  font-size: 15px;
-}
-
-.me-data-export {
+.me-cloud-row {
   display: flex;
   min-height: 44px;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 12px;
-  background: var(--white);
-  color: var(--purple-deep);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.me-data-cloud-row {
-  display: flex;
-  min-height: 28px;
-  align-items: center;
   justify-content: space-between;
+  padding: 0 14px;
+  border-top: 1px solid var(--line);
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
-.me-data-cloud-row b {
+.me-cloud-row b {
   color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .me-data-note {
   margin: 0;
   padding: 0 4px;
   color: var(--body);
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.7;
-}
-
-.me-guest {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 72px 28px 28px;
-  text-align: center;
-}
-
-.me-guest-mark {
-  display: flex;
-  width: 62px;
-  height: 62px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: var(--yellow);
-  color: var(--brown);
-}
-
-.me-guest h1 {
-  margin: 20px 0 8px;
-  font-size: 20px;
-}
-
-.me-guest > p {
-  max-width: 280px;
-  margin: 0;
-  color: var(--body);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.7;
 }
 
-.me-login-button {
-  width: min(100%, 300px);
-  min-height: 44px;
-  margin-top: 24px;
-  border-radius: 13px;
+/* ── 全局兜底：崩溃页与退出提示 ── */
+.app-crash {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 28px calc(32px + var(--safe-bottom));
+  background: var(--surface);
+  color: var(--body);
+  text-align: center;
+}
+
+.app-crash b {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.app-crash p {
+  margin: 0;
+  max-width: 300px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.app-crash-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.app-crash-actions button {
+  height: 40px;
+  padding: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-crash-actions button.is-primary {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+
+.app-crash small {
+  margin-top: 14px;
+  max-width: 320px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.app-exit-toast {
+  position: fixed;
+  bottom: calc(96px + var(--safe-bottom));
+  left: 50%;
+  z-index: 90;
+  transform: translateX(-50%);
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(32, 34, 41, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: exit-toast-in 160ms ease;
+}
+
+body.dark .app-exit-toast {
+  background: rgba(242, 240, 235, 0.94);
+  color: #17191f;
+}
+
+@keyframes exit-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── 每日读经提醒 ── */
+.notification-reminder-toggle {
+  border: 0;
+  background: none;
+  padding: 0;
+  flex: none;
+}
+
+.notification-reminder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.notification-reminder-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notification-reminder-time span {
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notification-reminder-time input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notification-reminder-feedback {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── 祷告清单 ── */
+.prayer-compose {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.prayer-compose input {
+  height: 44px;
+  min-width: 0;
+  flex: 1;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  font-size: 14px;
+}
+
+.prayer-compose button {
+  height: 44px;
+  flex: none;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
   background: var(--purple);
   color: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
-.me-guest-benefits {
-  display: flex;
-  width: min(100%, 300px);
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 24px;
-  padding: 16px;
-  border-radius: 14px;
+.prayer-compose button:disabled {
   background: var(--surface-2);
-  color: var(--body);
-  text-align: left;
+  color: var(--muted);
 }
 
-.me-guest-benefits span {
+
+
+.prayer-section {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prayer-section-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.prayer-section-head b { font-weight: 600; color: var(--ink); }
+.prayer-section-head span { color: var(--muted); font-size: 12px; font-weight: 600; }
+
+.prayer-list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  font-size: 12px;
-  font-weight: 700;
 }
 
-.me-guest-benefits .app-icon {
-  color: var(--purple);
+.prayer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
 }
 
-.me-guest > small {
-  margin-top: 18px;
+.prayer-item.is-answered {
+  background: var(--surface-soft);
+}
+
+.prayer-check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-top: 1px;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  color: #fff;
+}
+
+.prayer-item.is-answered .prayer-check {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.prayer-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prayer-copy p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.prayer-item.is-answered .prayer-copy p {
+  color: var(--body);
+  text-decoration: line-through;
+  text-decoration-color: rgba(47, 122, 80, 0.4);
+}
+
+.prayer-copy small {
   color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prayer-remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+}
+
+/* 社群代祷贴的「记入清单」小按钮 */
+.community-prayer-save {
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.community-prayer-save:disabled {
+  color: var(--success);
+}
+
+/* 资源管理：译本下载列表 */
+.me-res-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.me-res-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.me-res-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
+.me-res-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.me-res-copy b {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.me-res-copy small {
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-res-bar {
+  height: 4px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.me-res-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--purple);
+  transition: width 0.2s ease;
+}
+
+.me-res-btn {
+  min-width: 58px;
+  min-height: 34px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-res-btn.is-primary {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+
+.me-res-btn:disabled {
+  opacity: 0.55;
+}
+
+.me-res-error {
+  margin: 0;
+  color: var(--danger, #b3403f);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-res-unsupported {
+  margin: 0;
+  color: var(--body);
   font-size: 12px;
   font-weight: 600;
 }
@@ -3784,17 +4811,19 @@ body.dark .notification-daily-verse-action {
   background: var(--yellow-medium);
 }
 
-.huidu-chat-title-label {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 5px;
+/* 标题芯片：长标题收在固定宽度里、以省略号结尾。
+   不设上限时芯片会撑到被布局硬裁，截断处没有省略号、右侧贴边很难看。 */
+.huidu-chat-screen .bible-reader-selector.version {
+  max-width: min(48vw, 176px);
+  flex: 0 1 auto;
 }
 
-.huidu-chat-title-label > span {
+.huidu-chat-title-label {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .huidu-chat-title-label > .app-icon {
@@ -3811,7 +4840,7 @@ body.dark .notification-daily-verse-action {
 
 .huidu-quote {
   padding: 12px 13px;
-  border-radius: 15px;
+  border-radius: 16px;
   background: var(--yellow-soft);
 }
 
@@ -3828,13 +4857,13 @@ body.dark .notification-daily-verse-action {
   background: var(--yellow-medium);
   color: var(--yellow-ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .huidu-quote-meta b {
   color: var(--body);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .huidu-quote p {
@@ -3852,19 +4881,23 @@ body.dark .notification-daily-verse-action {
   gap: 10px;
 }
 
+/* 空态：主流 AI 的居中问候 + 建议提示词 */
 .huidu-chat-empty {
   display: flex;
-  max-width: 360px;
+  width: 100%;
+  max-width: 340px;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 18px 4px 8px;
+  align-items: center;
+  gap: 8px;
+  margin: auto;
+  padding: 18px 4px;
+  text-align: center;
 }
 
 .huidu-chat-empty > span {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   margin-bottom: 3px;
   place-items: center;
   border-radius: 14px;
@@ -3875,8 +4908,8 @@ body.dark .notification-daily-verse-action {
 .huidu-chat-empty h1 {
   margin: 0;
   color: var(--ink);
-  font-size: 18px;
-  font-weight: 850;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .huidu-chat-empty p {
@@ -3887,43 +4920,106 @@ body.dark .notification-daily-verse-action {
   line-height: 1.7;
 }
 
+.huidu-suggests {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.huidu-suggests button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.huidu-suggests button > .app-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+/* 第二入口提示：经文慧读路径可被发现 */
+.huidu-scripture-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  border: 0;
+  background: none;
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.huidu-suggests button:active {
+  border-color: var(--purple);
+  color: var(--purple-deep);
+}
+
+/* 用户消息：右侧浅底气泡、无头像——对话里只有两个声音，头像不提供信息 */
 .huidu-user-message {
   min-width: 0;
-  flex: 1;
-  padding: 8px 11px;
-  border-radius: 14px 14px 4px;
-  background: var(--purple);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.55;
+  padding: 9px 13px;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
 }
 
 .huidu-user-message-row {
   display: flex;
-  max-width: 88%;
-  align-items: flex-end;
+  max-width: 82%;
   align-self: flex-end;
-  gap: 7px;
 }
 
-.huidu-user-message-row > .user-avatar {
-  margin-bottom: 1px;
-}
-
+/* 助手消息：通栏平铺不装卡片——主流 AI 的答案就是页面正文 */
 .huidu-assistant-message {
   display: flex;
   flex-direction: column;
   gap: 12px;
   align-self: stretch;
-  padding: 12px 13px;
-  border-radius: 15px;
-  background: var(--surface-2);
+  padding: 2px 2px 0;
 }
 
 .huidu-assistant-message.is-pending {
-  min-height: 48px;
+  min-height: 40px;
   justify-content: center;
+}
+
+/* 回答下方的操作行：复制等轻操作，弱化为幽灵按钮 */
+.huidu-msg-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: -4px;
+}
+
+.huidu-msg-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.huidu-msg-actions button:active {
+  background: var(--surface-2);
+  color: var(--body);
 }
 
 .huidu-answer-block {
@@ -3932,15 +5028,25 @@ body.dark .notification-daily-verse-action {
   gap: 6px;
 }
 
+/* 分段标签统一用慧读的紫，层级靠位置和字重区分，
+   不再一段一个色相（原来是紫/绿/橙三色，与项目语义色系统冲突）。 */
 .huidu-answer-tag {
   align-self: flex-start;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--answer-color) 16%, transparent);
-  color: var(--answer-color);
+  color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.huidu-answer-tag::before {
+  display: inline-block;
+  width: 3px;
+  height: 11px;
+  margin-right: 7px;
+  border-radius: 2px;
+  background: var(--purple);
+  content: "";
+  transform: translateY(1px);
 }
 
 .huidu-answer-block p,
@@ -3948,7 +5054,7 @@ body.dark .notification-daily-verse-action {
   margin: 0;
   color: var(--body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.75;
   white-space: pre-line;
   text-align: justify;
@@ -3989,16 +5095,7 @@ body.dark .notification-daily-verse-action {
 
 .huidu-typing small {
   font-size: 12px;
-  font-weight: 650;
-}
-
-.huidu-thread-note {
-  padding: 4px 10px 0;
-  color: var(--muted);
-  font-size: 12px;
   font-weight: 600;
-  line-height: 1.55;
-  text-align: center;
 }
 
 .huidu-missing {
@@ -4017,11 +5114,27 @@ body.dark .notification-daily-verse-action {
   margin: 0 3px 7px;
   color: var(--purple-deep);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .huidu-composer-status.is-error {
-  color: #c64040;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--danger);
+}
+
+/* 失败即可一键重发：问题已回填，按钮只是替用户再按一次发送 */
+.huidu-retry-button {
+  flex: none;
+  padding: 3px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .huidu-chat-row {
@@ -4030,23 +5143,100 @@ body.dark .notification-daily-verse-action {
   gap: 7px;
 }
 
+/* 附件芯片：悬在输入栏上方，说明只用于本次提问 */
+.huidu-attach-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 3px 7px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.huidu-attach-chip > .app-icon {
+  flex: none;
+  color: var(--body);
+}
+
+.huidu-attach-chip span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.huidu-attach-chip small {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.huidu-attach-chip button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-left: auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+}
+
+.huidu-attach-input {
+  display: none;
+}
+
+.huidu-attach-btn {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  margin-left: -6px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--purple-deep);
+}
+
+.huidu-attach-btn:active:not(:disabled) {
+  background: var(--purple-soft);
+}
+
+.huidu-attach-btn:disabled {
+  color: var(--muted);
+}
+
+/* 主流 AI 输入栏：大圆角药丸，语音与发送都收进框内 */
 .huidu-chat-field {
   display: flex;
   min-width: 0;
-  height: 42px;
+  height: 48px;
   flex: 1;
   align-items: center;
   gap: 2px;
-  padding: 2px 4px 2px 10px;
+  padding: 4px 5px 4px 15px;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface-2);
+  border-radius: 24px;
+  background: var(--white);
+  box-shadow: 0 2px 10px rgba(48, 42, 30, 0.06);
+}
+
+.huidu-chat-field:focus-within {
+  border-color: var(--purple);
 }
 
 .huidu-chat-field input {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  height: 38px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -4054,7 +5244,7 @@ body.dark .notification-daily-verse-action {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .huidu-chat-field .voice-input-btn {
@@ -4068,7 +5258,7 @@ body.dark .notification-daily-verse-action {
 
 .huidu-chat-field .voice-input-btn:hover:not(:disabled) {
   border: 0;
-  background: rgba(191, 120, 246, 0.09);
+  background: var(--purple-soft);
 }
 
 .huidu-chat-field .voice-input-btn.is-listening {
@@ -4081,19 +5271,35 @@ body.dark .notification-daily-verse-action {
   height: 17px;
 }
 
+/* 发送键：框内圆形上箭头（主流 AI 的通行样式），有内容才点亮 */
 .huidu-send-btn {
+  display: grid;
   width: 38px;
   height: 38px;
   flex: none;
+  place-items: center;
   border: 0;
   border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
   box-shadow: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .huidu-send-btn:disabled {
   background: var(--surface-2);
   color: var(--muted);
   opacity: 1;
+  cursor: default;
+}
+
+.huidu-composer-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
 }
 
 @keyframes ob-blink {
@@ -4106,12 +5312,6 @@ body.dark .notification-daily-verse-action {
   40% { transform: translateY(-3px); opacity: 1; }
 }
 
-.bible-verse-content {
-  text-align: justify;
-  text-justify: inter-character;
-  word-break: break-word;
-}
-
 /* scripture markup from the source data: proper-noun marks + pinyin ruby */
 .verse-text mark {
   background: transparent;
@@ -4122,32 +5322,68 @@ body.dark .notification-daily-verse-action {
   text-decoration-color: var(--body);
 }
 
+/* 圣经正文里专名虚线默认不画，减少满屏的小干扰；选中该节时再出现 */
+.bible-verse-content .verse-text mark {
+  text-decoration: none;
+}
+
+.bible-verse-content .bible-verse-main.is-selected .verse-text mark {
+  /* 跟随文字色：高亮底上的深色文字，专名虚线也要同深 */
+  text-decoration: underline dotted currentColor;
+}
+
 .verse-text ruby rt {
   font-size: 0.55em;
   color: var(--body);
   font-weight: 400;
 }
 
+/* 经文正文按中文书排标准修正：
+   - 两端对齐 + inter-ideograph：右缘不再参差，多余空隙摊进汉字间
+   - line-break strict：避头尾——「。，？」不落行首、引号开头不吊行尾
+   - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，视觉右缘更齐
+   字号/行高/节距沿用现有内联值（此前逐项调过），这里只管排版规则。 */
+.bible-verse-content {
+  color: var(--ink);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-wrap: pretty;
+  text-align: justify;
+  text-justify: inter-ideograph;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hanging-punctuation: allow-end;
+}
+
+/* 韩文/拼音排版规则不同：拼音有 ruby 注音、韩文按词换行，
+   两端对齐会把空格拉出大洞，退回自然左对齐 */
+.bible-verse-content.is-korean,
+.bible-verse-content.is-pinyin {
+  text-align: left;
+  line-break: auto;
+}
+
 .bible-verse-main {
-  border-radius: 5px;
+  border-radius: 8px;
   transition: background-color 180ms ease, box-shadow 180ms ease;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
 .bible-verse-main.is-audio-current {
-  background: rgba(143, 75, 198, 0.09);
-  box-shadow: 0 0 0 3px rgba(143, 75, 198, 0.09);
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 16%, transparent);
 }
 
 .bible-verse-main.is-audio-current .bible-verse-number {
-  color: var(--purple-deep) !important;
+  color: var(--yellow-ink) !important;
 }
 
 .bible-verse-content.is-pinyin .verse-text ruby rt {
   color: #747985;
   font-size: 0.62em;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 1.2;
   letter-spacing: 0.015em;
 }
@@ -4170,7 +5406,7 @@ body.dark .notification-daily-verse-action {
   margin-right: 7px !important;
   color: var(--purple-deep) !important;
   font-size: 12px !important;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .bible-verse-content.is-pinyin .verse-text mark {
@@ -4181,7 +5417,7 @@ body.dark .notification-daily-verse-action {
 }
 
 .screen-scroll.is-korean-reader {
-  background: #fffefd;
+  background: var(--white);
 }
 
 .bible-verse-content.is-korean {
@@ -4208,7 +5444,7 @@ body.dark .notification-daily-verse-action {
   margin: 0 4px 0 0 !important;
   color: var(--purple-deep) !important;
   font-size: 12px !important;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -4237,7 +5473,7 @@ body.dark .notification-daily-verse-action {
   max-height: calc(100dvh - 22px);
   overflow-y: auto;
   padding: 16px 18px calc(18px + env(safe-area-inset-bottom));
-  border-radius: 22px 22px 0 0;
+  border-radius: 16px 16px 0 0;
   background: #fffdf9;
   box-shadow: 0 -18px 46px rgba(24, 25, 31, 0.2);
 }
@@ -4258,7 +5494,7 @@ body.dark .notification-daily-verse-action {
 .verse-share-heading small {
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .verse-share-heading strong {
@@ -4287,9 +5523,36 @@ body.dark .notification-daily-verse-action {
 
 .verse-share-templates {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+/* 排版方向：横排 / 竖排 */
+.verse-share-layouts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin: 0 0 12px;
+}
+
+.verse-share-layouts button {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.verse-share-layouts button.active {
+  border-color: var(--purple-deep);
+  background: var(--purple-soft);
+  color: var(--purple-deep);
 }
 
 .verse-share-templates button {
@@ -4300,11 +5563,11 @@ body.dark .notification-daily-verse-action {
   justify-content: center;
   gap: 5px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--white);
   color: var(--body);
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .verse-share-templates button.active {
@@ -4330,7 +5593,7 @@ body.dark .notification-daily-verse-action {
   margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(145, 124, 90, 0.28);
-  border-radius: 15px;
+  border-radius: 16px;
   background: #fffaf0;
   box-shadow: 0 10px 30px rgba(80, 64, 40, 0.15);
 }
@@ -4346,7 +5609,7 @@ body.dark .notification-daily-verse-action {
   padding: 20px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -4358,13 +5621,23 @@ body.dark .notification-daily-verse-action {
   padding: 11px 0 12px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .verse-share-actions {
   display: grid;
   grid-template-columns: 1fr 1.15fr;
   gap: 10px;
+}
+
+.verse-share-actions.is-three {
+  grid-template-columns: 1fr 1fr 1.1fr;
+  gap: 8px;
+}
+
+.verse-share-actions.is-three button {
+  gap: 5px;
+  font-size: 12px;
 }
 
 .verse-share-actions button {
@@ -4374,11 +5647,11 @@ body.dark .notification-daily-verse-action {
   justify-content: center;
   gap: 7px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 12px;
   background: var(--white);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .verse-share-actions button.primary {
@@ -4416,7 +5689,7 @@ body.dark .notification-daily-verse-action {
   color: #575b64;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
   font-size: 13px;
-  font-weight: 450;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.65;
 }
@@ -4426,7 +5699,7 @@ body.dark .notification-daily-verse-action {
   padding-top: 1px;
   color: #8d6919;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
@@ -4456,7 +5729,7 @@ body.dark .notification-daily-verse-action {
   min-height: 28px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .sheet-close-btn {
@@ -6122,7 +7395,7 @@ audio.community-post-media {
   margin-bottom: 18px;
   color: var(--body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .legal-card section + section {
@@ -6142,16 +7415,37 @@ audio.community-post-media {
   line-height: 1.8;
 }
 
+/* 护眼（米黄纸）：正文 11.0:1，次要 7.6:1，辅助 5.4:1 */
+body.sepia {
+  color-scheme: light;
+  --ink: #3b2f22;
+  --body: #54473a;
+  --muted: #6c5d49;
+  --ink-3: #8a7a62;
+  --line: #e2d6bb;
+  --surface: #ede3cb;
+  --surface-soft: #f1e8d3;
+  --surface-2: #eadfc3;
+  --white: #f4ecd8;
+  --yellow-soft: #f8ecc8;
+  --commentary-soft: #ebe3cf;
+  background: var(--surface);
+}
+
 /* Global dark mode — the same reading palette follows every route. */
 body.dark {
   color-scheme: dark;
-  --ink: #f2f0eb;
-  --body: #c0beb8;
-  --muted: #9297a2;
-  --line: #343740;
-  --surface: #101116;
-  --surface-2: #1e2027;
-  --white: #17191f;
+  /* 不用纯白字、不用纯黑底：正文 12.1:1，夜读不刺眼 */
+  --ink: #d8d4cc;
+  --body: #b8b3aa;
+  --muted: #9a958c;
+  --ink-3: #77736b;
+  --line: #2f3036;
+  --surface: #101113;
+  --surface-soft: #1a1b1f;
+  --danger: var(--pink);
+  --surface-2: #222328;
+  --white: #16171a;
   --yellow: #f1c662;
   --yellow-soft: #2b2518;
   --yellow-medium: #3a301b;
@@ -6199,8 +7493,8 @@ body.dark .bible-reader-selector.book.is-open,
 body.dark .bible-reader-selector.chapter-number.is-open,
 body.dark .bible-reader-selector.chapter.is-open,
 body.dark .bible-reader-selector.version.is-open {
-  background: #282a31;
-  color: var(--yellow);
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
 }
 
 body.dark .bible-version-picker,
@@ -6210,11 +7504,6 @@ body.dark .bible-reading-settings,
 body.dark .audio-player-sheet,
 body.dark .verse-share-sheet {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48);
-}
-
-body.dark .bible-version-option.active {
-  background: #2d2613 !important;
-  color: var(--yellow) !important;
 }
 
 body.dark input,
@@ -6229,7 +7518,8 @@ body.dark textarea::placeholder {
   color: var(--muted);
 }
 
-body.dark .bible-search-field input {
+/* 药丸容器里的输入框本身要透明，否则深色下框内会多出一块色差 */
+body.dark :is(.bible-search-field, .huidu-chat-field, .community-chat-field) input {
   background: transparent;
 }
 
@@ -6247,15 +7537,23 @@ body.dark .bible-toolbar-action {
   color: var(--ink);
 }
 
-/* Guest view in MePage */
+/* Guest view in MePage：满屏纯登录页。
+   品牌 + 广告语 + 登录按钮垂直居中，协议链接沉底，不放其他信息。 */
 .me-guest-scroll {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
+  padding: 24px 28px 28px;
   text-align: center;
-  gap: 20px;
+}
+
+/* margin auto 上下均分剩余空间，把整组内容顶到屏幕正中 */
+.me-guest-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  margin: auto 0;
 }
 
 .me-guest-brand {
@@ -6263,51 +7561,44 @@ body.dark .bible-toolbar-action {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
 }
 
 .me-logo-shield {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   background: var(--surface-2);
   border-radius: 20px;
   color: var(--ink);
 }
 
 .me-guest-brand h1 {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 26px;
+  font-weight: 600;
   margin: 0;
   display: flex;
   gap: 2px;
 }
 
 .me-guest-brand p {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--body);
   margin: 0;
-}
-
-.me-guest-prompt {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-top: 10px;
+  letter-spacing: 0.05em;
 }
 
 .me-login-button {
-  width: 100%;
+  width: min(100%, 320px);
   height: 48px;
   background: var(--purple);
   color: #fff;
   border: 0;
   border-radius: 12px;
   font-size: 15px;
-  font-weight: 750;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(127, 85, 224, 0.15);
   transition: all 0.2s ease;
@@ -6318,36 +7609,8 @@ body.dark .bible-toolbar-action {
   opacity: 0.9;
 }
 
-.me-guest-benefits {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  padding: 16px;
-  background: var(--surface-2);
-  border-radius: 14px;
-  margin-top: 15px;
-}
-
-.me-guest-benefits span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.me-guest-benefits .app-icon {
-  color: #27ae60;
-}
-
-.me-guest-scroll small {
-  font-size: 12px;
-  color: var(--body);
-  line-height: 1.5;
-  margin-top: 5px;
+.me-guest-scroll .me-legal-links {
+  margin-top: 24px;
 }
 
 body.dark .bible-setting-segment button.active {
@@ -6362,12 +7625,10 @@ body.dark .annotation-reader.is-introduction {
   background: var(--white);
 }
 
-body.dark .annotation-comparison-heading,
 body.dark .annotation-intro-hero {
-  background: #1d2026;
+  background: var(--surface-soft);
 }
 
-body.dark .annotation-comparison-heading h1,
 body.dark .annotation-section-body,
 body.dark .annotation-intro-hero h1,
 body.dark .annotation-intro-hero > p,
@@ -6378,36 +7639,39 @@ body.dark .annotation-copyright-details dd {
   color: var(--ink);
 }
 
-body.dark .annotation-paper-kicker,
 body.dark .annotation-intro-eyebrow,
 body.dark .annotation-intro-section h2,
 body.dark .annotation-intro-stages > div > span,
-body.dark .annotation-entry-heading h2,
-body.dark .annotation-section-meta {
-  color: var(--commentary);
+body.dark .annotation-entry-topic {
+  color: var(--yellow);
 }
 
-body.dark .annotation-overview-details {
-  border-color: #516a88;
-  background: var(--commentary-soft);
+body.dark .annotation-entry.is-located {
+  background: color-mix(in srgb, var(--yellow) 12%, transparent);
+  box-shadow: 0 0 0 2px rgba(241, 198, 98, 0.35);
 }
 
-body.dark .annotation-overview-details summary span {
-  color: #b8cbe1;
+body.dark .annotation-scripture-quote {
+  background: var(--yellow-soft);
+  color: var(--ink);
 }
 
-body.dark .annotation-chapter-overview {
-  border-color: rgba(158, 182, 212, 0.16);
+body.dark .annotation-chapter-nav button {
+  background: transparent;
 }
 
-body.dark .annotation-comparison-card {
-  border-color: #516a88;
+body.dark .annotation-reference-chip {
+  background: color-mix(in srgb, var(--yellow) 16%, transparent);
+  color: var(--yellow);
 }
 
-body.dark .annotation-chapter-overview.is-located,
-body.dark .annotation-comparison-card.is-located {
-  background: #263443;
-  box-shadow: 0 0 0 2px rgba(141, 169, 201, 0.24);
+body.dark .annotation-entry.is-range {
+  background: color-mix(in srgb, var(--yellow) 8%, transparent);
+}
+
+body.dark .annotation-entry.is-range .annotation-reference-chip {
+  background: var(--yellow);
+  color: var(--surface-soft);
 }
 
 body.dark .annotation-intro-facts,
@@ -6427,13 +7691,13 @@ body.dark .annotation-intro-themes li {
 
 body.dark .annotation-copyright-sheet {
   border-color: var(--line);
-  background: #1d1f25;
+  background: var(--white);
   box-shadow: var(--shadow-overlay);
 }
 
 body.dark .annotation-copyright-symbol {
   background: var(--commentary-soft);
-  color: #b5c9e0;
+  color: var(--commentary);
 }
 
 body.dark .annotation-copyright-details dt {
@@ -6441,14 +7705,14 @@ body.dark .annotation-copyright-details dt {
 }
 
 body.dark .annotation-copyright-details a {
-  color: #a9c2df;
+  color: var(--commentary);
 }
 
 body.dark .annotation-copyright-trigger[aria-expanded="true"],
 body.dark .annotation-audio-trigger[aria-expanded="true"],
 body.dark .annotation-font-trigger[aria-expanded="true"] {
-  border-color: #454955;
-  background: #292c34;
+  border-color: var(--line);
+  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -6457,13 +7721,6 @@ body.dark .bible-toolbar-action:hover:not(:disabled),
 body.dark .verse-share-heading > button:hover:not(:disabled) {
   border-color: var(--line);
   background: var(--surface-2);
-}
-
-body.dark .bible-book-option.active,
-body.dark .bible-chapter-grid button.active {
-  border-color: #655329;
-  background: var(--yellow-medium);
-  color: var(--yellow);
 }
 
 body.dark .bible-search-version,
@@ -6480,43 +7737,26 @@ body.dark .bible-search-highlight {
 }
 
 body.dark .tab-bar {
-  --tab-active-ink: var(--yellow-ink);
   --tab-active-fill: #a47b2b;
-  border-color: rgba(110, 92, 59, 0.62);
-  background: rgba(24, 25, 31, 0.96);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    0 10px 28px rgba(0, 0, 0, 0.34);
-}
-
-body.dark .tab-bar .tab {
-  color: #aeb2bc;
-}
-
-body.dark .tab-bar .tab.active {
-  border-color: rgba(193, 151, 65, 0.34);
-  background: linear-gradient(145deg, #302919, #282318);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.035),
-    0 3px 9px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.36);
 }
 
 body.dark .audio-progress::-webkit-slider-runnable-track {
   background: linear-gradient(
     to right,
     var(--audio-accent) var(--audio-progress),
-    #3a3d46 var(--audio-progress)
+    var(--line) var(--audio-progress)
   );
 }
 
 body.dark .audio-player-status.error {
-  background: rgba(239, 111, 159, 0.12);
+  background: rgba(201, 56, 112, 0.14);
   color: var(--pink);
 }
 
 body.dark .audio-voice-menu {
   border-color: var(--line);
-  background: #1d1f25;
+  background: var(--white);
   box-shadow: var(--shadow-overlay);
 }
 
@@ -6595,6 +7835,417 @@ body.dark .community-directory-list.is-featured {
 }
 
 body.dark .community-directory-row.is-official .community-directory-avatar {
+  background: color-mix(in srgb, var(--yellow) 12%, transparent) !important;
+  color: var(--yellow-ink);
+}
+
+body.dark .community-directory-badge.is-official {
+  background: var(--yellow-medium);
+  color: var(--yellow-ink);
+}
+
+body.dark .community-assistant-home.is-community .community-assistant-type {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--body);
+}
+
+body.dark .community-feedback {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+body.dark .community-post-card.is-notice {
+  border-color: color-mix(in srgb, var(--yellow) 28%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--yellow) 8%, var(--white)), color-mix(in srgb, var(--yellow) 5%, var(--white)));
+}
+
+body.dark .community-post-card.is-prayer {
+  border-color: color-mix(in srgb, var(--purple) 28%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--purple) 10%, var(--white)), color-mix(in srgb, var(--purple) 6%, var(--white)));
+}
+
+body.dark .community-pinned-label,
+body.dark .community-post-kind.is-notice {
+  color: var(--yellow-ink);
+}
+
+body.dark .community-post-kind.is-notice {
+  background: var(--yellow-soft);
+}
+
+body.dark .community-post-kind.is-article {
+  background: color-mix(in srgb, var(--commentary) 14%, transparent);
+  color: var(--commentary);
+}
+
+body.dark .community-post-kind.is-media {
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+}
+
+body.dark .community-post-kind.is-event {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+body.dark .community-user-message > div {
+  background: #70429a;
+  color: #fff;
+}
+
+body.dark .community-confirm-card {
+  border-color: color-mix(in srgb, var(--purple) 32%, transparent);
+  background: var(--purple-soft);
+}
+
+body.dark .community-publish-backdrop {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+body.dark .community-publish-sheet,
+body.dark .community-action-sheet {
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-overlay);
+}
+
+body.dark .me-avatar,
+body.dark .me-data-avatar,
+body.dark .user-avatar,
+body.dark .community-directory-avatar,
+body.dark .community-person-row > span,
+body.dark .community-group-row > span,
+/* 以下都是用户选的浅色头像底（黄/紫/粉/绿），字要固定深色，不能跟 --ink 翻白 */
+body.dark .community-assistant-home.is-community .community-assistant-home-mark,
+body.dark .community-join-preview-mark,
+body.dark .community-create-avatar,
+body.dark .me-group-avatar {
+  color: #202229;
+}
+
+body.dark .legal-card section + section,
+body.dark .community-article-expand > p,
+body.dark .community-member-result-row,
+body.dark .community-management-result button {
+  border-color: var(--line);
+}
+
+/* Personal and community reading plans */
+.reading-plans-scroll {
+  padding: 18px 18px calc(var(--safe-bottom) + 28px);
+}
+
+.reading-plans-intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--yellow-soft);
+}
+
+.reading-plans-intro > span {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--yellow);
+  color: var(--yellow-ink);
+}
+
+.reading-plans-intro h1,
+.reading-plan-card h2 {
+  margin: 0;
+  color: var(--ink);
+}
+
+.reading-plans-intro h1 {
+  font-size: 18px;
+}
+
+.reading-plans-intro p,
+.reading-plan-card > p {
+  margin: 5px 0 0;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.reading-plan-card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.reading-plan-card-top,
+.reading-plan-today,
+.reading-plan-action {
+  display: flex;
+  align-items: center;
+}
+
+.reading-plan-card-top {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.reading-plan-card-top small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.reading-plan-scope {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reading-plan-scope.is-community {
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
+.reading-plan-scope.is-personal {
+  background: var(--surface);
+  color: var(--body);
+}
+
+.reading-plan-card h2 {
+  font-size: 18px;
+}
+
+.reading-plan-progress {
+  height: 5px;
+  margin: 14px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.reading-plan-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--purple);
+}
+
+.reading-plan-today {
+  width: 100%;
+  min-height: 58px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.reading-plan-today > span {
+  display: grid;
+  gap: 2px;
+}
+
+.reading-plan-today small,
+.reading-plan-today em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.reading-plan-today b {
+  font-size: 14px;
+}
+
+.reading-plan-action {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--purple);
+  color: #fff;
+  font-weight: 600;
+}
+
+.reading-plan-action.is-complete {
+  background: var(--surface);
+  color: var(--success);
+}
+
+.reading-plan-feedback {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--purple-soft);
+  color: var(--purple-deep);
+  font-size: 13px;
+}
+
+.reading-plan-feedback.is-error {
+  color: var(--danger);
+}
+
+.reading-plan-feedback button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+}
+
+.reading-plan-empty,
+.reading-plans-note {
+  padding: 20px 4px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 防复制机制 */
+.annotation-comparison-list,
+.annotation-entry,
+.annotation-section-body,
+.annotation-entry-topic {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* 小图标键：视觉保持紧凑，点击热区用伪元素扩到 44×44（Apple HIG 最小触控尺寸） */
+:is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
+  .community-post-menu > button, .community-post-meta-tools > button,
+  .huidu-search > button, .bible-inline-note-actions button,
+  .audio-time-row button, .community-management-result button) {
+  position: relative;
+}
+
+:is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
+  .community-post-menu > button, .community-post-meta-tools > button,
+  .huidu-search > button, .bible-inline-note-actions button,
+  .audio-time-row button, .community-management-result button)::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2));
+}
+
+
+/* ── 沉浸阅读：分段标题、节号、金句、页边 ── */
+
+/* 分段标题靠留白分段：上方约一行、下方 8px；比正文小一号、半粗、次要色，不抢正文 */
+.bible-heading {
+  display: block;
+  margin: 32px 0 8px;
+  color: var(--body);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+
+.bible-verse:first-child .bible-heading {
+  margin-top: 8px;
+}
+
+/* 节号：12px 辅助灰、半粗等宽数字——11px 第三级灰在宋体正文旁偏虚看不清 */
+.bible-verse-number {
+  margin: 0 2px 0 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.bible-verse:first-child .bible-verse-number {
+  margin-left: 0;
+}
+
+/* 金句收起态：一行，点开才是整张卡 */
+.daily-verse-peek {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0 12px;
+  padding: 0 0 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.daily-verse-peek-main {
+  display: flex;
+  min-width: 0;
+  min-height: 40px;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--body);
+  font: inherit;
+  text-align: left;
+}
+
+.daily-verse-peek-main .daily-verse-kicker {
+  flex: none;
+}
+
+.daily-verse-peek-text {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.daily-verse-peek-main > .app-icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.daily-verse-peek .daily-verse-close {
+  width: 40px;
+  height: 40px;
+}
+
+button.daily-verse-kicker {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+@media (max-width: 374px) {
+  :root {
+    --reading-gutter: 20px;
+  }
+}
+
+/* Keep local RAG answers and community styles when syncing the reading UI. */
+.huidu-answer-block + .huidu-answer-block { margin-top: 6px; }
+
+body.dark .community-directory-list.is-featured {
+  background: var(--yellow-soft);
+}
+
+body.dark .community-directory-row.is-official .community-directory-avatar {
   background: rgba(241, 198, 98, 0.12) !important;
   color: var(--yellow-ink);
 }
@@ -6661,204 +8312,4 @@ body.dark .community-publish-sheet,
 body.dark .community-action-sheet {
   border: 1px solid var(--line);
   box-shadow: var(--shadow-overlay);
-}
-
-body.dark .me-avatar,
-body.dark .me-data-avatar,
-body.dark .user-avatar,
-body.dark .community-directory-avatar,
-body.dark .community-person-row > span,
-body.dark .community-group-row > span {
-  color: #202229;
-}
-
-body.dark .legal-card section + section,
-body.dark .community-article-expand > p,
-body.dark .community-member-result-row,
-body.dark .community-management-result button {
-  border-color: var(--line);
-}
-
-/* Personal and community reading plans */
-.reading-plans-scroll {
-  padding: 18px 18px calc(var(--safe-bottom) + 28px);
-}
-
-.reading-plans-intro {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding: 16px;
-  border-radius: 20px;
-  background: var(--yellow-soft);
-}
-
-.reading-plans-intro > span {
-  display: grid;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 14px;
-  background: var(--yellow);
-  color: var(--yellow-ink);
-}
-
-.reading-plans-intro h1,
-.reading-plan-card h2 {
-  margin: 0;
-  color: var(--ink);
-}
-
-.reading-plans-intro h1 {
-  font-size: 18px;
-}
-
-.reading-plans-intro p,
-.reading-plan-card > p {
-  margin: 5px 0 0;
-  color: var(--body);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.reading-plan-card {
-  margin-bottom: 12px;
-  padding: 16px;
-  border-radius: 20px;
-  background: var(--surface-soft);
-}
-
-.reading-plan-card-top,
-.reading-plan-today,
-.reading-plan-action {
-  display: flex;
-  align-items: center;
-}
-
-.reading-plan-card-top {
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.reading-plan-card-top small {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.reading-plan-scope {
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.reading-plan-scope.is-community {
-  background: var(--yellow-soft);
-  color: var(--yellow-ink);
-}
-
-.reading-plan-scope.is-personal {
-  background: var(--surface);
-  color: var(--body);
-}
-
-.reading-plan-card h2 {
-  font-size: 18px;
-}
-
-.reading-plan-progress {
-  height: 5px;
-  margin: 14px 0;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--line);
-}
-
-.reading-plan-progress > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--purple);
-}
-
-.reading-plan-today {
-  width: 100%;
-  min-height: 58px;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--ink);
-  text-align: left;
-}
-
-.reading-plan-today > span {
-  display: grid;
-  gap: 2px;
-}
-
-.reading-plan-today small,
-.reading-plan-today em {
-  color: var(--muted);
-  font-size: 11px;
-  font-style: normal;
-}
-
-.reading-plan-today b {
-  font-size: 14px;
-}
-
-.reading-plan-action {
-  width: 100%;
-  min-height: 44px;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 10px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--purple);
-  color: #fff;
-  font-weight: 700;
-}
-
-.reading-plan-action.is-complete {
-  background: var(--surface);
-  color: var(--success);
-}
-
-.reading-plan-feedback {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
-  font-size: 13px;
-}
-
-.reading-plan-feedback.is-error {
-  color: var(--danger);
-}
-
-.reading-plan-feedback button {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-weight: 700;
-}
-
-.reading-plan-empty,
-.reading-plans-note {
-  padding: 20px 4px;
-  color: var(--muted);
-  font-size: 13px;
-  text-align: center;
 }

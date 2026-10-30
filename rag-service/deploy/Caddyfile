@@ -1,0 +1,36 @@
+ac.ezra76.com {
+	encode gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		# HSTS: 1 年, 包含子域。
+		# 不发 `preload` 字面量 -- 那是为提交 hstspreload.org 准备的
+		# (浏览器内置后撤销周期数周, 想开再加 + 提交 https://hstspreload.org/)。
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# API: 剥掉 /api 前缀转给后端(与前端 dev proxy 行为一致, 后端路由无 /api)
+	handle_path /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# 健康检查直达后端(deploy.sh 外部 curl /health 用)
+	handle /health {
+		reverse_proxy backend:8000
+	}
+
+	# 其余一律服务前端 SPA; 客户端路由(/upload、/review…)回退 index.html
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

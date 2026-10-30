@@ -1,22 +1,35 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { initializePushNotifications, syncStoredPushToken } from "./data/push";
+import { lazy, Suspense, useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { TabBar } from "./components/TabBar";
+import { SkeletonScreen } from "./components/SkeletonScreen";
+// 首页路由同步加载，保证冷启动直达经文；其余页面按路由分包，
+// 繁体词典、二维码等重依赖也随各自页面延后加载。
 import { BiblePage } from "./pages/BiblePage";
-import { AnnotationsPage } from "./pages/AnnotationsPage";
-import { HuiduHomePage } from "./pages/HuiduHomePage";
-import { HuiduChatPage } from "./pages/HuiduChatPage";
-import { CommunityPage } from "./pages/CommunityPage";
-import { GroupPage } from "./pages/GroupPage";
-import { CreateGroupPage } from "./pages/CreateGroupPage";
-import { GroupSettingsPage } from "./pages/GroupSettingsPage";
-import { MePage } from "./pages/MePage";
-import { MyContentPage } from "./pages/MyContentPage";
-import { NotificationsPage } from "./pages/NotificationsPage";
-import { MyActivitiesPage } from "./pages/MyActivitiesPage";
-import { AccountDataPage } from "./pages/AccountDataPage";
-import { ReadingPlansPage } from "./pages/ReadingPlansPage";
-import { LoginPage } from "./pages/LoginPage";
-import { LegalPage } from "./pages/LegalPage";
+
+const lazyPage = <K extends string>(
+  loader: () => Promise<Record<K, ComponentType>>,
+  name: K,
+) => lazy(() => loader().then((m) => ({ default: m[name] })));
+
+const AnnotationsPage = lazyPage(() => import("./pages/AnnotationsPage"), "AnnotationsPage");
+const HuiduHomePage = lazyPage(() => import("./pages/HuiduHomePage"), "HuiduHomePage");
+const HuiduChatPage = lazyPage(() => import("./pages/HuiduChatPage"), "HuiduChatPage");
+const CommunityPage = lazyPage(() => import("./pages/CommunityPage"), "CommunityPage");
+const GroupPage = lazyPage(() => import("./pages/GroupPage"), "GroupPage");
+const CreateGroupPage = lazyPage(() => import("./pages/CreateGroupPage"), "CreateGroupPage");
+const GroupSettingsPage = lazyPage(() => import("./pages/GroupSettingsPage"), "GroupSettingsPage");
+const MePage = lazyPage(() => import("./pages/MePage"), "MePage");
+const MyContentPage = lazyPage(() => import("./pages/MyContentPage"), "MyContentPage");
+const NotificationsPage = lazyPage(() => import("./pages/NotificationsPage"), "NotificationsPage");
+const MyActivitiesPage = lazyPage(() => import("./pages/MyActivitiesPage"), "MyActivitiesPage");
+const AccountDataPage = lazyPage(() => import("./pages/AccountDataPage"), "AccountDataPage");
+const ResourcesPage = lazyPage(() => import("./pages/ResourcesPage"), "ResourcesPage");
+const PrayerListPage = lazyPage(() => import("./pages/PrayerListPage"), "PrayerListPage");
+const ReadingPlansPage = lazyPage(() => import("./pages/ReadingPlansPage"), "ReadingPlansPage");
+const LoginPage = lazyPage(() => import("./pages/LoginPage"), "LoginPage");
+const LegalPage = lazyPage(() => import("./pages/LegalPage"), "LegalPage");
+import { setupAndroidBackButton } from "./native/android-back";
 import { syncHighlights, syncNotes } from "./data/annotations";
 import { syncConversations } from "./data/huidu";
 import { fetchMe } from "./data/profile";
@@ -31,7 +44,7 @@ function RequireLogin({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  if (allowed === null) return <div className="route-status">正在确认账号…</div>;
+  if (allowed === null) return <SkeletonScreen label="正在确认账号" />;
   if (!allowed) return <Navigate to="/me/login" replace state={{ from: location.pathname }} />;
   return <>{children}</>;
 }
@@ -42,6 +55,8 @@ const AUTO_HIDE_TAB_PATHS = ["/bible", "/annotations"];
 
 export default function App() {
   const { pathname } = useLocation();
+  useEffect(() => { void initializePushNotifications(false); }, []);
+  useEffect(() => { void syncStoredPushToken(); }, [pathname]);
   const showTabBar = TAB_PATHS.includes(pathname);
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
@@ -49,6 +64,11 @@ export default function App() {
     void syncHighlights();
     void syncNotes();
     void syncConversations();
+    setupAndroidBackButton({
+      // 从 hash 现读路径：监听器只注册一次，不能闭包住某一次渲染的 pathname
+      isAtTabRoot: () => TAB_PATHS.includes(window.location.hash.replace(/^#/, "").split("?")[0]),
+      goBack: () => window.history.back(),
+    });
   }, []);
 
   useEffect(() => {
@@ -106,6 +126,7 @@ export default function App() {
 
   return (
     <div className={`app${showTabBar ? " has-tab-bar" : ""}`}>
+      <Suspense fallback={<SkeletonScreen label="正在打开页面" />}>
       <Routes>
         <Route path="/" element={<Navigate to="/bible" replace />} />
         <Route path="/bible" element={<BiblePage />} />
@@ -123,9 +144,14 @@ export default function App() {
         <Route path="/me/notifications" element={<NotificationsPage />} />
         <Route path="/me/activities" element={<RequireLogin><MyActivitiesPage /></RequireLogin>} />
         <Route path="/me/account" element={<RequireLogin><AccountDataPage /></RequireLogin>} />
+        {/* 译本下载是设备级功能，不要求登录 */}
+        <Route path="/me/resources" element={<ResourcesPage />} />
+        {/* 祷告清单：本机数据，不要求登录 */}
+        <Route path="/me/prayers" element={<PrayerListPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>
+      </Suspense>
       {showTabBar && <TabBar hidden={!isTabBarVisible} />}
     </div>
   );

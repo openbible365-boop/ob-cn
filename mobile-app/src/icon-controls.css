@@ -1,0 +1,139 @@
+/* Shared icon-button contract. Loaded after page styles so local controls
+   cannot drift in size, colour or interaction states. */
+:root {
+  --icon-button-size: 40px;
+  --icon-size: 20px;
+  --icon-button-radius: 12px;
+}
+
+body {
+  --icon-button-foreground: var(--ink);
+  --icon-button-hover: var(--surface-2);
+  --icon-button-selected: var(--purple-soft);
+  --icon-button-accent: var(--purple);
+  --icon-button-accent-hover: var(--purple-deep);
+}
+
+body.dark {
+  --icon-button-accent: #8250ab;
+  --icon-button-accent-hover: #704294;
+}
+
+/* 基础规则用 :where() 把特异度归零：否则列表里的 `.audio-controls > button:has(...)`
+   会把整条规则抬到 (0,2,1)，压过下面的 primary 变体，导致发送键、播放键全变成透明底。 */
+:where([data-icon-button], .icon-btn, .bible-toolbar-action,
+  .audio-controls > button:has(.audio-seek-icon)) {
+  display: inline-grid;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+  min-width: var(--icon-button-size);
+  min-height: var(--icon-button-size);
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--icon-button-radius);
+  background: transparent;
+  box-shadow: none;
+  color: var(--icon-button-foreground);
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease,
+    opacity 160ms ease, transform 120ms ease;
+}
+
+:is([data-icon-button], .icon-btn, .bible-toolbar-action) > .app-icon,
+.audio-controls .audio-seek-icon,
+.audio-controls .audio-seek-icon > svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  fill: none;
+  stroke-width: 2;
+}
+
+:where([data-icon-button], .icon-btn, .bible-toolbar-action,
+  .audio-controls > button:has(.audio-seek-icon)):hover:not(:disabled) {
+  background: var(--icon-button-hover);
+}
+
+:is([data-icon-button], .icon-btn, .bible-toolbar-action):is(
+  .is-active, .is-listening, [aria-pressed="true"], [aria-expanded="true"]
+) {
+  background: var(--icon-button-selected);
+  color: var(--purple-deep);
+}
+
+:is([data-icon-button="primary"], .icon-btn-primary) {
+  background: var(--icon-button-accent);
+  color: #fff;
+}
+
+:is([data-icon-button="primary"], .icon-btn-primary):hover:not(:disabled) {
+  background: var(--icon-button-accent-hover);
+}
+
+[data-icon-button="danger"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+:where([data-icon-button], .icon-btn, .bible-toolbar-action,
+  .audio-controls > button:has(.audio-seek-icon)):focus-visible {
+  outline: 2px solid var(--icon-button-accent);
+  outline-offset: 2px;
+}
+
+:where([data-icon-button], .icon-btn, .bible-toolbar-action,
+  .audio-controls > button:has(.audio-seek-icon)):active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+:where([data-icon-button], .icon-btn, .bible-toolbar-action,
+  .audio-controls > button:has(.audio-seek-icon)):disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bible-font-mark {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  gap: 2px;
+  align-items: baseline;
+}
+
+.bible-font-mark .small-a { font-size: 11px; }
+.bible-font-mark .large-a { font-size: 19px; }
+
+.audio-controls > button {
+  justify-self: center;
+}
+
+[data-icon-button-size="inline"] {
+  --icon-button-size: 24px;
+  --icon-size: 14px;
+  --icon-button-radius: 6px;
+  line-height: 1;
+  vertical-align: baseline;
+}
+
+.bible-verse-note-indicator[data-icon-button] {
+  margin-left: 3px;
+  vertical-align: 0.02em;
+  color: var(--purple-deep);
+}
+
+.bible-verse-note-indicator[data-icon-button].is-open {
+  background: var(--icon-button-selected);
+}
+
+.audio-controls [data-icon-button="primary"] {
+  --icon-button-size: 44px;
+  --icon-size: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-icon-button], .icon-btn, .bible-toolbar-action,
+    .audio-controls > button:has(.audio-seek-icon)) {
+    transition: none;
+  }
+}

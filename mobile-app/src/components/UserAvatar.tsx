@@ -1,3 +1,5 @@
+import { resolveAvatarUrl } from "../data/api";
+
 type UserAvatarProps = {
   name: string;
   avatarColor: string;
@@ -22,7 +24,7 @@ export function UserAvatar({
       {Array.from(name.trim())[0] ?? "我"}
       {avatarUrl && (
         <img
-          src={avatarUrl}
+          src={resolveAvatarUrl(avatarUrl) ?? ""}
           alt=""
           referrerPolicy="no-referrer"
           onError={(event) => { event.currentTarget.style.display = "none"; }}
