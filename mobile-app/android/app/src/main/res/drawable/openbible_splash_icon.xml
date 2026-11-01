@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 开机 logo：米白圆角方块底板 + 细描边（与 App 内登录页 me-logo-shield 同形态），
+     图标内缩居中。圆角比例 ≈ 22%，同应用图标视觉。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="140dp"
+        android:height="140dp"
+        android:gravity="center">
+        <shape android:shape="rectangle">
+            <corners android:radius="31dp" />
+            <solid android:color="#F0EFEC" />
+            <stroke android:width="1dp" android:color="#E8E6E3" />
+        </shape>
+    </item>
+    <item
+        android:width="88dp"
+        android:height="88dp"
+        android:drawable="@drawable/openbible_startup_logo"
+        android:gravity="center" />
+</layer-list>

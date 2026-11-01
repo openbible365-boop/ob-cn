@@ -2,7 +2,8 @@
 <resources>
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/startup_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/openbible_startup_logo</item>
+        <!-- 圆角方块底板版 logo（与 App 内登录页 logo 同形态） -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/openbible_splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@color/startup_background</item>
