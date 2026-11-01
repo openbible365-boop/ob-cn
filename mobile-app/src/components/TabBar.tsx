@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { TabIcon, type TabIconName } from "./TabIcon";
 import { useSettings } from "../context/SettingsContext";
+import { SHOW_COMMUNITY } from "../data/features";
 
 const TABS: Array<{ to: string; label: string; icon: TabIconName }> = [
   { to: "/bible", label: "圣经", icon: "bible" },
   { to: "/annotations", label: "注释", icon: "annotations" },
   { to: "/huidu", label: "慧读", icon: "huidu" },
-  { to: "/community", label: "社群", icon: "community" },
+  ...(SHOW_COMMUNITY ? [{ to: "/community", label: "社群", icon: "community" as TabIconName }] : []),
   { to: "/me", label: "我的", icon: "me" },
 ];
 

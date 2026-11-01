@@ -224,7 +224,8 @@ export function AnnotationAudioPlayer({
   };
 
   const changeSpeed = () => {
-    const nextSpeed = speed >= 1.5 ? 0.75 : speed + 0.25;
+    // 倍速档位与语音圣经一致：0.75x ~ 2x
+    const nextSpeed = speed >= 2 ? 0.75 : speed + 0.25;
     setSpeed(nextSpeed);
     if (isPlaying || isPaused) speakSegment(currentIndex, nextSpeed);
   };
@@ -376,7 +377,7 @@ export function AnnotationAudioPlayer({
                 {voicePreference === "female" ? "女" : "男"}
               </span>
               <span className="audio-voice-selected">
-                {translate("音色")} · {translate(voicePreference === "female" ? "清晰女声 · 温柔自然" : "沉稳男声 · 清楚从容")}
+                {translate("音色")} · {translate(voicePreference === "female" ? "知性女声 · 温柔自然" : "开朗学长 · 清晰沉稳")}
               </span>
               <span className="audio-voice-chevron" aria-hidden="true">
                 <Icon name="chevron-down" size={20} />
@@ -385,8 +386,9 @@ export function AnnotationAudioPlayer({
             {voiceMenuOpen && (
               <div className="audio-voice-menu" role="listbox" aria-label={translate("注释朗读音色")}>
                 {[
-                  { id: "female" as const, mark: "女", name: "清晰女声", detail: "温柔自然" },
-                  { id: "male" as const, mark: "男", name: "沉稳男声", detail: "清楚从容" },
+                  // 音色命名与语音圣经同一套，用户感知为同一能力
+                  { id: "female" as const, mark: "女", name: "知性女声", detail: "温柔自然" },
+                  { id: "male" as const, mark: "男", name: "开朗学长", detail: "清晰沉稳" },
                 ].map((voice) => (
                   <button
                     type="button"

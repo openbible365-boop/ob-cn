@@ -20,8 +20,14 @@ const TABS = [
   { id: "notes", label: "笔记" },
 ] as const;
 
+// 按本机时区显示：直接切 ISO 字符串是 UTC，晚上记的内容会错标成"第二天"。
+// 今天的记录看钟点有意义，更早的只看日期。
 function fmtDate(iso: string) {
-  return iso.slice(5, 10).replace("-", "/");
+  const date = new Date(iso);
+  if (date.toDateString() === new Date().toDateString()) {
+    return new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
+  }
+  return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(date);
 }
 
 // 我的内容（design 5b）— lists the real local highlights & notes.

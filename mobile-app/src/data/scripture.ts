@@ -74,7 +74,12 @@ export function getReading(): Reading {
 }
 
 export function setReading(reading: Reading) {
-  save(READING_KEY, reading);
+  // updatedAt 供跨设备同步判新旧（getReading 读取时忽略该字段）
+  save(READING_KEY, { ...reading, updatedAt: Date.now() });
+}
+
+export function getReadingUpdatedAt(): number {
+  return load<{ updatedAt?: number }>(READING_KEY, {}).updatedAt ?? 0;
 }
 
 // The demo design opens on John 3; every other book starts at chapter 1.
@@ -89,6 +94,10 @@ export type Verse = {
   label: string; // display label, usually same as verse
   text: string; // may contain <mark>/<ruby> markup — render as HTML
   heading?: string; // section heading shown before this verse
+  // 以下来自 USFM 底本的排版结构（目前仅 cuv 数据带有）：
+  p?: boolean; // 本节起新段落（\p 等散文段标记，或散文→诗体的切换点）
+  q?: boolean; // 本节处于诗体环境（\q 行），按诗行分行排版
+  b?: boolean; // 本节前有诗节空行（\b），诗节之间留空
 };
 
 export type BookData = { maxChapter: number; chapters: Map<number, Verse[]> };
@@ -96,7 +105,7 @@ export type BookData = { maxChapter: number; chapters: Map<number, Verse[]> };
 type RawBook = {
   chapters: {
     chapter: number;
-    verses: { verse: number | string; text: string; heading?: string }[];
+    verses: { verse: number | string; text: string; heading?: string; p?: boolean; q?: boolean; b?: boolean }[];
   }[];
 };
 
@@ -125,6 +134,9 @@ export function loadBook(versionCode: string, bookCode: string): Promise<BookDat
                 label: String(v.verse),
                 text: v.text,
                 heading: v.heading,
+                p: v.p,
+                q: v.q,
+                b: v.b,
               }))
               .filter((v) => Number.isInteger(v.verse) && v.text),
           );

@@ -4,37 +4,92 @@ import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-const STARTER_PLAN_ID = "openbible-starter-gospel-7";
 const MAX_PLAN_DAYS = 90;
 
-const STARTER_DAYS = [
-  { dayNumber: 1, title: "道成肉身", book: "jhn", chapter: 1, verseStart: 1, verseEnd: 18 },
-  { dayNumber: 2, title: "重生与永生", book: "jhn", chapter: 3, verseStart: 1, verseEnd: 21 },
-  { dayNumber: 3, title: "生命的活水", book: "jhn", chapter: 4, verseStart: 1, verseEnd: 26 },
-  { dayNumber: 4, title: "生命的粮", book: "jhn", chapter: 6, verseStart: 25, verseEnd: 40 },
-  { dayNumber: 5, title: "好牧人", book: "jhn", chapter: 10, verseStart: 1, verseEnd: 18 },
-  { dayNumber: 6, title: "道路、真理、生命", book: "jhn", chapter: 14, verseStart: 1, verseEnd: 14 },
-  { dayNumber: 7, title: "复活与差遣", book: "jhn", chapter: 20, verseStart: 1, verseEnd: 31 },
-] as const;
+type PresetDay = { dayNumber: number; title: string | null; book: string; chapter: number; verseStart: number; verseEnd: number };
 
-async function ensureStarterPlan() {
-  await db.readingPlan.upsert({
-    where: { id: STARTER_PLAN_ID },
-    update: {},
-    create: {
-      id: STARTER_PLAN_ID,
-      title: "七天认识耶稣",
-      description: "从约翰福音的七段核心经文开始，建立稳定、可完成的每日阅读节奏。",
-      scope: "PUBLIC",
-      totalDays: STARTER_DAYS.length,
-      days: {
-        create: STARTER_DAYS.map((day) => ({
-          ...day,
-          translation: "cuv",
-        })),
+// 整卷逐章计划：每天一章，起止节按和合本各章实际节数（末节号用于阅读页的打卡判定）
+function chapterPerDay(book: string, lastVerses: number[], titles: Record<number, string> = {}): PresetDay[] {
+  return lastVerses.map((verseEnd, index) => ({
+    dayNumber: index + 1,
+    title: titles[index + 1] ?? null,
+    book,
+    chapter: index + 1,
+    verseStart: 1,
+    verseEnd,
+  }));
+}
+
+// 官方精选计划目录：长短搭配，新手一周起步，资深一月一卷
+const PRESET_PLANS: Array<{ id: string; title: string; description: string; days: PresetDay[] }> = [
+  {
+    id: "openbible-starter-gospel-7",
+    title: "七天认识耶稣",
+    description: "从约翰福音的七段核心经文开始，建立稳定、可完成的每日阅读节奏。",
+    days: [
+      { dayNumber: 1, title: "道成肉身", book: "jhn", chapter: 1, verseStart: 1, verseEnd: 18 },
+      { dayNumber: 2, title: "重生与永生", book: "jhn", chapter: 3, verseStart: 1, verseEnd: 21 },
+      { dayNumber: 3, title: "生命的活水", book: "jhn", chapter: 4, verseStart: 1, verseEnd: 26 },
+      { dayNumber: 4, title: "生命的粮", book: "jhn", chapter: 6, verseStart: 25, verseEnd: 40 },
+      { dayNumber: 5, title: "好牧人", book: "jhn", chapter: 10, verseStart: 1, verseEnd: 18 },
+      { dayNumber: 6, title: "道路、真理、生命", book: "jhn", chapter: 14, verseStart: 1, verseEnd: 14 },
+      { dayNumber: 7, title: "复活与差遣", book: "jhn", chapter: 20, verseStart: 1, verseEnd: 31 },
+    ],
+  },
+  {
+    id: "openbible-philippians-4",
+    title: "腓立比书的喜乐",
+    description: "保罗在捆锁中写下的喜乐书信，四天读完，学习在任何境遇里喜乐。",
+    days: chapterPerDay("php", [30, 30, 21, 23], {
+      1: "活着就是基督", 2: "基督的心肠", 3: "竭力面前", 4: "知足的秘诀",
+    }),
+  },
+  {
+    id: "openbible-psalms-14",
+    title: "诗篇安静心灵",
+    description: "十四篇历代圣徒最常诵读的诗篇，每天一篇，在祷告与赞美中安静下来。",
+    days: ([
+      [1, 6], [8, 9], [16, 11], [19, 14], [23, 6], [27, 14], [42, 11],
+      [46, 11], [51, 19], [62, 12], [90, 17], [103, 22], [121, 8], [139, 24],
+    ] as const).map(([chapter, verseEnd], index) => ({
+      dayNumber: index + 1, title: `诗篇 ${chapter} 篇`, book: "psa", chapter, verseStart: 1, verseEnd,
+    })),
+  },
+  {
+    id: "openbible-mark-16",
+    title: "马可福音纵览",
+    description: "节奏最快的一卷福音书，十六天逐章走完耶稣的脚踪，从加利利直到空坟墓。",
+    days: chapterPerDay("mrk", [45, 28, 35, 41, 43, 56, 37, 38, 50, 52, 33, 44, 37, 72, 47, 20]),
+  },
+  {
+    id: "openbible-proverbs-31",
+    title: "箴言智慧之路",
+    description: "箴言正好三十一章，一天一章，用一个月把智慧的言语存在心里。",
+    days: chapterPerDay("pro", [
+      33, 22, 35, 27, 23, 35, 27, 36, 18, 32, 31, 28, 25, 35, 33,
+      33, 28, 24, 29, 30, 31, 29, 35, 34, 28, 28, 27, 28, 27, 33, 31,
+    ]),
+  },
+];
+
+async function ensurePresetPlans() {
+  for (const preset of PRESET_PLANS) {
+    await db.readingPlan.upsert({
+      where: { id: preset.id },
+      // 文案以代码目录为准，可随版本修订；日程不动，不影响已有进度
+      update: { title: preset.title, description: preset.description },
+      create: {
+        id: preset.id,
+        title: preset.title,
+        description: preset.description,
+        scope: "PUBLIC",
+        totalDays: preset.days.length,
+        days: {
+          create: preset.days.map((day) => ({ ...day, translation: "cuv" })),
+        },
       },
-    },
-  });
+    });
+  }
 }
 
 export async function GET() {
@@ -43,7 +98,7 @@ export async function GET() {
     return NextResponse.json({ ok: false, message: "请先登录" }, { status: 401 });
   }
 
-  await ensureStarterPlan();
+  await ensurePresetPlans();
   const memberships = await db.membership.findMany({
     where: { userId: user.id, community: { status: "ACTIVE" } },
     select: { communityId: true },

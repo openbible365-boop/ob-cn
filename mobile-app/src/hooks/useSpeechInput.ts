@@ -1,4 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+
+// 语音输入双通道：
+// - 原生 App 走 @capacitor-community/speech-recognition（安卓/iOS 系统识别引擎，
+//   WebView 不提供 Web Speech API，这是 App 内唯一可行的路）；
+// - 浏览器走 Web Speech API（Chrome/Edge 可用，识别由浏览器云服务完成）。
+// 两条通道行为一致：单句模式、中文、实时上屏、追加在已有文字之后。
 
 type SpeechRecognitionResultLike = {
   isFinal: boolean;
@@ -38,6 +45,9 @@ declare global {
   }
 }
 
+const IS_NATIVE = Capacitor.isNativePlatform();
+const MAX_LENGTH = 1200;
+
 function recognitionConstructor() {
   if (typeof window === "undefined") return undefined;
   return window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -54,6 +64,11 @@ function speechErrorMessage(error: string) {
   return "语音识别失败，请重试或改用键盘输入。";
 }
 
+async function nativePlugin() {
+  const { SpeechRecognition } = await import("@capacitor-community/speech-recognition");
+  return SpeechRecognition;
+}
+
 export function useSpeechInput(input: {
   value: string;
   onChange: (value: string) => void;
@@ -62,20 +77,94 @@ export function useSpeechInput(input: {
   const { value, onChange, disabled = false } = input;
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState("");
+  // 原生平台先乐观认为支持，mount 后用 available() 校验一次
+  const [nativeAvailable, setNativeAvailable] = useState(true);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const isSupported = Boolean(recognitionConstructor());
+  const nativeActiveRef = useRef(false);
+  const isSupported = IS_NATIVE ? nativeAvailable : Boolean(recognitionConstructor());
+
+  useEffect(() => {
+    if (!IS_NATIVE) return;
+    let active = true;
+    void nativePlugin()
+      .then((plugin) => plugin.available())
+      .then(({ available }) => { if (active) setNativeAvailable(available); })
+      .catch(() => { if (active) setNativeAvailable(false); });
+    return () => { active = false; };
+  }, []);
+
+  const stopNative = useCallback(() => {
+    nativeActiveRef.current = false;
+    setIsListening(false);
+    void nativePlugin().then(async (plugin) => {
+      await plugin.stop().catch(() => {});
+      await plugin.removeAllListeners().catch(() => {});
+    }).catch(() => {});
+  }, []);
+
+  const startNative = useCallback(async () => {
+    const plugin = await nativePlugin();
+    const permission = await plugin.requestPermissions();
+    if (permission.speechRecognition !== "granted") {
+      setError("无法使用麦克风，请在系统设置中允许本应用的麦克风与语音识别权限。");
+      return;
+    }
+
+    const initialValue = value.trimEnd();
+    const prefix = initialValue ? `${initialValue} ` : "";
+
+    await plugin.removeAllListeners().catch(() => {});
+    await plugin.addListener("partialResults", ({ matches }) => {
+      const transcript = matches?.[0] ?? "";
+      if (transcript) onChange(`${prefix}${transcript}`.slice(0, MAX_LENGTH));
+    });
+    await plugin.addListener("listeningState", ({ status }) => {
+      if (status === "stopped") {
+        nativeActiveRef.current = false;
+        setIsListening(false);
+        void plugin.removeAllListeners().catch(() => {});
+      }
+    });
+
+    setError("");
+    nativeActiveRef.current = true;
+    setIsListening(true);
+    try {
+      // 单句模式：说完一句系统自动停止，与网页端行为一致
+      await plugin.start({ language: "zh-CN", partialResults: true, popup: false, maxResults: 2 });
+    } catch {
+      nativeActiveRef.current = false;
+      setIsListening(false);
+      await plugin.removeAllListeners().catch(() => {});
+      setError("语音输入启动失败，请重试。");
+    }
+  }, [onChange, value]);
 
   const stopListening = useCallback(() => {
+    if (IS_NATIVE) {
+      stopNative();
+      return;
+    }
     recognitionRef.current?.stop();
     recognitionRef.current = null;
     setIsListening(false);
-  }, []);
+  }, [stopNative]);
 
   const startListening = useCallback(() => {
     if (disabled || isListening) return;
+
+    if (IS_NATIVE) {
+      void startNative().catch(() => {
+        nativeActiveRef.current = false;
+        setIsListening(false);
+        setError("语音输入启动失败，请重试。");
+      });
+      return;
+    }
+
     const Recognition = recognitionConstructor();
     if (!Recognition) {
-      setError("当前浏览器不支持语音输入，请使用键盘输入。");
+      setError("当前环境不支持语音输入，请使用键盘输入。");
       return;
     }
 
@@ -93,7 +182,7 @@ export function useSpeechInput(input: {
         if (event.results[index]?.isFinal) finalTranscript += transcript;
         else interimTranscript += transcript;
       }
-      onChange(`${prefix}${finalTranscript}${interimTranscript}`.slice(0, 1200));
+      onChange(`${prefix}${finalTranscript}${interimTranscript}`.slice(0, MAX_LENGTH));
     };
     recognition.onerror = (event) => {
       const message = speechErrorMessage(event.error);
@@ -116,7 +205,7 @@ export function useSpeechInput(input: {
       setIsListening(false);
       setError("语音输入启动失败，请重试。");
     }
-  }, [disabled, isListening, onChange, value]);
+  }, [disabled, isListening, onChange, startNative, value]);
 
   const toggleListening = useCallback(() => {
     if (isListening) stopListening();
@@ -124,14 +213,28 @@ export function useSpeechInput(input: {
   }, [isListening, startListening, stopListening]);
 
   useEffect(() => {
-    if (!disabled || !recognitionRef.current) return;
+    if (!disabled) return;
+    if (IS_NATIVE) {
+      if (nativeActiveRef.current) stopNative();
+      return;
+    }
+    if (!recognitionRef.current) return;
     recognitionRef.current.abort();
     recognitionRef.current = null;
     setIsListening(false);
-  }, [disabled]);
+  }, [disabled, stopNative]);
 
   useEffect(
     () => () => {
+      if (IS_NATIVE) {
+        if (nativeActiveRef.current) {
+          void nativePlugin().then(async (plugin) => {
+            await plugin.stop().catch(() => {});
+            await plugin.removeAllListeners().catch(() => {});
+          }).catch(() => {});
+        }
+        return;
+      }
       recognitionRef.current?.abort();
       recognitionRef.current = null;
     },

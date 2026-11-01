@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import {
   DEFAULT_SHARE_CARD_TEMPLATE,
@@ -16,6 +16,65 @@ type ShareCardData = {
 
 type ShareCardLayout = "horizontal" | "vertical";
 const LAYOUT_KEY = "ob.share-card-layout";
+
+// 「自定义」不进 SHARE_CARD_TEMPLATES：那张表同时约束后台全局默认模板，
+// 而自定义背景依赖本机选图，不能被设为全局默认。
+type TemplateChoice = ShareCardTemplateId | "custom";
+
+// 选图后预处理好的背景：已按卡片比例 cover 裁剪，dark 决定整套文字配色
+type CustomBackground = { canvas: HTMLCanvasElement; dark: boolean; thumb: string };
+
+// 把用户相册里的图解码成 720x960 的 cover 画布，并采样正文区亮度定明暗。
+// createImageBitmap 顺带把手机照片的 EXIF 方向转正；老 WebView 退回 <img> 解码。
+async function prepareCustomBackground(file: File): Promise<CustomBackground> {
+  let source: ImageBitmap | HTMLImageElement;
+  let objectUrl = "";
+  try {
+    source = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.src = objectUrl;
+    await image.decode();
+    source = image;
+  }
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 720;
+    canvas.height = 960;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas unavailable");
+    const width = "naturalWidth" in source ? source.naturalWidth : source.width;
+    const height = "naturalHeight" in source ? source.naturalHeight : source.height;
+    const scale = Math.max(720 / width, 960 / height);
+    context.drawImage(
+      source,
+      (720 - width * scale) / 2,
+      (960 - height * scale) / 2,
+      width * scale,
+      height * scale,
+    );
+
+    // 只看正文落字区域的平均亮度：暗图配米白字，亮图配深墨字
+    const sample = context.getImageData(68, 140, 584, 580).data;
+    let luma = 0;
+    let count = 0;
+    for (let i = 0; i < sample.length; i += 64) {
+      luma += sample[i] * 0.2126 + sample[i + 1] * 0.7152 + sample[i + 2] * 0.0722;
+      count++;
+    }
+    const dark = luma / count < 150;
+
+    const thumbCanvas = document.createElement("canvas");
+    thumbCanvas.width = 90;
+    thumbCanvas.height = 120;
+    thumbCanvas.getContext("2d")?.drawImage(canvas, 0, 0, 90, 120);
+    return { canvas, dark, thumb: thumbCanvas.toDataURL("image/jpeg", 0.7) };
+  } finally {
+    if ("close" in source) source.close();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }
+}
 
 // 关键词题眉：从经文里自动挑出圣经常用主题词，作为卡片的视觉引子。
 // 词表按长度降序匹配，避免「盼望」被「望」截胡；最多取 3 个，取不到就不显示。
@@ -117,8 +176,37 @@ function paintStudyTexture(context: CanvasRenderingContext2D) {
 
 function paintShareCardBackground(
   context: CanvasRenderingContext2D,
-  template: ShareCardTemplateId,
+  template: TemplateChoice,
+  custom: CustomBackground | null,
 ): CanvasTheme {
+  if (template === "custom" && custom) {
+    context.drawImage(custom.canvas, 0, 0);
+    // 半透明面纱保证经文可读：整面一层，底部（页脚/二维码区）再加深一段
+    const veil = custom.dark ? "12,12,16" : "255,250,240";
+    context.fillStyle = `rgba(${veil},${custom.dark ? 0.42 : 0.5})`;
+    context.fillRect(0, 0, 720, 960);
+    const bottom = context.createLinearGradient(0, 620, 0, 960);
+    bottom.addColorStop(0, `rgba(${veil},0)`);
+    bottom.addColorStop(1, `rgba(${veil},.4)`);
+    context.fillStyle = bottom;
+    context.fillRect(0, 620, 720, 340);
+    return custom.dark
+      ? {
+          ink: "#f6efdf",
+          muted: "rgba(246,239,223,.74)",
+          accent: "#f2c96d",
+          quote: "rgba(246,239,223,.32)",
+          qrLight: "#f6f0df",
+        }
+      : {
+          ink: "#201c15",
+          muted: "rgba(32,28,21,.68)",
+          accent: "#a06a1a",
+          quote: "rgba(32,28,21,.26)",
+          qrLight: "#fffdf8",
+        };
+  }
+
   if (template === "study") {
     const gradient = context.createLinearGradient(0, 0, 0, 960);
     gradient.addColorStop(0, "#160d05");
@@ -204,15 +292,16 @@ function paintShareCardBackground(
   return {
     ink: "#18191f",
     muted: "#666b76",
-    accent: "#9f6fc1",
-    quote: "rgba(160,108,201,.16)",
+    accent: "#c8821f",
+    quote: "rgba(200,130,31,.18)",
     qrLight: "#fffdf8",
   };
 }
 
 const CJK_FONT = "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
-// 经文正文用衬线（与 App 内阅读页一致）；标题、出处等保持黑体形成对比
-const SERIF_FONT = "'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC', serif";
+// 经文正文用衬线（与 App 内阅读页一致）；标题、出处等保持黑体形成对比。
+// Huidu Serif 是自带的思源宋体子集——安卓没有系统宋体，靠它兜底。
+const SERIF_FONT = "'Songti SC', 'Huidu Serif', 'Noto Serif CJK SC', 'Source Han Serif SC', serif";
 
 // 四角星芒：品牌「慧读」的母题，取代通用装饰
 function paintSparkle(context: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
@@ -227,6 +316,47 @@ function paintSparkle(context: CanvasRenderingContext2D, x: number, y: number, r
   context.quadraticCurveTo(-k, k, -r, 0);
   context.quadraticCurveTo(-k, -k, 0, -r);
   context.fill();
+  context.restore();
+}
+
+// 品牌 logo：书页金双页书 + 星芒金星芒，与首启引导、应用图标同一套造型的 canvas 版。
+// 描边用模板的 ink 色，深色模板上自然翻成浅描边，不用单独出一版反白 logo。
+const LOGO_STARS: Array<{ points: Array<[number, number]>; brand?: boolean }> = [
+  { points: [[60, 9], [63.2, 15.8], [72, 19], [63.2, 22.2], [60, 31], [56.8, 22.2], [48, 19], [56.8, 15.8]], brand: true },
+  { points: [[43.6, 25.6], [45.5, 30.1], [50, 32], [45.5, 33.9], [43.6, 38.4], [41.7, 33.9], [37.2, 32], [41.7, 30.1]] },
+  { points: [[77.9, 23.6], [79.8, 28.1], [84.3, 30], [79.8, 31.9], [77.9, 36.4], [76, 31.9], [71.5, 30], [76, 28.1]] },
+];
+
+function paintBrandLogo(context: CanvasRenderingContext2D, theme: CanvasTheme, x: number, y: number, size: number) {
+  context.save();
+  context.translate(x, y);
+  context.scale(size / 120, size / 120);
+  for (const star of LOGO_STARS) {
+    context.fillStyle = star.brand ? "#E89A2C" : theme.ink;
+    context.beginPath();
+    star.points.forEach(([px, py], index) => (index ? context.lineTo(px, py) : context.moveTo(px, py)));
+    context.closePath();
+    context.fill();
+  }
+  context.fillStyle = "#F2C96D";
+  context.strokeStyle = theme.ink;
+  context.lineJoin = "round";
+  context.lineWidth = 6;
+  for (const direction of [-1, 1] as const) {
+    context.beginPath();
+    context.moveTo(60, 53);
+    context.bezierCurveTo(60 + 10 * direction, 45, 60 + 26 * direction, 45, 60 + 34 * direction, 52);
+    context.lineTo(60 + 34 * direction, 88);
+    context.bezierCurveTo(60 + 26 * direction, 79, 60 + 10 * direction, 79, 60, 88);
+    context.closePath();
+    context.fill();
+    context.stroke();
+  }
+  context.lineWidth = 5;
+  context.beginPath();
+  context.moveTo(60, 53);
+  context.lineTo(60, 88);
+  context.stroke();
   context.restore();
 }
 
@@ -278,12 +408,13 @@ function paintSeal(context: CanvasRenderingContext2D, x: number, y: number) {
 async function paintFooter(
   context: CanvasRenderingContext2D,
   data: ShareCardData,
-  template: ShareCardTemplateId,
+  template: TemplateChoice,
   theme: CanvasTheme,
   withSeal: boolean,
 ) {
-  // 二维码放进带衬底的圆角瓷片：深色模板上自然成一块亮区，浅色模板上由描边界定
-  const tile = { x: 486, y: 788, size: 166 };
+  // 二维码放进带衬底的圆角瓷片：深色模板上自然成一块亮区，浅色模板上由描边界定。
+  // 内框底边在 y=934——瓷片必须完整落在框内，右侧与正文同用 68 的页边距。
+  const tile = { x: 496, y: 748, size: 156 };
   context.fillStyle = theme.qrLight;
   context.strokeStyle = theme.quote;
   context.lineWidth = 2;
@@ -298,21 +429,29 @@ async function paintFooter(
     width: 138,
     margin: 0,
     errorCorrectionLevel: "M",
-    color: { dark: template === "night" ? "#171c31" : template === "study" ? "#2c1c10" : theme.ink, light: theme.qrLight },
+    // 瓷片永远是浅底，深色模板（含暗图自定义背景）的 ink 是浅色，码点必须另给深色
+    color: {
+      dark: template === "night" ? "#171c31"
+        : template === "study" ? "#2c1c10"
+        : template === "custom" ? "#201c15"
+        : theme.ink,
+      light: theme.qrLight,
+    },
   });
   const qrImage = new Image();
   qrImage.src = qrDataUrl;
   await qrImage.decode();
-  context.drawImage(qrImage, tile.x + 14, tile.y + 14, tile.size - 28, tile.size - 28);
+  context.drawImage(qrImage, tile.x + 13, tile.y + 13, tile.size - 26, tile.size - 26);
 
-  paintSparkle(context, 78, 848, 11, theme.accent);
+  // 文案块与瓷片垂直居中对齐（瓷片中心 y≈826）
+  paintSparkle(context, 78, 812, 11, theme.accent);
   context.fillStyle = theme.ink;
   context.font = `600 24px ${CJK_FONT}`;
-  context.fillText("扫码阅读本节经文", 102, 857);
+  context.fillText("扫码阅读本节经文", 102, 821);
   context.fillStyle = theme.muted;
   context.font = `500 17px ${CJK_FONT}`;
-  context.fillText("慧读圣经 · 一起读经 · 一起成长", 102, 893);
-  if (withSeal) paintSeal(context, 404, 836); // 印章落在文字与二维码之间的空档
+  context.fillText("慧读圣经 · 一起读经 · 一起成长", 102, 857);
+  if (withSeal) paintSeal(context, 404, 798); // 印章落在文字与二维码之间的空档
 }
 
 function paintHorizontalLayout(
@@ -321,12 +460,14 @@ function paintHorizontalLayout(
   theme: CanvasTheme,
   themeWords: string[],
 ) {
+  // 题眉：品牌 logo 领衔，右侧两行（品牌名 + 日期）
+  paintBrandLogo(context, theme, 50, 30, 90);
   context.fillStyle = theme.accent;
-  context.font = `600 20px ${CJK_FONT}`;
-  context.fillText("慧读圣经 · 每日读经", 68, 84);
+  context.font = `700 30px ${CJK_FONT}`;
+  context.fillText("慧读圣经", 142, 78);
   context.fillStyle = theme.muted;
   context.font = `500 17px ${CJK_FONT}`;
-  context.fillText(todayStamp(), 68, 114);
+  context.fillText(todayStamp(), 142, 107);
 
   paintWatermark(context, theme, themeWords[0], 520, 660);
 
@@ -337,33 +478,11 @@ function paintHorizontalLayout(
   context.font = `500 ${verseFontSize}px ${SERIF_FONT}`;
   const lines = wrapCanvasText(context, data.verseText, 584, textLength <= 80 ? 7 : 9);
 
-  const chipRow = themeWords.length ? 86 : 0;        // 字牌行高（含与正文的间距）
   const refBlock = 96;                               // 短金线 + 出处 + 译本
-  const blockHeight = chipRow + lines.length * lineHeight + refBlock;
+  const blockHeight = lines.length * lineHeight + refBlock;
   const zoneTop = 170;
-  const zoneBottom = 764;
-  let cursor = zoneTop + Math.max(0, (zoneBottom - zoneTop - blockHeight) / 2);
-
-  // 主题词字牌：描边小方牌，一牌一词，像一排闲章
-  if (themeWords.length) {
-    let chipX = 68;
-    for (const word of themeWords.slice(0, 3)) {
-      const characters = Array.from(word);
-      const width = characters.length * 30 + 22;
-      context.strokeStyle = theme.accent;
-      context.lineWidth = 2;
-      context.beginPath();
-      context.roundRect(chipX, cursor, width, 48, 10);
-      context.stroke();
-      context.fillStyle = theme.accent;
-      context.font = `600 26px ${CJK_FONT}`;
-      characters.forEach((character, index) => {
-        context.fillText(character, chipX + 13 + index * 30, cursor + 34);
-      });
-      chipX += width + 14;
-    }
-    cursor += chipRow;
-  }
+  const zoneBottom = 728; // 二维码瓷片顶在 748，正文区到此为止
+  const cursor = zoneTop + Math.max(0, (zoneBottom - zoneTop - blockHeight) / 2);
 
   // 引号压在首行左上，作衬不作声
   context.fillStyle = theme.quote;
@@ -392,13 +511,14 @@ function paintVerticalLayout(
   data: ShareCardData,
   theme: CanvasTheme,
 ) {
-  // 品牌行放左上（右上留给内框的星芒），与横排同构
+  // 品牌行放左上（右上留给内框的星芒），与横排同构：logo + 品牌名 + 日期
+  paintBrandLogo(context, theme, 50, 30, 90);
   context.fillStyle = theme.accent;
-  context.font = `600 20px ${CJK_FONT}`;
-  context.fillText("慧读圣经", 68, 84);
+  context.font = `700 30px ${CJK_FONT}`;
+  context.fillText("慧读圣经", 142, 78);
   context.fillStyle = theme.muted;
   context.font = `500 17px ${CJK_FONT}`;
-  context.fillText(todayStamp(), 68, 114);
+  context.fillText(todayStamp(), 142, 107);
 
   const characters = Array.from(data.verseText.replace(/\s+/g, ""));
   const length = characters.length;
@@ -440,16 +560,23 @@ function paintVerticalLayout(
 
 async function createShareCard(
   data: ShareCardData,
-  template: ShareCardTemplateId,
+  template: TemplateChoice,
   layout: ShareCardLayout,
+  custom: CustomBackground | null,
 ) {
+  // canvas 不会自动触发 webfont 下载：先显式等衬线字体就绪，
+  // 否则安卓上没进过阅读页就直接分享时，经文会落回黑体
+  try {
+    await document.fonts.load(`500 40px ${SERIF_FONT}`, data.verseText.slice(0, 1));
+  } catch { /* 字体加载失败就用回退字体，不阻塞出图 */ }
+
   const canvas = document.createElement("canvas");
   canvas.width = 720;
   canvas.height = 960;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas unavailable");
 
-  const theme = paintShareCardBackground(context, template);
+  const theme = paintShareCardBackground(context, template, custom);
   paintFrame(context, theme);
   if (layout === "vertical") {
     paintWatermark(context, theme, extractThemeWords(data.verseText)[0], 230, 660);
@@ -470,9 +597,11 @@ async function dataUrlToFile(dataUrl: string, filename: string) {
 export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClose: () => void }) {
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<ShareCardTemplateId>(
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateChoice>(
     DEFAULT_SHARE_CARD_TEMPLATE,
   );
+  const [customBackground, setCustomBackground] = useState<CustomBackground | null>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
   const [layout, setLayout] = useState<ShareCardLayout>(() => {
     try {
       return localStorage.getItem(LAYOUT_KEY) === "vertical" ? "vertical" : "horizontal";
@@ -493,11 +622,32 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
     let cancelled = false;
     setImageUrl("");
     setError(false);
-    createShareCard(data, selectedTemplate, layout)
+    createShareCard(data, selectedTemplate, layout, customBackground)
       .then((url) => { if (!cancelled) setImageUrl(url); })
       .catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; };
-  }, [data, selectedTemplate, layout]);
+  }, [data, selectedTemplate, layout, customBackground]);
+
+  // 自定义背景：没选过图先调相册；已有图时点击即切换，再点一次可换图
+  const pickCustomImage = () => {
+    if (!customBackground || selectedTemplate === "custom") {
+      customInputRef.current?.click();
+    } else {
+      setSelectedTemplate("custom");
+    }
+  };
+
+  const handleCustomFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const background = await prepareCustomBackground(file);
+      setCustomBackground(background);
+      setSelectedTemplate("custom");
+    } catch {
+      // 多为安卓端选到 HEIC 等 WebView 解不了的格式
+      window.alert("这张图片无法读取，请换一张（建议 JPG/PNG）");
+    }
+  };
 
   const selectLayout = (next: ShareCardLayout) => {
     setLayout(next);
@@ -567,6 +717,35 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
               {template.name}
             </button>
           ))}
+          <button
+            type="button"
+            className={selectedTemplate === "custom" ? "active" : ""}
+            aria-pressed={selectedTemplate === "custom"}
+            aria-label={customBackground ? "自定义背景（再点一次可换图）" : "选择本地图片作背景"}
+            onClick={pickCustomImage}
+          >
+            {customBackground ? (
+              <i
+                className="is-custom-photo"
+                aria-hidden="true"
+                style={{ backgroundImage: `url(${customBackground.thumb})` }}
+              />
+            ) : (
+              <i className="is-custom-empty" aria-hidden="true">＋</i>
+            )}
+            自定义
+          </button>
+          <input
+            ref={customInputRef}
+            className="sr-only"
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              void handleCustomFile(file);
+            }}
+          />
         </div>
 
         <div className="verse-share-layouts" role="group" aria-label="选择排版方向">

@@ -14,8 +14,12 @@ import {
   updateAccountNotificationPreference,
   type AccountNotification,
 } from "../data/profile";
+import { Capacitor } from "@capacitor/core";
+import { SHOW_COMMUNITY } from "../data/features";
+import { initializePushNotifications, sendTestPush } from "../data/push";
 import { useSessionUser } from "../hooks/useSessionUser";
-import { disableReminder, enableReminder, getReminder, reminderSupported } from "../data/reading-reminder";
+import { disableReminder, enableReminder, getReminder, rememberReminderTime, reminderSupported } from "../data/reading-reminder";
+import { getDailyVerse } from "../data/daily-verse";
 
 export function NotificationsPage() {
   const navigate = useNavigate();
@@ -33,15 +37,16 @@ export function NotificationsPage() {
   const [reminder, setReminder] = useState(getReminder);
   const [reminderFeedback, setReminderFeedback] = useState("");
   const [reminderBusy, setReminderBusy] = useState(false);
-  const dailyVerse = useMemo(
-    () => ({
-      verseText: "你的话是我脚前的灯，是我路上的光。",
-      reference: "诗篇 119:105",
+  // 样张用真·今日金句（31 节按天轮换，与圣经页一致），不再写死某一节
+  const dailyVerse = useMemo(() => {
+    const verse = getDailyVerse();
+    return {
+      verseText: verse.text,
+      reference: verse.reference,
       versionLabel: "和合本",
-      shareUrl: `${window.location.origin}${window.location.pathname}#/bible?t=cuv&bk=psa&c=119&v=105`,
-    }),
-    [],
-  );
+      shareUrl: `${window.location.origin}${window.location.pathname}#/bible?t=cuv&bk=${verse.book}&c=${verse.chapter}&v=${verse.verse}`,
+    };
+  }, []);
   const dailyVerseDate = new Intl.DateTimeFormat("zh-CN", {
     month: "long",
     day: "numeric",
@@ -121,7 +126,11 @@ export function NotificationsPage() {
 
   const changeReminderTime = async (time: string) => {
     setReminder((current) => ({ ...current, time }));
-    if (!reminder.enabled || reminderBusy) return;
+    if (!reminder.enabled || reminderBusy) {
+      // 未开启提醒时也把时间落盘，下次进来不回跳默认值
+      rememberReminderTime(time);
+      return;
+    }
     setReminderBusy(true);
     const result = await enableReminder(time);
     setReminder(getReminder());
@@ -129,10 +138,44 @@ export function NotificationsPage() {
     setReminderBusy(false);
   };
 
+  // 原生 App 走 Capacitor 系统推送（请求权限 → 注册 → 向服务器登记 token）；
+  // 网页版仍是浏览器的 Notification 权限。
+  const isNativePush = Capacitor.isNativePlatform();
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushRegistered, setPushRegistered] = useState(false);
+  const [pushMessage, setPushMessage] = useState("");
+
+  useEffect(() => {
+    if (!isNativePush) return;
+    void initializePushNotifications(false).then((status) => {
+      setSystemPermission(status.permission);
+      setPushRegistered(status.registered);
+      setPushMessage(status.message);
+    });
+  }, [isNativePush]);
+
   const requestSystemPermission = async () => {
+    if (isNativePush) {
+      if (pushBusy) return;
+      setPushBusy(true);
+      const status = await initializePushNotifications(true);
+      setSystemPermission(status.permission);
+      setPushRegistered(status.registered);
+      setPushMessage(status.message);
+      setPushBusy(false);
+      return;
+    }
     if (typeof Notification === "undefined") return;
     const permission = await Notification.requestPermission();
     setSystemPermission(permission);
+  };
+
+  const runTestPush = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    const result = await sendTestPush();
+    setPushMessage(result.message);
+    setPushBusy(false);
   };
 
   return (
@@ -158,7 +201,7 @@ export function NotificationsPage() {
             </div>
           </div>
           <div className="notification-preference-list" aria-busy={loading}>
-            {NOTIFICATION_PREFS.map((preference) => {
+            {NOTIFICATION_PREFS.filter((preference) => SHOW_COMMUNITY || !preference.community).map((preference) => {
               const on = Boolean(prefs[preference.key]);
               return (
                 <button
@@ -229,12 +272,18 @@ export function NotificationsPage() {
           <div className="notification-section-heading compact">
             <div>
               <h2 id="system-notification-title">本机系统通知</h2>
-              <p>用于锁屏和桌面提醒，与账号偏好分开</p>
+              <p>{isNativePush ? (pushMessage || "用于锁屏推送提醒，与账号偏好分开") : "用于锁屏和桌面提醒，与账号偏好分开"}</p>
             </div>
-            <button type="button" className="notification-permission-button" onClick={() => void requestSystemPermission()} disabled={systemPermission === "unsupported"}>
-              {systemPermission === "granted" ? "已允许" : systemPermission === "denied" ? "已拒绝" : systemPermission === "unsupported" ? "不支持" : "去开启"}
+            <button type="button" className="notification-permission-button" onClick={() => void requestSystemPermission()} disabled={pushBusy || systemPermission === "unsupported"}>
+              {pushBusy ? "处理中…" : systemPermission === "granted" ? "已允许" : systemPermission === "denied" ? "已拒绝" : systemPermission === "unsupported" ? "不支持" : "去开启"}
             </button>
           </div>
+          {/* 原生端登记成功后提供一键自测：真机上立即验证整条推送链路 */}
+          {isNativePush && pushRegistered && (
+            <button type="button" className="notification-text-action" disabled={pushBusy} onClick={() => void runTestPush()}>
+              发送一条测试推送到这台手机
+            </button>
+          )}
         </section>
 
         {sessionUser && (
@@ -242,7 +291,7 @@ export function NotificationsPage() {
             <div className="notification-section-heading compact">
               <div>
                 <h2 id="notification-inbox-title">消息中心 {unreadCount > 0 && <span>{unreadCount}</span>}</h2>
-                <p>活动、评论、入群审核和 AI 任务</p>
+                <p>{SHOW_COMMUNITY ? "活动、评论、入群审核和 AI 任务" : "金句推送与 AI 任务"}</p>
               </div>
               {unreadCount > 0 && <button type="button" className="notification-text-action" onClick={() => void markAllRead()}>全部已读</button>}
             </div>
@@ -261,7 +310,7 @@ export function NotificationsPage() {
                 ))}
               </div>
             ) : (
-              <EmptyState compact art="inbox" title="暂无通知" desc="有新的活动、互动或审核结果时会显示在这里" />
+              <EmptyState compact art="inbox" title="暂无通知" desc={SHOW_COMMUNITY ? "有新的活动、互动或审核结果时会显示在这里" : "有新的消息时会显示在这里"} />
             )}
           </section>
         )}

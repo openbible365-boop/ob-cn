@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { fetchMyActivities, type MyActivity } from "../data/profile";
+import { SHOW_COMMUNITY } from "../data/features";
 
 function activityTime(activity: MyActivity) {
   const start = new Date(activity.startAt);
@@ -45,6 +46,8 @@ export function MyActivitiesPage() {
       const end = new Date(activity.endAt ?? activity.startAt).getTime();
       (end >= now ? upcoming : ended).push(activity);
     }
+    // 即将开始的按开始时间升序（最近的在前），已结束的按开始时间倒序
+    upcoming.sort((a, b) => a.startAt.localeCompare(b.startAt));
     ended.sort((a, b) => b.startAt.localeCompare(a.startAt));
     return [
       { label: "即将开始", items: upcoming },
@@ -74,7 +77,8 @@ export function MyActivitiesPage() {
             art="activity"
             title="还没有报名活动"
             desc="在社群的「活动」页面报名后，会汇总显示在这里。"
-            action={<button type="button" className="empty-state-action" onClick={() => navigate("/community")}>浏览社群</button>}
+            // 社群下线期间不给"浏览社群"出口（本页仅深链可达，入口已随开关隐藏）
+            action={SHOW_COMMUNITY ? <button type="button" className="empty-state-action" onClick={() => navigate("/community")}>浏览社群</button> : undefined}
           />
         )}
         {grouped.map((group) => (

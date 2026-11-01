@@ -30,7 +30,9 @@ export function UnifiedHeader({
           <button
             type="button"
             className="bible-reader-selector chapter"
-            aria-label={backLabel}
+            // 可见文字是页面标题，无障碍名称必须包含它（label-in-name），
+            // 再补返回语义，读屏听到的是「祷告清单，返回我的」
+            aria-label={typeof title === "string" ? `${title}，${backLabel}` : backLabel}
             onClick={onBack}
           >
             {titleContent}
@@ -38,7 +40,8 @@ export function UnifiedHeader({
         ) : (
           <div className="bible-reader-selector chapter">{titleContent}</div>
         )}
-        <div className="bible-reader-selector version">{subtitle}</div>
+        {/* 副标题不可点：不再长成「译本切换」那种金色芯片，降为纯文字说明 */}
+        <div className="bible-reader-selector version is-static">{subtitle}</div>
       </div>
       {actions && <div className="bible-toolbar-actions">{actions}</div>}
     </div>

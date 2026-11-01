@@ -93,7 +93,15 @@ export function HuiduChatPage() {
   const [copiedIndex, setCopiedIndex] = useState(-1);
   const [attachment, setAttachment] = useState<File | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // 多行输入自动增高：随内容撑到约 4 行封顶，之后内部滚动
+  const autosizeInput = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const answerTimerRef = useRef<number | null>(null);
   const initialQuestionStartedRef = useRef(false);
@@ -207,6 +215,10 @@ export function HuiduChatPage() {
     };
 
     setQuestion("");
+    // 清空后把自动增高的输入框收回单行
+    requestAnimationFrame(() => {
+      if (inputRef.current) inputRef.current.style.height = "auto";
+    });
     setAttachment(null);
     setRequestError("");
     setPendingAnswer(true);
@@ -229,15 +241,17 @@ export function HuiduChatPage() {
     <div className="screen huidu-chat-screen">
       <CompactToolbar
         ariaLabel="慧读对话"
-        // 返回放在左侧标题芯片里，和社群详情页（UnifiedHeader）同一个位置
+        // 返回放在左侧标题芯片里，和社群详情页（UnifiedHeader）同一个位置。
+        // 走真实的历史后退：从圣经页选经文进来的，点返回就回到那节经文；
+        // 从慧读列表进来的回列表；深链直达没有历史时兜底到 /huidu。
         primary={(
           <span className="unified-header-title">
             <Icon name="chevron-left" size={14} />
             <span>慧读</span>
           </span>
         )}
-        onPrimaryClick={() => navigate("/huidu")}
-        primaryAriaLabel="返回慧读列表"
+        onPrimaryClick={goBack}
+        primaryAriaLabel="返回"
         // 经文对话用经节引用做标题：短、稳定、一眼知道在读哪一节。
         // 原来显示的模板标题太长，在顶栏里会被截成「诗篇 2:...」，等于什么都没说。
         // 改名仍然是点这里，说明放在 aria-label 里，省掉一个含义不明的铅笔图标。
@@ -246,8 +260,10 @@ export function HuiduChatPage() {
             {scriptureContext ? conv.refLabel : conv.title}
           </span>
         )}
-        secondaryAriaLabel={`修改对话标题，当前为${conv.title}`}
-        onSecondaryClick={() => {
+        // 经文对话顶栏显示的是经节引用，改 conv.title 在界面上毫无体现——
+        // 改名入口只给自由对话（标题真正展示在顶栏与历史列表里）
+        secondaryAriaLabel={scriptureContext ? `当前经文 ${conv.refLabel}` : `修改对话标题，当前为${conv.title}`}
+        onSecondaryClick={scriptureContext ? undefined : () => {
           setTitleDraft(conv.title);
           setRenameOpen(true);
         }}
@@ -429,34 +445,45 @@ export function HuiduChatPage() {
               className="huidu-attach-btn"
               aria-label="添加附件"
               title="添加附件（支持文本类文件）"
-              disabled={pendingAnswer}
               onClick={() => fileInputRef.current?.click()}
             >
               <Icon name="paperclip" size={17} />
             </button>
-            <input
+            {/* 多行 textarea：长问题可换行查看编辑；生成回答期间不禁用，
+                可以先把下一个问题打好，等发送键恢复后再发 */}
+            <textarea
               ref={inputRef}
               value={question}
+              rows={1}
               onChange={(event) => {
                 setQuestion(event.target.value);
+                autosizeInput();
                 if (requestError) setRequestError("");
                 if (speechInput.error) speechInput.clearError();
               }}
-              disabled={pendingAnswer}
+              onKeyDown={(event) => {
+                // 外接键盘回车即发送，Shift+回车换行（移动端软键盘走发送键）
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  void submit(question);
+                }
+              }}
+              enterKeyHint="send"
               maxLength={1200}
               aria-label={conv.messages.length === 0 ? "输入问题" : "继续追问"}
               placeholder={speechInput.isListening
                 ? "正在聆听…"
-                : attachment
-                  ? "可补充问题，发送后分析附件…"
-                  : conv.messages.length === 0
-                    ? "有问题，尽管问…"
-                    : "继续追问…"}
+                : pendingAnswer
+                  ? "回答生成中，可先写下一个问题…"
+                  : attachment
+                    ? "可补充问题，发送后分析附件…"
+                    : conv.messages.length === 0
+                      ? "有问题，尽管问…"
+                      : "继续追问…"}
             />
             <VoiceInputButton
               isSupported={speechInput.isSupported}
               isListening={speechInput.isListening}
-              disabled={pendingAnswer}
               onClick={speechInput.toggleListening}
             />
             <button data-icon-button="primary"

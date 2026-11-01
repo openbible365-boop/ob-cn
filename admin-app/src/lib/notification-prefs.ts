@@ -7,6 +7,7 @@ export const NOTIFICATION_PREFS = [
   { key: "reply", title: "留言回复通知", desc: "我的帖子收到评论或回复时", defaultEnabled: true },
   { key: "join_updates", title: "入群申请与审核", desc: "收到加入申请或审核结果时", defaultEnabled: true },
   { key: "ai_assistant", title: "AI 助理相关通知", desc: "AI 后台任务完成时", defaultEnabled: false },
+  { key: "prayer_amen", title: "代祷阿们提醒", desc: "有弟兄姊妹为你的代祷按下阿们时", defaultEnabled: true },
 ] as const;
 
 export function defaultFor(key: string) {

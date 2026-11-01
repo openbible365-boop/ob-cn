@@ -25,12 +25,15 @@ const MyActivitiesPage = lazyPage(() => import("./pages/MyActivitiesPage"), "MyA
 const AccountDataPage = lazyPage(() => import("./pages/AccountDataPage"), "AccountDataPage");
 const ResourcesPage = lazyPage(() => import("./pages/ResourcesPage"), "ResourcesPage");
 const PrayerListPage = lazyPage(() => import("./pages/PrayerListPage"), "PrayerListPage");
+const PrayerWallPage = lazyPage(() => import("./pages/PrayerWallPage"), "PrayerWallPage");
 const ReadingPlansPage = lazyPage(() => import("./pages/ReadingPlansPage"), "ReadingPlansPage");
 const LoginPage = lazyPage(() => import("./pages/LoginPage"), "LoginPage");
 const LegalPage = lazyPage(() => import("./pages/LegalPage"), "LegalPage");
 import { setupAndroidBackButton } from "./native/android-back";
 import { syncHighlights, syncNotes } from "./data/annotations";
 import { syncConversations } from "./data/huidu";
+import { initializePushNotifications } from "./data/push";
+import { pullReadingPosition } from "./data/reading-sync";
 import { fetchMe } from "./data/profile";
 
 function RequireLogin({ children }: { children: ReactNode }) {
@@ -61,6 +64,10 @@ export default function App() {
     void syncHighlights();
     void syncNotes();
     void syncConversations();
+    // 系统推送：启动时静默恢复（已授权才注册并向服务器登记 token；未授权不打扰）
+    void initializePushNotifications(false);
+    // 登录态下取回其他设备的阅读位置（未登录静默失败）
+    void pullReadingPosition();
     setupAndroidBackButton({
       // 从 hash 现读路径：监听器只注册一次，不能闭包住某一次渲染的 pathname
       isAtTabRoot: () => TAB_PATHS.includes(window.location.hash.replace(/^#/, "").split("?")[0]),
@@ -145,6 +152,8 @@ export default function App() {
         <Route path="/me/resources" element={<ResourcesPage />} />
         {/* 祷告清单：本机数据，不要求登录 */}
         <Route path="/me/prayers" element={<PrayerListPage />} />
+        {/* 祷告墙：全站代祷，看墙不要求登录，发布/阿们时再引导登录 */}
+        <Route path="/prayer-wall" element={<PrayerWallPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
         <Route path="*" element={<Navigate to="/bible" replace />} />
       </Routes>

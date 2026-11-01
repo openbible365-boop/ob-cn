@@ -228,12 +228,14 @@ export async function fetchMyActivities(): Promise<
 
 const PREFS_KEY = "ob.notificationPrefs";
 
+// community: true 的项属于社群功能，社群隐藏（SHOW_COMMUNITY=false）时不在设置页展示
 export const NOTIFICATION_PREFS = [
-  { key: "daily_verse", title: "每日金句推送", desc: "每天早上 7:30 推送一节经文", defaultEnabled: false },
-  { key: "event_reminder", title: "社群活动提醒", desc: "已报名活动开始前 2 小时提醒", defaultEnabled: true },
-  { key: "reply", title: "留言回复通知", desc: "我的帖子收到评论或回复时", defaultEnabled: true },
-  { key: "join_updates", title: "入群申请与审核", desc: "收到加入申请或审核结果时", defaultEnabled: true },
-  { key: "ai_assistant", title: "AI 助理相关通知", desc: "AI 后台任务完成时", defaultEnabled: false },
+  { key: "daily_verse", title: "每日金句推送", desc: "每天早上 7:30 推送一节经文", defaultEnabled: false, community: false },
+  { key: "event_reminder", title: "社群活动提醒", desc: "已报名活动开始前 2 小时提醒", defaultEnabled: true, community: true },
+  { key: "reply", title: "留言回复通知", desc: "我的帖子收到评论或回复时", defaultEnabled: true, community: true },
+  { key: "join_updates", title: "入群申请与审核", desc: "收到加入申请或审核结果时", defaultEnabled: true, community: true },
+  { key: "ai_assistant", title: "AI 助理相关通知", desc: "AI 后台任务完成时", defaultEnabled: false, community: false },
+  { key: "prayer_amen", title: "代祷阿们提醒", desc: "有弟兄姊妹为你的代祷按下阿们时", defaultEnabled: true, community: false },
 ] as const;
 
 export function getPrefs(): Record<string, boolean> {
@@ -252,7 +254,7 @@ export function togglePref(key: string) {
 
 export type AccountNotification = {
   id: string;
-  type: "EVENT_REMINDER" | "COMMENT_REPLY" | "JOIN_REQUEST" | "JOIN_REVIEW" | "AI_TASK" | "DAILY_VERSE";
+  type: "EVENT_REMINDER" | "COMMENT_REPLY" | "JOIN_REQUEST" | "JOIN_REVIEW" | "AI_TASK" | "DAILY_VERSE" | "PRAYER_AMEN";
   title: string;
   body: string;
   href: string | null;

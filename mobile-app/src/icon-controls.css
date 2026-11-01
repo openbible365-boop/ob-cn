@@ -116,14 +116,15 @@ body.dark {
   vertical-align: baseline;
 }
 
+/* 行内笔记指示器：笔记属阅读域，金色（明暗两套主题同语义） */
 .bible-verse-note-indicator[data-icon-button] {
   margin-left: 3px;
   vertical-align: 0.02em;
-  color: var(--purple-deep);
+  color: var(--yellow-ink);
 }
 
 .bible-verse-note-indicator[data-icon-button].is-open {
-  background: var(--icon-button-selected);
+  background: var(--yellow-soft);
 }
 
 .audio-controls [data-icon-button="primary"] {
