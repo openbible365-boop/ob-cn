@@ -8,18 +8,24 @@ import { PrismaClient } from "../src/generated/prisma/client";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const db = new PrismaClient({ adapter });
 
+const isProduction = process.env.NODE_ENV === "production";
+
 async function main() {
-  const passwordHash = await bcrypt.hash("admin12345", 10);
-  await db.operator.upsert({
-    where: { username: "admin" },
-    update: {},
-    create: {
-      username: "admin",
-      passwordHash,
-      name: "运营 · 超级管理员",
-      role: "SUPER_ADMIN",
-    },
-  });
+  // 弱密码演示账号（admin/moderator）仅限开发环境；
+  // 生产环境只创建 OPENBIBLE_ADMIN_USERNAME/PASSWORD 配置的管理员
+  if (!isProduction) {
+    const passwordHash = await bcrypt.hash("admin12345", 10);
+    await db.operator.upsert({
+      where: { username: "admin" },
+      update: {},
+      create: {
+        username: "admin",
+        passwordHash,
+        name: "运营 · 超级管理员",
+        role: "SUPER_ADMIN",
+      },
+    });
+  }
 
   const configuredAdminUsername = process.env.OPENBIBLE_ADMIN_USERNAME?.trim();
   const configuredAdminPassword = process.env.OPENBIBLE_ADMIN_PASSWORD;
@@ -41,17 +47,25 @@ async function main() {
     });
   }
 
-  const moderatorPasswordHash = await bcrypt.hash("moderator123", 10);
-  await db.operator.upsert({
-    where: { username: "moderator" },
-    update: {},
-    create: {
-      username: "moderator",
-      passwordHash: moderatorPasswordHash,
-      name: "内容审核员",
-      role: "MODERATOR",
-    },
-  });
+  if (!isProduction) {
+    const moderatorPasswordHash = await bcrypt.hash("moderator123", 10);
+    await db.operator.upsert({
+      where: { username: "moderator" },
+      update: {},
+      create: {
+        username: "moderator",
+        passwordHash: moderatorPasswordHash,
+        name: "内容审核员",
+        role: "MODERATOR",
+      },
+    });
+  }
+
+  if (isProduction && !(configuredAdminUsername && configuredAdminPassword)) {
+    throw new Error(
+      "生产环境必须设置 OPENBIBLE_ADMIN_USERNAME 和 OPENBIBLE_ADMIN_PASSWORD（演示账号不会在生产创建）",
+    );
+  }
 
   const alreadySeeded = (await db.user.count()) > 0;
   if (!alreadySeeded) {

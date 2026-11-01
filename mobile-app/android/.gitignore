@@ -99,3 +99,7 @@ app/src/main/assets/public
 app/src/main/assets/capacitor.config.json
 app/src/main/assets/capacitor.plugins.json
 app/src/main/res/xml/config.xml
+
+# 发布签名（绝不入库——密钥库丢失无法再更新已上架应用，务必另行备份）
+keystore.properties
+app/openbible-release.keystore
