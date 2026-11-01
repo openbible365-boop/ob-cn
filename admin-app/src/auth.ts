@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { isLockedOut, recordFailure, clearFailures } from "@/lib/login-rate-limit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -19,12 +20,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        // 防爆破：窗口内失败超限的用户名直接拒绝（成功登录后清零）
+        const limitKey = username.trim().toLowerCase();
+        if (isLockedOut(limitKey)) return null;
+
         const operator = await db.operator.findUnique({ where: { username } });
-        if (!operator) return null;
+        if (!operator) {
+          recordFailure(limitKey);
+          return null;
+        }
 
         const valid = await bcrypt.compare(password, operator.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          recordFailure(limitKey);
+          return null;
+        }
 
+        clearFailures(limitKey);
         return { id: operator.id, name: operator.name, username: operator.username, role: operator.role };
       },
     }),
