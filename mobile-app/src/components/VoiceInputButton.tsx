@@ -12,7 +12,7 @@ export function VoiceInputButton({
   onClick: () => void;
 }) {
   const label = !isSupported
-    ? "当前浏览器不支持语音输入"
+    ? "当前设备不支持语音输入"
     : isListening
       ? "停止语音输入"
       : "开始语音输入";

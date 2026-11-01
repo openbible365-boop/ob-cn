@@ -45,6 +45,11 @@ export async function enableReminder(time: string): Promise<{ ok: boolean; messa
   }
 }
 
+// 提醒未开启时也要记住用户调的时间，否则离开页面后时间回跳默认值
+export function rememberReminderTime(time: string): void {
+  save(KEY, { ...getReminder(), time });
+}
+
 export async function disableReminder(): Promise<void> {
   try {
     await LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] });

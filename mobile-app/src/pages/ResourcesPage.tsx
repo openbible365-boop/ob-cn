@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
+import { useArmedConfirm } from "../hooks/useArmedConfirm";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
@@ -22,6 +23,8 @@ type Progress = { done: number; total: number };
 
 export function ResourcesPage() {
   const goBack = useAppBack("/me/account");
+  // 删除走页内二次确认（再点一次），不用 WebView 的英文 confirm 弹窗
+  const { armedKey, confirm } = useArmedConfirm();
   const [meta, setMeta] = useState(getOfflineMeta);
   const [audioMeta, setAudioMeta] = useState(getOfflineAudioMeta);
   // 同一时刻只允许一个译本在下载：拼音和合本有 50MB，上并发只会互相拖慢
@@ -47,9 +50,8 @@ export function ResourcesPage() {
     }
   }
 
-  async function handleRemove(code: string, label: string) {
+  async function handleRemove(code: string) {
     if (busyVersion) return;
-    if (!window.confirm(`删除已下载的「${label}」？删除后离线时将无法使用它。`)) return;
     setBusyVersion(code);
     setError("");
     try {
@@ -86,12 +88,13 @@ export function ResourcesPage() {
         </span>
         {downloaded ? (
           <button
-            className="me-res-btn"
+            className={`me-res-btn${armedKey === `res:${code}` ? " is-danger" : ""}`}
             type="button"
             disabled={Boolean(busyVersion)}
-            onClick={() => void handleRemove(code, label)}
+            aria-label={armedKey === `res:${code}` ? `再点一次确认删除「${label}」` : `删除已下载的「${label}」`}
+            onClick={() => confirm(`res:${code}`, () => void handleRemove(code))}
           >
-            删除
+            {armedKey === `res:${code}` ? "确认删除" : "删除"}
           </button>
         ) : (
           <button
@@ -175,17 +178,19 @@ export function ResourcesPage() {
                       <small>已缓存 · {readableBytes(item.bytes)} · {item.chapters}/{item.totalChapters} 章</small>
                     </span>
                     <button
-                      className="me-res-btn"
+                      className={`me-res-btn${armedKey === `audio:${bookCode}:${voice}` ? " is-danger" : ""}`}
                       type="button"
                       disabled={Boolean(busyVersion)}
-                      onClick={() => {
-                        if (!window.confirm(`删除《${label}》（${voiceLabel}）的整卷音频缓存？`)) return;
+                      aria-label={armedKey === `audio:${bookCode}:${voice}`
+                        ? `再点一次确认删除《${label}》的音频缓存`
+                        : `删除《${label}》（${voiceLabel}）的整卷音频缓存`}
+                      onClick={() => confirm(`audio:${bookCode}:${voice}`, () => {
                         void removeBookAudio("cuv", bookCode, item.totalChapters, voice).then(() => {
                           setAudioMeta(getOfflineAudioMeta());
                         });
-                      }}
+                      })}
                     >
-                      删除
+                      {armedKey === `audio:${bookCode}:${voice}` ? "确认删除" : "删除"}
                     </button>
                   </div>
                 );

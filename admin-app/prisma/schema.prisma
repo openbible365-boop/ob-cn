@@ -49,6 +49,11 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum PushPlatform {
+  ANDROID
+  IOS
+}
+
 model User {
   id             String     @id @default(cuid())
   uid            Int        @unique @default(autoincrement())
@@ -62,6 +67,9 @@ model User {
   mutedUntil     DateTime?
   banReason      String?
   lastLoginAt    DateTime?
+  // 阅读位置跨设备同步：{version, book, chapter, verse?}，以 readingPositionAt 判新旧
+  readingPosition   Json?
+  readingPositionAt DateTime?
   createdAt      DateTime   @default(now())
 
   authAccounts          AuthAccount[]
@@ -87,6 +95,32 @@ model User {
   userNotifications     UserNotification[]
   communityJoinRequests CommunityJoinRequest[]  @relation("CommunityJoinRequester")
   reviewedJoinRequests  CommunityJoinRequest[]  @relation("CommunityJoinReviewer")
+  pushDevices           DevicePushToken[]
+}
+
+// ---------- Mobile push notification device tokens ----------
+
+model DevicePushToken {
+  id          String       @id @default(cuid())
+  userId      String
+  token       String       @unique
+  platform    PushPlatform
+  deviceId    String?
+  appVersion  String?
+  ipAddress   String?
+  country     String?
+  countryCode String?
+  region      String?
+  city        String?
+  enabled     Boolean      @default(true)
+  lastSeenAt  DateTime     @default(now())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@index([deviceId])
 }
 
 model AuthAccount {
@@ -771,6 +805,8 @@ enum UserNotificationType {
   JOIN_REVIEW
   AI_TASK
   DAILY_VERSE
+  // 祷告墙：有人为我的代祷按下阿们（按帖按天聚合）
+  PRAYER_AMEN
 }
 
 model UserNotification {

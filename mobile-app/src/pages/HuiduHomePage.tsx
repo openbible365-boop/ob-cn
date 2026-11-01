@@ -13,12 +13,18 @@ import {
   type Conversation,
 } from "../data/huidu";
 
+// 一律按本机时区显示：直接切 ISO 字符串拿到的是 UTC，钟点会差一个时区
 function fmtTime(iso: string) {
-  return iso.slice(11, 16);
+  return new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false })
+    .format(new Date(iso));
+}
+
+function fmtDate(iso: string) {
+  return new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(new Date(iso));
 }
 
 function isToday(iso: string) {
-  return iso.slice(0, 10) === new Date().toISOString().slice(0, 10);
+  return new Date(iso).toDateString() === new Date().toDateString();
 }
 
 export function HuiduHomePage() {
@@ -77,7 +83,7 @@ export function HuiduHomePage() {
   };
   const latest = normalizedSearch ? null : conversations[0] ?? null;
 
-  const item = (conversation: Conversation, highlight: boolean) => {
+  const item = (conversation: Conversation) => {
     // 经文慧读的标题都是「XX 的历史背景与生活应用」这类模板句，整列看下来全是重复。
     // 真正能区分记录的是经文引用，所以经文对话用引用做主标题。
     const scripture = hasScriptureContext(conversation);
@@ -87,9 +93,14 @@ export function HuiduHomePage() {
     const summary = scripture
       ? conversation.verseText.replace(/^\d+\s*节：/, "").replace(/\s+/g, " ").trim()
       : "";
+    // 今天的记录看钟点有意义，更早的记录只有日期有意义；空对话不显示「0 轮」
+    const rounds = Math.ceil(conversation.messages.length / 2);
+    const when = isToday(conversation.createdAt)
+      ? fmtTime(conversation.createdAt)
+      : fmtDate(conversation.createdAt);
 
     return (
-    <div key={conversation.id} className={`huidu-history-row-shell${highlight ? " is-current" : ""}`}>
+    <div key={conversation.id} className="huidu-history-row-shell">
       <Link to={`/huidu/${conversation.id}`} className="huidu-history-row">
         <span className={`huidu-history-mark${scripture ? " is-scripture" : ""}`} aria-hidden="true">
           <Icon name={scripture ? "book" : "sparkle"} size={16} />
@@ -98,7 +109,7 @@ export function HuiduHomePage() {
           <span className="huidu-history-title">{translate(heading)}</span>
           {summary && <span className="huidu-history-summary">{translate(summary)}</span>}
           <span className="huidu-history-meta">
-            {Math.ceil(conversation.messages.length / 2)} {translate("轮")} · {fmtTime(conversation.createdAt)}
+            {rounds > 0 ? `${rounds} ${translate("轮")} · ` : ""}{when}
           </span>
         </span>
       </Link>
@@ -117,10 +128,10 @@ export function HuiduHomePage() {
 
   return (
     <div className="screen huidu-home-screen">
+      {/* 条数在列表标题里已经有了，顶栏不再重复一遍 */}
       <CompactToolbar
-        ariaLabel={translate("慧读与今日额度")}
+        ariaLabel={translate("慧读")}
         primary={translate("慧读")}
-        secondary={`${conversations.length} ${translate("条对话")}`}
         actions={(
           <>
             <button data-icon-button="default"
@@ -202,25 +213,25 @@ export function HuiduHomePage() {
           {grouping === "time" && today.length > 0 && (
             <div className="huidu-history-group">
               <div className="huidu-history-label">{translate("今天")}</div>
-              <div className="huidu-history-list">{today.map((conversation, index) => item(conversation, index === 0))}</div>
+              <div className="huidu-history-list">{today.map(item)}</div>
             </div>
           )}
           {grouping === "time" && earlier.length > 0 && (
             <div className="huidu-history-group">
               <div className="huidu-history-label">{translate("更早")}</div>
-              <div className="huidu-history-list">{earlier.map((conversation) => item(conversation, false))}</div>
+              <div className="huidu-history-list">{earlier.map(item)}</div>
             </div>
           )}
           {grouping === "type" && generalConversations.length > 0 && (
             <div className="huidu-history-group">
               <div className="huidu-history-label">{translate("自由对话")}</div>
-              <div className="huidu-history-list">{generalConversations.map((conversation) => item(conversation, false))}</div>
+              <div className="huidu-history-list">{generalConversations.map(item)}</div>
             </div>
           )}
           {grouping === "type" && scriptureConversations.length > 0 && (
             <div className="huidu-history-group">
               <div className="huidu-history-label">{translate("经文慧读")}</div>
-              <div className="huidu-history-list">{scriptureConversations.map((conversation) => item(conversation, false))}</div>
+              <div className="huidu-history-list">{scriptureConversations.map(item)}</div>
             </div>
           )}
           {filteredConversations.length === 0 && (

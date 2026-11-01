@@ -1,0 +1,105 @@
+name: llm
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # 宿主机独立持久化, 与语音项目的数据库物理隔绝
+      - /opt/llm/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - llm-net
+    restart: unless-stopped
+
+  backend:
+    image: llm-backend:latest
+    build:
+      context: ../backend
+      dockerfile: ../deploy/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    # 绑定宿主机 8002 端口, 供同机上级 Nginx 或 Caddy 进行域名分发反代
+    ports:
+      - "8002:8000"
+    volumes:
+      # NOTE: 上传文件持久化 — 若不挂载, 每次 docker compose up 重建容器后
+      # 用户上传的文件会全部丢失, 导致 reindex 报 "Physical file not found on disk"
+      - /opt/llm/data/uploads:/app/uploads
+    networks:
+      - llm-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # 文档解析/切片/Embedding/入库使用独立 worker。
+  # 任务状态保存在 PostgreSQL，容器重启后会自动恢复，不再依赖易丢失的请求内后台任务。
+  document-worker:
+    image: llm-backend:latest
+    command: ["python", "-m", "app.document_worker"]
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      infinity:
+        condition: service_healthy
+    volumes:
+      - /opt/llm/data/uploads:/app/uploads
+    networks:
+      - llm-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+  # Qdrant 只加入内部 Docker 网络，不向公网暴露 6333/6334。
+  # 向量数据独立持久化，重建容器不会丢失索引。
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    volumes:
+      - /opt/llm/data/qdrant:/qdrant/storage
+    networks:
+      - llm-net
+    restart: unless-stopped
+
+  # NOTE: Infinity 是轻量级 BGE-M3 Embedding 服务 (CPU 推理, 无需 GPU)
+  # 提供高质量中英文语义向量, 支撑 RAG 知识库检索
+  # 模型首次启动会自动从 HuggingFace 下载 (~570MB), 之后从本地缓存读取
+  infinity:
+    image: michaelf34/infinity:latest
+    command: v2 --model-id BAAI/bge-m3 --port 7997 --device cpu --batch-size 32
+    ports:
+      - "7997:7997"
+    volumes:
+      # 模型缓存持久化, 避免重启重新下载
+      - /opt/llm/models:/app/.cache
+    networks:
+      - llm-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:7997/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+networks:
+  llm-net:
+    driver: bridge

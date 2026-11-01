@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { VerseShareSheet } from "../components/VerseShareSheet";
 import { AudioGlyph } from "../components/AudioGlyph";
@@ -14,6 +14,7 @@ import { hapticLight } from "../native/haptics";
 import { SkeletonScreen } from "../components/SkeletonScreen";
 import { EmptyState } from "../components/EmptyState";
 import { getStreak, markTodayRead } from "../data/streak";
+import { updateReadingPlan } from "../data/reading-plans";
 import {
   BOOKS,
   VERSIONS,
@@ -52,14 +53,44 @@ import {
   updateAndroidMedia,
 } from "../data/android-media";
 import { useSettings } from "../context/SettingsContext";
+import { PlayingAudioIcon } from "../components/PlayingAudioIcon";
+import { schedulePushReadingPosition } from "../data/reading-sync";
+import { useArmedConfirm } from "../hooks/useArmedConfirm";
 import { FirstRunGuide, shouldShowFirstRunGuide } from "../components/FirstRunGuide";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
 
-const PlayingAudioIcon = () => (
-  <span className="playing-audio-icon" aria-hidden="true">
-    <i /><i /><i />
-  </span>
-);
+// 诗歌体书卷（纯诗体四卷）：无结构标记的译本按书卷近似判定。
+// cuv 数据已合入 USFM 底本的节级标记（v.q 诗体 / v.p 段首 / v.b 诗节空行），
+// 能精确处理约伯记、传道书、先知书等散文诗混合体；其余中文译本退回这份名单。
+const POETRY_BOOKS = new Set(["psa", "pro", "sng", "lam"]);
+
+function toPoetryHtml(html: string) {
+  // 只在不含标签的纯文本上断行，含内嵌 HTML 的内容原样返回，避免拆坏标签
+  if (html.includes("<")) return html;
+  const parts = html.split(/(?<=[，。；：！？])/).filter((part) => part.trim());
+  const lines: string[] = [];
+  for (const part of parts) {
+    let line = part;
+    if (lines.length > 0) {
+      // 句读后紧跟的收尾引号/括号归还上一行行尾，不在行首吊着（如「”这是耶和华说的」）
+      const closers = line.match(/^[”’』」）】]+/);
+      if (closers) {
+        lines[lines.length - 1] += closers[0];
+        line = line.slice(closers[0].length);
+        if (!line.trim()) continue;
+      }
+      // 孤短行（只剩一个实字，如「说：」「我，」）并入上一行，印刷诗体没有一字行
+      const core = line.replace(/[，。；：！？“”‘’（）\s]/g, "");
+      if (core.length <= 1) {
+        lines[lines.length - 1] += line;
+        continue;
+      }
+    }
+    lines.push(line);
+  }
+  if (lines.length < 2) return html;
+  return lines.map((line) => `<span class="poem-line">${line}</span>`).join("");
+}
 
 type BibleSearchScope =
   | "all"
@@ -198,6 +229,49 @@ export function BiblePage() {
   // 首次启动的三步引导：圣经页是落地页，在这里出现一次
   const [showFirstRunGuide, setShowFirstRunGuide] = useState(shouldShowFirstRunGuide);
 
+  // ── 计划打卡闭环：从读经计划「今日」进来的会带上下文 ──
+  // 滚动读到今日读段末节时浮出打卡胶囊，就地完成打卡，不用折返计划页。
+  type PlanCheckIn = { planId: string; planTitle: string; dayNumber: number; book: string; chapter: number; verseEnd: number };
+  const location = useLocation();
+  const [planCheckIn] = useState<PlanCheckIn | null>(() => {
+    const state = location.state as { planCheckIn?: PlanCheckIn } | null;
+    return state?.planCheckIn ?? null;
+  });
+  const [checkInStage, setCheckInStage] = useState<"reading" | "ready" | "done" | "hidden">("reading");
+  const [checkInBusy, setCheckInBusy] = useState(false);
+  const [checkInError, setCheckInError] = useState("");
+
+  const completePlanDay = async () => {
+    if (!planCheckIn || checkInBusy) return;
+    setCheckInBusy(true);
+    setCheckInError("");
+    const result = await updateReadingPlan("COMPLETE_TODAY", planCheckIn.planId);
+    setCheckInBusy(false);
+    if (result.ok) {
+      markTodayRead();
+      hapticLight();
+      setCheckInStage("done");
+      window.setTimeout(() => setCheckInStage("hidden"), 3600);
+    } else {
+      setCheckInError(result.message);
+    }
+  };
+
+  // 读段很短、全在首屏时没有滚动事件——经文渲染完后自检一次末节是否已可见
+  useEffect(() => {
+    if (!planCheckIn || checkInStage !== "reading" || !data) return;
+    if (book.code !== planCheckIn.book || chapter !== planCheckIn.chapter) return;
+    const timer = window.setTimeout(() => {
+      const container = readingScrollRef.current;
+      if (!container) return;
+      const endNode = container.querySelector(`#bible-verse-${planCheckIn.verseEnd}`);
+      if (endNode && endNode.getBoundingClientRect().bottom <= container.getBoundingClientRect().top + container.clientHeight) {
+        setCheckInStage("ready");
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [planCheckIn, checkInStage, data, book.code, chapter]);
+
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
   const [picker, setPicker] = useState<null | "book" | "version" | "chapter" | "search" | "audio" | "font">(null);
   const [pickerBook, setPickerBook] = useState<string | null>(null); // book focused inside the picker
@@ -265,9 +339,8 @@ export function BiblePage() {
   const [dailyShareOpen, setDailyShareOpen] = useState(false);
   // 金句默认只占一行，点开才展开整张卡，首屏留给经文
   const [dailyExpanded, setDailyExpanded] = useState(false);
-  // 操作条「更多」
-  const [moreOpen, setMoreOpen] = useState(false);
   const dailyVerse = getDailyVerse();
+  const { armedKey: audioRemoveArmed, confirm: confirmAudioRemove } = useArmedConfirm();
   const readStreak = getStreak();
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -287,7 +360,6 @@ export function BiblePage() {
         (shareOpen && (() => setShareOpen(false)))
         || (dailyShareOpen && (() => setDailyShareOpen(false)))
         || (noteOpen && (() => setNoteOpen(false)))
-        || (moreOpen && (() => setMoreOpen(false)))
         || (picker !== null && (() => { setPicker(null); setPickerBook(null); }))
         || (selected.size > 0 && (() => setSelected(new Set())));
       if (close) {
@@ -297,7 +369,7 @@ export function BiblePage() {
     };
     window.addEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
     return () => window.removeEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
-  }, [shareOpen, dailyShareOpen, noteOpen, moreOpen, picker, selected]);
+  }, [shareOpen, dailyShareOpen, noteOpen, picker, selected]);
 
   useEffect(() => {
     if (picker === "search") return;
@@ -318,6 +390,7 @@ export function BiblePage() {
 
   useEffect(() => {
     setReading({ version: version.code, book: book.code, chapter });
+    schedulePushReadingPosition();
   }, [version.code, book.code, chapter]);
 
   useEffect(() => {
@@ -753,7 +826,6 @@ export function BiblePage() {
     } catch {
       /* clipboard unavailable */
     }
-    setMoreOpen(false);
     setSelected(new Set());
   };
 
@@ -986,9 +1058,11 @@ export function BiblePage() {
   const cacheBookAudio = async () => {
     if (audioCacheBusy) return;
     if (audioCacheReady) {
-      if (!window.confirm(`已缓存《${displayedBook}》整卷音频。删除本卷离线音频？`)) return;
-      await removeBookAudio(version.code, book.code, book.chapters, displayedAudioVoice);
-      setAudioCacheReady(false);
+      // 页内二次确认：第一次点进入待命态，再点一次才删（替代英文按钮的 confirm）
+      confirmAudioRemove("book-audio", () => {
+        void removeBookAudio(version.code, book.code, book.chapters, displayedAudioVoice)
+          .then(() => setAudioCacheReady(false));
+      });
       return;
     }
     if (!offlineAudioSupported()) {
@@ -1023,12 +1097,16 @@ export function BiblePage() {
     setParams({ t: version.code, bk: nextBook.code, c: String(nextChapter) });
     setSelected(new Set());
   };
-  // 歌词式视图：点某节从该节开始听（有时间戳才可点）
+  // 歌词式视图：点某节从该节开始听（有时间戳才可点）。
+  // 时间戳域与音频域时长可能不等（显示侧做了比例换算），跳转要做逆换算，
+  // 否则两个时长不一致时点击定位会偏移。
   const seekToVerse = (verseNumber: number) => {
     const audio = audioRef.current;
     const stamp = audioTimestamps.find((item) => item.verse === verseNumber);
     if (!audio || !stamp || !Number.isFinite(audio.duration)) return;
-    audio.currentTime = Math.min(audio.duration, stamp.start + 0.01);
+    const stampsDuration = audioTimestamps.at(-1)?.end ?? 0;
+    const target = stampsDuration > 0 ? stamp.start * audio.duration / stampsDuration : stamp.start;
+    audio.currentTime = Math.min(audio.duration, target + 0.01);
   };
   const locateAudioVerse = () => {
     if (!audioCurrentVerse) return;
@@ -1042,7 +1120,7 @@ export function BiblePage() {
   };
 
   return (
-    <div className="screen">
+    <div className="screen bible-screen">
       <audio
         ref={audioRef}
         src={audioUrl || undefined}
@@ -1108,6 +1186,7 @@ export function BiblePage() {
             className={`bible-reader-selector version${picker === "version" ? " is-open" : ""}`}
             onClick={() => setPicker(picker === "version" ? null : "version")}
             aria-label={`选择译本，当前为${version.label}`}
+            aria-expanded={picker === "version"}
           >
             {version.label}
           </button>
@@ -1517,11 +1596,19 @@ export function BiblePage() {
           verseSaveTimerRef.current = window.setTimeout(() => {
             verseSaveTimerRef.current = null;
             const containerTop = container.getBoundingClientRect().top;
+            // 计划打卡：今日读段的末节底部进入视口，视为「读到了」，浮出打卡胶囊
+            if (planCheckIn && checkInStage === "reading" && book.code === planCheckIn.book && chapter === planCheckIn.chapter) {
+              const endNode = container.querySelector(`#bible-verse-${planCheckIn.verseEnd}`);
+              if (endNode && endNode.getBoundingClientRect().bottom <= containerTop + container.clientHeight) {
+                setCheckInStage("ready");
+              }
+            }
             for (const node of container.querySelectorAll('[id^="bible-verse-"]')) {
               if (node.getBoundingClientRect().bottom > containerTop + 40) {
                 const verseNumber = Number(node.id.slice("bible-verse-".length));
                 if (Number.isFinite(verseNumber)) {
                   setReading({ version: version.code, book: book.code, chapter, verse: verseNumber > 1 ? verseNumber : undefined });
+                  schedulePushReadingPosition();
                 }
                 return;
               }
@@ -1602,7 +1689,7 @@ export function BiblePage() {
           <SkeletonScreen variant="verses" label="正在加载经文" />
         )}
         {loadError && (
-          <div style={{ fontSize: 13, color: "var(--body)" }}>经文加载失败，请检查网络后重试。</div>
+          <EmptyState compact art="content" title="经文加载失败" desc="请检查网络后重试。" />
         )}
         <div
           key={`${version.code}-${book.code}-${chapter}`}
@@ -1618,8 +1705,20 @@ export function BiblePage() {
             const isAudioCurrent = audioPlaying && audioCurrentVerseNumber === v.verse;
             const verseNotes = notes.filter((note) => note.verse === v.verse);
             const noteExpanded = expandedNoteVerse === v.verse;
+            // cuv 带 USFM 结构标记：节级判定诗体；其他中文译本退回整卷名单。
+            // 拼音版有自己的注音排版、韩文无句读分行依据，都不参与诗体排版。
+            const poetic =
+              version.code !== "pinyin" &&
+              version.lang !== "ko" &&
+              (version.code === "cuv" ? v.q === true : POETRY_BOOKS.has(book.code));
+            // 段落/诗节间距：标题自带留白、章首有大字号章码，这两处不再加
+            const paragraphBreak =
+              (v.p || v.b) && v.verse !== verses[0]?.verse && !(showHeadings && v.heading);
             return (
-              <span key={v.label} className="bible-verse">
+              <span key={v.label} className={`bible-verse${poetic ? " is-poetic" : ""}`}>
+                {paragraphBreak && (
+                  <span className={`verse-break${v.b && !v.p ? " is-stanza" : ""}`} aria-hidden="true" />
+                )}
                 {showHeadings && v.heading && (
                   <span className="bible-heading">{translate(v.heading)}</span>
                 )}
@@ -1660,7 +1759,9 @@ export function BiblePage() {
                       textDecorationThickness: isSelected ? "1px" : undefined,
                       textUnderlineOffset: isSelected ? "5px" : undefined,
                     }}
-                    dangerouslySetInnerHTML={{ __html: translate(v.text) }}
+                    dangerouslySetInnerHTML={{
+                      __html: poetic ? toPoetryHtml(translate(v.text)) : translate(v.text),
+                    }}
                   />
                 </span>
                 {noteVerseNumbers.has(v.verse) && (
@@ -1738,16 +1839,22 @@ export function BiblePage() {
                 className={`audio-player-download${audioCacheReady ? " is-done" : ""}`}
                 aria-label={audioCacheBusy
                   ? `正在缓存${displayedBook}整卷音频，第 ${audioCacheBusy.done} 章，共 ${audioCacheBusy.total} 章`
-                  : audioCacheReady
-                    ? `已缓存${displayedBook}整卷音频，点击可删除`
-                    : `缓存${displayedBook}整卷音频到本机`}
-                title={audioCacheBusy ? "整卷缓存中…" : audioCacheReady ? "已缓存整卷 · 点击删除" : "缓存整卷音频"}
+                  : audioRemoveArmed === "book-audio"
+                    ? `再点一次确认删除${displayedBook}整卷离线音频`
+                    : audioCacheReady
+                      ? `已缓存${displayedBook}整卷音频，点击可删除`
+                      : `缓存${displayedBook}整卷音频到本机`}
+                title={audioCacheBusy
+                  ? "整卷缓存中…"
+                  : audioRemoveArmed === "book-audio"
+                    ? "再点一次确认删除"
+                    : audioCacheReady ? "已缓存整卷 · 点击删除" : "缓存整卷音频"}
                 disabled={Boolean(audioCacheBusy)}
                 onClick={() => void cacheBookAudio()}
               >
                 {audioCacheBusy
                   ? <b className="audio-cache-progress">{audioCacheBusy.done}/{audioCacheBusy.total}</b>
-                  : <Icon name={audioCacheReady ? "check" : "download"} size={18} />}
+                  : <Icon name={audioRemoveArmed === "book-audio" ? "trash" : audioCacheReady ? "check" : "download"} size={18} />}
               </button>
               <button data-icon-button="default" type="button" className="audio-player-close" aria-label="关闭语音圣经" onClick={closeAudio}>
                 <Icon name="x" size={20} />
@@ -1894,7 +2001,7 @@ export function BiblePage() {
           <div ref={verseActionSheetRef} className="verse-action-sheet is-docked" role="dialog" aria-label="经文操作" data-testid="verse-action-sheet">
             <div className="verse-dock-header">
               <div><strong>{displayedBook} {chapter}:{selectedRangeLabel}</strong><span aria-live="polite">已选 {selectedVerses.length} 节</span></div>
-              <button data-icon-button="default" type="button" aria-label="关闭经文操作" onClick={() => { setSelected(new Set()); setNoteOpen(false); setMoreOpen(false); }}><Icon name="x" /></button>
+              <button data-icon-button="default" type="button" aria-label="关闭经文操作" onClick={() => { setSelected(new Set()); setNoteOpen(false); }}><Icon name="x" /></button>
             </div>
             {noteOpen && selectedVerses.length === 1 ? (
               <form
@@ -1973,6 +2080,30 @@ export function BiblePage() {
           }}
           onClose={() => setDailyShareOpen(false)}
         />
+      )}
+
+      {/* 计划打卡胶囊：读到今日读段末节后浮出；打完卡显示庆祝态后自动收起 */}
+      {planCheckIn && (checkInStage === "ready" || checkInStage === "done") && selectedVerses.length === 0 && (
+        <div className={`plan-checkin${checkInStage === "done" ? " is-done" : ""}`} role="status">
+          {checkInStage === "done" ? (
+            <span className="plan-checkin-celebrate">
+              🎉 第 {planCheckIn.dayNumber} 天完成{getStreak() > 0 ? ` · 连续 ${getStreak()} 天` : ""}
+            </span>
+          ) : (
+            <>
+              <span className="plan-checkin-copy">
+                <b>{planCheckIn.planTitle}</b>
+                <small>{checkInError || "今日读段已读完"}</small>
+              </span>
+              <button type="button" className="plan-checkin-btn" disabled={checkInBusy} onClick={() => void completePlanDay()}>
+                {checkInBusy ? "打卡中…" : `完成第 ${planCheckIn.dayNumber} 天 ✓`}
+              </button>
+              <button data-icon-button="default" type="button" className="plan-checkin-close" aria-label="暂不打卡" onClick={() => setCheckInStage("hidden")}>
+                <Icon name="x" size={14} />
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       {showFirstRunGuide && <FirstRunGuide onClose={() => setShowFirstRunGuide(false)} />}

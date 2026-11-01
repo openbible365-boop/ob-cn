@@ -227,7 +227,7 @@ a {
 }
 
 .annotation-intro-hero h1 {
-  font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+  font-family: "Songti SC", "STSong", "Huidu Serif", "Noto Serif SC", serif;
   font-size: 32px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -541,7 +541,12 @@ a {
   padding: 5px 16px;
   border-bottom: 0.5px solid var(--line);
   background: var(--white);
-  transition: margin-top 220ms ease, opacity 180ms ease;
+  transition: margin-top 220ms ease;
+}
+
+/* 顶栏收起时内容淡出（进度线豁免，见 .bible-toolbar.is-hidden） */
+.bible-toolbar > * {
+  transition: opacity 180ms ease;
 }
 
 /* 今日金句卡：金色淡底的每日仪式感入口 */
@@ -585,8 +590,9 @@ a {
 .daily-verse-close {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  /* 展开态与 peek 态同样给足 40px 热区（图标视觉大小不变） */
+  width: 40px;
+  height: 40px;
   flex: none;
   border: 0;
   border-radius: 8px;
@@ -625,7 +631,8 @@ a {
 .daily-verse-actions button {
   border: 0;
   background: none;
-  color: var(--purple-deep);
+  /* 金句卡是阅读域：动作用深金，紫色留给 AI */
+  color: var(--yellow-ink);
   font-size: 13px;
   font-weight: 600;
 }
@@ -646,6 +653,15 @@ a {
   transition: width 120ms linear;
 }
 
+/* 圣经页顶栏：图标按钮的选中/展开态走金色——阅读域语义，紫色留给 AI。
+   （注释页已有同义的逐触发器覆写，这里补齐圣经页的搜索/字体等按钮） */
+.bible-screen .bible-toolbar :is([data-icon-button], .bible-toolbar-action):is(
+  .is-active, [aria-pressed="true"], [aria-expanded="true"]
+) {
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+}
+
 /* 合并芯片与下拉箭头 */
 .bible-reader-selector .selector-caret {
   margin-left: 5px;
@@ -656,11 +672,16 @@ a {
   border-radius: 10px;
 }
 
-/* 向下滚阅读时收起顶栏，把竖向空间还给正文；向上滚随即恢复 */
+/* 向下滚阅读时收起顶栏，把竖向空间还给正文；向上滚随即恢复。
+   注意：透明度只加在子元素上、进度线豁免——顶栏上移后它的下缘正好停在
+   屏幕顶端，进度线要继续可见（正是向下滚时最需要位置感）。 */
 .bible-toolbar.is-hidden {
   margin-top: -50px;
-  opacity: 0;
   pointer-events: none;
+}
+
+.bible-toolbar.is-hidden > :not(.bible-read-progress) {
+  opacity: 0;
 }
 
 .bible-reader-selectors {
@@ -1648,12 +1669,6 @@ a {
   line-height: 1.6;
 }
 
-.annotation-empty-title {
-  margin-bottom: 3px;
-  color: var(--ink);
-  font-weight: 600;
-}
-
 .annotation-copyright-layer {
   position: fixed;
   inset: 0;
@@ -1851,8 +1866,9 @@ a {
   padding: 11px 14px;
   border: 0;
   border-radius: 12px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
+  /* 通知属账号/阅读域：金色语义，紫色留给 AI */
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
@@ -1861,7 +1877,7 @@ a {
 
 .notification-section {
   padding: 12px;
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--white);
   border: 1px solid var(--line);
 }
@@ -1907,7 +1923,7 @@ a {
   place-items: center;
   margin-left: 4px;
   border-radius: 8px;
-  background: var(--purple);
+  background: var(--yellow-ink);
   color: #fff;
   font-size: 12px;
 }
@@ -1992,7 +2008,7 @@ a {
 }
 
 .notification-switch.is-on {
-  background: var(--purple);
+  background: var(--yellow-ink);
 }
 
 .notification-switch.is-on i {
@@ -2007,7 +2023,7 @@ a {
   border: 0;
   border-radius: 12px;
   background: var(--white);
-  color: var(--purple-deep);
+  color: var(--yellow-ink);
   font-size: 12px;
   font-weight: 600;
 }
@@ -2023,12 +2039,12 @@ a {
   flex: none;
   place-items: center;
   border-radius: 12px;
-  background: var(--purple-soft);
-  color: var(--purple);
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
 }
 
 .notification-inbox-item.is-unread {
-  box-shadow: inset 3px 0 0 var(--purple);
+  box-shadow: inset 3px 0 0 var(--yellow);
 }
 
 
@@ -2147,7 +2163,9 @@ a {
   z-index: 30;
   flex: none;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* 按实际 Tab 数均分（社群可被开关隐藏），不写死列数 */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   align-items: center;
   min-height: 56px;
   margin-top: 20px;
@@ -2950,7 +2968,8 @@ a {
   flex: none;
   border: 0;
   border-radius: 50%;
-  background: var(--purple);
+  /* 语音读的是经文本身：与主播放面板同用星芒金，紫色留给 AI */
+  background: #e89a2c;
   color: #fff;
 }
 
@@ -3241,58 +3260,9 @@ a {
 .huidu-home-scroll {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  /* 统一区块节奏：问经台 / 继续上次 / 对话记录之间一个间距走到底 */
+  gap: 20px;
   padding: 18px 18px 28px;
-}
-
-.huidu-start {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 18px;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 13px;
-  border-radius: 16px;
-  /* 慧读的语义色是紫，入口卡片跟随，不再用阅读的黄。 */
-  background: var(--purple-soft);
-  color: var(--ink);
-  text-align: left;
-}
-
-.huidu-start-icon {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--white);
-  color: var(--purple);
-}
-
-.huidu-start-copy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.huidu-start-copy b {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.huidu-start-copy small {
-  overflow: hidden;
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.huidu-start > .app-icon {
-  color: var(--body);
-  opacity: 0.7;
 }
 
 .huidu-history-section,
@@ -3377,13 +3347,9 @@ a {
   align-items: center;
   min-height: 48px;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--white);
   border: 1px solid var(--line);
-}
-
-.huidu-history-row-shell.is-current {
-  background: var(--yellow-soft);
 }
 
 .huidu-history-row {
@@ -3643,8 +3609,14 @@ a {
 .me-scroll {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  /* 统一区块节奏：全页一个间距，不靠各卡自己撑空隙 */
+  gap: 14px;
   padding: 18px 20px 28px;
+}
+
+/* 头像行之后多留一点呼吸，身份区和功能区分层 */
+.me-scroll > .me-profile {
+  margin-bottom: 4px;
 }
 
 .me-profile {
@@ -3683,7 +3655,7 @@ a {
 }
 
 .me-avatar-upload:focus-visible {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--yellow);
   outline-offset: 3px;
 }
 
@@ -3703,8 +3675,9 @@ a {
   place-items: center;
   border: 2px solid var(--white);
   border-radius: 50%;
-  background: var(--purple);
-  color: #fff;
+  /* 相机角标是账号功能，不碰紫色（AI 专属），用墨色中性承载 */
+  background: var(--ink);
+  color: var(--white);
   box-shadow: 0 2px 7px rgba(31, 28, 38, 0.18);
 }
 
@@ -3760,71 +3733,6 @@ a {
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.me-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.me-section-heading {
-  display: flex;
-  min-height: 24px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.me-section-heading h2 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.me-section-heading > button,
-.me-section-heading > span {
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* 「查看内容」这类栏目右侧的文字入口原来只有 17px 高，
-   移动端点不准；撑出上下热区，视觉字号不变。 */
-.me-section-heading > button {
-  min-height: 40px;
-  padding: 0 4px;
-  margin: -11px -4px;
-}
-
-.me-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 5px;
-}
-
-.me-stats > button {
-  display: flex;
-  min-width: 0;
-  min-height: 52px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 7px 2px;
-  border-radius: 12px;
-  background: var(--white);
-  border: 1px solid var(--line);
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.me-stat-value {
-  color: var(--ink);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
 }
 
 /* 读经进度横幅：金色淡底承载阅读语义，整卡可点跳读经计划 */
@@ -3927,7 +3835,7 @@ a {
   gap: 5px;
   padding: 9px 2px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--white);
   color: var(--body);
   font-size: 12px;
@@ -4073,8 +3981,14 @@ a {
 }
 
 .me-menu-icon {
-  background: var(--white);
+  /* 淡底瓷片给图标一个承托，行与行的左缘对齐线由它统一 */
+  background: var(--surface-2);
   color: var(--body);
+}
+
+/* 阅读模式行与下方第一行菜单之间也要有分隔线（button+button 选不中它） */
+.me-theme-row + button {
+  border-top: 1px solid var(--line);
 }
 
 .me-group-copy,
@@ -4132,7 +4046,7 @@ a {
 .me-logout-button {
   width: 100%;
   min-height: 46px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--white);
   border: 1px solid var(--line);
   color: var(--orange-deep);
@@ -4145,7 +4059,7 @@ a {
   flex-direction: column;
   gap: 10px;
   padding: 13px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--white);
   border: 1px solid var(--line);
 }
@@ -4192,6 +4106,11 @@ a {
   font-size: 12px;
   font-weight: 600;
   text-align: center;
+}
+
+/* 法务链接和版本号同属页脚，两行贴得更近一些 */
+.me-legal-links + .me-version {
+  margin-top: -10px;
 }
 
 .me-version {
@@ -4500,6 +4419,10 @@ body.dark .app-exit-toast {
 
 /* ── 每日读经提醒 ── */
 .notification-reminder-toggle {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
   border: 0;
   background: none;
   padding: 0;
@@ -4570,10 +4493,11 @@ body.dark .app-exit-toast {
   padding: 0 18px;
   border: 0;
   border-radius: 999px;
-  background: var(--purple);
-  color: #fff;
+  background: linear-gradient(135deg, var(--yellow), color-mix(in srgb, var(--yellow) 76%, #c8821f));
+  color: #2b2926;
   font-size: 13px;
   font-weight: 600;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--yellow) 35%, transparent);
 }
 
 .prayer-compose button:disabled {
@@ -4617,25 +4541,27 @@ body.dark .app-exit-toast {
 }
 
 .prayer-item.is-answered {
-  background: var(--surface-soft);
+  border-color: color-mix(in srgb, var(--yellow) 55%, transparent);
+  background: var(--yellow-soft);
 }
 
 .prayer-check {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex: none;
   margin-top: 1px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid color-mix(in srgb, var(--yellow-ink, #8a5a00) 42%, transparent);
   border-radius: 50%;
   background: var(--white);
   color: #fff;
 }
 
 .prayer-item.is-answered .prayer-check {
-  border-color: var(--success);
-  background: var(--success);
+  border-color: var(--yellow-ink, #8a5a00);
+  background: var(--yellow-ink, #8a5a00);
 }
 
 .prayer-copy {
@@ -4655,10 +4581,14 @@ body.dark .app-exit-toast {
   word-break: break-word;
 }
 
+/* 已应允是「恩典记录」不是划掉的待办：不打删除线，只是语气放轻 */
 .prayer-item.is-answered .prayer-copy p {
   color: var(--body);
-  text-decoration: line-through;
-  text-decoration-color: rgba(47, 122, 80, 0.4);
+  font-weight: 500;
+}
+
+.prayer-item.is-answered .prayer-copy small {
+  color: var(--yellow-ink, #8a5a00);
 }
 
 .prayer-copy small {
@@ -4668,15 +4598,11 @@ body.dark .app-exit-toast {
 }
 
 .prayer-remove {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
+  /* 尺寸由图标按钮契约（min 40px）决定，这里只管弱化配色 */
   flex: none;
   border: 0;
-  border-radius: 8px;
   background: none;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 65%, transparent);
 }
 
 /* 社群代祷贴的「记入清单」小按钮 */
@@ -4752,7 +4678,7 @@ body.dark .app-exit-toast {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--purple);
+  background: var(--yellow);
   transition: width 0.2s ease;
 }
 
@@ -4769,8 +4695,9 @@ body.dark .app-exit-toast {
 }
 
 .me-res-btn.is-primary {
-  border-color: var(--purple);
-  background: var(--purple);
+  /* 资源下载属阅读域：金色主按钮，紫色留给 AI */
+  border-color: var(--yellow-ink);
+  background: var(--yellow-ink);
   color: #fff;
 }
 
@@ -4950,9 +4877,10 @@ body.dark .app-exit-toast {
 /* 第二入口提示：经文慧读路径可被发现 */
 .huidu-scripture-hint {
   display: flex;
+  min-height: 44px;
   align-items: center;
   gap: 6px;
-  margin-top: 14px;
+  margin-top: 4px;
   border: 0;
   background: none;
   color: var(--purple-deep);
@@ -5006,6 +4934,7 @@ body.dark .app-exit-toast {
 
 .huidu-msg-actions button {
   display: flex;
+  min-height: 40px;
   align-items: center;
   gap: 5px;
   padding: 4px 8px;
@@ -5128,6 +5057,7 @@ body.dark .app-exit-toast {
 /* 失败即可一键重发：问题已回填，按钮只是替用户再按一次发送 */
 .huidu-retry-button {
   flex: none;
+  min-height: 40px;
   padding: 3px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -5218,9 +5148,10 @@ body.dark .app-exit-toast {
 .huidu-chat-field {
   display: flex;
   min-width: 0;
-  height: 48px;
+  /* 多行输入：随 textarea 增高，按钮钉在底部一行 */
+  min-height: 48px;
   flex: 1;
-  align-items: center;
+  align-items: flex-end;
   gap: 2px;
   padding: 4px 5px 4px 15px;
   border: 1px solid var(--line);
@@ -5229,15 +5160,17 @@ body.dark .app-exit-toast {
   box-shadow: 0 2px 10px rgba(48, 42, 30, 0.06);
 }
 
+
 .huidu-chat-field:focus-within {
   border-color: var(--purple);
 }
 
-.huidu-chat-field input {
+.huidu-chat-field textarea {
   flex: 1;
   min-width: 0;
   height: 38px;
-  padding: 0;
+  max-height: 120px;
+  padding: 8px 0;
   border: 0;
   border-radius: 0;
   outline: none;
@@ -5245,6 +5178,9 @@ body.dark .app-exit-toast {
   color: var(--ink);
   font: inherit;
   font-size: 16px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
 }
 
 .huidu-chat-field .voice-input-btn {
@@ -5338,14 +5274,18 @@ body.dark .app-exit-toast {
   font-weight: 400;
 }
 
-/* 经文正文按中文书排标准修正：
-   - 两端对齐 + inter-ideograph：右缘不再参差，多余空隙摊进汉字间
+/* 经文正文按中文书排标准修正（对齐方式经用户确认定稿，勿再改）：
+   - 两端对齐：右缘补齐无行尾空格；避头尾推字的空隙摊进该行字间（个别行略宽~10%）。
+     左对齐则字距恒定但行尾留空位——二者取一，印刷圣经/微信读书均取两端对齐
    - line-break strict：避头尾——「。，？」不落行首、引号开头不吊行尾
-   - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，视觉右缘更齐
+   - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，减少需要摊的空隙
    字号/行高/节距沿用现有内联值（此前逐项调过），这里只管排版规则。 */
 .bible-verse-content {
   color: var(--ink);
-  font-weight: 400;
+  /* 宋体屏显偏细，但 Songti SC 无中间字重、改 font-weight 不起作用，
+     用微描边统一加墨：跟随 currentColor，高亮/选中态颜色不受影响 */
+  font-weight: 500;
+  -webkit-text-stroke: 0.014em currentColor;
   letter-spacing: 0.02em;
   text-wrap: pretty;
   text-align: justify;
@@ -5362,6 +5302,8 @@ body.dark .app-exit-toast {
 .bible-verse-content.is-pinyin {
   text-align: left;
   line-break: auto;
+  /* 韩文/拼音字体有真实字重，描边会把小号注音糊掉 */
+  -webkit-text-stroke: 0;
 }
 
 .bible-verse-main {
@@ -5523,7 +5465,8 @@ body.dark .app-exit-toast {
 
 .verse-share-templates {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* 五个预置模板 + 自定义背景，3x2 栅格 */
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
   margin: 0 0 8px;
 }
@@ -5583,6 +5526,24 @@ body.dark .app-exit-toast {
   flex: none;
   border: 1px solid rgba(24, 25, 31, 0.12);
   border-radius: 50%;
+}
+
+/* 自定义背景：未选图时是虚线加号位，选图后换成图片缩略瓷片 */
+.verse-share-templates i.is-custom-empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed currentColor;
+  border-radius: 4px;
+  background: none;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1;
+}
+
+.verse-share-templates i.is-custom-photo {
+  border-radius: 4px;
+  background-position: center;
+  background-size: cover;
 }
 
 .verse-share-preview {
@@ -5672,12 +5633,12 @@ body.dark .app-exit-toast {
   margin-left: 3px;
   border-radius: 50%;
   background: transparent;
-  color: var(--purple-deep);
+  color: var(--yellow-ink);
   vertical-align: 0.08em;
 }
 
 .bible-verse-note-indicator.is-open {
-  background: rgba(135, 80, 182, 0.1);
+  background: var(--yellow-soft);
 }
 
 .bible-inline-note {
@@ -8613,7 +8574,7 @@ body.dark textarea::placeholder {
 }
 
 /* 药丸容器里的输入框本身要透明，否则深色下框内会多出一块色差 */
-body.dark :is(.bible-search-field, .huidu-chat-field, .community-chat-field) input {
+body.dark :is(.bible-search-field, .huidu-chat-field, .community-chat-field) :is(input, textarea) {
   background: transparent;
 }
 
@@ -8819,7 +8780,6 @@ body.dark .verse-share-heading > button:hover:not(:disabled) {
 
 body.dark .bible-search-version,
 body.dark .bible-search-result-meta b,
-body.dark .huidu-history-kind.is-scripture,
 body.dark .huidu-quote-meta span {
   background: var(--yellow-medium);
   color: var(--yellow-ink);
@@ -8903,13 +8863,10 @@ body.dark .bible-inline-note-label {
   color: var(--yellow-ink);
 }
 
-body.dark .huidu-start,
-body.dark .huidu-history-row-shell.is-current,
 body.dark .huidu-quote {
   background: var(--yellow-soft);
 }
 
-body.dark .huidu-start-icon,
 body.dark .huidu-chat-empty > span {
   background: var(--yellow-medium);
 }
@@ -9025,78 +8982,53 @@ body.dark .community-management-result button {
 
 /* Personal and community reading plans */
 .reading-plans-scroll {
-  padding: 18px 18px calc(var(--safe-bottom) + 28px);
+  padding: 16px 18px calc(var(--safe-bottom) + 28px);
 }
 
-.reading-plans-intro {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--yellow-soft);
-}
-
-.reading-plans-intro > span {
-  display: grid;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--yellow);
-  color: var(--yellow-ink);
-}
-
-.reading-plans-intro h1,
-.reading-plan-card h2 {
-  margin: 0;
-  color: var(--ink);
-}
-
-.reading-plans-intro h1 {
-  font-size: 18px;
-}
-
-.reading-plans-intro p,
-.reading-plan-card > p {
-  margin: 5px 0 0;
-  color: var(--body);
-  font-size: 13px;
-  line-height: 1.55;
-}
+/* ═══ 读经计划：两种卡形态 ═══
+   进行中卡 = 进度 + 今日读段（唯一主 CTA）+ 手动补卡兜底；
+   可选卡 = 目录形态（标题 + 时长 + 简介 + 试读/加入），不渲染无意义的 0% 进度。
+   配色全金：紫色留给 AI 语义。 */
 
 .reading-plan-card {
-  margin-bottom: 12px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--surface-soft);
-}
-
-.reading-plan-card-top,
-.reading-plan-today,
-.reading-plan-action {
-  display: flex;
-  align-items: center;
+  margin-bottom: 10px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
 }
 
 .reading-plan-card-top {
-  justify-content: space-between;
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reading-plan-card-top h2 {
+  overflow: hidden;
+  flex: 1;
+  margin: 0;
+  color: var(--ink);
+  font-size: 16.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reading-plan-card-top small {
+  flex: none;
   color: var(--muted);
   font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .reading-plan-scope {
-  padding: 4px 9px;
+  flex: none;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -9106,74 +9038,158 @@ body.dark .community-management-result button {
 }
 
 .reading-plan-scope.is-personal {
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--body);
 }
 
-.reading-plan-card h2 {
-  font-size: 18px;
+.reading-plan-days {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 11.5px;
+  font-weight: 700;
 }
 
+.reading-plan-card > p {
+  margin: 8px 0 0;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 进度条：金色（阅读语义） */
 .reading-plan-progress {
   height: 5px;
-  margin: 14px 0;
+  margin: 12px 0;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--surface-2);
 }
 
 .reading-plan-progress > span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--purple);
+  background: linear-gradient(90deg, var(--yellow), #c8821f);
 }
 
+/* 今日读段：进行中卡的唯一主 CTA，金色淡底整行可点 */
 .reading-plan-today {
+  display: flex;
   width: 100%;
-  min-height: 58px;
+  min-height: 56px;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--yellow) 55%, transparent);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--yellow-soft);
   color: var(--ink);
   text-align: left;
 }
 
-.reading-plan-today > span {
+.reading-plan-today-copy {
   display: grid;
+  min-width: 0;
   gap: 2px;
 }
 
-.reading-plan-today small,
-.reading-plan-today em {
-  color: var(--muted);
+.reading-plan-today-copy small {
+  overflow: hidden;
+  color: var(--yellow-ink);
   font-size: 12px;
-  font-style: normal;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.reading-plan-today b {
-  font-size: 14px;
+.reading-plan-today-copy b {
+  color: var(--ink);
+  font-size: 14.5px;
 }
 
-.reading-plan-action {
+.reading-plan-go {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--yellow), color-mix(in srgb, var(--yellow) 76%, #c8821f));
+  color: #2b2926;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 手动补卡：兜底动作，文本级别的轻 */
+.reading-plan-manual {
+  display: block;
   width: 100%;
   min-height: 44px;
+  margin-top: 2px;
+  padding: 7px 0 2px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.reading-plan-complete {
+  display: flex;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 10px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--purple);
-  color: #fff;
+  padding: 10px 0 2px;
+  color: var(--success);
+  font-size: 13.5px;
   font-weight: 600;
 }
 
-.reading-plan-action.is-complete {
-  background: var(--surface);
-  color: var(--success);
+/* 可选卡底行：试读 + 加入 */
+.reading-plan-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.reading-plan-preview {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reading-plan-join {
+  flex: none;
+  min-height: 36px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--yellow), color-mix(in srgb, var(--yellow) 76%, #c8821f));
+  color: #2b2926;
+  font-size: 13.5px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--yellow) 32%, transparent);
+}
+
+.reading-plan-join:disabled {
+  opacity: 0.6;
 }
 
 .reading-plan-feedback {
@@ -9183,12 +9199,13 @@ body.dark .community-management-result button {
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--purple-soft);
-  color: var(--purple-deep);
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
   font-size: 13px;
 }
 
 .reading-plan-feedback.is-error {
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
   color: var(--danger);
 }
 
@@ -9199,7 +9216,6 @@ body.dark .community-management-result button {
   font-weight: 600;
 }
 
-.reading-plan-empty,
 .reading-plans-note {
   padding: 20px 4px;
   color: var(--muted);
@@ -9254,12 +9270,12 @@ body.dark .community-management-result button {
   margin-top: 8px;
 }
 
-/* 节号：12px 辅助灰、半粗等宽数字——11px 第三级灰在宋体正文旁偏虚看不清 */
+/* 节号：12px 次级墨色、加粗等宽数字——muted 灰在宋体正文旁偏虚看不清 */
 .bible-verse-number {
   margin: 0 2px 0 3px;
-  color: var(--muted);
+  color: var(--body, var(--ink));
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
@@ -9330,4 +9346,391 @@ button.daily-verse-kicker {
   :root {
     --reading-gutter: 20px;
   }
+}
+
+/* ═══ 祷告墙：代祷便签墙 ═══
+   每张便签按帖子 id 稳定取色/取倾角，两列砖石排布；
+   底色用 color-mix 调和 --surface，三套主题下都保持纸感。 */
+.prayer-wall-scroll {
+  padding: 14px 14px 18px;
+}
+
+.prayer-wall {
+  columns: 2;
+  column-gap: 10px;
+}
+
+.prayer-note {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  break-inside: avoid;
+  margin-bottom: 10px;
+  padding: 12px 12px 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  border-radius: 4px 14px 14px 14px; /* 左上角略尖：一点「纸角」的意思 */
+  box-shadow: 0 2px 6px rgba(68, 48, 14, 0.07);
+  transform: rotate(var(--note-tilt, 0deg));
+  animation: prayer-note-enter 0.5s ease backwards;
+}
+
+/* 五色便签：金、绿、蓝、粉、紫（与高亮五色同家族），混入主题底色 */
+.prayer-note.tint-0 { background: color-mix(in srgb, #f2c96d 30%, var(--surface)); }
+.prayer-note.tint-1 { background: color-mix(in srgb, #9ed3a2 26%, var(--surface)); }
+.prayer-note.tint-2 { background: color-mix(in srgb, #9ec4e8 26%, var(--surface)); }
+.prayer-note.tint-3 { background: color-mix(in srgb, #f1a8c4 24%, var(--surface)); }
+.prayer-note.tint-4 { background: color-mix(in srgb, #c3aee6 26%, var(--surface)); }
+
+@keyframes prayer-note-enter {
+  from {
+    opacity: 0;
+    transform: rotate(var(--note-tilt, 0deg)) translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--note-tilt, 0deg)) translateY(0) scale(1);
+  }
+}
+
+/* 轻微呼吸漂浮：便签像被风掀动一下；减少动态偏好下关闭 */
+@media (prefers-reduced-motion: no-preference) {
+  .prayer-note { animation: prayer-note-enter 0.5s ease backwards, prayer-note-float 6s ease-in-out 0.5s infinite; }
+  .prayer-note.tint-1, .prayer-note.tint-3 { animation-duration: 0.5s, 7.3s; }
+  .prayer-note.tint-2, .prayer-note.tint-4 { animation-duration: 0.5s, 8.1s; }
+}
+
+@keyframes prayer-note-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -2.5px; }
+}
+
+.prayer-note header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.prayer-note header b {
+  overflow: hidden;
+  flex: 1;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prayer-note header time {
+  flex: none;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.prayer-note-avatar {
+  display: flex;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #4a3005;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.prayer-note p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.prayer-note-amen {
+  position: relative;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  color: var(--ink-2, var(--ink));
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prayer-note-amen.is-active {
+  border-color: transparent;
+  background: var(--yellow-ink, #8a5a00);
+  color: #fff8e8;
+}
+
+.prayer-wall-hint {
+  margin: 6px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.prayer-wall-loading {
+  padding: 48px 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 底部发布条：与慧读输入栏同一族式样，药丸输入 + 圆形发送键 */
+.prayer-wall-composer {
+  padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  /* 祷告是金色语义：发送键不用图标契约里的 AI 紫 */
+  --icon-button-accent: var(--yellow-ink);
+  --icon-button-accent-hover: #6f4a00;
+}
+
+.prayer-wall-composer form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prayer-wall-composer input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.prayer-wall-composer input::placeholder {
+  color: var(--muted);
+}
+
+.prayer-wall-feedback {
+  margin-bottom: 6px;
+  color: var(--yellow-ink, #8a5a00);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* 祷告清单页顶部的祷告墙入口横幅：金色淡底，与读经横幅同族 */
+.prayer-wall-banner {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--yellow, #f2c96d) 55%, transparent);
+  border-radius: 14px;
+  background: var(--yellow-soft, #fdf3dd);
+  color: var(--ink);
+  text-align: left;
+}
+
+.prayer-wall-banner-icon {
+  font-size: 20px;
+}
+
+.prayer-wall-banner-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prayer-wall-banner-copy b {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.prayer-wall-banner-copy small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ═══ 读经计划打卡胶囊：读完今日读段后浮现在 Tab 栏上方 ═══ */
+.plan-checkin {
+  position: fixed;
+  z-index: 38;
+  right: 14px;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--yellow) 60%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--yellow-soft) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(68, 48, 14, 0.16);
+  animation: plan-checkin-rise 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.1) backwards;
+}
+
+@keyframes plan-checkin-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.plan-checkin-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.plan-checkin-copy b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-checkin-copy small {
+  color: var(--yellow-ink, #8a5a00);
+  font-size: 11.5px;
+}
+
+.plan-checkin-btn {
+  flex: none;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--yellow), color-mix(in srgb, var(--yellow) 76%, #c8821f));
+  color: #2b2926;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--yellow) 40%, transparent);
+}
+
+.plan-checkin-btn:disabled {
+  opacity: 0.6;
+}
+
+.plan-checkin-close {
+  flex: none;
+  color: var(--muted);
+}
+
+.plan-checkin.is-done {
+  justify-content: center;
+  animation: plan-checkin-rise 0.35s ease backwards;
+}
+
+.plan-checkin-celebrate {
+  color: var(--yellow-ink, #8a5a00);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 读经计划分组标题：我的计划 / 可选计划 */
+.reading-plans-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reading-plans-group + .reading-plans-group {
+  margin-top: 8px;
+}
+
+.reading-plans-group > h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 2px 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reading-plans-group > h3 span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* 小目标热区扩张：视觉尺寸不变，触控面积补足 44px */
+.prayer-check::after,
+.prayer-note-amen::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+/* 页内二次确认的待命态：按钮翻红，提示「再点一次」 */
+.me-res-btn.is-danger {
+  border-color: var(--pink);
+  background: var(--pink);
+  color: #fff;
+}
+
+.prayer-remove.is-armed {
+  background: color-mix(in srgb, var(--pink) 12%, transparent);
+  color: var(--pink);
+}
+
+/* 不可点的顶栏副标题：去芯片化成纯文字，可点的芯片样式是一种视觉承诺 */
+.bible-reader-selector.version.is-static {
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 副标题退为纯文字后，前面的芯片要自己收口：
+   两段式（标题+副标题）的标题变完整药丸；
+   三段式（书卷|章|副标题）保持连体，只给中段补右侧圆角 */
+.bible-reader-selector.chapter:has(+ .bible-reader-selector.version.is-static) {
+  border-radius: 999px;
+}
+
+.bible-reader-selector.chapter-number:has(+ .bible-reader-selector.version.is-static) {
+  border-radius: 0 999px 999px 0;
+}
+
+/* 诗歌体排版：每个句读一行，折行悬挂缩进；首行跟在节号后不另起。
+   overflow:hidden 让每行自成排版上下文，整行避让章首大字号章码的浮动，
+   否则负缩进会把行首文字拉进大字区域、与章码叠在一起 */
+.verse-text .poem-line {
+  display: block;
+  overflow: hidden;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+  background: inherit;
+  color: inherit;
+}
+
+.verse-text .poem-line:first-child {
+  display: inline;
+  padding-left: 0;
+  text-indent: 0;
+}
+
+/* 诗体节各占整行：单句诗行（节内无句读可拆）不再与上一节连排 */
+.bible-verse-content .bible-verse.is-poetic {
+  display: block;
+}
+
+/* 段落间距（USFM \p）与诗节空行（\b）：块级空元素打断连排，形成书页式分段 */
+.bible-verse-content .verse-break {
+  display: block;
+  height: 0.75em;
+}
+
+.bible-verse-content .verse-break.is-stanza {
+  height: 0.5em;
 }

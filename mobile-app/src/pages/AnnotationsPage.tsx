@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import { useSearchParams } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState";
 import { Icon } from "../components/Icon";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { BookIntroduction } from "../components/BookIntroduction";
@@ -114,8 +115,10 @@ export function AnnotationsPage() {
   const [expandedScripture, setExpandedScripture] = useState<string | null>(null);
   const [scriptureVerses, setScriptureVerses] = useState<Verse[] | null>(null);
   const expandedScriptureRef = useRef<string | null>(null);
-  const [readProgress, setReadProgress] = useState(0);
+  // 进度线用 ref 直写 style：滚动是最高频事件，不值得整页重渲（与圣经页同策略）
+  const readProgressRef = useRef<HTMLDivElement>(null);
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickRef = useRef(false);
 
   // 安卓返回键：先关掉打开的面板，再轮到路由回退
   useEffect(() => {
@@ -300,6 +303,8 @@ export function AnnotationsPage() {
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+    // 与圣经页一致：左右边缘 24px 让给系统手势（iOS 侧滑返回 / Android 手势导航）
+    if (event.clientX < 24 || event.clientX > window.innerWidth - 24) return;
     gestureStartRef.current = { x: event.clientX, y: event.clientY };
   };
 
@@ -319,6 +324,9 @@ export function AnnotationsPage() {
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
     if (Math.abs(deltaX) < 64 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+    // 滑动收尾落在引用徽章等可点元素上时，抑制这记 click，避免翻章+展开经文同时触发
+    suppressClickRef.current = true;
+    window.setTimeout(() => { suppressClickRef.current = false; }, 0);
     gotoAdjacentChapter(deltaX < 0 ? 1 : -1);
   };
 
@@ -327,7 +335,7 @@ export function AnnotationsPage() {
     expandedScriptureRef.current = null;
     setExpandedScripture(null);
     setScriptureVerses(null);
-    setReadProgress(0);
+    if (readProgressRef.current) readProgressRef.current.style.width = "0%";
   }, [commentaryChapterKey, isIntroduction]);
 
   // 章内阅读进度：与圣经页一致的 2px 金色细线
@@ -335,8 +343,9 @@ export function AnnotationsPage() {
     const scroller = document.querySelector<HTMLElement>(".annotation-reader-scroll");
     if (!scroller) return;
     const update = () => {
+      if (!readProgressRef.current) return;
       const total = scroller.scrollHeight - scroller.clientHeight;
-      setReadProgress(total > 0 ? Math.min(100, (scroller.scrollTop / total) * 100) : 0);
+      readProgressRef.current.style.width = `${total > 0 ? Math.min(100, (scroller.scrollTop / total) * 100) : 0}%`;
     };
     update();
     scroller.addEventListener("scroll", update, { passive: true });
@@ -408,7 +417,10 @@ export function AnnotationsPage() {
             className={`annotation-reference-chip${expandedScripture === sectionId ? " is-expanded" : ""}`}
             aria-expanded={expandedScripture === sectionId}
             aria-label={`${commentaryReference(section.title)}，${expandedScripture === sectionId ? translate("收起经文") : translate("展开对应经文")}`}
-            onClick={() => void toggleScripture(sectionId, section.title)}
+            onClick={() => {
+              if (suppressClickRef.current) return; // 刚完成滑动翻章，这记 click 是滑动的尾巴
+              void toggleScripture(sectionId, section.title);
+            }}
           >
             {commentaryReference(section.title)}
           </button>
@@ -438,6 +450,7 @@ export function AnnotationsPage() {
         primary={translate(bookChipName(book, version))}
         middle={isIntroduction ? translate("绪论") : chapter}
         secondary={translate("精读本注释")}
+        secondaryChip
         primaryAriaLabel={`${translate("选择书卷，当前为")}${displayedBook}`}
         middleAriaLabel={isIntroduction
           ? `${translate("选择章节，当前为")}${displayedBook}${translate("绪论")}`
@@ -644,7 +657,7 @@ export function AnnotationsPage() {
       />
 
       <div className="annotation-read-progress" aria-hidden="true">
-        <div style={{ width: `${readProgress}%` }} />
+        <div ref={readProgressRef} style={{ width: "0%" }} />
       </div>
 
       <div
@@ -680,7 +693,7 @@ export function AnnotationsPage() {
               )}
 
               {loadError && (
-                <div className="annotation-status-card" role="alert">{translate("注释加载失败，请检查网络后重试。")}</div>
+                <EmptyState compact art="content" title={translate("注释加载失败")} desc={translate("请检查网络后重试。")} />
               )}
               {commentary === null && !loadError && (
                 <div className="annotation-status-card">{translate("加载注释中…")}</div>
@@ -693,10 +706,7 @@ export function AnnotationsPage() {
                 {orderedSections.map((entry) => renderSection(entry))}
               </div>
               {commentary !== null && detailCount === 0 && (
-                <div className="annotation-status-card">
-                  <div className="annotation-empty-title">{translate("本章暂无更多注释")}</div>
-                  <div>{translate("可以切换到其他章节继续阅读。")}</div>
-                </div>
+                <EmptyState compact art="content" title={translate("本章暂无更多注释")} desc={translate("可以切换到其他章节继续阅读。")} />
               )}
               {/* 读到底的顺手延续：只留轻量「下一章」，回看走顶部章节芯片或左右滑动 */}
               <div className="annotation-chapter-nav">

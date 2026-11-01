@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
 import { Capacitor } from "@capacitor/core";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
+import { SHOW_COMMUNITY } from "../data/features";
 import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
+import { syncStoredPushToken } from "../data/push";
+import { pullReadingPosition } from "../data/reading-sync";
 import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
 import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
 
@@ -28,11 +31,17 @@ export function LoginPage() {
   const [googleBusy, setGoogleBusy] = useState(false);
   const [appleBusy, setAppleBusy] = useState(false);
 
+  // 倒计时句柄记在 ref 里，组件卸载时清掉，避免离开页面后定时器空转
+  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => () => {
+    if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+  }, []);
+
   const startCooldown = (seconds: number) => {
     setCooldown(seconds);
-    const timer = setInterval(() => {
+    cooldownTimerRef.current = setInterval(() => {
       setCooldown((s) => {
-        if (s <= 1) clearInterval(timer);
+        if (s <= 1 && cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
         return s - 1;
       });
     }, 1000);
@@ -66,6 +75,8 @@ export function LoginPage() {
     const result = await verifyLoginCode(email, code.trim());
     if (result.ok) {
       await syncHighlights();
+      void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
+      void pullReadingPosition(); // 取回其他设备的阅读位置
       setBusy(false);
       navigate(returnTo, { replace: true });
     } else {
@@ -86,6 +97,8 @@ export function LoginPage() {
         return;
       }
       await syncHighlights();
+      void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
+      void pullReadingPosition(); // 取回其他设备的阅读位置
       navigate(returnTo, { replace: true });
     } catch (error) {
       if (!isGoogleSignInCanceled(error)) {
@@ -120,7 +133,10 @@ export function LoginPage() {
         return;
       }
       await syncHighlights();
-      navigate("/me", { replace: true });
+      void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
+      void pullReadingPosition(); // 取回其他设备的阅读位置
+      // 与邮箱/Google 登录一致：回到被登录墙拦下前的目标页，而不是写死「我的」
+      navigate(returnTo, { replace: true });
     } catch (error) {
       if (!isAppleSignInCanceled(error)) {
         const message = error instanceof Error ? error.message : "Apple 登录失败，请稍后重试";
@@ -141,8 +157,8 @@ export function LoginPage() {
             <svg
               viewBox="22 5 76 88"
               xmlns="http://www.w3.org/2000/svg"
-              width="78"
-              height="78"
+              width="56"
+              height="56"
               role="img"
               aria-hidden="true"
             >
@@ -158,10 +174,14 @@ export function LoginPage() {
             <span className="login-title-brand">慧读</span>
             <span>圣经</span>
           </div>
-          <div className="login-slogan">智慧 · 读经 · 社群 · 共勉</div>
+          <div className="login-slogan">{SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉"}</div>
         </div>
 
-        <div className="card login-card">
+        {/* 包成真正的 form：手机键盘的「前往/回车」可以直接提交 */}
+        <form
+          className="card login-card"
+          onSubmit={(event) => { event.preventDefault(); void submit(); }}
+        >
           <label className="login-field">
             <Icon name="mail" size={16} />
             <input
@@ -190,11 +210,11 @@ export function LoginPage() {
           </div>
           {error && <div role="alert" className="login-feedback is-error">{error}</div>}
           {notice && !error && <div role="status" className="login-feedback">{notice}</div>}
-          <button className="btn-primary" onClick={submit} disabled={busy}>
+          <button className="btn-primary" type="submit" disabled={busy}>
             {busy ? "请稍候…" : "登录 / 注册"}
           </button>
           <div className="login-hint">首次使用同一邮箱登录将自动注册</div>
-        </div>
+        </form>
 
         <div className="login-divider" aria-hidden="true"><i /><span>或</span><i /></div>
 

@@ -9,6 +9,7 @@ export function CompactToolbar({
   onPrimaryClick,
   onMiddleClick,
   onSecondaryClick,
+  secondaryChip = false,
   primaryAriaLabel,
   middleAriaLabel,
   secondaryAriaLabel,
@@ -28,6 +29,9 @@ export function CompactToolbar({
   primaryAriaLabel?: string;
   middleAriaLabel?: string;
   secondaryAriaLabel?: string;
+  /** 版本位芯片：不可点也保持芯片外观（如注释页「精读本注释」，与圣经页「和合本」同级）。
+      默认 false——说明性副标题降为纯文字，芯片样式留给可点元素。 */
+  secondaryChip?: boolean;
   primaryOpen?: boolean;
   middleOpen?: boolean;
   middleWide?: boolean;
@@ -79,7 +83,8 @@ export function CompactToolbar({
               {secondary}
             </button>
           ) : (
-            <div className="bible-reader-selector version">{secondary}</div>
+            // 版本位保持芯片外观；说明性副标题降为纯文字（芯片样式 = 可点的视觉承诺）
+            <div className={`bible-reader-selector version${secondaryChip ? "" : " is-static"}`}>{secondary}</div>
           )
         )}
       </div>

@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
+import { EmptyState } from "../components/EmptyState";
 import { Icon } from "../components/Icon";
+import { SkeletonScreen } from "../components/SkeletonScreen";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { getStreak, markTodayRead } from "../data/streak";
 import { bookName, getBookByCode, getVersion } from "../data/scripture";
+import { SHOW_COMMUNITY } from "../data/features";
 import {
   fetchReadingPlans,
   updateReadingPlan,
   type ReadingPlan,
 } from "../data/reading-plans";
-
-function scopeLabel(plan: ReadingPlan) {
-  if (plan.scope === "COMMUNITY") return plan.community?.name ?? "社群计划";
-  if (plan.scope === "PERSONAL") return "我的计划";
-  return "精选计划";
-}
 
 function todayReference(plan: ReadingPlan) {
   if (!plan.today) return "";
@@ -72,88 +69,140 @@ export function ReadingPlansPage() {
       c: String(plan.today.chapter),
       v: String(plan.today.verseStart),
     });
-    navigate(`/bible?${query.toString()}`);
+    // 带上计划上下文：阅读页在读完今日读段时就地浮出打卡胶囊，
+    // 把「读完 → 打卡」的闭环闭在阅读现场，不用再折返这页。
+    navigate(`/bible?${query.toString()}`, {
+      state: {
+        planCheckIn: {
+          planId: plan.id,
+          planTitle: plan.title,
+          dayNumber: plan.today.dayNumber,
+          book: plan.today.book,
+          chapter: plan.today.chapter,
+          verseEnd: plan.today.verseEnd,
+        },
+      },
+    });
   };
+
+  // 进行中的计划卡：今日读段是唯一主 CTA；手动打卡降级为兜底小动作
+  const renderEnrolledCard = (plan: ReadingPlan) => {
+    const progress = plan.totalDays
+      ? Math.round((plan.completedDays / plan.totalDays) * 100)
+      : 0;
+    return (
+      <article className="reading-plan-card" key={plan.id}>
+        <div className="reading-plan-card-top">
+          <h2>{plan.title}</h2>
+          {/* 精选计划不打徽章（分组标题已说明）；社群/个人计划才需要来源标识 */}
+          {plan.scope === "COMMUNITY" && <span className="reading-plan-scope is-community">{plan.community?.name ?? "社群"}</span>}
+          {plan.scope === "PERSONAL" && <span className="reading-plan-scope is-personal">自建</span>}
+          <small>{plan.completedDays}/{plan.totalDays} 天</small>
+        </div>
+        <div className="reading-plan-progress" aria-label={`已完成${progress}%`}>
+          <span style={{ width: `${progress}%` }} />
+        </div>
+        {plan.completedAt ? (
+          <div className="reading-plan-complete"><Icon name="check" size={15} />计划已完成，愿你继续持守阅读</div>
+        ) : (
+          <>
+            {plan.today && (
+              <button className="reading-plan-today" type="button" onClick={() => openToday(plan)}>
+                <span className="reading-plan-today-copy">
+                  <small>第 {plan.today.dayNumber} 天{plan.today.title ? ` · ${plan.today.title}` : ""}</small>
+                  <b>{todayReference(plan)}</b>
+                </span>
+                <span className="reading-plan-go">去阅读<Icon name="chevron-right" size={14} /></span>
+              </button>
+            )}
+            {/* 兜底：读了纸质圣经或跳过了阅读页的打卡提示时手动补卡 */}
+            <button
+              className="reading-plan-manual"
+              type="button"
+              disabled={busyId === plan.id}
+              onClick={() => void runAction(plan)}
+            >
+              {busyId === plan.id ? "正在打卡…" : "已在别处读完？手动打卡"}
+            </button>
+          </>
+        )}
+      </article>
+    );
+  };
+
+  // 可选计划卡：目录形态——标题 + 时长 + 简介 + 试读/加入，不渲染无意义的 0% 进度
+  const renderAvailableCard = (plan: ReadingPlan) => (
+    <article className="reading-plan-card is-available" key={plan.id}>
+      <div className="reading-plan-card-top">
+        <h2>{plan.title}</h2>
+        {plan.scope === "COMMUNITY" && <span className="reading-plan-scope is-community">{plan.community?.name ?? "社群"}</span>}
+        <span className="reading-plan-days">{plan.totalDays} 天</span>
+      </div>
+      {plan.description && <p>{plan.description}</p>}
+      <div className="reading-plan-card-foot">
+        {plan.today && (
+          <button className="reading-plan-preview" type="button" onClick={() => openToday(plan)}>
+            试读第 1 天 · {todayReference(plan)}
+          </button>
+        )}
+        <button
+          className="reading-plan-join"
+          type="button"
+          disabled={busyId === plan.id}
+          onClick={() => void runAction(plan)}
+        >
+          {busyId === plan.id ? "加入中…" : "加入"}
+        </button>
+      </div>
+    </article>
+  );
+
+  const mine = plans
+    .filter((plan) => plan.enrolled)
+    .sort((a, b) => Number(Boolean(a.completedAt)) - Number(Boolean(b.completedAt)));
+  const available = plans.filter((plan) => !plan.enrolled);
 
   return (
     <div className="screen reading-plans-screen">
       <UnifiedHeader
         title="读经计划"
-        subtitle={getStreak() > 0 ? `连续 ${getStreak()} 天` : plans.length ? `${plans.length} 个` : "每日同行"}
-        ariaLabel="个人与社群读经计划"
+        subtitle={getStreak() > 0 ? `连续 ${getStreak()} 天` : "每日同行"}
+        ariaLabel="读经计划"
         onBack={goBack}
         backLabel="返回我的"
       />
       <main className="screen-scroll reading-plans-scroll">
-        <header className="reading-plans-intro">
-          <span><Icon name="calendar" size={20} /></span>
-          <div>
-            <h1>每天一段，持续读下去</h1>
-            <p>个人计划只属于你；社群计划与群成员一起完成。</p>
-          </div>
-        </header>
-
         {message && <div className="reading-plan-feedback" role="status">{message}</div>}
         {error && (
           <div className="reading-plan-feedback is-error" role="alert">
             {error}<button type="button" onClick={() => void loadPlans()}>重试</button>
           </div>
         )}
-        {loading && <div className="reading-plan-empty">正在读取计划…</div>}
+        {loading && <SkeletonScreen label="正在读取计划" />}
 
-        {!loading && plans.map((plan) => {
-          const progress = plan.totalDays
-            ? Math.round((plan.completedDays / plan.totalDays) * 100)
-            : 0;
-          const reference = todayReference(plan);
-          return (
-            <article className="reading-plan-card" key={plan.id}>
-              <div className="reading-plan-card-top">
-                <span className={`reading-plan-scope is-${plan.scope.toLowerCase()}`}>
-                  {scopeLabel(plan)}
-                </span>
-                <small>{plan.completedDays}/{plan.totalDays} 天</small>
-              </div>
-              <h2>{plan.title}</h2>
-              {plan.description && <p>{plan.description}</p>}
-              <div className="reading-plan-progress" aria-label={`已完成${progress}%`}>
-                <span style={{ width: `${progress}%` }} />
-              </div>
-              {plan.today && !plan.completedAt && (
-                <button className="reading-plan-today" type="button" onClick={() => openToday(plan)}>
-                  <span>
-                    <small>第 {plan.today.dayNumber} 天</small>
-                    <b>{plan.today.title || reference}</b>
-                    {plan.today.title && <em>{reference}</em>}
-                  </span>
-                  <Icon name="chevron-right" size={16} />
-                </button>
-              )}
-              <button
-                className={`reading-plan-action${plan.completedAt ? " is-complete" : ""}`}
-                type="button"
-                disabled={busyId === plan.id || Boolean(plan.completedAt)}
-                onClick={() => void runAction(plan)}
-              >
-                {plan.completedAt
-                  ? <><Icon name="check" size={16} />计划已完成</>
-                  : busyId === plan.id
-                    ? "正在更新…"
-                    : plan.enrolled
-                      ? "完成今天的阅读"
-                      : "加入计划"}
-              </button>
-            </article>
-          );
-        })}
-
-        {!loading && !plans.length && !error && (
-          <div className="reading-plan-empty">暂时没有可加入的读经计划。</div>
+        {!loading && mine.length > 0 && (
+          <section className="reading-plans-group" aria-label="我的计划">
+            <h3>我的计划<span>{mine.length}</span></h3>
+            {mine.map(renderEnrolledCard)}
+          </section>
         )}
 
-        <p className="reading-plans-note">
-          群主或管理员可通过社群助手创建群读经计划；个人计划内容仅当前账号可见。
-        </p>
+        {!loading && available.length > 0 && (
+          <section className="reading-plans-group" aria-label="可选计划">
+            <h3>可选计划<span>{available.length}</span></h3>
+            {available.map(renderAvailableCard)}
+          </section>
+        )}
+
+        {!loading && !plans.length && !error && (
+          <EmptyState compact art="content" title="暂时没有读经计划" desc="新的计划上架后会出现在这里。" />
+        )}
+
+        {SHOW_COMMUNITY && (
+          <p className="reading-plans-note">
+            群主或管理员可通过社群助手创建群读经计划；个人计划内容仅当前账号可见。
+          </p>
+        )}
       </main>
     </div>
   );

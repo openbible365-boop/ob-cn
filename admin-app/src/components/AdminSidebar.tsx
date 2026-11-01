@@ -32,6 +32,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope }[] 
   { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
   { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app" },
+  { href: "/admin/notifications", label: "通知推送", roles: ["SUPER_ADMIN"], scope: "app" },
 ];
 
 const SCOPE_ORDER: Scope[] = ["shared", "app"];

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useAppBack } from "../hooks/useAppBack";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
@@ -27,7 +28,9 @@ export function AccountDataPage() {
     };
   }, []);
 
-  const exportLocalData = () => {
+  const [exportError, setExportError] = useState("");
+
+  const exportLocalData = async () => {
     const payload = {
       format: "openbible-local-data",
       version: 1,
@@ -36,13 +39,39 @@ export function AccountDataPage() {
       notes,
       conversations,
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
+    const json = JSON.stringify(payload, null, 2);
+    // 文件名日期用本机时区（toISOString 是 UTC，晚上导出会标成"明天"）
+    const now = new Date();
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const filename = `openbible-local-data-${day}.json`;
+    setExportError("");
+
+    // 原生 App：WKWebView 没有下载管理器，blob 下载会静默失败。
+    // 写入缓存目录后调系统分享面板，用户自选"存储到文件/隔空投送/微信"等出口。
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([
+          import("@capacitor/filesystem"),
+          import("@capacitor/share"),
+        ]);
+        await Filesystem.writeFile({ path: filename, data: json, directory: Directory.Cache, encoding: Encoding.UTF8 });
+        const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
+        await Share.share({ title: filename, url: uri });
+        setExported(true);
+      } catch (error) {
+        // 用户取消分享面板不算失败，不提示也不置"已导出"
+        if (!/cancel/i.test(error instanceof Error ? error.message : "")) {
+          setExportError("导出失败，请重试");
+        }
+      }
+      return;
+    }
+
+    const blob = new Blob([json], { type: "application/json" });
     const href = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = href;
-    link.download = `openbible-local-data-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(href);
     setExported(true);
@@ -85,17 +114,17 @@ export function AccountDataPage() {
             <button type="button" onClick={() => navigate("/me/content?t=highlights")}>
               <Icon name="star" size={20} />
               <span>高亮</span>
-              <b className="me-quick-count">{highlights.length}</b>
+              <b className={`me-quick-count${highlights.length === 0 ? " is-zero" : ""}`}>{highlights.length}</b>
             </button>
             <button type="button" onClick={() => navigate("/me/content?t=notes")}>
               <Icon name="edit" size={20} />
               <span>笔记</span>
-              <b className="me-quick-count">{notes.length}</b>
+              <b className={`me-quick-count${notes.length === 0 ? " is-zero" : ""}`}>{notes.length}</b>
             </button>
             <button type="button" onClick={() => navigate("/huidu")}>
               <Icon name="sparkle" size={20} />
               <span>慧读</span>
-              <b className="me-quick-count">{conversations.length}</b>
+              <b className={`me-quick-count${conversations.length === 0 ? " is-zero" : ""}`}>{conversations.length}</b>
             </button>
           </div>
         </section>
@@ -110,11 +139,11 @@ export function AccountDataPage() {
             </span>
             <Icon name="chevron-right" size={16} />
           </button>
-          <button type="button" onClick={exportLocalData}>
+          <button type="button" onClick={() => void exportLocalData()}>
             <span className="me-menu-icon"><Icon name="download" size={16} /></span>
             <span className="me-menu-copy">
               <b>{exported ? "已导出本机数据" : "导出本机数据"}</b>
-              <small>生成 JSON 备份，不含密码、凭证或社群成员资料</small>
+              <small>{exportError || "生成 JSON 备份，不含密码、凭证或社群成员资料"}</small>
             </span>
             <Icon name="chevron-right" size={16} />
           </button>

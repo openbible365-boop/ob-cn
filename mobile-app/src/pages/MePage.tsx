@@ -7,6 +7,8 @@ import { Icon } from "../components/Icon";
 import { UserAvatar } from "../components/UserAvatar";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
+import { getPrayers } from "../data/prayers";
+import { unregisterCurrentPushToken } from "../data/push";
 import { useSettings } from "../context/SettingsContext";
 import {
   announceProfileChanged,
@@ -15,6 +17,7 @@ import {
   updateAvatar,
   type SessionUser,
 } from "../data/profile";
+import { SHOW_COMMUNITY } from "../data/features";
 import { fetchReadingPlans, type ReadingPlan } from "../data/reading-plans";
 import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
@@ -83,7 +86,8 @@ export function MePage() {
     // 纯登录页：满屏只放品牌、广告语和登录按钮，不放任何数据入口。
     return (
       <div className="screen me-screen">
-        <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} secondary={translate("个人")} />
+        {/* 访客态没有可说的副信息，「个人」与「我的」纯属同义反复 */}
+        <CompactToolbar ariaLabel={translate("个人中心")} primary={translate("我的")} />
         <main className="screen-scroll me-guest-scroll">
           <div className="me-guest-center">
             <div className="me-guest-brand">
@@ -109,7 +113,7 @@ export function MePage() {
                 <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
                 <span>{translate("圣经")}</span>
               </h1>
-              <p>{translate("智慧 · 读经 · 社群 · 共勉")}</p>
+              <p>{translate(SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉")}</p>
             </div>
             <button className="me-login-button" type="button" onClick={() => navigate("/me/login")}>
               {translate("登录或注册")}
@@ -132,28 +136,23 @@ export function MePage() {
     { icon: "star", label: translate("高亮"), value: getHighlights().length, to: "/me/content?t=highlights" },
     { icon: "edit", label: translate("笔记"), value: getNotes().length, to: "/me/content?t=notes" },
     { icon: "sparkle", label: translate("慧读"), value: getConversations().length, to: "/huidu" },
-    { icon: "calendar", label: translate("活动"), value: user.counts.eventSignups, to: "/me/activities" },
+    // 活动报名属于社群功能，随社群开关一起隐藏；隐藏期间这一格给祷告清单
+    ...(SHOW_COMMUNITY
+      ? [{ icon: "calendar", label: translate("活动"), value: user.counts.eventSignups, to: "/me/activities" }]
+      : [{ icon: "heart", label: translate("祷告"), value: getPrayers().length, to: "/me/prayers" }]),
   ];
 
-  // 菜单分组：读经内容 / 设置 / 法务三张卡（社群卡单独渲染，只有管理身份才出现）。
-  // 法务条款独立成组放最底部——注册型产品里它们该能被找到，但不该和日常设置挤在一起。
-  const menuGroups = [
-    [
-      { icon: "calendar", label: translate("读经计划"), desc: translate("个人与社群每日阅读"), to: "/me/plans" },
-      { icon: "align-justify", label: translate("我的内容"), desc: translate("高亮与笔记的汇总"), to: "/me/content" },
-      { icon: "heart", label: translate("祷告清单"), desc: translate("代求与已应允的记录"), to: "/me/prayers" },
-    ],
-    [
-      { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
-      { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
-      { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
-      // 反馈走系统邮件：协议与隐私政策里承诺的联系渠道
-      { icon: "mail", label: translate("意见反馈"), desc: "mushengbooks@gmail.com", to: "", href: `mailto:mushengbooks@gmail.com?subject=${encodeURIComponent("慧读圣经反馈")}` },
-    ],
-    [
-      { icon: "info", label: translate("用户协议"), desc: "", to: "/legal/terms" },
-      { icon: "shield", label: translate("隐私政策"), desc: "", to: "/legal/privacy" },
-    ],
+  // 设置只有一张卡（社群卡单独渲染，只有管理身份才出现）。
+  // 原先的「读经计划 / 我的内容 / 祷告清单」一组被裁掉了——三行全是重复入口：
+  // 计划有顶部横幅、内容有四宫格的高亮/笔记、祷告有四宫格的祷告格，一页一个门就够。
+  // 用户协议 / 隐私政策是低频法务链接，降级为页脚文字行（与未登录页同一形态），
+  // 不再占一张与日常设置同级的卡。
+  const menuRows = [
+    { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
+    { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
+    { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
+    // 反馈走系统邮件：协议与隐私政策里承诺的联系渠道
+    { icon: "mail", label: translate("意见反馈"), desc: "mushengbooks@gmail.com", to: "", href: `mailto:mushengbooks@gmail.com?subject=${encodeURIComponent("慧读圣经反馈")}` },
   ];
 
   // 读经横幅：优先进行中的计划；全部读完则显示最近一个，让完成状态可见
@@ -166,6 +165,8 @@ export function MePage() {
   const confirmLogout = async () => {
     setLogoutBusy(true);
     setLogoutError("");
+    // 先注销本机推送 token，否则退出后这台手机还会收到上个账号的通知
+    await unregisterCurrentPushToken();
     const result = await logout();
     setLogoutBusy(false);
     if (result.ok) setUser(null);
@@ -287,22 +288,7 @@ export function MePage() {
           ))}
         </div>
 
-        {menuGroups[0] && (
-          <div className="me-menu-card">
-            {menuGroups[0].map((row) => (
-              <button key={row.label} type="button" onClick={() => navigate(row.to)}>
-                <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
-                <span className="me-menu-copy">
-                  <b>{row.label}</b>
-                  {row.desc && <small>{row.desc}</small>}
-                </span>
-                <Icon name="chevron-right" size={16} />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {user.groupAccounts.length > 0 && (
+        {SHOW_COMMUNITY && user.groupAccounts.length > 0 && (
           <div className="me-menu-card">
             <button type="button" aria-expanded={groupsOpen} onClick={() => setGroupsOpen((value) => !value)}>
               <span className="me-menu-icon"><Icon name="users" size={16} /></span>
@@ -338,8 +324,8 @@ export function MePage() {
           </div>
         )}
 
-        {/* 外观：阅读主题是全局偏好，放在「我的」而不是阅读页的快捷面板里 */}
         <div className="me-menu-card">
+          {/* 阅读模式（即时偏好）并入设置卡头部，不再独占一张孤卡 */}
           <div className="me-theme-row">
             <span className="me-menu-icon"><Icon name="sun" size={16} /></span>
             <span className="me-menu-copy"><b>{translate("阅读模式")}</b></span>
@@ -358,26 +344,21 @@ export function MePage() {
               ))}
             </div>
           </div>
+          {menuRows.map((row) => (
+            <button
+              key={row.label}
+              type="button"
+              onClick={() => ("href" in row && row.href ? openFeedback() : navigate(row.to))}
+            >
+              <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
+              <span className="me-menu-copy">
+                <b>{row.label}</b>
+                {row.desc && <small>{row.desc}</small>}
+              </span>
+              <Icon name="chevron-right" size={16} />
+            </button>
+          ))}
         </div>
-
-        {menuGroups.slice(1).map((group, index) => (
-          <div className="me-menu-card" key={index}>
-            {group.map((row) => (
-              <button
-                key={row.label}
-                type="button"
-                onClick={() => ("href" in row && row.href ? openFeedback() : navigate(row.to))}
-              >
-                <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
-                <span className="me-menu-copy">
-                  <b>{row.label}</b>
-                  {row.desc && <small>{row.desc}</small>}
-                </span>
-                <Icon name="chevron-right" size={16} />
-              </button>
-            ))}
-          </div>
-        ))}
 
         {!logoutConfirm ? (
           <button className="me-logout-button" type="button" onClick={() => setLogoutConfirm(true)}>
@@ -399,6 +380,11 @@ export function MePage() {
           </section>
         )}
         {logoutError && <div className="me-logout-error" role="alert">{logoutError}</div>}
+
+        <div className="me-legal-links">
+          <button type="button" onClick={() => navigate("/legal/terms")}>{translate("用户协议")}</button>
+          <button type="button" onClick={() => navigate("/legal/privacy")}>{translate("隐私政策")}</button>
+        </div>
 
         <div className="me-version">慧读圣经 · v{__APP_VERSION__}</div>
       </main>
