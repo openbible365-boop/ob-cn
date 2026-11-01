@@ -776,7 +776,8 @@ a {
 
 .bible-chapter-picker.book-list {
   position: fixed;
-  top: 50px;
+  /* fixed 相对视口：要自己加状态栏安全区，否则安卓上浮层会盖住顶栏 */
+  top: calc(50px + env(safe-area-inset-top));
   right: 0;
   bottom: 0;
   left: 0;
@@ -8468,6 +8469,179 @@ audio.community-post-media {
   color: var(--body);
   font-size: 13px;
   line-height: 1.8;
+}
+
+/* ── 奉献支持页：与网页端支持弹窗同一设计（计划卡 + 周期切换），
+   金色语义（事工），卡片遵循白底 1px 线 14px 圆角规范 ── */
+.donate-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.donate-head {
+  text-align: center;
+  padding: 6px 4px 2px;
+}
+
+.donate-head h1 {
+  font-size: 19px;
+}
+
+.donate-head p {
+  margin-top: 6px;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* 周期切换药丸：与阅读模式分段控件同形态 */
+.donate-period {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.donate-period button {
+  padding: 7px 18px;
+  border-radius: 999px;
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.donate-period button.active {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.donate-plan {
+  position: relative;
+  padding: 18px 16px 16px;
+}
+
+/* 热门档：金色描边突出（对应网页端 popular 卡） */
+.donate-plan.is-popular {
+  border-color: var(--yellow-medium);
+  box-shadow: 0 0 0 1px var(--yellow-medium);
+}
+
+.donate-plan-badge {
+  position: absolute;
+  top: -9px;
+  right: 16px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.donate-plan h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.donate-plan-spark {
+  color: var(--yellow-ink);
+}
+
+.donate-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 8px 0 12px;
+}
+
+.donate-plan-price .donate-currency {
+  color: var(--body);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.donate-plan-price b {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.donate-plan-price .donate-period-unit {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.donate-plan-btn {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.donate-plan-btn.is-highlight {
+  border-color: transparent;
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.donate-plan-btn.is-current {
+  border-color: transparent;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.donate-plan-features {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.donate-plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.donate-plan-features .app-icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--yellow-ink);
+}
+
+.donate-foot {
+  padding: 2px 6px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.donate-foot .app-icon {
+  vertical-align: -2px;
+}
+
+.donate-foot-contact {
+  margin-top: 8px;
+}
+
+.donate-foot a {
+  color: var(--yellow-ink);
+  font-weight: 600;
 }
 
 /* 护眼（米黄纸）：正文 11.0:1，次要 7.6:1，辅助 5.4:1 */

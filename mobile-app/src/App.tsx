@@ -25,6 +25,7 @@ const MyActivitiesPage = lazyPage(() => import("./pages/MyActivitiesPage"), "MyA
 const AccountDataPage = lazyPage(() => import("./pages/AccountDataPage"), "AccountDataPage");
 const ResourcesPage = lazyPage(() => import("./pages/ResourcesPage"), "ResourcesPage");
 const PrayerListPage = lazyPage(() => import("./pages/PrayerListPage"), "PrayerListPage");
+const DonatePage = lazyPage(() => import("./pages/DonatePage"), "DonatePage");
 const PrayerWallPage = lazyPage(() => import("./pages/PrayerWallPage"), "PrayerWallPage");
 const ReadingPlansPage = lazyPage(() => import("./pages/ReadingPlansPage"), "ReadingPlansPage");
 const LoginPage = lazyPage(() => import("./pages/LoginPage"), "LoginPage");
@@ -152,6 +153,8 @@ export default function App() {
         <Route path="/me/resources" element={<ResourcesPage />} />
         {/* 祷告清单：本机数据，不要求登录 */}
         <Route path="/me/prayers" element={<PrayerListPage />} />
+        {/* 奉献支持：纯信息展示页，不要求登录 */}
+        <Route path="/me/donate" element={<DonatePage />} />
         {/* 祷告墙：全站代祷，看墙不要求登录，发布/阿们时再引导登录 */}
         <Route path="/prayer-wall" element={<PrayerWallPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />
