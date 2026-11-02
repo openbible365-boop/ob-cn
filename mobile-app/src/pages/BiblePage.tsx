@@ -43,7 +43,7 @@ import {
   updateNote,
   deleteNote,
 } from "../data/annotations";
-import { startConversation } from "../data/huidu";
+import { OPENING_QUESTION, startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
 import {
   hasAndroidMediaControls,
@@ -813,7 +813,7 @@ export function BiblePage() {
       customRef,
       { bookCode: book.code, versionCode: version.code },
     );
-    navigate(`/huidu/${conv.id}`, { state: { justCreated: true } });
+    navigate(`/huidu/${conv.id}`, { state: { justCreated: true, initialQuestion: OPENING_QUESTION } });
   };
 
   const copyVerse = async () => {

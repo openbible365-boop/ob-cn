@@ -15,6 +15,7 @@ ExecStart=/usr/bin/ssh -NT \
   -o ServerAliveInterval=30 \
   -o ServerAliveCountMax=3 \
   -o StrictHostKeyChecking=accept-new \
+  -L 172.17.0.1:7998:127.0.0.1:7998 \
   -L 172.20.0.1:8010:127.0.0.1:8010 \
   root@47.238.7.44
 Restart=always
