@@ -2396,30 +2396,45 @@ a {
   color: var(--muted);
 }
 
+/* 笔记表单：多行自适应输入（约 4 行封顶），按钮贴底随输入框长高。
+   配色用金（个人内容语义）——紫色只留给 AI。 */
 .verse-compact-note-form {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
 }
 
-.verse-compact-note-form input {
-  height: 40px;
+.verse-compact-note-form textarea {
+  min-height: 40px;
+  max-height: 120px;
   min-width: 0;
   flex: 1;
-  padding: 0 12px;
+  padding: 9px 12px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
   font-size: 14px;
+  line-height: 1.55;
+  resize: none;
+  overflow-y: auto;
+}
+
+.verse-compact-note-form textarea:focus-visible {
+  outline: none;
+  border-color: var(--yellow-medium);
 }
 
 .verse-compact-note-form button {
   height: 36px;
+  margin-bottom: 2px;
   flex: none;
   padding: 0 16px;
   border: 0;
   border-radius: 999px;
-  background: var(--purple);
-  color: #fff;
+  background: var(--yellow);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 600;
 }

@@ -1914,10 +1914,29 @@ export function BiblePage() {
                   }
                 }}
               >
-                <input
+                {/* 多行自适应：随内容撑到约 4 行封顶后内部滚动；Enter 保存、Shift+Enter 换行 */}
+                <textarea
                   autoFocus
+                  rows={1}
+                  // 编辑已有长笔记时预填内容也按内容撑高（callback ref 幂等）
+                  ref={(el) => {
+                    if (!el) return;
+                    el.style.height = "auto";
+                    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+                  }}
                   value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
+                  enterKeyHint="send"
+                  onChange={(e) => {
+                    setNoteText(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      e.currentTarget.form?.requestSubmit();
+                    }
+                  }}
                   placeholder="写下你的笔记…"
                 />
                 <button type="submit">{editingNoteId ? "更新" : "保存"}</button>
