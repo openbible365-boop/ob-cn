@@ -26,6 +26,8 @@ const AccountDataPage = lazyPage(() => import("./pages/AccountDataPage"), "Accou
 const ResourcesPage = lazyPage(() => import("./pages/ResourcesPage"), "ResourcesPage");
 const PrayerListPage = lazyPage(() => import("./pages/PrayerListPage"), "PrayerListPage");
 const DonatePage = lazyPage(() => import("./pages/DonatePage"), "DonatePage");
+const FeedbackPage = lazyPage(() => import("./pages/FeedbackPage"), "FeedbackPage");
+const ReferralPage = lazyPage(() => import("./pages/ReferralPage"), "ReferralPage");
 const PrayerWallPage = lazyPage(() => import("./pages/PrayerWallPage"), "PrayerWallPage");
 const ReadingPlansPage = lazyPage(() => import("./pages/ReadingPlansPage"), "ReadingPlansPage");
 const LoginPage = lazyPage(() => import("./pages/LoginPage"), "LoginPage");
@@ -155,6 +157,10 @@ export default function App() {
         <Route path="/me/prayers" element={<PrayerListPage />} />
         {/* 奉献支持：纯信息展示页，不要求登录 */}
         <Route path="/me/donate" element={<DonatePage />} />
+        {/* 意见反馈：表单提交，允许匿名 */}
+        <Route path="/me/feedback" element={<FeedbackPage />} />
+        {/* 推荐朋友：下载二维码与链接 */}
+        <Route path="/me/referral" element={<ReferralPage />} />
         {/* 祷告墙：全站代祷，看墙不要求登录，发布/阿们时再引导登录 */}
         <Route path="/prayer-wall" element={<PrayerWallPage />} />
         <Route path="/me/plans" element={<RequireLogin><ReadingPlansPage /></RequireLogin>} />

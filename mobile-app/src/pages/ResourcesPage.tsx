@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
-import { useArmedConfirm } from "../hooks/useArmedConfirm";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
@@ -14,25 +13,12 @@ import {
   readableBytes,
   removeVersion,
 } from "../data/offline-bible";
-import {
-  getOfflineAudioMeta,
-  removeBookAudio,
-} from "../data/offline-audio";
-import {
-  VERSIONS,
-  getBookByCode,
-  getVersion,
-  bookName,
-  getEnabledVersionCodes,
-  setVersionEnabled,
-} from "../data/scripture";
+import { VERSIONS, getEnabledVersionCodes, setVersionEnabled } from "../data/scripture";
 
 type Progress = { done: number; total: number };
 
 export function ResourcesPage() {
   const goBack = useAppBack("/me/account");
-  // 删除走页内二次确认（再点一次），不用 WebView 的英文 confirm 弹窗
-  const { armedKey, confirm } = useArmedConfirm();
   const [meta, setMeta] = useState(getOfflineMeta);
   // 注释内容是否有新版（仅对已下载用户检查；离线/未下载不提示）
   const [commentaryUpdate, setCommentaryUpdate] = useState(false);
@@ -42,7 +28,6 @@ export function ResourcesPage() {
     commentaryHasUpdate().then((result) => { if (!cancelled) setCommentaryUpdate(result); });
     return () => { cancelled = true; };
   }, []);
-  const [audioMeta, setAudioMeta] = useState(getOfflineAudioMeta);
   // 同一时刻只允许一个译本在下载：拼音和合本有 50MB，上并发只会互相拖慢
   const [busyVersion, setBusyVersion] = useState("");
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -223,52 +208,6 @@ export function ResourcesPage() {
           <div className="me-res-list">
             {commentaryRow()}
           </div>
-        </section>
-
-        {/* 语音圣经缓存：入口在播放器（按整卷缓存），这里做统一查看与删除 */}
-        <section className="me-data-section">
-          <div className="me-data-heading">
-            <div>
-              <h2>语音圣经</h2>
-              <p>在语音圣经播放器里点右上角下载键，即可缓存整卷音频。</p>
-            </div>
-            <Icon name="volume-2" size={20} />
-          </div>
-          {Object.keys(audioMeta).length === 0 ? (
-            <p className="me-res-unsupported">还没有缓存任何书卷的音频。</p>
-          ) : (
-            <div className="me-res-list">
-              {Object.entries(audioMeta).map(([key, item]) => {
-                const [voice, bookCode] = key.split(":");
-                const label = bookName(getBookByCode(bookCode), getVersion("cuv"));
-                const voiceLabel = voice === "female" ? "女声" : "男声";
-                return (
-                  <div className="me-res-row" key={key}>
-                    <span className="me-res-icon"><Icon name="volume-2" size={18} /></span>
-                    <span className="me-res-copy">
-                      <b>{label} · {voiceLabel}</b>
-                      <small>已缓存 · {readableBytes(item.bytes)} · {item.chapters}/{item.totalChapters} 章</small>
-                    </span>
-                    <button
-                      className={`me-res-btn${armedKey === `audio:${bookCode}:${voice}` ? " is-danger" : ""}`}
-                      type="button"
-                      disabled={Boolean(busyVersion)}
-                      aria-label={armedKey === `audio:${bookCode}:${voice}`
-                        ? `再点一次确认删除《${label}》的音频缓存`
-                        : `删除《${label}》（${voiceLabel}）的整卷音频缓存`}
-                      onClick={() => confirm(`audio:${bookCode}:${voice}`, () => {
-                        void removeBookAudio("cuv", bookCode, item.totalChapters, voice).then(() => {
-                          setAudioMeta(getOfflineAudioMeta());
-                        });
-                      })}
-                    >
-                      {armedKey === `audio:${bookCode}:${voice}` ? "确认删除" : "删除"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </section>
 
         <p className="me-data-note">

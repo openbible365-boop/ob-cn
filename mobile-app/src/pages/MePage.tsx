@@ -45,18 +45,6 @@ export function MePage() {
     return () => { cancelled = true; };
   }, []);
 
-  // 意见反馈：优先唤起系统邮件；900ms 后页面仍有焦点说明没有邮件应用接管，
-  // 兜底把邮箱复制进剪贴板并提示（安卓上未配置邮件客户端的情况很常见）
-  const openFeedback = () => {
-    const FEEDBACK_EMAIL = "mushengbooks@gmail.com";
-    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("慧读圣经反馈")}`;
-    window.setTimeout(() => {
-      if (!document.hasFocus()) return;
-      navigator.clipboard?.writeText(FEEDBACK_EMAIL).catch(() => {});
-      window.alert(translate("未能唤起邮件应用。反馈邮箱已复制，可粘贴到任意邮箱发送：") + FEEDBACK_EMAIL);
-    }, 900);
-  };
-
   const loggedIn = Boolean(user);
   useEffect(() => {
     if (!loggedIn) return;
@@ -123,7 +111,7 @@ export function MePage() {
           <div className="me-legal-links">
             <button type="button" onClick={() => navigate("/legal/terms")}>{translate("用户协议")}</button>
             <button type="button" onClick={() => navigate("/legal/privacy")}>{translate("隐私政策")}</button>
-            <button type="button" onClick={openFeedback}>{translate("意见反馈")}</button>
+            <button type="button" onClick={() => navigate("/me/feedback")}>{translate("意见反馈")}</button>
           </div>
         </main>
       </div>
@@ -155,8 +143,9 @@ export function MePage() {
     ...(SHOW_DONATION
       ? [{ icon: "gift", label: translate("奉献支持"), desc: translate("支持这项免费的福音事工"), to: "/me/donate" }]
       : []),
-    // 反馈走系统邮件：协议与隐私政策里承诺的联系渠道
-    { icon: "mail", label: translate("意见反馈"), desc: "mushengbooks@gmail.com", to: "", href: `mailto:mushengbooks@gmail.com?subject=${encodeURIComponent("慧读圣经反馈")}` },
+    { icon: "share", label: translate("推荐朋友"), desc: translate("分享下载二维码与链接"), to: "/me/referral" },
+    // 反馈走应用内表单（表单页里仍展示联系邮箱）
+    { icon: "mail", label: translate("意见反馈"), desc: translate("问题与建议，我们都会读"), to: "/me/feedback" },
   ];
 
   // 读经横幅：优先进行中的计划；全部读完则显示最近一个，让完成状态可见
@@ -237,9 +226,10 @@ export function MePage() {
           <div className="me-profile-copy">
             <h1>
               {user.name}
-              {/* 套餐从顶栏挪到名字旁边：放在「我的」后面像个来路不明的标签，
-                  贴着账号才读得出这是这个账号的方案。 */}
-              <span className="me-plan-tag">{translate(user.entitlements.label)}</span>
+              {/* 套餐标签随支持计划体系（SHOW_DONATION）一起隐藏/恢复 */}
+              {SHOW_DONATION && (
+                <span className="me-plan-tag">{translate(user.entitlements.label)}</span>
+              )}
             </h1>
             <p>{user.email ?? translate("已登录用户")}</p>
             {avatarMessage && (
@@ -352,7 +342,7 @@ export function MePage() {
             <button
               key={row.label}
               type="button"
-              onClick={() => ("href" in row && row.href ? openFeedback() : navigate(row.to))}
+              onClick={() => navigate(row.to)}
             >
               <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
               <span className="me-menu-copy">

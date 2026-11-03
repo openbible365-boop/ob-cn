@@ -3,12 +3,6 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { VerseShareSheet } from "../components/VerseShareSheet";
 import { AudioGlyph } from "../components/AudioGlyph";
-import {
-  downloadBookAudio,
-  isBookAudioCached,
-  offlineAudioSupported,
-  removeBookAudio,
-} from "../data/offline-audio";
 import { getDailyVerse } from "../data/daily-verse";
 import { hapticLight } from "../native/haptics";
 import { SkeletonScreen } from "../components/SkeletonScreen";
@@ -54,7 +48,6 @@ import {
 import { useSettings } from "../context/SettingsContext";
 import { PlayingAudioIcon } from "../components/PlayingAudioIcon";
 import { schedulePushReadingPosition } from "../data/reading-sync";
-import { useArmedConfirm } from "../hooks/useArmedConfirm";
 import { FirstRunGuide, shouldShowFirstRunGuide } from "../components/FirstRunGuide";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
 
@@ -322,8 +315,6 @@ export function BiblePage() {
   const [audioTimestamps, setAudioTimestamps] = useState<AudioTimestamp[]>([]);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
-  const [audioCacheBusy, setAudioCacheBusy] = useState<{ done: number; total: number } | null>(null);
-  const [audioCacheReady, setAudioCacheReady] = useState(false);
   // 正在播放的章节标签：面板关闭后切章浏览时，迷你条仍如实显示音频来源
   const [audioSourceLabel, setAudioSourceLabel] = useState("");
   // 顶栏滚动收起：向下滚隐藏、向上滚或回到顶部恢复
@@ -341,7 +332,6 @@ export function BiblePage() {
   // 金句默认只占一行，点开才展开整张卡，首屏留给经文
   const [dailyExpanded, setDailyExpanded] = useState(false);
   const dailyVerse = getDailyVerse();
-  const { armedKey: audioRemoveArmed, confirm: confirmAudioRemove } = useArmedConfirm();
   const readStreak = getStreak();
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -518,10 +508,6 @@ export function BiblePage() {
 
   const displayedAudioVoice = resolvedAudioVoice || audioVoice;
 
-  // 换书卷或换音色后重查整卷缓存状态
-  useEffect(() => {
-    setAudioCacheReady(isBookAudioCached(book.code, displayedAudioVoice));
-  }, [book.code, displayedAudioVoice]);
   const chooseAudioVoice = (voice: string) => {
     setVoiceMenuOpen(false);
     setResolvedAudioVoice("");
@@ -1052,38 +1038,6 @@ export function BiblePage() {
     audioRef.current?.pause();
     setParams({ t: version.code, bk: target.bookCode, c: String(target.chapter) });
     setSelected(new Set());
-  };
-  // 整卷音频缓存：把当前书卷全部章节（当前音色）缓存到本机，离线可听。
-  // 单章 mp3 走跨域 CDN，一律经同域代理 /api/mobile/audio/file 拉取。
-  const cacheBookAudio = async () => {
-    if (audioCacheBusy) return;
-    if (audioCacheReady) {
-      // 页内二次确认：第一次点进入待命态，再点一次才删（替代英文按钮的 confirm）
-      confirmAudioRemove("book-audio", () => {
-        void removeBookAudio(version.code, book.code, book.chapters, displayedAudioVoice)
-          .then(() => setAudioCacheReady(false));
-      });
-      return;
-    }
-    if (!offlineAudioSupported()) {
-      setAudioError("当前环境不支持离线缓存");
-      return;
-    }
-    setAudioCacheBusy({ done: 0, total: book.chapters });
-    try {
-      await downloadBookAudio(
-        version.code,
-        book.code,
-        book.chapters,
-        displayedAudioVoice,
-        (done, total) => setAudioCacheBusy({ done, total }),
-      );
-      setAudioCacheReady(true);
-    } catch (error) {
-      setAudioError(error instanceof Error ? error.message : "整卷缓存失败，请检查网络后重试");
-    } finally {
-      setAudioCacheBusy(null);
-    }
   };
   const continueToNextAudioChapter = () => {
     const bookIndex = BOOKS.findIndex((item) => item.code === book.code);
@@ -1797,28 +1751,6 @@ export function BiblePage() {
             <div className="audio-player-kicker">
               <Icon name="volume-2" size={20} />
               <span>语音圣经</span>
-              <button data-icon-button="default"
-                type="button"
-                className={`audio-player-download${audioCacheReady ? " is-done" : ""}`}
-                aria-label={audioCacheBusy
-                  ? `正在缓存${displayedBook}整卷音频，第 ${audioCacheBusy.done} 章，共 ${audioCacheBusy.total} 章`
-                  : audioRemoveArmed === "book-audio"
-                    ? `再点一次确认删除${displayedBook}整卷离线音频`
-                    : audioCacheReady
-                      ? `已缓存${displayedBook}整卷音频，点击可删除`
-                      : `缓存${displayedBook}整卷音频到本机`}
-                title={audioCacheBusy
-                  ? "整卷缓存中…"
-                  : audioRemoveArmed === "book-audio"
-                    ? "再点一次确认删除"
-                    : audioCacheReady ? "已缓存整卷 · 点击删除" : "缓存整卷音频"}
-                disabled={Boolean(audioCacheBusy)}
-                onClick={() => void cacheBookAudio()}
-              >
-                {audioCacheBusy
-                  ? <b className="audio-cache-progress">{audioCacheBusy.done}/{audioCacheBusy.total}</b>
-                  : <Icon name={audioRemoveArmed === "book-audio" ? "trash" : audioCacheReady ? "check" : "download"} size={18} />}
-              </button>
               <button data-icon-button="default" type="button" className="audio-player-close" aria-label="关闭语音圣经" onClick={closeAudio}>
                 <Icon name="x" size={20} />
               </button>

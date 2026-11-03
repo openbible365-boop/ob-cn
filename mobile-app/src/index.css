@@ -2848,6 +2848,11 @@ a {
 
 .audio-play-button svg { fill: currentColor; stroke-width: 1.6; }
 
+/* 播放三角的重心偏左：右移 2px 做视觉居中（暂停双杠对称，不移） */
+.audio-play-button svg:has(polygon) {
+  transform: translateX(2px);
+}
+
 .audio-seek-icon {
   position: relative;
   display: inline-flex;
@@ -8436,6 +8441,176 @@ audio.community-post-media {
   color: var(--body);
   font-size: 13px;
   line-height: 1.8;
+}
+
+/* ── 推荐朋友页：下载二维码与链接，安卓 / iOS 分渠道 ── */
+.referral-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.referral-slogan {
+  padding: 0 4px;
+  color: var(--body);
+  font-size: 13px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.referral-channel {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.referral-channel h2 {
+  font-size: 15px;
+}
+
+.referral-channel > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.referral-qr {
+  width: 176px;
+  height: 176px;
+  margin: 6px 0 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.referral-link {
+  max-width: 100%;
+  color: var(--body);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.referral-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.referral-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--yellow-medium);
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.referral-actions button.is-copied {
+  border-color: transparent;
+  background: var(--surface-2);
+  color: var(--body);
+}
+
+.referral-coming {
+  padding: 18px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── 意见反馈页：应用内表单，联系邮箱保留在页脚 ── */
+.feedback-page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.feedback-form,
+.feedback-done {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.feedback-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.feedback-field span {
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.feedback-field textarea,
+.feedback-field input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.feedback-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.feedback-field textarea:focus-visible,
+.feedback-field input:focus-visible {
+  outline: none;
+  border-color: var(--yellow-medium);
+}
+
+.feedback-error {
+  color: var(--pink);
+  font-size: 12px;
+}
+
+.feedback-done {
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.feedback-done .app-icon {
+  color: var(--yellow-ink);
+}
+
+.feedback-done p {
+  color: var(--body);
+  font-size: 13px;
+}
+
+.feedback-done .btn-primary {
+  margin-top: 4px;
+  min-width: 160px;
+}
+
+.feedback-mail {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.feedback-mail a {
+  color: var(--yellow-ink);
+  font-weight: 600;
 }
 
 /* ── 奉献支持页：与网页端支持弹窗同一设计（计划卡 + 周期切换），

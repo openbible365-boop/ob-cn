@@ -1014,3 +1014,21 @@ model Session {
   @@index([userId])
   @@index([expiresAt])
 }
+
+/// 用户意见反馈：App 内表单提交，后台「意见反馈」页查看。
+/// 不与 User 建外键关系：允许匿名提交，用户注销后留言也应保留。
+model Feedback {
+  id        String   @id @default(cuid())
+  content   String
+  /// 用户选填的联系方式（邮箱/微信等，自由文本）
+  contact   String?
+  /// 提交时已登录则快照用户信息，便于后台定位
+  userId    String?
+  userEmail String?
+  userName  String?
+  handled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([handled])
+}
