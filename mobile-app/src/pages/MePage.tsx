@@ -130,20 +130,23 @@ export function MePage() {
       : [{ icon: "heart", label: translate("祷告"), value: getPrayers().length, to: "/me/prayers" }]),
   ];
 
-  // 设置只有一张卡（社群卡单独渲染，只有管理身份才出现）。
+  // 设置分两张卡（社群卡单独渲染，只有管理身份才出现）：
+  // 第一张是「偏好与数据」——阅读模式、账户、通知、资源，日常高频设置；
+  // 第二张是「分享与反馈」——推荐朋友、奉献（开关）、意见反馈，对外动作。
   // 原先的「读经计划 / 我的内容 / 祷告清单」一组被裁掉了——三行全是重复入口：
   // 计划有顶部横幅、内容有四宫格的高亮/笔记、祷告有四宫格的祷告格，一页一个门就够。
-  // 用户协议 / 隐私政策是低频法务链接，降级为页脚文字行（与未登录页同一形态），
-  // 不再占一张与日常设置同级的卡。
-  const menuRows = [
+  // 用户协议 / 隐私政策是低频法务链接，降级为页脚文字行（与未登录页同一形态）。
+  const settingRows = [
     { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
     { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
-    { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
+    { icon: "download", label: translate("资源管理"), desc: translate("译本启用与注释更新"), to: "/me/resources" },
+  ];
+  const shareRows = [
+    { icon: "share", label: translate("推荐朋友"), desc: translate("分享下载二维码与链接"), to: "/me/referral" },
     // 奉献入口随 SHOW_DONATION 开关：网页端支付承接上线后再放开
     ...(SHOW_DONATION
       ? [{ icon: "gift", label: translate("奉献支持"), desc: translate("支持这项免费的福音事工"), to: "/me/donate" }]
       : []),
-    { icon: "share", label: translate("推荐朋友"), desc: translate("分享下载二维码与链接"), to: "/me/referral" },
     // 反馈走应用内表单（表单页里仍展示联系邮箱）
     { icon: "mail", label: translate("意见反馈"), desc: translate("问题与建议，我们都会读"), to: "/me/feedback" },
   ];
@@ -338,7 +341,25 @@ export function MePage() {
               ))}
             </div>
           </div>
-          {menuRows.map((row) => (
+          {settingRows.map((row) => (
+            <button
+              key={row.label}
+              type="button"
+              onClick={() => navigate(row.to)}
+            >
+              <span className="me-menu-icon"><Icon name={row.icon} size={16} /></span>
+              <span className="me-menu-copy">
+                <b>{row.label}</b>
+                {row.desc && <small>{row.desc}</small>}
+              </span>
+              <Icon name="chevron-right" size={16} />
+            </button>
+          ))}
+        </div>
+
+        {/* 分享与反馈：对外动作单独一张卡，和日常设置分组 */}
+        <div className="me-menu-card">
+          {shareRows.map((row) => (
             <button
               key={row.label}
               type="button"
