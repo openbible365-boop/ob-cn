@@ -2195,6 +2195,13 @@ a {
   scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
+/* 经文操作面板打开时：底部按面板最大高度留白，
+   否则末尾约 300px 正文被面板挡死——滚到底也看不到、点不到（无法继续多选） */
+.app.has-tab-bar .screen-scroll.has-verse-action-sheet {
+  padding-bottom: calc(320px + env(safe-area-inset-bottom)) !important;
+  scroll-padding-bottom: calc(320px + env(safe-area-inset-bottom));
+}
+
 .tab-bar .tab {
   display: flex;
   min-width: 0;
@@ -2419,9 +2426,15 @@ a {
   line-height: 1.55;
   resize: none;
   overflow-y: auto;
+  /* 桌面端滚动条占位显突兀；移动端本就无轨道，统一隐藏（仍可滚动） */
+  scrollbar-width: none;
 }
 
-.verse-compact-note-form textarea:focus-visible {
+.verse-compact-note-form textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.verse-compact-note-form textarea:focus {
   outline: none;
   border-color: var(--yellow-medium);
 }
@@ -2437,6 +2450,10 @@ a {
   color: var(--ink);
   font-size: 13px;
   font-weight: 600;
+}
+
+.verse-compact-note-form button:disabled {
+  opacity: 0.45;
 }
 
 .verse-action-sheet-header {

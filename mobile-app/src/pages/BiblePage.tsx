@@ -1939,7 +1939,7 @@ export function BiblePage() {
                   }}
                   placeholder="写下你的笔记…"
                 />
-                <button type="submit">{editingNoteId ? "更新" : "保存"}</button>
+                <button type="submit" disabled={!noteText.trim()}>{editingNoteId ? "更新" : "保存"}</button>
               </form>
             ) : (
               <div className="verse-dock-body">
