@@ -1214,7 +1214,12 @@ export function BiblePage() {
           <div className={`bible-chapter-picker ${picker === "chapter" ? "chapter-list" : "book-list"}`}>
             {picker === "chapter" && pickerBookData ? (
               <>
-                <div className="bible-popup-title">{bookName(pickerBookData, version)} · 选择章</div>
+                <div className="annotation-picker-heading">
+                  <button type="button" onClick={() => { setPicker("book"); setPickerBook(null); }}>
+                    <Icon name="chevron-left" size={14} /> 书卷
+                  </button>
+                  <div>{bookName(pickerBookData, version)} · 选择章</div>
+                </div>
                 <div className="bible-chapter-grid">
                   {Array.from({ length: pickerBookData.chapters }, (_, i) => i + 1).map((n) => (
                     <button
@@ -1238,7 +1243,8 @@ export function BiblePage() {
                       {group.books.map((bk) => (
                         <button
                           key={bk.code}
-                          onClick={() => gotoChapter(bk.code === book.code ? chapter : 1, bk.code)}
+                          // 选完书卷接着选章（与注释页同一流程），不直接跳第 1 章
+                          onClick={() => { setPickerBook(bk.code); setPicker("chapter"); }}
                           className={`bible-book-option${bk.code === book.code ? " active" : ""}${bookName(bk, version).length >= 7 ? " is-long" : ""}`}
                         >
                           {bookName(bk, version)}
