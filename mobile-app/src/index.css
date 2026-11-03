@@ -4021,14 +4021,7 @@ a {
   /* 淡底瓷片给图标一个承托，行与行的左缘对齐线由它统一 */
   background: var(--surface-2);
   color: var(--body);
-}
-
-/* 阅读模式行与下方第一行菜单之间也要有分隔线（button+button 选不中它） */
-.me-theme-row + button {
-  border-top: 1px solid var(--line);
-}
-
-.me-group-copy,
+}.me-group-copy,
 .me-menu-copy {
   display: flex;
   min-width: 0;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { READING_THEMES, useReadingTheme } from "../theme";
 import { Icon } from "../components/Icon";
 import { VerseShareSheet } from "../components/VerseShareSheet";
 import { AudioGlyph } from "../components/AudioGlyph";
@@ -192,6 +193,7 @@ export function BiblePage() {
   const version = getVersion(versionCode);
   const book = getBookByCode(bookCode);
   const { isTraditional, setIsTraditional, translate } = useSettings();
+  const [theme, setTheme] = useReadingTheme();
   const [showHeadings, setShowHeadings] = useState(() => {
     const saved = localStorage.getItem("ob.bible.showHeadings");
     return saved === null ? true : saved === "true";
@@ -1491,6 +1493,25 @@ export function BiblePage() {
                 >
                   +
                 </button>
+              </div>
+            </div>
+
+            {/* 阅读模式从「我的」迁来：浅色/护眼/深色与字号字体同属阅读显示设置 */}
+            <div className="bible-reading-setting-row">
+              <span>阅读模式</span>
+              <div className="bible-setting-segment is-theme" role="radiogroup" aria-label="阅读模式">
+                {READING_THEMES.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={theme === option.value}
+                    className={theme === option.value ? "active" : ""}
+                    onClick={() => setTheme(option.value)}
+                  >
+                    {translate(option.label)}
+                  </button>
+                ))}
               </div>
             </div>
 

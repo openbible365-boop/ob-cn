@@ -1,6 +1,5 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { SkeletonScreen } from "../components/SkeletonScreen";
-import { READING_THEMES, useReadingTheme } from "../theme";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
@@ -24,7 +23,6 @@ import { prepareAvatarImage } from "../utils/avatar";
 
 export function MePage() {
   const { translate } = useSettings();
-  const [theme, setTheme] = useReadingTheme();
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -321,26 +319,8 @@ export function MePage() {
           </div>
         )}
 
+        {/* 阅读模式已迁入圣经页的 Aa 阅读设置面板（与字号/字体同处），这里不再重复 */}
         <div className="me-menu-card">
-          {/* 阅读模式（即时偏好）并入设置卡头部，不再独占一张孤卡 */}
-          <div className="me-theme-row">
-            <span className="me-menu-icon"><Icon name="sun" size={16} /></span>
-            <span className="me-menu-copy"><b>{translate("阅读模式")}</b></span>
-            <div className="bible-setting-segment is-theme" role="radiogroup" aria-label={translate("阅读模式")}>
-              {READING_THEMES.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={theme === option.value}
-                  className={theme === option.value ? "active" : ""}
-                  onClick={() => setTheme(option.value)}
-                >
-                  {translate(option.label)}
-                </button>
-              ))}
-            </div>
-          </div>
           {settingRows.map((row) => (
             <button
               key={row.label}
