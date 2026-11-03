@@ -3,8 +3,16 @@ import { auth } from "@/auth";
 import { NotificationComposer } from "@/components/NotificationComposer";
 import { db } from "@/lib/db";
 
+// 本地时区格式化（禁止 ISO slice：那是 UTC 时间，会与运营者的钟差好几个小时）
+const dateFormat = new Intl.DateTimeFormat("zh-CN", {
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 function formatDate(date: Date) {
-  return date.toISOString().slice(0, 16).replace("T", " ");
+  return dateFormat.format(date);
 }
 
 export default async function NotificationsManagementPage() {
@@ -27,6 +35,14 @@ export default async function NotificationsManagementPage() {
     ],
   });
 
+  // 最近发送记录：来自审计日志的 PushBroadcast 条目（发送动作本身就会落审计）
+  const recentSends = await db.auditLog.findMany({
+    where: { targetType: "PushBroadcast" },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    include: { operator: { select: { name: true } } },
+  });
+
   const activeDevices = devices.filter((device) => device.enabled);
   const activeUsers = new Set(activeDevices.map((device) => device.userId)).size;
   const iosCount = activeDevices.filter((device) => device.platform === "IOS").length;
@@ -47,6 +63,12 @@ export default async function NotificationsManagementPage() {
       </div>
 
       <NotificationComposer
+        recentSends={recentSends.map((entry) => ({
+          id: entry.id,
+          detail: entry.detail,
+          operator: entry.operator.name,
+          at: formatDate(entry.createdAt),
+        }))}
         devices={devices.map((device) => ({
           id: device.id,
           userName: device.user.name,

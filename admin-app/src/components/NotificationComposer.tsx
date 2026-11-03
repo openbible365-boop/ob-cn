@@ -1,10 +1,17 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   sendAdminNotification,
   type NotificationSendState,
 } from "@/lib/actions/notifications";
+
+export type RecentSend = {
+  id: string;
+  detail: string;
+  operator: string;
+  at: string;
+};
 
 export type NotificationDevice = {
   id: string;
@@ -30,19 +37,49 @@ function shortDeviceId(id: string) {
   return `设备 …${id.slice(-6)}`;
 }
 
-export function NotificationComposer({ devices }: { devices: NotificationDevice[] }) {
+export function NotificationComposer({
+  devices,
+  recentSends,
+}: {
+  devices: NotificationDevice[];
+  recentSends: RecentSend[];
+}) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  // 页内两步确认（替代英文的 window.confirm）：第一次点进入待命态，再点才真发
+  const [armed, setArmed] = useState(false);
+  const [query, setQuery] = useState("");
   const [state, action, pending] = useActionState<
     NotificationSendState,
     FormData
   >(sendAdminNotification, null);
 
+  // 发送成功后清空草稿与选择，避免误触重复群发
+  const handledStateRef = useRef<NotificationSendState>(null);
+  useEffect(() => {
+    if (state && state !== handledStateRef.current && state.kind === "success") {
+      setTitle("");
+      setBody("");
+      setSelected(new Set());
+    }
+    handledStateRef.current = state;
+  }, [state]);
+
   const enabledDevices = useMemo(
     () => devices.filter((device) => device.enabled),
     [devices],
   );
+  // 搜索：按用户名 / UID / 邮箱 / 归属地过滤设备列表
+  const visibleDevices = useMemo(() => {
+    const keyword = query.trim().toLowerCase();
+    if (!keyword) return devices;
+    return devices.filter((device) =>
+      [device.userName, String(device.uid), device.email, device.country, device.region, device.city]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(keyword)),
+    );
+  }, [devices, query]);
   const allSelected =
     enabledDevices.length > 0 &&
     enabledDevices.every((device) => selected.has(device.id));
@@ -68,13 +105,14 @@ export function NotificationComposer({ devices }: { devices: NotificationDevice[
         action={action}
         className="card notification-composer"
         onSubmit={(event) => {
-          if (
-            !window.confirm(
-              `确认向选中的 ${selected.size} 台手机发送这条通知吗？`,
-            )
-          ) {
+          // 两步确认：第一次提交只进入待命态
+          if (!armed) {
             event.preventDefault();
+            setArmed(true);
+            window.setTimeout(() => setArmed(false), 4000);
+            return;
           }
+          setArmed(false);
         }}
       >
         <div>
@@ -118,16 +156,34 @@ export function NotificationComposer({ devices }: { devices: NotificationDevice[
         )}
 
         <button
-          className="notification-send-button"
+          className={`notification-send-button${armed ? " is-armed" : ""}`}
           type="submit"
           disabled={pending || selected.size === 0 || !title.trim() || !body.trim()}
         >
-          {pending ? "正在发送…" : `向 ${selected.size} 台手机推送`}
+          {pending
+            ? "正在发送…"
+            : armed
+              ? `再点一次确认发送（${selected.size} 台）`
+              : `向 ${selected.size} 台手机推送`}
         </button>
 
         <div className="notification-safety-note">
-          发送前会再次确认；无效 Token 会在发送失败后自动停用。
+          发送需点击两次确认；无效 Token 会在发送失败后自动停用。
         </div>
+
+        {recentSends.length > 0 && (
+          <div className="notification-history">
+            <div className="notification-section-title">最近发送</div>
+            <ul>
+              {recentSends.map((entry) => (
+                <li key={entry.id}>
+                  <span className="notification-history-detail">{entry.detail}</span>
+                  <small>{entry.at} · {entry.operator}</small>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </form>
 
       <section className="card notification-devices">
@@ -149,8 +205,18 @@ export function NotificationComposer({ devices }: { devices: NotificationDevice[
           </label>
         </div>
 
+        {devices.length > 0 && (
+          <input
+            className="notification-device-search"
+            type="search"
+            value={query}
+            placeholder="搜索用户名、UID、邮箱或归属地…"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        )}
+
         <div className="notification-device-list">
-          {devices.map((device) => (
+          {visibleDevices.map((device) => (
             <label
               key={device.id}
               className={`notification-device-row${device.enabled ? "" : " disabled"}`}
@@ -193,10 +259,12 @@ export function NotificationComposer({ devices }: { devices: NotificationDevice[
             </label>
           ))}
 
-          {devices.length === 0 && (
+          {devices.length === 0 ? (
             <div className="notification-empty">
               暂无手机 Token；用户在原生应用中启用系统通知后会显示在这里。
             </div>
+          ) : visibleDevices.length === 0 && (
+            <div className="notification-empty">没有匹配「{query}」的手机。</div>
           )}
         </div>
       </section>

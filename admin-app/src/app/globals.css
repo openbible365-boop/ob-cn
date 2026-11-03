@@ -1490,3 +1490,225 @@ body > div select:focus-visible {
   font-size: 10.5px;
   line-height: 1.5;
 }
+
+/* ── 通知推送页 ── */
+.notification-summary {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.notification-summary span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.notification-management {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: var(--den-gap);
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .notification-management { grid-template-columns: 1fr; }
+}
+
+.notification-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.notification-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.notification-section-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.notification-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notification-field > span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--body);
+}
+
+.notification-field small { color: var(--muted); font-weight: 400; }
+
+.notification-field input,
+.notification-field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
+
+.notification-field textarea { resize: vertical; }
+
+.notification-field input:focus,
+.notification-field textarea:focus {
+  outline: none;
+  border-color: var(--yellow);
+}
+
+.notification-result { padding: 8px 10px; border-radius: 8px; font-size: 12px; }
+.notification-result.success { color: var(--st-ok); background: var(--st-ok-bg); }
+.notification-result.warning { color: var(--st-warn); background: var(--st-warn-bg); }
+.notification-result.error { color: var(--st-err); background: var(--st-err-bg); }
+
+.notification-send-button {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--yellow-ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 待命态：换警示色，提醒「再点一次就真的发出去了」 */
+.notification-send-button.is-armed {
+  background: var(--orange);
+  color: #fff;
+}
+
+.notification-send-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.notification-safety-note { font-size: 11px; color: var(--muted); }
+
+.notification-history {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.notification-history ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notification-history li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+  color: var(--body);
+}
+
+.notification-history-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-history small { color: var(--muted); font-size: 11px; }
+
+.notification-devices {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-device-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notification-select-all {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.notification-device-search {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  font: inherit;
+  font-size: 13px;
+}
+
+.notification-device-search:focus { outline: none; border-color: var(--yellow); }
+
+.notification-device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notification-device-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(130px, 1.1fr) minmax(130px, 1fr) minmax(110px, 0.9fr) minmax(130px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.notification-device-row.disabled { opacity: 0.55; cursor: default; }
+
+.notification-device-row strong { display: block; font-size: 13px; color: var(--ink); }
+.notification-device-row small {
+  display: block;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-platform-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--body);
+}
+
+.notification-empty {
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
