@@ -17,20 +17,27 @@ const SCOPE_LABEL: Record<Scope, string> = {
   app: "App 端",
 };
 
-const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope }[] = [
+// 以 App 端实际开放的功能为标准，对应功能未上线的管理模块先藏入口（页面与接口保留）：
+//   社群管理 / 活动监管 / 内容审核（审核对象是社群帖子）—— App 端 SHOW_COMMUNITY=false
+//   音频缓存 —— App 端整卷音频缓存功能已下线
+// App 端恢复对应功能时翻回 true 即可。
+const SHOW_COMMUNITY_ADMIN = false;
+const SHOW_AUDIO_CACHE_ADMIN = false;
+
+const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hidden?: boolean }[] = [
   { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/commentary", label: "注释校对", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/annotations", label: "用户标注", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
+  { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared", hidden: !SHOW_COMMUNITY_ADMIN },
   { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"], scope: "shared" },
   { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"], scope: "shared" },
 
-  { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
-  { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
+  { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app", hidden: !SHOW_COMMUNITY_ADMIN },
+  { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app", hidden: !SHOW_COMMUNITY_ADMIN },
   { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
-  { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app" },
+  { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app", hidden: !SHOW_AUDIO_CACHE_ADMIN },
   { href: "/admin/notifications", label: "通知推送", roles: ["SUPER_ADMIN"], scope: "app" },
   { href: "/admin/feedback", label: "意见反馈", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
 ];
@@ -39,7 +46,7 @@ const SCOPE_ORDER: Scope[] = ["shared", "app"];
 
 export function AdminSidebar({ operatorName, role }: { operatorName: string; role?: string }) {
   const pathname = usePathname();
-  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role as Role));
+  const visibleItems = NAV_ITEMS.filter((item) => !item.hidden && item.roles.includes(role as Role));
 
   return (
     <div className="admin-sidebar">
