@@ -9,9 +9,9 @@ import {
   downloadCommentary,
   downloadVersion,
   getOfflineMeta,
+  markCommentaryUpdated,
   offlineSupported,
   readableBytes,
-  removeCommentary,
   removeVersion,
 } from "../data/offline-bible";
 import {
@@ -82,35 +82,22 @@ export function ResourcesPage() {
     }
   };
 
-  async function handleDownload(code: string) {
+  // 注释有新版：重新拉取全集刷新本机缓存，记录新版本后提醒消除
+  async function handleCommentaryUpdate() {
     if (busyVersion) return;
-    setBusyVersion(code);
+    setBusyVersion(JINGDU_KEY);
     setProgress({ done: 0, total: 66 });
     setError("");
     try {
-      const run = code === JINGDU_KEY ? downloadCommentary : (cb: (d: number, t: number) => void) => downloadVersion(code, cb);
-      await run((done, total) => setProgress({ done, total }));
+      await downloadCommentary((done, total) => setProgress({ done, total }));
+      await markCommentaryUpdated();
       setMeta(getOfflineMeta());
-      if (code === JINGDU_KEY) setCommentaryUpdate(false); // 更新完成，提醒消除
+      setCommentaryUpdate(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "下载失败，请检查网络后重试");
+      setError(err instanceof Error ? err.message : "更新失败，请检查网络后重试");
     } finally {
       setBusyVersion("");
       setProgress(null);
-    }
-  }
-
-  async function handleRemove(code: string) {
-    if (busyVersion) return;
-    setBusyVersion(code);
-    setError("");
-    try {
-      await (code === JINGDU_KEY ? removeCommentary() : removeVersion(code));
-      setMeta(getOfflineMeta());
-    } catch {
-      setError("删除失败，请重试");
-    } finally {
-      setBusyVersion("");
     }
   }
 
@@ -157,27 +144,24 @@ export function ResourcesPage() {
     );
   };
 
-  // 注释行保留「下载 / 删除」按钮；内容有新版时标题挂提醒红点、按钮变「更新」
-  const resourceRow = (code: string, label: string, icon: string) => {
-    const downloaded = meta[code];
-    const downloading = busyVersion === code && progress;
-    const hasUpdate = code === JINGDU_KEY && Boolean(downloaded) && commentaryUpdate;
+  // 注释随应用内置，没有下载/删除概念：平时不放按钮，
+  // 只在内容有新版时亮红点并出现「更新」按钮
+  const commentaryRow = () => {
+    const downloading = busyVersion === JINGDU_KEY && progress;
     return (
-      <div className="me-res-row" key={code}>
-        <span className="me-res-icon"><Icon name={icon} size={18} /></span>
+      <div className="me-res-row" key={JINGDU_KEY}>
+        <span className="me-res-icon"><Icon name="align-justify" size={18} /></span>
         <span className="me-res-copy">
           <b>
-            {label}
-            {hasUpdate && <i className="me-res-update-dot" aria-hidden="true" />}
+            精读本注释
+            {commentaryUpdate && <i className="me-res-update-dot" aria-hidden="true" />}
           </b>
           <small>
             {downloading
-              ? `正在下载 ${progress.done}/${progress.total} 卷…`
-              : hasUpdate
+              ? `正在更新 ${progress.done}/${progress.total} 卷…`
+              : commentaryUpdate
                 ? "内容有更新，点「更新」获取最新注释"
-                : downloaded
-                  ? `已下载 · ${readableBytes(downloaded.bytes)} · 66 卷`
-                  : "未下载 · 66 卷"}
+                : "全 66 卷 · 随应用提供"}
           </small>
           {downloading && (
             <span className="me-res-bar">
@@ -185,33 +169,14 @@ export function ResourcesPage() {
             </span>
           )}
         </span>
-        {hasUpdate ? (
+        {commentaryUpdate && (
           <button
             className="me-res-btn is-primary"
-            type="button"
-            disabled={!supported || Boolean(busyVersion)}
-            onClick={() => void handleDownload(code)}
-          >
-            {downloading ? "更新中" : "更新"}
-          </button>
-        ) : downloaded ? (
-          <button
-            className={`me-res-btn${armedKey === `res:${code}` ? " is-danger" : ""}`}
             type="button"
             disabled={Boolean(busyVersion)}
-            aria-label={armedKey === `res:${code}` ? `再点一次确认删除「${label}」` : `删除已下载的「${label}」`}
-            onClick={() => confirm(`res:${code}`, () => void handleRemove(code))}
+            onClick={() => void handleCommentaryUpdate()}
           >
-            {armedKey === `res:${code}` ? "确认删除" : "删除"}
-          </button>
-        ) : (
-          <button
-            className="me-res-btn is-primary"
-            type="button"
-            disabled={!supported || Boolean(busyVersion)}
-            onClick={() => void handleDownload(code)}
-          >
-            {downloading ? "下载中" : "下载"}
+            {downloading ? "更新中" : "更新"}
           </button>
         )}
       </div>
@@ -251,12 +216,12 @@ export function ResourcesPage() {
           <div className="me-data-heading">
             <div>
               <h2>注释</h2>
-              <p>精读本注释全集，下载后离线也能查看逐段解经。</p>
+              <p>精读本注释全集随应用内置，内容有新版时在这里一键更新。</p>
             </div>
             <Icon name="align-justify" size={20} />
           </div>
           <div className="me-res-list">
-            {resourceRow(JINGDU_KEY, "精读本注释", "align-justify")}
+            {commentaryRow()}
           </div>
         </section>
 

@@ -85,13 +85,26 @@ export async function fetchCommentaryVersion(): Promise<string | null> {
   }
 }
 
-/** 已下载的注释是否落后于服务器版本（未下载、离线或无版本记录都返回 false） */
+// 注释随应用内置（App 内 /data/ 读的是安装包资产），没有"下载/删除"概念；
+// 版本记录独立存储：首次见到远端版本时记为基线，之后远端变化才提醒更新。
+const COMMENTARY_VERSION_KEY = "ob.commentary.version";
+
+/** 注释内容是否有新版。离线/取不到版本文件返回 false，不打扰。 */
 export async function commentaryHasUpdate(): Promise<boolean> {
-  const local = getOfflineMeta()[JINGDU_KEY];
-  if (!local) return false;
   const remote = await fetchCommentaryVersion();
-  // 旧版下载的缓存没有版本记录：有了远端版本就视为可更新一次，补齐记录
-  return remote !== null && local.version !== remote;
+  if (remote === null) return false;
+  const local = load<string | null>(COMMENTARY_VERSION_KEY, null);
+  if (local === null) {
+    save(COMMENTARY_VERSION_KEY, remote); // 首次：记基线，不提醒
+    return false;
+  }
+  return local !== remote;
+}
+
+/** 更新完成后记录新版本，消除提醒 */
+export async function markCommentaryUpdated() {
+  const remote = await fetchCommentaryVersion();
+  if (remote) save(COMMENTARY_VERSION_KEY, remote);
 }
 
 async function removePack(key: string) {
