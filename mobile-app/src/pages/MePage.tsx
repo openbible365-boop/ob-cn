@@ -7,7 +7,7 @@ import { UserAvatar } from "../components/UserAvatar";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
 import { getPrayers } from "../data/prayers";
-import { unregisterCurrentPushToken } from "../data/push";
+import { syncStoredPushToken, unregisterCurrentPushToken } from "../data/push";
 import { useSettings } from "../context/SettingsContext";
 import {
   announceProfileChanged,
@@ -159,12 +159,17 @@ export function MePage() {
   const confirmLogout = async () => {
     setLogoutBusy(true);
     setLogoutError("");
-    // 先注销本机推送 token，否则退出后这台手机还会收到上个账号的通知
+    // 先注销本机推送 token（需要登录态），否则退出后这台手机还会收到上个账号的通知
     await unregisterCurrentPushToken();
     const result = await logout();
     setLogoutBusy(false);
-    if (result.ok) setUser(null);
-    else setLogoutError(result.message || translate("退出失败，请稍后重试"));
+    if (result.ok) {
+      setUser(null);
+    } else {
+      // 退出失败：用户仍在登录态，把刚注销的推送登记补回来，否则收不到通知
+      void syncStoredPushToken();
+      setLogoutError(result.message || translate("退出失败，请稍后重试"));
+    }
   };
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {

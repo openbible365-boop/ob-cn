@@ -1,3 +1,5 @@
+import { resolveApiUrl } from "./api";
+
 export const SHARE_CARD_TEMPLATES = [
   { id: "warm", name: "暖金", colors: ["#fffaf0", "#f2c96d", "#c8821f"] },
   { id: "paper", name: "书卷", colors: ["#f4ead2", "#8d6643", "#28342d"] },
@@ -17,7 +19,8 @@ export function isShareCardTemplateId(value: unknown): value is ShareCardTemplat
 
 export async function fetchShareCardTemplate(): Promise<ShareCardTemplateId> {
   try {
-    const response = await fetch("/api/mobile/share-card-settings", {
+    // 原生端相对路径打不到服务器，必须经 resolveApiUrl 补 API 来源
+    const response = await fetch(resolveApiUrl("/api/mobile/share-card-settings"), {
       cache: "no-store",
     });
     if (!response.ok) return DEFAULT_SHARE_CARD_TEMPLATE;

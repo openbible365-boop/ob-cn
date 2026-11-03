@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiRequest } from "../data/api";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { Icon } from "../components/Icon";
 import { useAppBack } from "../hooks/useAppBack";
@@ -24,16 +25,15 @@ export function FeedbackPage() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/mobile/feedback", {
+      // 必须走 apiRequest：原生端 WebView 的相对路径打不到服务器，也带不上会话
+      const res = await apiRequest<{ ok?: boolean; message?: string }>("/api/mobile/feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: content.trim(), contact: contact.trim() }),
+        body: { content: content.trim(), contact: contact.trim() },
       });
-      const data = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
-      if (res.ok && data?.ok) {
+      if (res.ok && res.data?.ok) {
         setDone(true);
       } else {
-        setError(data?.message ?? translate("提交失败，请稍后重试"));
+        setError(res.data?.message ?? translate("提交失败，请稍后重试"));
       }
     } catch {
       setError(translate("网络异常，请稍后重试"));

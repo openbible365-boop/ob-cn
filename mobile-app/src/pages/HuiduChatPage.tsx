@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Icon } from "../components/Icon";
@@ -76,6 +76,17 @@ export function HuiduChatPage() {
       ? createDraftConversation()
       : getConversation(conversationId ?? "")
   ));
+
+  // 路由参数变化时重载对话：同一路由元素不会卸载（如从通知深链跳到另一条对话），
+  // 不重载的话页面会停留在旧对话上、新消息也发进旧对话
+  const loadedConversationIdRef = useRef(conversationId);
+  useEffect(() => {
+    if (conversationId === loadedConversationIdRef.current) return;
+    loadedConversationIdRef.current = conversationId;
+    setConv(conversationId === "new" ? createDraftConversation() : getConversation(conversationId ?? ""));
+    setPendingAnswer(false);
+    setRevealed(Infinity);
+  }, [conversationId]);
   const [revealed, setRevealed] = useState(justCreated ? 0 : Infinity);
   const [pendingAnswer, setPendingAnswer] = useState(false);
   const [question, setQuestion] = useState("");
@@ -155,13 +166,18 @@ export function HuiduChatPage() {
 
   const scriptureContext = hasScriptureContext(conv);
   const legacyBookLabel = conv.refLabel.replace(/\s+\d+:[\d-]+$/, "");
-  const legacyContext = VERSIONS
-    .flatMap((candidateVersion) => BOOKS.map((candidateBook) => ({
-      bookCode: candidateBook.code,
-      versionCode: candidateVersion.code,
-      label: bookName(candidateBook, candidateVersion),
-    })))
-    .find((candidate) => candidate.label === legacyBookLabel);
+  // 仅旧数据（无 bookCode）才需要反查，且 VERSIONS×BOOKS 枚举不便宜——缓存住，
+  // 避免输入框每敲一字就重算一遍
+  const legacyContext = useMemo(() => {
+    if (conv.bookCode) return undefined;
+    return VERSIONS
+      .flatMap((candidateVersion) => BOOKS.map((candidateBook) => ({
+        bookCode: candidateBook.code,
+        versionCode: candidateVersion.code,
+        label: bookName(candidateBook, candidateVersion),
+      })))
+      .find((candidate) => candidate.label === legacyBookLabel);
+  }, [conv.bookCode, legacyBookLabel]);
   const currentReading = getReading();
   const referencedBookCode = conv.bookCode ?? legacyContext?.bookCode ?? currentReading.book;
   const referencedVersionCode = conv.versionCode ?? legacyContext?.versionCode ?? currentReading.version;

@@ -67,6 +67,16 @@ async function main() {
     );
   }
 
+  if (isProduction) {
+    // 生产初始化只做两件事：系统配置 singleton 与圣经/注释数据。
+    // 王弟兄等演示用户、假社群、假审计、看板假数字一概不写入——
+    // 旧版在生产会先种满演示数据、再因缺 admin 账号中途崩溃。
+    await ensureCoreSettings();
+    await seedBibleAndCommentary();
+    console.log("Seed complete (production: core settings + bible data only).");
+    return;
+  }
+
   const alreadySeeded = (await db.user.count()) > 0;
   if (!alreadySeeded) {
     await seedUsersCommunitiesAndMemberships();
@@ -75,13 +85,45 @@ async function main() {
   await ensureLocalTestAccounts();
   await seedAiAndDashboard();
   await seedContentModerationEventsAudit();
-  if (process.env.NODE_ENV !== "production" || process.env.SEED_COMMUNITY_VALIDATION_FIXTURES === "true") {
+  if (process.env.SEED_COMMUNITY_VALIDATION_FIXTURES !== "false") {
     await seedCommunityValidationFixtures();
   }
   await seedBibleAndCommentary();
   await seedPersonalSamples();
 
   console.log("Seed complete.");
+}
+
+// 生产也需要的系统配置（App 的分享卡/AI 功能读这些 singleton）；
+// create 值用干净初始值，已存在则不动（upsert update:{}）
+async function ensureCoreSettings() {
+  await db.aiSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      autoFallbackEnabled: true,
+      rateLimited: false,
+      monthLabel: `${new Date().getMonth() + 1} 月`,
+      monthlyBudgetCents: 60_000,
+      monthSpendCents: 0,
+    },
+  });
+  await db.shareCardSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton", activeTemplate: "warm", autoRotate: false, rotationDays: 7 },
+  });
+  await db.aiModel.upsert({
+    where: { role: "PRIMARY" },
+    update: {},
+    create: { role: "PRIMARY", provider: "Anthropic", modelName: "claude-sonnet-4-5", temperature: 0.4, status: "NORMAL" },
+  });
+  await db.aiModel.upsert({
+    where: { role: "BACKUP" },
+    update: {},
+    create: { role: "BACKUP", provider: "Zhipu", modelName: "glm-4.7", temperature: 0.4, status: "STANDBY" },
+  });
 }
 
 async function ensureLocalTestAccounts() {

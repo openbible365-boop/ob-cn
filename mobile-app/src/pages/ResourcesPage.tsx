@@ -18,7 +18,8 @@ import { VERSIONS, getEnabledVersionCodes, setVersionEnabled } from "../data/scr
 type Progress = { done: number; total: number };
 
 export function ResourcesPage() {
-  const goBack = useAppBack("/me/account");
+  // 主入口是「我的」直达；兜底也回 /me（本页是设备级功能，不该被登录墙拦）
+  const goBack = useAppBack("/me");
   const [meta, setMeta] = useState(getOfflineMeta);
   // 注释内容是否有新版（仅对已下载用户检查；离线/未下载不提示）
   const [commentaryUpdate, setCommentaryUpdate] = useState(false);
@@ -175,7 +176,7 @@ export function ResourcesPage() {
         subtitle="译本与注释"
         ariaLabel="资源管理"
         onBack={goBack}
-        backLabel="返回数据与账户"
+        backLabel="返回我的"
       />
       <main className="screen-scroll me-detail-scroll">
         <section className="me-data-section">

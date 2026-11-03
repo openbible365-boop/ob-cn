@@ -8,6 +8,7 @@ import { UnifiedHeader } from "../components/UnifiedHeader";
 import { getHighlights, getNotes } from "../data/annotations";
 import { getConversations } from "../data/huidu";
 import { fetchMe, type SessionUser } from "../data/profile";
+import { SHOW_COMMUNITY, SHOW_DONATION } from "../data/features";
 
 export function AccountDataPage() {
   const navigate = useNavigate();
@@ -81,7 +82,8 @@ export function AccountDataPage() {
     <div className="screen me-subpage">
       <UnifiedHeader
         title="数据与账户"
-        subtitle={user?.entitlements.label ?? "读取中"}
+        // 套餐标签随支持计划体系（SHOW_DONATION）隐藏，与 MePage 一致
+        subtitle={SHOW_DONATION ? (user?.entitlements.label ?? "读取中") : "慧读圣经"}
         ariaLabel="数据与账户"
         onBack={goBack}
         backLabel="返回我的"
@@ -155,17 +157,19 @@ export function AccountDataPage() {
             <span className="me-menu-icon"><Icon name="cloud" size={16} /></span>
             <span className="me-menu-copy">
               <b>云端同步</b>
-              <small>经文高亮和活动报名已关联当前账户</small>
+              <small>{SHOW_COMMUNITY ? "经文高亮和活动报名已关联当前账户" : "经文高亮与笔记已关联当前账户"}</small>
             </span>
           </div>
           <div className="me-cloud-row">
             <span>云端高亮</span>
             <b>{user?.counts.highlights ?? "—"} 处</b>
           </div>
-          <div className="me-cloud-row">
-            <span>报名活动</span>
-            <b>{user?.counts.eventSignups ?? "—"} 项</b>
-          </div>
+          {SHOW_COMMUNITY && (
+            <div className="me-cloud-row">
+              <span>报名活动</span>
+              <b>{user?.counts.eventSignups ?? "—"} 项</b>
+            </div>
+          )}
         </div>
       </main>
     </div>

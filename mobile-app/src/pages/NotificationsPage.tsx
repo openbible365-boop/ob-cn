@@ -86,7 +86,11 @@ export function NotificationsPage() {
       setPrefs((current) => ({ ...current, [key]: !enabled }));
       setFeedback(result.message);
     } else {
+      // 成功提示 2.5 秒后自动消失，不永远挂在页脚（错误提示保留给用户看）
       setFeedback("通知偏好已同步到账号");
+      window.setTimeout(() => {
+        setFeedback((current) => (current === "通知偏好已同步到账号" ? "" : current));
+      }, 2500);
     }
   };
 
