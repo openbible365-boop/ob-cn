@@ -14,7 +14,7 @@ const META_KEY = "ob.offline-bible";
 
 const BOOK_CODES = (manifest.books as { code: string }[]).map((b) => b.code);
 
-export type OfflineVersionMeta = { books: number; bytes: number; at: string };
+export type OfflineVersionMeta = { books: number; bytes: number; at: string; version?: string };
 type Meta = Record<string, OfflineVersionMeta>;
 
 export function offlineSupported() {
@@ -64,7 +64,34 @@ async function downloadPack(
   }
   const meta = getOfflineMeta();
   meta[key] = { books: urls.length, bytes, at: new Date().toISOString() };
+  if (key === JINGDU_KEY) {
+    // 记录内容版本：资源管理页据此提示"注释有更新"
+    const version = await fetchCommentaryVersion();
+    if (version) meta[key].version = version;
+  }
   save(META_KEY, meta);
+}
+
+/** 服务器上注释数据的当前版本指纹（由 scripts/gen-commentary-version.py 生成）。
+    加时间戳查询参数绕开 HTTP 缓存；取不到（离线/旧服务器）返回 null，不提示更新。 */
+export async function fetchCommentaryVersion(): Promise<string | null> {
+  try {
+    const res = await fetch(`/data/commentary/jingdu/version.json?t=${Date.now()}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { version?: unknown };
+    return typeof data.version === "string" ? data.version : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 已下载的注释是否落后于服务器版本（未下载、离线或无版本记录都返回 false） */
+export async function commentaryHasUpdate(): Promise<boolean> {
+  const local = getOfflineMeta()[JINGDU_KEY];
+  if (!local) return false;
+  const remote = await fetchCommentaryVersion();
+  // 旧版下载的缓存没有版本记录：有了远端版本就视为可更新一次，补齐记录
+  return remote !== null && local.version !== remote;
 }
 
 async function removePack(key: string) {

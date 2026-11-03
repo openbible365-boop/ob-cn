@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
 import { useArmedConfirm } from "../hooks/useArmedConfirm";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import {
   JINGDU_KEY,
+  commentaryHasUpdate,
   downloadCommentary,
   downloadVersion,
   getOfflineMeta,
@@ -33,6 +34,14 @@ export function ResourcesPage() {
   // 删除走页内二次确认（再点一次），不用 WebView 的英文 confirm 弹窗
   const { armedKey, confirm } = useArmedConfirm();
   const [meta, setMeta] = useState(getOfflineMeta);
+  // 注释内容是否有新版（仅对已下载用户检查；离线/未下载不提示）
+  const [commentaryUpdate, setCommentaryUpdate] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    commentaryHasUpdate().then((result) => { if (!cancelled) setCommentaryUpdate(result); });
+    return () => { cancelled = true; };
+  }, []);
   const [audioMeta, setAudioMeta] = useState(getOfflineAudioMeta);
   // 同一时刻只允许一个译本在下载：拼音和合本有 50MB，上并发只会互相拖慢
   const [busyVersion, setBusyVersion] = useState("");
@@ -82,6 +91,7 @@ export function ResourcesPage() {
       const run = code === JINGDU_KEY ? downloadCommentary : (cb: (d: number, t: number) => void) => downloadVersion(code, cb);
       await run((done, total) => setProgress({ done, total }));
       setMeta(getOfflineMeta());
+      if (code === JINGDU_KEY) setCommentaryUpdate(false); // 更新完成，提醒消除
     } catch (err) {
       setError(err instanceof Error ? err.message : "下载失败，请检查网络后重试");
     } finally {
@@ -147,21 +157,27 @@ export function ResourcesPage() {
     );
   };
 
-  // 注释行保留原「下载 / 删除」按钮（注释没有显示开关概念）
+  // 注释行保留「下载 / 删除」按钮；内容有新版时标题挂提醒红点、按钮变「更新」
   const resourceRow = (code: string, label: string, icon: string) => {
     const downloaded = meta[code];
     const downloading = busyVersion === code && progress;
+    const hasUpdate = code === JINGDU_KEY && Boolean(downloaded) && commentaryUpdate;
     return (
       <div className="me-res-row" key={code}>
         <span className="me-res-icon"><Icon name={icon} size={18} /></span>
         <span className="me-res-copy">
-          <b>{label}</b>
+          <b>
+            {label}
+            {hasUpdate && <i className="me-res-update-dot" aria-hidden="true" />}
+          </b>
           <small>
             {downloading
               ? `正在下载 ${progress.done}/${progress.total} 卷…`
-              : downloaded
-                ? `已下载 · ${readableBytes(downloaded.bytes)} · 66 卷`
-                : "未下载 · 66 卷"}
+              : hasUpdate
+                ? "内容有更新，点「更新」获取最新注释"
+                : downloaded
+                  ? `已下载 · ${readableBytes(downloaded.bytes)} · 66 卷`
+                  : "未下载 · 66 卷"}
           </small>
           {downloading && (
             <span className="me-res-bar">
@@ -169,7 +185,16 @@ export function ResourcesPage() {
             </span>
           )}
         </span>
-        {downloaded ? (
+        {hasUpdate ? (
+          <button
+            className="me-res-btn is-primary"
+            type="button"
+            disabled={!supported || Boolean(busyVersion)}
+            onClick={() => void handleDownload(code)}
+          >
+            {downloading ? "更新中" : "更新"}
+          </button>
+        ) : downloaded ? (
           <button
             className={`me-res-btn${armedKey === `res:${code}` ? " is-danger" : ""}`}
             type="button"
