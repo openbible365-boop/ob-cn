@@ -209,7 +209,6 @@ export function ResourcesPage() {
               <h2>译本管理</h2>
               <p>打开开关即启用该译本并自动下载到本机，离线也能阅读；关闭则从译本列表移除并释放空间。</p>
             </div>
-            <Icon name="download" size={20} />
           </div>
 
           {!supported && (
