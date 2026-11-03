@@ -108,11 +108,14 @@ function todayStamp() {
 function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
   const lines: string[] = [];
   let line = "";
-  for (const character of text) {
-    const next = line + character;
-    if (context.measureText(next).width > maxWidth && line) {
+  // 按排版单元断行：拉丁词（连同其后空格）整体不拆，CJK 逐字——
+  // 否则英文经文（KJV/BSB）会在单词中间任意截断
+  const tokens = text.match(/[A-Za-z0-9'’-]+\s*|\s+|./gu) ?? [];
+  for (const token of tokens) {
+    const next = line + token;
+    if (context.measureText(next).width > maxWidth && line.trim()) {
       lines.push(line.trim());
-      line = character;
+      line = token.trimStart();
       if (lines.length === maxLines) break;
     } else {
       line = next;
@@ -610,29 +613,37 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
     }
   });
 
+  // 用户是否已手动选过模板：远端推荐模板异步返回时不得覆盖用户的选择
+  const templateTouchedRef = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
     fetchShareCardTemplate().then((template) => {
-      if (!cancelled) setSelectedTemplate(template);
+      if (!cancelled && !templateTouchedRef.current) setSelectedTemplate(template);
     });
     return () => { cancelled = true; };
   }, []);
+
+  // 英文经文（KJV/BSB）不支持竖排：拉丁文逐字直排不可读，强制横排并禁用切换
+  const verticalUnavailable = /[A-Za-z]/.test(data.verseText) && !/[一-鿿]/.test(data.verseText);
+  const effectiveLayout: ShareCardLayout = verticalUnavailable ? "horizontal" : layout;
 
   useEffect(() => {
     let cancelled = false;
     setImageUrl("");
     setError(false);
-    createShareCard(data, selectedTemplate, layout, customBackground)
+    createShareCard(data, selectedTemplate, effectiveLayout, customBackground)
       .then((url) => { if (!cancelled) setImageUrl(url); })
       .catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; };
-  }, [data, selectedTemplate, layout, customBackground]);
+  }, [data, selectedTemplate, effectiveLayout, customBackground]);
 
   // 自定义背景：没选过图先调相册；已有图时点击即切换，再点一次可换图
   const pickCustomImage = () => {
     if (!customBackground || selectedTemplate === "custom") {
       customInputRef.current?.click();
     } else {
+      templateTouchedRef.current = true;
       setSelectedTemplate("custom");
     }
   };
@@ -642,6 +653,7 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
     try {
       const background = await prepareCustomBackground(file);
       setCustomBackground(background);
+      templateTouchedRef.current = true;
       setSelectedTemplate("custom");
     } catch {
       // 多为安卓端选到 HEIC 等 WebView 解不了的格式
@@ -708,7 +720,7 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
               type="button"
               className={selectedTemplate === template.id ? "active" : ""}
               aria-pressed={selectedTemplate === template.id}
-              onClick={() => setSelectedTemplate(template.id)}
+              onClick={() => { templateTouchedRef.current = true; setSelectedTemplate(template.id); }}
             >
               <i
                 aria-hidden="true"
@@ -753,8 +765,10 @@ export function VerseShareSheet({ data, onClose }: { data: ShareCardData; onClos
             <button
               key={value}
               type="button"
-              className={layout === value ? "active" : ""}
-              aria-pressed={layout === value}
+              className={effectiveLayout === value ? "active" : ""}
+              aria-pressed={effectiveLayout === value}
+              disabled={value === "vertical" && verticalUnavailable}
+              title={value === "vertical" && verticalUnavailable ? "英文经文不支持竖排" : undefined}
               onClick={() => selectLayout(value)}
             >
               {label}

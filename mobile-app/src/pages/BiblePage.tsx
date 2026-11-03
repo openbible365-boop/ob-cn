@@ -315,6 +315,9 @@ export function BiblePage() {
   const [voiceMenuOpen, setVoiceMenuOpen] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
   const [audioTimestamps, setAudioTimestamps] = useState<AudioTimestamp[]>([]);
+  // 正在播放的章（音频加载时锁定）：后台播放时用户可翻到别章浏览，
+  // 节高亮/自动滚动/锁屏信息都必须对照它而不是当前浏览章
+  const [audioSource, setAudioSource] = useState<{ book: string; chapter: number } | null>(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
   // 正在播放的章节标签：面板关闭后切章浏览时，迷你条仍如实显示音频来源
@@ -462,6 +465,7 @@ export function BiblePage() {
     setAudioDuration(0);
     setAudioUrl("");
     setAudioTimestamps([]);
+    setAudioSource(null);
     setResolvedAudioVoice("");
     setAudioError("");
 
@@ -479,6 +483,7 @@ export function BiblePage() {
         if (cancelled) return;
         setAudioUrl(result.audioUrl);
         setAudioTimestamps(result.timestamps);
+        setAudioSource({ book: book.code, chapter });
         setResolvedAudioVoice(result.voice);
         setAudioSourceLabel(`${displayedBook} ${chapter}`);
         setLoadedAudioKey(currentKey);
@@ -848,17 +853,27 @@ export function BiblePage() {
     Math.max(verses.length - 1, 0),
     Math.floor(audioProgress / 100 * Math.max(verses.length, 1)),
   );
-  const audioCurrentVerse = verses.find((verse) => verse.verse === timestampVerse?.verse)
-    ?? verses[fallbackAudioIndex]
-    ?? verses[0]
-    ?? null;
+  // 浏览章 == 播放章 才能用当前 verses 匹配时间戳；后台播放跨章浏览时
+  // 不高亮、不滚动（否则会对错章——时间戳是播放章的，verses 是浏览章的）
+  const audioMatchesView = audioSource !== null
+    && audioSource.book === book.code
+    && audioSource.chapter === chapter;
+  const audioCurrentVerse = audioMatchesView
+    ? verses.find((verse) => verse.verse === timestampVerse?.verse)
+      ?? verses[fallbackAudioIndex]
+      ?? verses[0]
+      ?? null
+    : null;
   const audioCurrentVerseNumber = audioCurrentVerse?.verse ?? null;
   const audioCurrentVerseText = audioCurrentVerse ? stripHtml(audioCurrentVerse.text) : "";
+  // 锁屏/系统媒体信息：始终显示「播放中的章」；跨章浏览时退化为章级标题
+  const audioLockTitle = audioCurrentVerse
+    ? `${displayedBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`
+    : `${audioSourceLabel}${timestampVerse ? `:${timestampVerse.verse}` : ""} · ${version.label}`;
 
   useEffect(() => {
     if (
       !audioUrl
-      || !audioCurrentVerse
       || !("mediaSession" in navigator)
       || typeof MediaMetadata === "undefined"
     ) {
@@ -866,7 +881,7 @@ export function BiblePage() {
     }
 
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `${displayedBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+      title: audioLockTitle,
       artist: audioCurrentVerseText,
       album: "OpenBible · 语音圣经",
       artwork: hasAndroidMediaControls() ? [] : [
@@ -877,14 +892,7 @@ export function BiblePage() {
         },
       ],
     });
-  }, [
-    audioUrl,
-    displayedBook,
-    chapter,
-    version.label,
-    audioCurrentVerse,
-    audioCurrentVerseText,
-  ]);
+  }, [audioUrl, audioLockTitle, audioCurrentVerseText]);
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
@@ -924,7 +932,7 @@ export function BiblePage() {
   }, []);
 
   useEffect(() => {
-    if (!hasAndroidMediaControls() || !audioUrl || !audioCurrentVerse) return;
+    if (!hasAndroidMediaControls() || !audioUrl) return;
     let cancelled = false;
     const updateNativeMedia = async () => {
       if (audioPlaying && !androidMediaStartedRef.current) {
@@ -935,7 +943,7 @@ export function BiblePage() {
       if (!androidMediaStartedRef.current) return;
       try {
         await updateAndroidMedia({
-          title: `${displayedBook} ${chapter}:${audioCurrentVerse.label} · ${version.label}`,
+          title: audioLockTitle,
           text: audioCurrentVerseText,
           album: "OpenBible · 语音圣经",
           playing: audioPlaying,
@@ -955,10 +963,7 @@ export function BiblePage() {
     audioDuration,
     audioCurrentTimeSecond,
     audioSpeed,
-    displayedBook,
-    chapter,
-    version.label,
-    audioCurrentVerse,
+    audioLockTitle,
     audioCurrentVerseText,
   ]);
 
@@ -1034,6 +1039,16 @@ export function BiblePage() {
     : audioBookIndex < BOOKS.length - 1
       ? { bookCode: BOOKS[audioBookIndex + 1].code, chapter: 1 }
       : null;
+  // 打开播放面板：正在播放别章时先把阅读位置跳回播放章——
+  // 否则加载 effect 会把正在播的音频换成浏览章、进度清零
+  const openAudioPanel = () => {
+    if (audioPlaying && audioSource && (audioSource.book !== book.code || audioSource.chapter !== chapter)) {
+      setParams({ t: version.code, bk: audioSource.book, c: String(audioSource.chapter) });
+      setSelected(new Set());
+    }
+    setPicker("audio");
+  };
+
   const gotoAudioTarget = (target: { bookCode: string; chapter: number } | null) => {
     if (!target) return;
     continueAudioAfterLoadRef.current = false;
@@ -1153,7 +1168,7 @@ export function BiblePage() {
             className="bible-toolbar-action"
             title="有声圣经"
             aria-label="有声圣经"
-            onClick={() => setPicker("audio")}
+            onClick={openAudioPanel}
           >
             {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={24} />}
           </button>
@@ -1755,7 +1770,7 @@ export function BiblePage() {
       {/* 只在播放中显示：暂停时隐藏，不占阅读空间（进度保留，从顶栏喇叭键可回到面板） */}
       {audioUrl && picker !== "audio" && audioPlaying && (
         <div className="audio-mini-bar">
-          <button type="button" className="audio-mini-main" aria-label="展开语音圣经" onClick={() => setPicker("audio")}>
+          <button type="button" className="audio-mini-main" aria-label="展开语音圣经" onClick={openAudioPanel}>
             <span className="audio-mini-eq" aria-hidden="true">
               {audioPlaying ? <PlayingAudioIcon /> : <Icon name="volume-2" size={16} />}
             </span>
