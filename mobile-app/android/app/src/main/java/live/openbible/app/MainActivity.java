@@ -57,6 +57,9 @@ public class MainActivity extends BridgeActivity {
         WebView webView = bridge.getWebView();
         if (webView != null) {
             webView.setBackgroundColor(Color.rgb(244, 245, 247));
+            // 固定文字缩放：安卓 WebView 默认跟随系统字体大小（textZoom≠100 时
+            // 全部排版随之变化，与 iOS 不一致）。字号大小统一由 App 内设置控制。
+            webView.getSettings().setTextZoom(100);
         }
 
         startupWebViewListener = new WebViewListener() {

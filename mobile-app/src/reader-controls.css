@@ -1482,10 +1482,10 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
 
 /* ═══ 经文书面排版（参考精读本/微读的纸书版式）═══ */
 
-/* 自带衬线兜底：思源宋体（Noto Serif SC，OFL 开源，可免费商用），
+/* 阅读内容的统一字体：思源宋体（Noto Serif SC，OFL 开源，可免费商用），
    按圣经全库 + 精读本注释语料子集化为 1.4MB 可变字体（字重 200–900 全真实）。
-   安卓设备普遍只有黑体、没有任何中文衬线——没有这个兜底，宋体会静默降级成黑体。
-   iOS/macOS 命中系统 Songti SC 时浏览器不会下载此文件（字体按需加载）。 */
+   打包字体放栈首：iOS/安卓/桌面三端字形度量完全一致，换行、字重、行高
+   不随平台漂移（之前 iOS 命中系统 Songti SC、安卓用此字体，两端排版不同）。 */
 @font-face {
   font-family: "Huidu Serif";
   src: url("/fonts/NotoSerifSC-huidu.woff2") format("woff2");
@@ -1495,7 +1495,7 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
 
 /* 正文用衬线宋体：中文「书感」的一半。韩文与拼音版保持原字体 */
 .bible-verse-content {
-  font-family: "Songti SC", "Huidu Serif", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
+  font-family: "Huidu Serif", "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
 }
 
 /* 可选经文字体：系统黑体（苹方/思源黑体），现代清晰、零体积成本。
@@ -1548,7 +1548,7 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
 .intro-fact-row p,
 .intro-outline,
 .annotation-intro-hero h1 {
-  font-family: "Songti SC", "Songti TC", "Huidu Serif", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
+  font-family: "Huidu Serif", "Songti SC", "Songti TC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
 }
 
 /* ── 经文字体统一收口：凡是「圣经原文」出现的地方都用衬线 ──
@@ -1557,7 +1557,7 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
 .daily-verse-peek-text,
 .huidu-quote p,
 .audio-lyric-text {
-  font-family: "Songti SC", "Songti TC", "Huidu Serif", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
+  font-family: "Huidu Serif", "Songti SC", "Songti TC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", serif;
 }
 
 /* ── 绪论末尾的「进入第 1 章」：金色收束键，与扉页同一身份（替换旧的注释蓝大块） ── */

@@ -227,7 +227,7 @@ a {
 }
 
 .annotation-intro-hero h1 {
-  font-family: "Songti SC", "STSong", "Huidu Serif", "Noto Serif SC", serif;
+  font-family: "Huidu Serif", "Songti SC", "STSong", "Noto Serif SC", serif;
   font-size: 32px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1501,7 +1501,6 @@ a {
   text-align: justify;
   text-justify: inter-ideograph;
   line-break: strict;
-  hanging-punctuation: allow-end;
   word-break: break-word;
 }
 
@@ -5309,7 +5308,8 @@ body.dark .app-exit-toast {
    - 两端对齐：右缘补齐无行尾空格；避头尾推字的空隙摊进该行字间（个别行略宽~10%）。
      左对齐则字距恒定但行尾留空位——二者取一，印刷圣经/微信读书均取两端对齐
    - line-break strict：避头尾——「。，？」不落行首、引号开头不吊行尾
-   - hanging-punctuation：WebKit 上行尾标点悬挂到边距里，减少需要摊的空隙
+   - 不用 hanging-punctuation：仅 WebKit 支持，会让 iOS 与安卓换行点不同；
+     跨端排版一致优先（字体已统一为打包的 Huidu Serif，三端度量相同）
    字号/行高/节距沿用现有内联值（此前逐项调过），这里只管排版规则。 */
 .bible-verse-content {
   color: var(--ink);
@@ -5318,13 +5318,12 @@ body.dark .app-exit-toast {
   font-weight: 500;
   -webkit-text-stroke: 0.014em currentColor;
   letter-spacing: 0.02em;
-  text-wrap: pretty;
+  /* 不用 text-wrap:pretty：安卓支持、iOS 不支持，会让两端段落换行点不同 */
   text-align: justify;
   text-justify: inter-ideograph;
   line-break: strict;
   word-break: normal;
   overflow-wrap: break-word;
-  hanging-punctuation: allow-end;
 }
 
 /* 韩文/拼音排版规则不同：拼音有 ruby 注音、韩文按词换行，
