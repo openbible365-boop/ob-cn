@@ -26,6 +26,31 @@ export function getVersion(code: string | null | undefined): Version {
   return VERSIONS.find((v) => v.code === code) ?? VERSIONS[0];
 }
 
+// ---------- 启用的译本（阅读页译本列表只显示勾选项） ----------
+// 默认只显示和合本，其余在「资源管理」勾选后出现；和合本是兜底版本，不可取消。
+const ENABLED_VERSIONS_KEY = "ob.bible.enabledVersions";
+
+export function getEnabledVersionCodes(): string[] {
+  const stored = load<string[]>(ENABLED_VERSIONS_KEY, ["cuv"]);
+  const valid = stored.filter((code) => VERSIONS.some((v) => v.code === code));
+  return valid.includes("cuv") ? valid : ["cuv", ...valid];
+}
+
+export function setVersionEnabled(code: string, enabled: boolean) {
+  if (code === "cuv") return; // 兜底版本不可关
+  const current = getEnabledVersionCodes();
+  const next = enabled
+    ? current.includes(code) ? current : [...current, code]
+    : current.filter((c) => c !== code);
+  save(ENABLED_VERSIONS_KEY, next);
+}
+
+/** 阅读页译本列表：勾选项 + 当前正在读的版本（即使被取消勾选也保底可见） */
+export function getEnabledVersions(currentCode?: string): Version[] {
+  const codes = getEnabledVersionCodes();
+  return VERSIONS.filter((v) => codes.includes(v.code) || v.code === currentCode);
+}
+
 export function getBookByCode(code: string | null | undefined): Book {
   return BOOKS.find((b) => b.code === code) ?? BOOKS[42]; // 约翰福音
 }

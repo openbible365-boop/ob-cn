@@ -17,7 +17,14 @@ import {
   getOfflineAudioMeta,
   removeBookAudio,
 } from "../data/offline-audio";
-import { VERSIONS, getBookByCode, getVersion, bookName } from "../data/scripture";
+import {
+  VERSIONS,
+  getBookByCode,
+  getVersion,
+  bookName,
+  getEnabledVersionCodes,
+  setVersionEnabled,
+} from "../data/scripture";
 
 type Progress = { done: number; total: number };
 
@@ -31,7 +38,14 @@ export function ResourcesPage() {
   const [busyVersion, setBusyVersion] = useState("");
   const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState("");
+  // 勾选的译本才出现在阅读页的译本列表；和合本是兜底，不可取消
+  const [enabledCodes, setEnabledCodes] = useState(getEnabledVersionCodes);
   const supported = offlineSupported();
+
+  const toggleVersion = (code: string) => {
+    setVersionEnabled(code, !enabledCodes.includes(code));
+    setEnabledCodes(getEnabledVersionCodes());
+  };
 
   async function handleDownload(code: string) {
     if (busyVersion) return;
@@ -64,12 +78,27 @@ export function ResourcesPage() {
     }
   }
 
-  // 译本与注释共用同一种行：状态文案、进度条、下载/删除按钮的逻辑完全一致
-  const resourceRow = (code: string, label: string, icon: string) => {
+  // 译本与注释共用同一种行：状态文案、进度条、下载/删除按钮的逻辑完全一致。
+  // 译本行多一个「显示」开关：勾选的才进阅读页的译本列表（和合本兜底不可关）。
+  const resourceRow = (code: string, label: string, icon: string, toggleable = false) => {
     const downloaded = meta[code];
     const downloading = busyVersion === code && progress;
+    const enabled = enabledCodes.includes(code);
     return (
       <div className="me-res-row" key={code}>
+        {toggleable && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            aria-label={`在译本列表${enabled ? "隐藏" : "显示"}「${label}」`}
+            className="me-res-toggle"
+            disabled={code === "cuv"}
+            onClick={() => toggleVersion(code)}
+          >
+            <span className={`notification-switch${enabled ? " is-on" : ""}`} aria-hidden="true"><i /></span>
+          </button>
+        )}
         <span className="me-res-icon"><Icon name={icon} size={18} /></span>
         <span className="me-res-copy">
           <b>{label}</b>
@@ -123,8 +152,8 @@ export function ResourcesPage() {
         <section className="me-data-section">
           <div className="me-data-heading">
             <div>
-              <h2>译本下载</h2>
-              <p>下载到本机后，没有网络也能阅读整本圣经。</p>
+              <h2>译本管理</h2>
+              <p>勾选的译本会出现在阅读页的译本列表；下载到本机后离线也能阅读。</p>
             </div>
             <Icon name="download" size={20} />
           </div>
@@ -136,7 +165,7 @@ export function ResourcesPage() {
           {error && <p className="me-res-error" role="alert">{error}</p>}
 
           <div className="me-res-list">
-            {VERSIONS.map((version) => resourceRow(version.code, version.label, "book"))}
+            {VERSIONS.map((version) => resourceRow(version.code, version.label, "book", true))}
           </div>
         </section>
 

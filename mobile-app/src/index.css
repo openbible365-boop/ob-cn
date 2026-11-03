@@ -4636,6 +4636,20 @@ body.dark .app-exit-toast {
   background: var(--white);
 }
 
+/* 译本「显示」开关：勾选的才进阅读页译本列表；和合本兜底（禁用态弱化） */
+.me-res-toggle {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+}
+
+.me-res-toggle:disabled {
+  opacity: 0.45;
+}
+
 .me-res-icon {
   display: flex;
   width: 36px;

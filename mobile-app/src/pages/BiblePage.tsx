@@ -17,7 +17,7 @@ import { getStreak, markTodayRead } from "../data/streak";
 import { updateReadingPlan } from "../data/reading-plans";
 import {
   BOOKS,
-  VERSIONS,
+  getEnabledVersions,
   OT_BOOKS,
   NT_BOOKS,
   getVersion,
@@ -1231,7 +1231,7 @@ export function BiblePage() {
       {picker === "version" && (
           <div className="bible-version-picker">
             <div className="bible-popup-title">选择译本</div>
-            {VERSIONS.map((ver) => (
+            {getEnabledVersions(version.code).map((ver) => (
               <button
                 key={ver.code}
                 type="button"
@@ -1366,7 +1366,7 @@ export function BiblePage() {
                     setSearchError("");
                   }}
                 >
-                  {VERSIONS.map((targetVersion) => (
+                  {getEnabledVersions(version.code).map((targetVersion) => (
                     <option key={targetVersion.code} value={targetVersion.code}>
                       {targetVersion.label}
                     </option>
