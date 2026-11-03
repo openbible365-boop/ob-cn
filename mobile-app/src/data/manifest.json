@@ -14,6 +14,16 @@
       "code": "pinyin",
       "label": "拼音和合本",
       "lang": "zh"
+    },
+    {
+      "code": "kjv",
+      "label": "KJV 钦定本",
+      "lang": "en"
+    },
+    {
+      "code": "bsb",
+      "label": "BSB 标准本",
+      "lang": "en"
     }
   ],
   "books": [

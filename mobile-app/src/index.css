@@ -5307,6 +5307,17 @@ body.dark .app-exit-toast {
   -webkit-text-stroke: 0;
 }
 
+/* 英文译本：西文衬线 + 英文排版规则。中文的避头尾/字距/描边都不适用；
+   英文两端对齐在窄屏会拉出大词距，按英文书惯例左对齐 */
+.bible-verse-content.is-english {
+  font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+  letter-spacing: 0;
+  -webkit-text-stroke: 0;
+  text-align: left;
+  line-break: auto;
+  hyphens: auto;
+}
+
 .bible-verse-main {
   border-radius: 8px;
   transition: background-color 180ms ease, box-shadow 180ms ease;
@@ -5623,75 +5634,6 @@ body.dark .app-exit-toast {
 
 .verse-share-actions button:disabled {
   opacity: 0.42;
-}
-
-.bible-verse-note-indicator {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  align-items: center;
-  justify-content: center;
-  margin-left: 3px;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--yellow-ink);
-  vertical-align: 0.08em;
-}
-
-.bible-verse-note-indicator.is-open {
-  background: var(--yellow-soft);
-}
-
-.bible-inline-note {
-  display: flex;
-  gap: 9px;
-  margin: 5px 0 13px;
-  padding: 4px 0 4px 10px;
-  border-left: 2px solid #e3b955;
-  color: #575b64;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.65;
-}
-
-.bible-inline-note-label {
-  flex: none;
-  padding-top: 1px;
-  color: #8d6919;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-.bible-inline-note-list,
-.bible-inline-note-row {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-}
-
-.bible-inline-note-list {
-  gap: 7px;
-}
-
-.bible-inline-note-copy {
-  white-space: pre-wrap;
-}
-
-.bible-inline-note-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 2px;
-}
-
-.bible-inline-note-actions button {
-  min-height: 28px;
-  color: var(--body);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .sheet-close-btn {
@@ -8752,16 +8694,6 @@ body.dark :is(.bible-search-field, .huidu-chat-field, .community-chat-field) :is
   background: transparent;
 }
 
-body.dark .bible-verse-note-indicator {
-  background: var(--yellow-soft);
-  color: var(--yellow);
-}
-
-body.dark .bible-inline-note {
-  border-color: var(--line);
-  background: var(--surface-2);
-}
-
 body.dark .bible-toolbar-action {
   color: var(--ink);
 }
@@ -9026,15 +8958,6 @@ body.dark .verse-share-actions button.primary {
   border-color: #6d572b;
   background: var(--yellow);
   color: #4d3305;
-}
-
-body.dark .bible-inline-note {
-  border-left-color: #a88436;
-  color: var(--body);
-}
-
-body.dark .bible-inline-note-label {
-  color: var(--yellow-ink);
 }
 
 body.dark .huidu-quote {
@@ -9411,14 +9334,14 @@ body.dark .community-management-result button {
 /* 小图标键：视觉保持紧凑，点击热区用伪元素扩到 44×44（Apple HIG 最小触控尺寸） */
 :is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
   .community-post-menu > button, .community-post-meta-tools > button,
-  .huidu-search > button, .bible-inline-note-actions button,
+  .huidu-search > button,
   .audio-time-row button, .community-management-result button) {
   position: relative;
 }
 
 :is(.daily-verse-close, .audio-player-close, .audio-locate-btn, .huidu-attach-chip button,
   .community-post-menu > button, .community-post-meta-tools > button,
-  .huidu-search > button, .bible-inline-note-actions button,
+  .huidu-search > button,
   .audio-time-row button, .community-management-result button)::after {
   content: "";
   position: absolute;

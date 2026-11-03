@@ -41,7 +41,6 @@ import {
   getNotes,
   addNote,
   updateNote,
-  deleteNote,
 } from "../data/annotations";
 import { startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
@@ -63,6 +62,9 @@ import { ANDROID_BACK_EVENT } from "../native/android-back";
 // cuv 数据已合入 USFM 底本的节级标记（v.q 诗体 / v.p 段首 / v.b 诗节空行），
 // 能精确处理约伯记、传道书、先知书等散文诗混合体；其余中文译本退回这份名单。
 const POETRY_BOOKS = new Set(["psa", "pro", "sng", "lam"]);
+
+// 已合入 USFM 节级结构标记（p 段首 / q 诗体 / b 诗节空行）的译本
+const STRUCTURED_VERSIONS = new Set(["cuv", "kjv", "bsb"]);
 
 function toPoetryHtml(html: string) {
   // 只在不含标签的纯文本上断行，含内嵌 HTML 的内容原样返回，避免拆坏标签
@@ -278,7 +280,6 @@ export function BiblePage() {
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [expandedNoteVerse, setExpandedNoteVerse] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -541,7 +542,6 @@ export function BiblePage() {
     void storeVersion;
     return getNotes().filter((n) => n.book === book.code && n.chapter === chapter);
   }, [book.code, chapter, storeVersion]);
-  const noteVerseNumbers = new Set(notes.map((note) => note.verse));
 
   const selectedNumbers = [...selected].sort((a, b) => a - b);
   const selectedRangeLabel = (() => {
@@ -1693,24 +1693,23 @@ export function BiblePage() {
         )}
         <div
           key={`${version.code}-${book.code}-${chapter}`}
-          className={`bible-verse-content${version.code === "pinyin" ? " is-pinyin" : ""}${version.lang === "ko" ? " is-korean" : ""}`}
+          className={`bible-verse-content${version.code === "pinyin" ? " is-pinyin" : ""}${version.lang === "ko" ? " is-korean" : ""}${version.lang === "en" ? " is-english" : ""}`}
           style={{
             fontSize: version.lang === "ko" ? Math.max(16, fontSize - 1) : fontSize,
-            lineHeight: version.code === "pinyin" ? 2.18 : version.lang === "ko" ? 1.82 : 1.8,
+            lineHeight: version.code === "pinyin" ? 2.18 : version.lang === "ko" ? 1.82 : version.lang === "en" ? 1.68 : 1.8,
           }}
         >
           {verses.map((v) => {
             const color = highlightMap.get(v.verse);
             const isSelected = selected.has(v.verse);
             const isAudioCurrent = audioPlaying && audioCurrentVerseNumber === v.verse;
-            const verseNotes = notes.filter((note) => note.verse === v.verse);
-            const noteExpanded = expandedNoteVerse === v.verse;
-            // cuv 带 USFM 结构标记：节级判定诗体；其他中文译本退回整卷名单。
+            // 带 USFM 结构标记的译本（cuv/kjv/bsb）按节级判定诗体；其他中文译本退回整卷名单。
             // 拼音版有自己的注音排版、韩文无句读分行依据，都不参与诗体排版。
+            // 英文诗体节不做节内分行（toPoetryHtml 只认中文句读），但各自成行，合英文诗篇排版惯例。
             const poetic =
               version.code !== "pinyin" &&
               version.lang !== "ko" &&
-              (version.code === "cuv" ? v.q === true : POETRY_BOOKS.has(book.code));
+              (STRUCTURED_VERSIONS.has(version.code) ? v.q === true : POETRY_BOOKS.has(book.code));
             // 段落/诗节间距：标题自带留白、章首有大字号章码，这两处不再加
             const paragraphBreak =
               (v.p || v.b) && v.verse !== verses[0]?.verse && !(showHeadings && v.heading);
@@ -1764,42 +1763,6 @@ export function BiblePage() {
                     }}
                   />
                 </span>
-                {noteVerseNumbers.has(v.verse) && (
-                  <button data-icon-button="default" data-icon-button-size="inline"
-                    type="button"
-                    className={`bible-verse-note-indicator${noteExpanded ? " is-open" : ""}`}
-                    aria-label={noteExpanded ? "收起本节笔记" : "展开本节笔记"}
-                    aria-expanded={noteExpanded}
-                    onClick={() => setExpandedNoteVerse(noteExpanded ? null : v.verse)}
-                  >
-                    <Icon name="edit" size={12} />
-                  </button>
-                )}
-                {noteExpanded && (
-                  <span className="bible-inline-note" role="note" aria-label={`${displayedBook}${chapter}章${v.label}节的笔记`}>
-                    <span className="bible-inline-note-label">笔记</span>
-                    <span className="bible-inline-note-list">
-                      {verseNotes.map((note) => (
-                        <span className="bible-inline-note-row" key={note.id}>
-                          <span className="bible-inline-note-copy">{note.content}</span>
-                          <span className="bible-inline-note-actions">
-                            <button type="button" onClick={() => openNoteEditor(v.verse, note)}>编辑</button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                deleteNote(note.id);
-                                setStoreVersion((value) => value + 1);
-                                if (verseNotes.length === 1) setExpandedNoteVerse(null);
-                              }}
-                            >
-                              删除
-                            </button>
-                          </span>
-                        </span>
-                      ))}
-                    </span>
-                  </span>
-                )}
               </span>
             );
           })}
@@ -2012,7 +1975,6 @@ export function BiblePage() {
                     if (editingNoteId) updateNote(editingNoteId, noteText.trim());
                     else addNote(book.code, chapter, selectedVerse.verse, noteText.trim(), version.code);
                     setStoreVersion((v) => v + 1);
-                    setExpandedNoteVerse(selectedVerse.verse);
                     setSelected(new Set());
                     setNoteText("");
                     setNoteOpen(false);

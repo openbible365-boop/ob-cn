@@ -107,3 +107,13 @@
 - 每次交付附带完成项、测试结果、已知问题和下一阶段计划。
 - 不以界面“看起来完成”作为验收；必须有数据库、权限、错误处理和测试闭环。
 - 不覆盖未确认的本地修改，不提交密钥，不在前端依赖权限隐藏。
+
+## 8. 英文译本版权路线（2026-11-02 记录）
+
+- 已离线打包（合法免费）：KJV（公有领域）、BSB（Berean Standard Bible，公有领域），
+  均含 USFM 段落/诗体结构标记，数据在 data/bible/{kjv,bsb}。
+- ESV：Crossway 官方 API 代理已就绪（admin-app /api/mobile/bible/esv），
+  到 https://api.esv.org 免费申请 key 并设置 ESV_API_KEY 即可启用在线查经；
+  按条款不得离线存储全文（免费额度每日 5000 次查询）。
+- NIV：Biblica 版权，无免费途径。上架且有预算后走 Biblica 或 API.Bible 商业授权，
+  在此之前不集成任何非授权 NIV 文本（网传 JSON 均为侵权拷贝）。
