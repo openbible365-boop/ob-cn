@@ -4848,9 +4848,23 @@ body.dark .app-exit-toast {
   font-weight: 600;
 }
 
+/* 经文引用块整块可点（跳回圣经页）：角标箭头做可点提示 */
+.huidu-quote.is-link {
+  cursor: pointer;
+}
+
+.huidu-quote.is-link:active {
+  opacity: 0.75;
+}
+
+.huidu-quote-caret {
+  margin-left: auto;
+  color: var(--yellow-ink);
+}
+
 .huidu-quote p {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--huidu-font-scale, 1));
   font-weight: 600;
   line-height: 1.75;
   text-align: justify;
@@ -4955,7 +4969,7 @@ body.dark .app-exit-toast {
   border-radius: 18px 18px 4px 18px;
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 13px;
+  font-size: calc(13px * var(--huidu-font-scale, 1));
   font-weight: 500;
   line-height: 1.6;
 }
@@ -5037,7 +5051,7 @@ body.dark .app-exit-toast {
 .huidu-answer-paragraph {
   margin: 0;
   color: var(--body);
-  font-size: 12px;
+  font-size: calc(12px * var(--huidu-font-scale, 1));
   font-weight: 400;
   line-height: 1.75;
   white-space: pre-line;

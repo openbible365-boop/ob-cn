@@ -71,6 +71,16 @@ export function HuiduChatPage() {
   const justCreated = Boolean(routeState?.justCreated);
   const initialQuestion = routeState?.initialQuestion?.trim() ?? "";
 
+  // 对话字号：三档缩放，作用于提问/回答/经文引用文本
+  const [fontScale, setFontScale] = useState(() => {
+    const saved = Number(localStorage.getItem("ob.huidu.fontScale"));
+    return [1, 1.15, 1.3].includes(saved) ? saved : 1;
+  });
+  const [fontPanelOpen, setFontPanelOpen] = useState(false);
+  useEffect(() => {
+    localStorage.setItem("ob.huidu.fontScale", String(fontScale));
+  }, [fontScale]);
+
   const [conv, setConv] = useState<Conversation | null>(() => (
     conversationId === "new"
       ? createDraftConversation()
@@ -284,22 +294,69 @@ export function HuiduChatPage() {
           setRenameOpen(true);
         }}
         actions={(
-          <>
-            {scriptureContext && (
-              <button data-icon-button="default" className="bible-toolbar-action huidu-chat-toolbar-action is-reference" type="button" aria-label={`在圣经中查看${conv.refLabel}`} title="定位经文" onClick={openReferencedVerse}>
-                <Icon name="map-pin" size={20} />
-              </button>
-            )}
-          </>
+          // 字体大小调节（原定位经文按钮：定位入口移到经文引用块上，点引用块即跳经文）
+          <button data-icon-button="default"
+            className="bible-toolbar-action huidu-chat-toolbar-action"
+            type="button"
+            title="字体设置"
+            aria-label="字体设置"
+            aria-expanded={fontPanelOpen}
+            onClick={() => setFontPanelOpen((open) => !open)}
+          >
+            <span className="bible-font-mark" aria-hidden="true">
+              <span className="small-a">A</span>
+              <span className="large-a">A</span>
+            </span>
+          </button>
         )}
+        overlay={fontPanelOpen ? (
+          <div className="bible-reading-settings" role="dialog" aria-label="慧读阅读设置">
+            <div className="bible-reading-setting-row">
+              <span>字体大小</span>
+              <div className="bible-setting-segment is-theme" role="radiogroup" aria-label="字体大小">
+                {([[1, "标准"], [1.15, "大"], [1.3, "特大"]] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={fontScale === value}
+                    className={fontScale === value ? "active" : ""}
+                    onClick={() => setFontScale(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : undefined}
       />
 
-      <main ref={scrollRef} className="screen-scroll huidu-thread">
+      <main
+        ref={scrollRef}
+        className="screen-scroll huidu-thread"
+        style={{ "--huidu-font-scale": fontScale } as React.CSSProperties}
+        onClickCapture={() => { if (fontPanelOpen) setFontPanelOpen(false); }}
+      >
         {scriptureContext && (
-          <section className="huidu-quote" aria-label={`${conv.refLabel}经文`}>
+          // 整块可点：跳回圣经页对应经节（原顶栏定位按钮的职责移到这里）
+          <section
+            className="huidu-quote is-link"
+            role="button"
+            tabIndex={0}
+            aria-label={`在圣经中查看${conv.refLabel}`}
+            onClick={openReferencedVerse}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openReferencedVerse();
+              }
+            }}
+          >
             <div className="huidu-quote-meta">
               <span>经文</span>
               <b>{conv.refLabel}</b>
+              <Icon name="chevron-right" size={13} className="huidu-quote-caret" />
             </div>
             <p>{conv.verseText}</p>
           </section>
