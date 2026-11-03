@@ -2,3 +2,6 @@
 // 四宫格的活动入口、通知设置里的社群类偏好。
 // 路由、数据层与后端接口全部保留，翻回 true 即全量恢复。
 export const SHOW_COMMUNITY = false;
+
+// 奉献支持入口：网页端支付承接上线前先隐藏（页面与路由保留，翻回 true 即恢复）
+export const SHOW_DONATION = false;

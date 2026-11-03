@@ -17,7 +17,7 @@ import {
   updateAvatar,
   type SessionUser,
 } from "../data/profile";
-import { SHOW_COMMUNITY } from "../data/features";
+import { SHOW_COMMUNITY, SHOW_DONATION } from "../data/features";
 import { fetchReadingPlans, type ReadingPlan } from "../data/reading-plans";
 import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
@@ -151,7 +151,10 @@ export function MePage() {
     { icon: "cloud", label: translate("数据与账户"), desc: translate("同步状态与本机数据导出"), to: "/me/account" },
     { icon: "bell", label: translate("通知设置"), desc: translate("读经提醒与消息偏好"), to: "/me/notifications" },
     { icon: "download", label: translate("资源管理"), desc: translate("译本、注释与语音下载"), to: "/me/resources" },
-    { icon: "gift", label: translate("奉献支持"), desc: translate("支持这项免费的福音事工"), to: "/me/donate" },
+    // 奉献入口随 SHOW_DONATION 开关：网页端支付承接上线后再放开
+    ...(SHOW_DONATION
+      ? [{ icon: "gift", label: translate("奉献支持"), desc: translate("支持这项免费的福音事工"), to: "/me/donate" }]
+      : []),
     // 反馈走系统邮件：协议与隐私政策里承诺的联系渠道
     { icon: "mail", label: translate("意见反馈"), desc: "mushengbooks@gmail.com", to: "", href: `mailto:mushengbooks@gmail.com?subject=${encodeURIComponent("慧读圣经反馈")}` },
   ];
