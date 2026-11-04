@@ -24,6 +24,8 @@ services:
       DATABASE_URL: postgresql://openbible:${DB_PASSWORD}@db:5432/ob_cn?schema=public
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
+      AUTH_URL: https://admin.openbible.live/api/auth
+      NEXTAUTH_URL: https://admin.openbible.live
       APP_URL: https://admin.openbible.live
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-465}
@@ -38,14 +40,26 @@ services:
       APPLE_KEY_ID: ${APPLE_KEY_ID:-}
       APPLE_PRIVATE_KEY_PATH: /run/secrets/apple_sign_in_key
       APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      FIREBASE_SERVICE_ACCOUNT_PATH: /run/secrets/firebase-admin.json
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_PRIVATE_KEY_PATH: /run/secrets/apns_push_key.p8
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-live.openbible.app}
+      APNS_ENVIRONMENT: ${APNS_ENVIRONMENT:-production}
+      PUSH_DEFAULT_IMAGE_URL: ${PUSH_DEFAULT_IMAGE_URL:-https://admin.openbible.live/openbible-notification-logo.png}
+      IP_GEOLOCATION_URL: ${IP_GEOLOCATION_URL:-https://ipwho.is}
       OPENBIBLE_LLM_BASE_URL: ${OPENBIBLE_LLM_BASE_URL:-http://host.docker.internal:8010/v1}
       OPENBIBLE_LLM_MODEL: ${OPENBIBLE_LLM_MODEL:-Qwen3-14B-AWQ}
       VLLM_API_KEY: ${VLLM_API_KEY:-}
+      OPENBIBLE_RAG_BASE_URL: ${OPENBIBLE_RAG_BASE_URL:-http://host.docker.internal:8002}
+      OPENBIBLE_RAG_INTERNAL_API_KEY: ${OPENBIBLE_RAG_INTERNAL_API_KEY:-}
       COMMUNITY_UPLOAD_DIR: /app/uploads/community
     extra_hosts:
       - "host.docker.internal:172.20.0.1"
     volumes:
       - ./secrets/apple_sign_in_key.p8:/run/secrets/apple_sign_in_key:ro
+      - ./secrets/firebase-admin.json:/run/secrets/firebase-admin.json:ro
+      - ./secrets/apns_push_key.p8:/run/secrets/apns_push_key.p8:ro
       - community_uploads:/app/uploads/community
       - ../web-app:/web-app:ro
       - ../mobile-app:/mobile-app:ro

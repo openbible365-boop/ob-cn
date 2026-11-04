@@ -8,6 +8,7 @@ import { AiThinking } from "../components/AiThinking";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { VoiceInputButton } from "../components/VoiceInputButton";
 import {
+  OPENING_QUESTION,
   appendFollowup,
   getConversation,
   hasScriptureContext,
@@ -99,6 +100,8 @@ export function HuiduChatPage() {
   }, [conversationId]);
   const [revealed, setRevealed] = useState(justCreated ? 0 : Infinity);
   const [pendingAnswer, setPendingAnswer] = useState(false);
+  // 流式回答的已到达部分；回答完成写入对话后清空
+  const [streamingAnswer, setStreamingAnswer] = useState("");
   const [question, setQuestion] = useState("");
   const [requestError, setRequestError] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
@@ -144,17 +147,22 @@ export function HuiduChatPage() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [conv, revealed, pendingAnswer]);
+  }, [conv, revealed, pendingAnswer, streamingAnswer]);
 
   useEffect(() => {
     if (!conv || !initialQuestion || conv.messages.length > 0 || initialQuestionStartedRef.current) return;
     initialQuestionStartedRef.current = true;
     const originalConversation = conv;
     setPendingAnswer(true);
+    setStreamingAnswer("");
     setConv({ ...conv, messages: [{ role: "user", content: initialQuestion }] });
-    void requestHuiduFollowup(originalConversation, initialQuestion).then((result) => {
+    void requestHuiduFollowup(originalConversation, initialQuestion, {
+      // 经文对话的首问走 opening 模式：服务端按三段结构生成并可命中缓存
+      mode: hasScriptureContext(originalConversation) ? "opening" : "followup",
+      onDelta: setStreamingAnswer,
+    }).then((result) => {
       if (result.ok) {
-        const updated = appendFollowup(originalConversation.id, initialQuestion, result.answer);
+        const updated = appendFollowup(originalConversation.id, initialQuestion, result.answer, result.sources, result.blocks);
         setConv(updated ?? originalConversation);
       } else {
         setConv(originalConversation);
@@ -162,6 +170,7 @@ export function HuiduChatPage() {
         setRequestError(result.message);
       }
       setPendingAnswer(false);
+      setStreamingAnswer("");
     });
   }, [conv, initialQuestion]);
 
@@ -248,11 +257,17 @@ export function HuiduChatPage() {
     setAttachment(null);
     setRequestError("");
     setPendingAnswer(true);
+    setStreamingAnswer("");
     setConv(optimisticConversation);
 
-    const result = await requestHuiduFollowup(originalConversation, questionForApi, file);
+    const result = await requestHuiduFollowup(originalConversation, questionForApi, {
+      file,
+      // 首次解读失败后重试时，对话仍为空，需要继续按 opening 模式请求
+      mode: hasScriptureContext(originalConversation) && originalConversation.messages.length === 0 ? "opening" : "followup",
+      onDelta: setStreamingAnswer,
+    });
     if (result.ok) {
-      const updated = appendFollowup(originalConversation.id, displayText, result.answer);
+      const updated = appendFollowup(originalConversation.id, displayText, result.answer, result.sources, result.blocks);
       setConv(updated ?? originalConversation);
     } else {
       setConv(originalConversation);
@@ -261,6 +276,7 @@ export function HuiduChatPage() {
       setRequestError(result.message);
     }
     setPendingAnswer(false);
+    setStreamingAnswer("");
   };
 
   return (
@@ -396,6 +412,8 @@ export function HuiduChatPage() {
         <div className="huidu-message-list">
           {conv.messages.map((message, index) => {
             if (message.role === "user") {
+              // 自动发出的首问只是触发解读，用户没有亲手输入，不展示成气泡
+              if (scriptureContext && index === 0 && message.content.trim() === OPENING_QUESTION) return null;
               // 主流 AI 应用的消息样式：用户消息右侧气泡不带头像，
               // 助手消息通栏平铺——对话里只有两个声音，头像不提供信息。
               return (
@@ -467,7 +485,9 @@ export function HuiduChatPage() {
 
           {pendingAnswer && (
             <div className="huidu-assistant-message is-pending">
-              <AiThinking />
+              {streamingAnswer
+                ? streamingAnswer.split(/\n\n+/).map((paragraph, index) => <p className="huidu-answer-paragraph" key={index}>{paragraph}</p>)
+                : <AiThinking />}
             </div>
           )}
         </div>

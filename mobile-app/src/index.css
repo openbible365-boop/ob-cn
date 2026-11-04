@@ -3144,6 +3144,11 @@ a {
   background: var(--yellow-soft);
 }
 
+/* 注释页音频弹窗底部卡片：三列网格（来自 ob-cn 线上分支的修复，合并时保留） */
+.annotation-audio-player .audio-current-passage {
+  grid-template-columns: auto 1fr 18px;
+}
+
 .audio-current-passage b { display: block; font-size: 12px; margin-bottom: 3px; color: var(--yellow-ink); }
 .audio-current-passage small {
   display: -webkit-box;
@@ -4021,7 +4026,9 @@ a {
   /* 淡底瓷片给图标一个承托，行与行的左缘对齐线由它统一 */
   background: var(--surface-2);
   color: var(--body);
-}.me-group-copy,
+}
+
+.me-group-copy,
 .me-menu-copy {
   display: flex;
   min-width: 0;

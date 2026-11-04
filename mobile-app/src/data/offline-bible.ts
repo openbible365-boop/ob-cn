@@ -26,7 +26,8 @@ export function getOfflineMeta(): Meta {
 }
 
 function bookUrl(version: string, book: string) {
-  return `/data/bible/${version}/${book}.json`;
+  const folder = version === "pinyin" ? "pinyin2" : version;
+  return `/data/bible/${folder}/${book}.json`;
 }
 
 export function readableBytes(value: number) {
