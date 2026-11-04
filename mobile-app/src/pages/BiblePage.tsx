@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { READING_THEMES, useReadingTheme } from "../theme";
 import { Icon } from "../components/Icon";
@@ -38,6 +38,8 @@ import {
   updateNote,
 } from "../data/annotations";
 import { OPENING_QUESTION, startConversation } from "../data/huidu";
+import { checkLoginState } from "../data/profile";
+import { LoginRequiredDialog } from "../components/LoginRequiredDialog";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
 import {
   hasAndroidMediaControls,
@@ -340,6 +342,11 @@ export function BiblePage() {
   const readStreak = getStreak();
   const [locatedVerse, setLocatedVerse] = useState<number | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  // 未登录点「慧读」时的登录提示弹窗
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const checkingLoginRef = useRef(false);
+  // 稳定引用：弹窗内的安卓返回键监听依赖它，避免每次渲染重复绑定
+  const closeLoginPrompt = useCallback(() => setLoginPromptOpen(false), []);
   const [loadedAudioKey, setLoadedAudioKey] = useState<string | null>(null);
   // 离线缓存章节的音频是 ObjectURL，换章时释放上一章的 MP3 内存
   useEffect(() => {
@@ -352,6 +359,8 @@ export function BiblePage() {
   // 安卓返回键：开着的弹层逐层关闭，全关完才轮到路由回退
   useEffect(() => {
     const closeTopOverlay = (event: Event) => {
+      // 登录提示弹窗自己处理返回键，这里不再连带关闭选节面板
+      if (loginPromptOpen) return;
       const close =
         (shareOpen && (() => setShareOpen(false)))
         || (dailyShareOpen && (() => setDailyShareOpen(false)))
@@ -365,7 +374,7 @@ export function BiblePage() {
     };
     window.addEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
     return () => window.removeEventListener(ANDROID_BACK_EVENT, closeTopOverlay);
-  }, [shareOpen, dailyShareOpen, noteOpen, picker, selected]);
+  }, [shareOpen, dailyShareOpen, noteOpen, picker, selected, loginPromptOpen]);
 
   useEffect(() => {
     if (picker === "search") return;
@@ -555,6 +564,30 @@ export function BiblePage() {
     .filter((verse): verse is Verse => Boolean(verse));
   const selectedVerse = selectedVerses[0] ?? null;
   const selectedNotes = notes.filter((note) => selected.has(note.verse));
+
+  // 「登录后继续慧读」：从登录页回来时带着待恢复的经节。
+  // 第一步等本章经文加载后恢复选中；第二步等选中生效（selectedVerses 已算出）再进入慧读。
+  // NOTE: 恢复后立即清掉路由 state，避免返回/刷新时再次触发。
+  const resumeHuiduVerses = (location.state as { resumeHuiduVerses?: unknown } | null)?.resumeHuiduVerses;
+  const [pendingHuiduResume, setPendingHuiduResume] = useState(false);
+  // 清除路由 state 是异步生效的，期间本 effect 可能再跑一次；用 ref 保证只恢复一次，避免重复新建对话
+  const huiduResumeHandledRef = useRef(false);
+  useEffect(() => {
+    if (!Array.isArray(resumeHuiduVerses) || verses.length === 0 || huiduResumeHandledRef.current) return;
+    huiduResumeHandledRef.current = true;
+    const wanted = resumeHuiduVerses.filter(
+      (value): value is number => typeof value === "number" && verses.some((verse) => verse.verse === value),
+    );
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    if (wanted.length === 0) return;
+    setSelected(new Set(wanted));
+    setPendingHuiduResume(true);
+  }, [resumeHuiduVerses, verses, navigate, location.pathname, location.search]);
+  useEffect(() => {
+    if (!pendingHuiduResume || selectedVerses.length === 0) return;
+    setPendingHuiduResume(false);
+    askHuidu();
+  });
 
   useEffect(() => {
     const scroller = readingScrollRef.current;
@@ -792,6 +825,40 @@ export function BiblePage() {
     setSearchResults([]);
     setHasSearched(false);
     setPicker(null);
+  };
+
+  // 慧读需要登录：未登录时先弹提示，引导去登录页，登录后回到当前经文。
+  // 网络异常（状态未知）时不拦截，交给后续请求自行报错，避免离线时误报未登录。
+  const askHuiduWithLoginCheck = async () => {
+    if (selectedVerses.length === 0 || !selectedVerse || checkingLoginRef.current) return;
+    checkingLoginRef.current = true;
+    try {
+      const loginState = await checkLoginState();
+      if (loginState === "signed-out") {
+        setLoginPromptOpen(true);
+        return;
+      }
+      askHuidu();
+    } finally {
+      checkingLoginRef.current = false;
+    }
+  };
+
+  const goLoginForHuidu = () => {
+    setLoginPromptOpen(false);
+    const backTo = new URLSearchParams({
+      t: version.code,
+      bk: book.code,
+      c: String(chapter),
+      ...(selectedVerse ? { v: String(selectedVerse.verse) } : {}),
+    });
+    navigate("/me/login", {
+      state: {
+        from: `/bible?${backTo.toString()}`,
+        // 登录成功后由登录页原样带回，回到本页即恢复选中并直接进入慧读
+        fromState: { resumeHuiduVerses: selectedNumbers },
+      },
+    });
   };
 
   const askHuidu = () => {
@@ -1988,7 +2055,7 @@ export function BiblePage() {
                 <div className="verse-dock-actions">
                   <button type="button" onClick={() => openNoteEditor(selectedVerse.verse, selectedNotes[0], true)}><Icon name="edit" /><span>笔记</span></button>
                   <button type="button" onClick={() => navigate(`/annotations?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse.verse}`)}><Icon name="book" /><span>注释</span></button>
-                  <button type="button" className="is-huidu" onClick={askHuidu}><Icon name="sparkle" /><span>慧读</span></button>
+                  <button type="button" className="is-huidu" onClick={() => void askHuiduWithLoginCheck()}><Icon name="sparkle" /><span>慧读</span></button>
                   <button type="button" onClick={() => setShareOpen(true)}><Icon name="share" /><span>分享</span></button>
                   <button type="button" onClick={() => void copyVerse()}><Icon name="copy" /><span>复制经文</span></button>
                 </div>
@@ -2072,6 +2139,14 @@ export function BiblePage() {
             shareUrl: `https://app.openbible.live/#/bible?t=${version.code}&bk=${book.code}&c=${chapter}&v=${selectedVerse?.verse ?? selectedVerses[0].verse}`,
           }}
           onClose={() => setShareOpen(false)}
+        />
+      )}
+
+      {loginPromptOpen && (
+        <LoginRequiredDialog
+          message="登录后即可使用慧读解读经文"
+          onClose={closeLoginPrompt}
+          onLogin={goLoginForHuidu}
         />
       )}
     </div>

@@ -137,6 +137,25 @@ export async function fetchMe(): Promise<SessionUser | null> {
   }
 }
 
+export type LoginState = "signed-in" | "signed-out" | "unknown";
+
+/**
+ * 检查当前是否已登录
+ * NOTE: 与 fetchMe 不同，这里区分「服务端明确返回 401」与「网络异常」：
+ * 网络不通时返回 unknown，调用方不应据此误判为未登录而弹出登录提示。
+ * @returns 登录状态
+ */
+export async function checkLoginState(): Promise<LoginState> {
+  try {
+    const response = await apiRequest<ApiResult>("/api/mobile/me");
+    if (response.status === 401) return "signed-out";
+    if (response.ok && response.data?.user) return "signed-in";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 export async function updateAvatar(avatarUrl: string) {
   try {
     const response = await apiRequest<{

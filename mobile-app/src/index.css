@@ -3605,6 +3605,17 @@ a {
   color: #fff;
 }
 
+/* 登录提示弹窗：主按钮用品牌黄，与登录页「获取验证码」一致 */
+.login-required-dialog p {
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.login-required-dialog button.is-primary {
+  background: var(--yellow);
+  color: #2b2926;
+}
+
 .huidu-rename-dialog input {
   width: 100%;
   height: 42px;

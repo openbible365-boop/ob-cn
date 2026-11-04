@@ -25,6 +25,8 @@ export function LoginPage() {
   const isNative = Capacitor.isNativePlatform();
   const showAppleLogin = !isAndroid;
   const returnTo = ((location.state as { from?: string } | null)?.from) || "/me";
+  // 登录成功跳回原页面时一并带回的路由状态（如「登录后继续慧读」要恢复的经节）
+  const returnState = (location.state as { fromState?: unknown } | null)?.fromState;
   const [mode, setMode] = useState<LoginMode>("code");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -89,7 +91,7 @@ export function LoginPage() {
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       setBusy(false);
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: returnState });
     } else {
       setBusy(false);
       setError(result.message);
@@ -110,7 +112,7 @@ export function LoginPage() {
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       setBusy(false);
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: returnState });
     } else {
       setBusy(false);
       setError(result.message);
@@ -138,7 +140,7 @@ export function LoginPage() {
       await syncHighlights();
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: returnState });
     } catch (error) {
       if (!isGoogleSignInCanceled(error)) {
         const message = error instanceof Error ? error.message : "Google 登录失败，请稍后重试";
@@ -175,7 +177,7 @@ export function LoginPage() {
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       // 与邮箱/Google 登录一致：回到被登录墙拦下前的目标页，而不是写死「我的」
-      navigate(returnTo, { replace: true });
+      navigate(returnTo, { replace: true, state: returnState });
     } catch (error) {
       if (!isAppleSignInCanceled(error)) {
         const message = error instanceof Error ? error.message : "Apple 登录失败，请稍后重试";
