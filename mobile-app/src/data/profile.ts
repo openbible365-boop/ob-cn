@@ -86,6 +86,18 @@ export async function verifyLoginCode(email: string, code: string) {
   return result;
 }
 
+/**
+ * 账号密码登录（仅限后台开通了密码的账号）
+ * @param account 用户名或邮箱
+ * @param password 密码
+ * @returns 登录结果
+ */
+export async function verifyPasswordLogin(account: string, password: string) {
+  const result = await post("/api/mobile/auth/password", { account, password });
+  if (result.ok) clearCommunityWorkspaceCache();
+  return result;
+}
+
 export async function verifyGoogleLogin(idToken: string) {
   const result = await post("/api/mobile/auth/google", { idToken });
   if (result.ok) clearCommunityWorkspaceCache();

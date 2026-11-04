@@ -976,6 +976,49 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
   padding: 18px;
 }
 
+/* 登录方式切换：验证码 / 密码，两段式分段控件 */
+.login-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.login-mode-tabs button {
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-mode-tabs button.active {
+  background: var(--white);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.login-password-toggle {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  margin-right: -8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.login-password-toggle[aria-pressed="true"] {
+  color: var(--purple-deep);
+}
+
 .login-field {
   display: flex;
   min-width: 0;

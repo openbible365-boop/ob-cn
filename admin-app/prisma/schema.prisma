@@ -73,6 +73,7 @@ model User {
   createdAt      DateTime   @default(now())
 
   authAccounts          AuthAccount[]
+  password              UserPassword?
   memberships           Membership[]
   ownedCommunities      Community[]             @relation("CommunityOwner")
   posts                 Post[]
@@ -132,6 +133,20 @@ model AuthAccount {
 
   @@unique([userId, provider])
   @@unique([provider, providerAccountId])
+}
+
+// 账号密码登录凭据（仅用于商店审核 / 内部测试等「后台开通」的账号）。
+// NOTE: 单独成表而不是放在 User 上：多处接口直接返回完整 User 对象，
+// 若哈希放在 User 上很容易随之泄露到前端。普通用户无法自助注册密码。
+model UserPassword {
+  userId       String   @id
+  // 登录名统一存小写，实现大小写不敏感匹配
+  loginName    String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ---------- Communities (分社群) ----------

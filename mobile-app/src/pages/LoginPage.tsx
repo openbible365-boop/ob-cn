@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { SHOW_COMMUNITY } from "../data/features";
-import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode } from "../data/profile";
+import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode, verifyPasswordLogin } from "../data/profile";
 import { syncHighlights } from "../data/annotations";
 import { syncStoredPushToken } from "../data/push";
 import { pullReadingPosition } from "../data/reading-sync";
@@ -14,6 +14,9 @@ import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
 
 // 注册登录（design 5d）— real email verification-code login against the
 // OpenBible backend; first login auto-registers the account.
+// 另有「密码登录」：仅限后台开通了密码的账号（商店审核 / 内部测试），不能用于注册。
+type LoginMode = "code" | "password";
+
 export function LoginPage() {
   const navigate = useNavigate();
   const goBack = useAppBack("/me");
@@ -22,8 +25,12 @@ export function LoginPage() {
   const isNative = Capacitor.isNativePlatform();
   const showAppleLogin = !isAndroid;
   const returnTo = ((location.state as { from?: string } | null)?.from) || "/me";
+  const [mode, setMode] = useState<LoginMode>("code");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [account, setAccount] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -66,6 +73,10 @@ export function LoginPage() {
   };
 
   const submit = async () => {
+    if (mode === "password") {
+      await submitPassword();
+      return;
+    }
     if (!/^\d{6}$/.test(code.trim())) {
       setError("请输入 6 位数字验证码");
       return;
@@ -83,6 +94,34 @@ export function LoginPage() {
       setBusy(false);
       setError(result.message);
     }
+  };
+
+  const submitPassword = async () => {
+    if (!account.trim() || !password) {
+      setError("请输入账号和密码");
+      return;
+    }
+    setError("");
+    setNotice("");
+    setBusy(true);
+    const result = await verifyPasswordLogin(account.trim(), password);
+    if (result.ok) {
+      await syncHighlights();
+      void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
+      void pullReadingPosition(); // 取回其他设备的阅读位置
+      setBusy(false);
+      navigate(returnTo, { replace: true });
+    } else {
+      setBusy(false);
+      setError(result.message);
+    }
+  };
+
+  const switchMode = (next: LoginMode) => {
+    if (next === mode) return;
+    setMode(next);
+    setError("");
+    setNotice("");
   };
 
   const signInWithGoogleAccount = async () => {
@@ -182,38 +221,103 @@ export function LoginPage() {
           className="card login-card"
           onSubmit={(event) => { event.preventDefault(); void submit(); }}
         >
-          <label className="login-field">
-            <Icon name="mail" size={16} />
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="邮箱地址"
-              aria-label="邮箱地址"
-              type="email"
-            />
-          </label>
-          <div className="login-code-row">
-            <label className="login-field">
-              <Icon name="lock" size={16} />
-              <input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="6 位验证码"
-                aria-label="6 位验证码"
-                inputMode="numeric"
-                maxLength={6}
-              />
-            </label>
-            <button type="button" className="login-send-btn" onClick={sendCode} disabled={busy || cooldown > 0}>
-              {cooldown > 0 ? `${cooldown}s` : "获取验证码"}
+          <div className="login-mode-tabs" role="tablist" aria-label="登录方式">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "code"}
+              className={mode === "code" ? "active" : ""}
+              onClick={() => switchMode("code")}
+            >
+              验证码登录
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "password"}
+              className={mode === "password" ? "active" : ""}
+              onClick={() => switchMode("password")}
+            >
+              密码登录
             </button>
           </div>
+
+          {mode === "code" ? (
+            <>
+              <label className="login-field">
+                <Icon name="mail" size={16} />
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="邮箱地址"
+                  aria-label="邮箱地址"
+                  type="email"
+                />
+              </label>
+              <div className="login-code-row">
+                <label className="login-field">
+                  <Icon name="lock" size={16} />
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="6 位验证码"
+                    aria-label="6 位验证码"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                </label>
+                <button type="button" className="login-send-btn" onClick={sendCode} disabled={busy || cooldown > 0}>
+                  {cooldown > 0 ? `${cooldown}s` : "获取验证码"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <label className="login-field">
+                <Icon name="user" size={16} />
+                <input
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
+                  placeholder="用户名或邮箱"
+                  aria-label="用户名或邮箱"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  maxLength={120}
+                />
+              </label>
+              <label className="login-field">
+                <Icon name="lock" size={16} />
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="密码"
+                  aria-label="密码"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  maxLength={128}
+                />
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  <Icon name="eye" size={16} />
+                </button>
+              </label>
+            </>
+          )}
           {error && <div role="alert" className="login-feedback is-error">{error}</div>}
           {notice && !error && <div role="status" className="login-feedback">{notice}</div>}
           <button className="btn-primary" type="submit" disabled={busy}>
-            {busy ? "请稍候…" : "登录 / 注册"}
+            {busy ? "请稍候…" : mode === "code" ? "登录 / 注册" : "登录"}
           </button>
-          <div className="login-hint">首次使用同一邮箱登录将自动注册</div>
+          <div className="login-hint">
+            {mode === "code" ? "首次使用同一邮箱登录将自动注册" : "密码登录仅限已开通密码的账号"}
+          </div>
         </form>
 
         <div className="login-divider" aria-hidden="true"><i /><span>或</span><i /></div>
