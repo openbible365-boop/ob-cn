@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta
+      name="description"
+      content="慧读圣经（OpenBible）隐私政策：说明应用如何收集、使用、共享、保留和删除用户数据。"
+    />
+    <title>隐私政策 | OpenBible</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      :root {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Noto Sans SC", Arial, sans-serif;
+        color: #2b2926;
+        background: #f6f5f3;
+        font-synthesis: none;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: #f6f5f3;
+        color: #2b2926;
+        line-height: 1.75;
+      }
+
+      a { color: #6f3fa0; }
+
+      a:focus-visible,
+      button:focus-visible {
+        outline: 3px solid rgba(111, 63, 160, 0.28);
+        outline-offset: 3px;
+      }
+
+      .page-header {
+        border-bottom: 1px solid #e8e6e3;
+        background: #fff;
+      }
+
+      .page-header-inner,
+      main,
+      footer {
+        width: min(100% - 32px, 860px);
+        margin: 0 auto;
+      }
+
+      .page-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        min-height: 72px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #2b2926;
+        font-size: 18px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border-radius: 10px;
+        background: #fff1c9;
+        color: #8a5a00;
+        font-size: 21px;
+      }
+
+      .language-switch {
+        display: inline-flex;
+        padding: 3px;
+        border: 1px solid #e0ddd8;
+        border-radius: 999px;
+        background: #f7f6f4;
+      }
+
+      .language-switch button {
+        min-height: 36px;
+        padding: 0 13px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #625d55;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .language-switch button[aria-pressed="true"] {
+        background: #fff;
+        color: #2b2926;
+        box-shadow: 0 1px 4px rgba(43, 41, 38, 0.12);
+      }
+
+      main { padding: 48px 0 32px; }
+
+      .hero {
+        margin-bottom: 28px;
+        padding: 30px;
+        border: 1px solid #eadfbf;
+        border-radius: 22px;
+        background: linear-gradient(145deg, #fff2c9 0%, #fff 88%);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(30px, 6vw, 44px);
+        line-height: 1.2;
+        letter-spacing: -0.025em;
+      }
+
+      .lead {
+        max-width: 680px;
+        margin: 0;
+        color: #57524b;
+        font-size: 16px;
+      }
+
+      .meta {
+        margin: 18px 0 0;
+        color: #716b63;
+        font-size: 13px;
+      }
+
+      .policy-card {
+        padding: 8px 30px 30px;
+        border: 1px solid #e8e6e3;
+        border-radius: 22px;
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(43, 41, 38, 0.045);
+      }
+
+      section {
+        padding-top: 25px;
+        scroll-margin-top: 24px;
+      }
+
+      section + section {
+        margin-top: 21px;
+        border-top: 1px solid #efede9;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        line-height: 1.4;
+      }
+
+      p { margin: 0; }
+
+      p + p,
+      p + ul,
+      ul + p { margin-top: 12px; }
+
+      ul {
+        margin-bottom: 0;
+        padding-left: 1.35em;
+      }
+
+      li + li { margin-top: 8px; }
+
+      .callout {
+        margin-top: 14px;
+        padding: 16px 18px;
+        border-left: 4px solid #8a55b6;
+        border-radius: 0 12px 12px 0;
+        background: #f7f1fb;
+      }
+
+      .action-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        margin-top: 16px;
+        padding: 0 18px;
+        border-radius: 12px;
+        background: #7f4caf;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      footer {
+        padding: 14px 0 42px;
+        color: #716b63;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      [hidden] { display: none !important; }
+
+      @media (max-width: 600px) {
+        .page-header-inner { min-height: 64px; }
+        .brand-text { display: none; }
+        main { padding-top: 24px; }
+        .hero,
+        .policy-card { padding-right: 20px; padding-left: 20px; border-radius: 17px; }
+        .policy-card { padding-top: 2px; }
+      }
+
+      @media print {
+        body { background: #fff; }
+        .page-header,
+        footer,
+        .language-switch { display: none; }
+        main { width: 100%; padding: 0; }
+        .hero,
+        .policy-card { border: 0; box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="page-header-inner">
+        <a class="brand" href="/" aria-label="OpenBible home">
+          <span class="brand-mark" aria-hidden="true">▤</span>
+          <span class="brand-text">慧读圣经 · OpenBible</span>
+        </a>
+        <div class="language-switch" role="group" aria-label="Language">
+          <button type="button" data-language="zh" aria-pressed="true">中文</button>
+          <button type="button" data-language="en" aria-pressed="false">English</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <article data-policy="zh">
+        <div class="hero">
+          <h1>隐私政策</h1>
+          <p class="lead">
+            慧读圣经（OpenBible）尊重并保护你的隐私。本政策说明我们处理哪些数据、为何处理、与谁共享，以及你如何访问、导出或删除这些数据。
+          </p>
+          <p class="meta">生效及最近更新日期：2026 年 11 月 5 日</p>
+        </div>
+
+        <div class="policy-card">
+          <section>
+            <h2>1. 适用范围与联系方式</h2>
+            <p>
+              本政策适用于慧读圣经（OpenBible）的 Android、iOS 应用及网页服务。服务提供方为慧读圣经（OpenBible）开发团队。如对个人信息处理有疑问或希望行使隐私权利，请发送邮件至
+              <a href="mailto:mushengbooks@gmail.com">mushengbooks@gmail.com</a>，或在应用内通过“我的 → 意见反馈”联系我们。
+            </p>
+          </section>
+
+          <section>
+            <h2>2. 我们收集和处理的数据</h2>
+            <ul>
+              <li><strong>账号资料：</strong>邮箱地址、昵称、头像，以及你选择 Google 或 Apple 登录时对应平台提供的账号标识和基本资料。</li>
+              <li><strong>阅读与使用内容：</strong>阅读位置、高亮、笔记、读经计划及进度、慧读 AI 对话、社群帖子与评论、点赞、收藏、活动报名、代祷内容，以及你主动提交的意见反馈和可选联系方式。</li>
+              <li><strong>设备与网络资料：</strong>应用平台和版本、推送设备令牌，以及登记推送设备时的 IP 地址和由 IP 推断的国家、地区与城市。此信息用于推送送达、账号安全和故障排查，不用于广告。</li>
+              <li><strong>你授权使用的功能：</strong>通知权限用于发送你选择接收的提醒；麦克风仅在你主动点击语音输入时用于将语音转换为文字；前台服务与唤醒锁仅用于持续播放圣经音频。</li>
+            </ul>
+            <p>我们不读取通讯录、短信、通话记录或精确 GPS 位置，也不收集 Android 广告标识符用于广告或营销。</p>
+          </section>
+
+          <section>
+            <h2>3. 本机存储与账号同步</h2>
+            <p>
+              部分阅读设置和个人记录会先保存在你的设备中。登录后，高亮、笔记、阅读位置、慧读对话、读经计划进度及社群相关内容会按功能需要与你的账号同步到服务器，以支持跨设备使用。个人祷告清单目前仅保存在设备本机；清除应用数据或卸载应用会使这类未同步数据丢失。
+            </p>
+          </section>
+
+          <section>
+            <h2>4. 我们如何使用数据</h2>
+            <p>我们仅为以下目的使用数据：</p>
+            <ul>
+              <li>创建和保护账号，提供登录、同步、阅读、慧读、社群和反馈功能；</li>
+              <li>生成你主动请求的 AI 经文解释和追问回答；</li>
+              <li>发送你已启用的读经、活动或互动通知；</li>
+              <li>维护服务安全、阻止滥用、诊断故障并改进可靠性；</li>
+              <li>履行适用法律要求和处理隐私请求。</li>
+            </ul>
+            <p>我们不出售个人信息，不进行个性化广告，也不使用你的个人内容训练对外销售的 AI 模型。</p>
+          </section>
+
+          <section>
+            <h2>5. AI 与语音功能</h2>
+            <p>
+              当你使用慧读时，所选经文、你的问题、必要的近期对话和相关注释资料会发送至我们控制的服务器及 AI 推理服务，用于生成本次回答。语音输入由设备操作系统提供的语音识别服务处理；根据设备设置和服务提供方，音频可能由 Google 或 Apple 处理。我们只接收识别后的文字，不在服务器保存你的原始麦克风录音。
+            </p>
+          </section>
+
+          <section>
+            <h2>6. 第三方服务与数据共享</h2>
+            <p>为了提供具体功能，我们可能在必要范围内使用以下服务：</p>
+            <ul>
+              <li><strong>Google Sign-In：</strong>用于你选择的 Google 账号登录；</li>
+              <li><strong>Firebase Cloud Messaging：</strong>用于 Android 系统推送；</li>
+              <li><strong>Sign in with Apple 与 Apple Push Notification service：</strong>用于 iOS 登录和推送；</li>
+              <li><strong>设备语音识别服务：</strong>仅在你主动使用语音输入时处理语音；</li>
+              <li><strong>IP 地区查询与服务器托管服务商：</strong>用于粗略地区识别、网络传输、数据库、备份和服务运行。</li>
+            </ul>
+            <p>
+              这些服务商仅为提供相应功能处理必要数据，并受其各自隐私政策及合同义务约束。你在社群中主动发布的内容会依照所选可见范围展示给其他用户。除你同意、提供服务所必需或法律要求外，我们不会向其他方披露个人信息。本应用不集成广告 SDK 或第三方营销分析 SDK。
+            </p>
+          </section>
+
+          <section>
+            <h2>7. 数据安全与跨境处理</h2>
+            <p>
+              我们使用 HTTPS 加密传输、受限的管理权限、凭据哈希、访问控制、数据备份和最小权限原则保护个人信息。由于互联网服务无法保证绝对安全，如发生可能对你造成重大影响的数据安全事件，我们会依照适用法律进行通知。根据你所在地区和服务基础设施，数据可能在你所在国家或地区以外处理；我们会采取适当措施保护这些数据。
+            </p>
+          </section>
+
+          <div id="account-deletion" aria-hidden="true"></div>
+          <section>
+            <h2>8. 数据保留与账号删除</h2>
+            <p>
+              账号及同步数据通常保留至你主动删除相关内容或账号。你可以在应用内进入“我的”，点击页面底部的“删除用户”，按照提示完成永久删除。删除账号会删除账号资料、登录方式、会话、推送设备、笔记、高亮、慧读记录、社群内容及其他关联数据；需要保留的意见反馈会先去除账号标识和联系方式。
+            </p>
+            <p>
+              你也可以通过下方邮件链接从应用外请求删除账号和关联数据。我们可能要求验证账号所有权。完成删除后，受保护备份中的残留副本将在正常轮换周期内删除，最长不超过 30 天；法律、安全或防欺诈要求必须保留的有限记录除外。
+            </p>
+            <div class="callout">
+              邮件中请注明注册邮箱，并使用主题“OpenBible 账号删除请求”。请勿在邮件中发送密码或验证码。
+            </div>
+            <a
+              class="action-link"
+              href="mailto:mushengbooks@gmail.com?subject=OpenBible%20账号删除请求"
+            >申请删除账号和数据</a>
+          </section>
+
+          <section>
+            <h2>9. 你的选择与权利</h2>
+            <p>
+              你可以在应用内查看、更正或导出部分账号数据，关闭系统通知，删除笔记、对话或社群内容，并永久删除账号。你也可以联系我们请求访问、更正、导出、限制处理或删除个人信息；我们会在验证身份后依照适用法律处理。你可以随时在系统设置中撤回通知或麦克风权限，但相关功能将无法继续使用。
+            </p>
+          </section>
+
+          <section>
+            <h2>10. 未成年人</h2>
+            <p>
+              本服务不以未满 13 周岁的儿童为目标用户。未达到所在地区可独立同意数据处理年龄的用户，应在父母或监护人同意和指导下使用。如监护人认为儿童未经适当同意向我们提供了个人信息，请联系我们，我们会核实并删除相关信息。
+            </p>
+          </section>
+
+          <section>
+            <h2>11. 政策更新</h2>
+            <p>
+              功能、法律或数据处理方式发生变化时，我们可能更新本政策，并在本页显示新的更新日期。重大变化会通过应用内提示或其他适当方式通知。建议你定期查看本页。
+            </p>
+          </section>
+        </div>
+      </article>
+
+      <article data-policy="en" hidden>
+        <div class="hero">
+          <h1>Privacy Policy</h1>
+          <p class="lead">
+            OpenBible explains below what data we process, why we process it, who may receive it, and how you can access, export, or delete it.
+          </p>
+          <p class="meta">Effective and last updated: November 5, 2026</p>
+        </div>
+
+        <div class="policy-card">
+          <section>
+            <h2>1. Scope and contact</h2>
+            <p>
+              This policy applies to the OpenBible (慧读圣经) Android and iOS apps and web service, provided by the OpenBible development team. For privacy questions or requests, email
+              <a href="mailto:mushengbooks@gmail.com">mushengbooks@gmail.com</a> or use “Mine → Feedback” in the app.
+            </p>
+          </section>
+
+          <section>
+            <h2>2. Data we collect and process</h2>
+            <ul>
+              <li><strong>Account data:</strong> email address, display name, profile photo, and the account identifier and basic profile supplied by Google or Apple when you choose those sign-in methods.</li>
+              <li><strong>Reading and user content:</strong> reading position, highlights, notes, reading plans and progress, Open Reading AI conversations, community posts and comments, likes, bookmarks, event registrations, prayer content, feedback, and optional contact details you submit.</li>
+              <li><strong>Device and network data:</strong> platform and app version, push notification token, and—when a push device is registered—IP address and approximate country, region, and city derived from the IP address. We use this information for delivery, security, and troubleshooting, not advertising.</li>
+              <li><strong>Permission-based features:</strong> notifications deliver alerts you enable; the microphone is accessed only when you start voice input; foreground service and wake lock permissions support continuous Bible audio playback.</li>
+            </ul>
+            <p>We do not access contacts, SMS, call logs, or precise GPS location, and we do not collect the Android Advertising ID for advertising or marketing.</p>
+          </section>
+
+          <section>
+            <h2>3. On-device storage and account sync</h2>
+            <p>
+              Some reading preferences and personal records are stored on your device first. When signed in, highlights, notes, reading position, AI conversations, reading-plan progress, and community data are synced to our servers as needed for cross-device use. The personal prayer list is currently stored only on your device; uninstalling the app or clearing app data removes unsynced local data.
+            </p>
+          </section>
+
+          <section>
+            <h2>4. How we use data</h2>
+            <ul>
+              <li>To create and secure accounts and provide sign-in, sync, reading, AI, community, and feedback features;</li>
+              <li>To generate scripture explanations and follow-up answers you request;</li>
+              <li>To deliver reading, event, or interaction notifications you enable;</li>
+              <li>To secure the service, prevent abuse, troubleshoot problems, and improve reliability; and</li>
+              <li>To meet legal obligations and respond to privacy requests.</li>
+            </ul>
+            <p>We do not sell personal data, serve personalized ads, or use your personal content to train AI models sold to third parties.</p>
+          </section>
+
+          <section>
+            <h2>5. AI and voice features</h2>
+            <p>
+              When you use Open Reading, selected scripture, your question, necessary recent conversation context, and relevant commentary are sent to servers and AI inference services under our control to generate the requested answer. Voice input uses the speech-recognition service provided by your device operating system. Depending on your settings and provider, Google or Apple may process the audio. We receive the recognized text and do not store the original microphone recording on our servers.
+            </p>
+          </section>
+
+          <section>
+            <h2>6. Service providers and sharing</h2>
+            <p>We may use the following providers where needed for a feature:</p>
+            <ul>
+              <li><strong>Google Sign-In</strong> for optional Google account sign-in;</li>
+              <li><strong>Firebase Cloud Messaging</strong> for Android push notifications;</li>
+              <li><strong>Sign in with Apple and Apple Push Notification service</strong> for iOS sign-in and notifications;</li>
+              <li><strong>Device speech-recognition services</strong> when you initiate voice input; and</li>
+              <li><strong>IP geolocation and infrastructure providers</strong> for approximate region lookup, hosting, transmission, databases, and backups.</li>
+            </ul>
+            <p>
+              Providers process only data necessary for their services and operate under their own privacy terms and applicable contractual obligations. Content you intentionally post in a community is visible according to the visibility you choose. We otherwise disclose personal data only with your consent, as needed to provide the service, or when legally required. The app contains no advertising SDK or third-party marketing analytics SDK.
+            </p>
+          </section>
+
+          <section>
+            <h2>7. Security and international processing</h2>
+            <p>
+              We use HTTPS encryption, restricted administrative access, credential hashing, access controls, backups, and least-privilege practices. No online service can guarantee absolute security; if an incident is likely to materially affect you, we will provide notice as required by applicable law. Depending on your location and our infrastructure, data may be processed outside your country or region with appropriate safeguards.
+            </p>
+          </section>
+
+          <section id="account-deletion-en">
+            <h2>8. Retention and account deletion</h2>
+            <p>
+              Account and synced data are generally retained until you delete the content or your account. In the app, open “Mine,” select “Delete Account” at the bottom, and follow the permanent-deletion confirmation. This removes account details, sign-in methods, sessions, push devices, notes, highlights, AI history, community content, and other associated data. Retained support feedback is first stripped of account identifiers and contact details.
+            </p>
+            <p>
+              You may also request account and associated-data deletion outside the app using the email link below. We may verify account ownership. Residual copies in protected backups are removed through normal rotation within no more than 30 days, except limited records required for legal, security, or fraud-prevention purposes.
+            </p>
+            <div class="callout">
+              Include your registered email and use the subject “OpenBible Account Deletion Request.” Never send a password or verification code by email.
+            </div>
+            <a
+              class="action-link"
+              href="mailto:mushengbooks@gmail.com?subject=OpenBible%20Account%20Deletion%20Request"
+            >Request account and data deletion</a>
+          </section>
+
+          <section>
+            <h2>9. Your choices and rights</h2>
+            <p>
+              You can review, correct, or export certain account data in the app, turn off notifications, delete notes, conversations, or community content, and permanently delete your account. You may also contact us to request access, correction, export, restriction, or deletion, subject to identity verification and applicable law. You can withdraw notification or microphone permissions in system settings, but the related feature will stop working.
+            </p>
+          </section>
+
+          <section>
+            <h2>10. Children</h2>
+            <p>
+              The service is not directed to children under 13. A person below the age at which they may independently consent to data processing in their region should use the service only with a parent or guardian's consent and guidance. If a guardian believes a child provided personal data without appropriate consent, contact us so we can investigate and delete it.
+            </p>
+          </section>
+
+          <section>
+            <h2>11. Changes to this policy</h2>
+            <p>
+              We may update this policy when features, laws, or data practices change. The updated date will appear here, and material changes will be communicated in the app or by another appropriate method. Please review this page periodically.
+            </p>
+          </section>
+        </div>
+      </article>
+    </main>
+
+    <footer>© 2026 OpenBible · Privacy contact: mushengbooks@gmail.com</footer>
+
+    <script>
+      (() => {
+        const buttons = [...document.querySelectorAll("[data-language]")];
+        const policies = [...document.querySelectorAll("[data-policy]")];
+        const stored = localStorage.getItem("openbible-privacy-language");
+        const preferred = stored || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en");
+
+        function show(language, save) {
+          const selected = language === "en" ? "en" : "zh";
+          document.documentElement.lang = selected === "en" ? "en" : "zh-CN";
+          document.title = selected === "en" ? "Privacy Policy | OpenBible" : "隐私政策 | OpenBible";
+          policies.forEach((policy) => { policy.hidden = policy.dataset.policy !== selected; });
+          buttons.forEach((button) => {
+            button.setAttribute("aria-pressed", String(button.dataset.language === selected));
+          });
+          if (save) localStorage.setItem("openbible-privacy-language", selected);
+          if (location.hash === "#account-deletion") {
+            requestAnimationFrame(() => {
+              document
+                .getElementById(selected === "en" ? "account-deletion-en" : "account-deletion")
+                ?.scrollIntoView();
+            });
+          }
+        }
+
+        buttons.forEach((button) => {
+          button.addEventListener("click", () => show(button.dataset.language, true));
+        });
+        show(preferred, false);
+      })();
+    </script>
+  </body>
+</html>
