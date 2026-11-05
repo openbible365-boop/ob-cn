@@ -5,7 +5,7 @@ import { Icon } from "../components/Icon";
 import { useAppBack } from "../hooks/useAppBack";
 import { useSettings } from "../context/SettingsContext";
 
-const FEEDBACK_EMAIL = "mushengbooks@gmail.com";
+const FEEDBACK_EMAIL = "openbible365@gmail.com";
 
 export function FeedbackPage() {
   const { translate } = useSettings();

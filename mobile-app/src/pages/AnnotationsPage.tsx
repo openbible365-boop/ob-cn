@@ -785,7 +785,7 @@ export function AnnotationsPage() {
               </div>
               <div>
                 <dt>{translate("联系方式")}</dt>
-                <dd><a href="mailto:mushengbooks@gmail.com">mushengbooks@gmail.com</a></dd>
+                <dd><a href="mailto:openbible365@gmail.com">openbible365@gmail.com</a></dd>
               </div>
               <div>
                 <dt>{translate("版本")}</dt>
