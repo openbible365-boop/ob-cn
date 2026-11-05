@@ -22,7 +22,7 @@ import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
 
 export function MePage() {
-  const { translate } = useSettings();
+  const { isEnglish, translate } = useSettings();
   const navigate = useNavigate();
   // undefined = checking the session, null = logged out.
   const [user, setUser] = useState<SessionUser | null | undefined>(undefined);
@@ -96,10 +96,23 @@ export function MePage() {
                 </svg>
               </div>
               <h1>
-                <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
-                <span>{translate("圣经")}</span>
+                {isEnglish ? (
+                  <>
+                    <span style={{ color: "#E89A2C" }}>Open</span>
+                    <span>Bible</span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ color: "#E89A2C" }}>{translate("慧读")}</span>
+                    <span>{translate("圣经")}</span>
+                  </>
+                )}
               </h1>
-              <p>{translate(SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉")}</p>
+              <p>
+                {isEnglish
+                  ? "Wisdom · Scripture · Fellowship"
+                  : translate(SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉")}
+              </p>
             </div>
             <button className="me-login-button" type="button" onClick={() => navigate("/me/login")}>
               {translate("登录或注册")}

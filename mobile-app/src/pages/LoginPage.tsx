@@ -11,6 +11,7 @@ import { syncStoredPushToken } from "../data/push";
 import { pullReadingPosition } from "../data/reading-sync";
 import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
 import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
+import { useSettings } from "../context/SettingsContext";
 
 // 注册登录（design 5d）— real email verification-code login against the
 // OpenBible backend; first login auto-registers the account.
@@ -18,6 +19,7 @@ import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
 type LoginMode = "code" | "password";
 
 export function LoginPage() {
+  const { isEnglish, translate } = useSettings();
   const navigate = useNavigate();
   const goBack = useAppBack("/me");
   const location = useLocation();
@@ -58,7 +60,7 @@ export function LoginPage() {
 
   const sendCode = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("请输入有效的邮箱地址");
+      setError(translate("请输入有效的邮箱地址"));
       return;
     }
     setError("");
@@ -80,7 +82,7 @@ export function LoginPage() {
       return;
     }
     if (!/^\d{6}$/.test(code.trim())) {
-      setError("请输入 6 位数字验证码");
+      setError(translate("请输入 6 位数字验证码"));
       return;
     }
     setError("");
@@ -100,7 +102,7 @@ export function LoginPage() {
 
   const submitPassword = async () => {
     if (!account.trim() || !password) {
-      setError("请输入账号和密码");
+      setError(translate("请输入账号和密码"));
       return;
     }
     setError("");
@@ -143,7 +145,7 @@ export function LoginPage() {
       navigate(returnTo, { replace: true, state: returnState });
     } catch (error) {
       if (!isGoogleSignInCanceled(error)) {
-        const message = error instanceof Error ? error.message : "Google 登录失败，请稍后重试";
+        const message = error instanceof Error ? error.message : translate("Google 登录失败，请稍后重试");
         setError(message);
       }
     } finally {
@@ -180,7 +182,7 @@ export function LoginPage() {
       navigate(returnTo, { replace: true, state: returnState });
     } catch (error) {
       if (!isAppleSignInCanceled(error)) {
-        const message = error instanceof Error ? error.message : "Apple 登录失败，请稍后重试";
+        const message = error instanceof Error ? error.message : translate("Apple 登录失败，请稍后重试");
         setError(message);
       }
     } finally {
@@ -189,8 +191,14 @@ export function LoginPage() {
   };
 
   return (
-    <div className="screen">
-      <UnifiedHeader title="登录 / 注册" subtitle="OpenBible" ariaLabel="账号登录" onBack={goBack} backLabel="返回我的" />
+    <div className="screen login-screen">
+      <UnifiedHeader
+        title={translate("登录 / 注册")}
+        subtitle="OpenBible"
+        ariaLabel={translate("账号登录")}
+        onBack={goBack}
+        backLabel={translate("返回我的")}
+      />
 
       <div className="screen-scroll login-scroll">
         <div className="login-hero">
@@ -212,10 +220,23 @@ export function LoginPage() {
             </svg>
           </div>
           <div className="login-title">
-            <span className="login-title-brand">慧读</span>
-            <span>圣经</span>
+            {isEnglish ? (
+              <>
+                <span className="login-title-brand">Open</span>
+                <span>Bible</span>
+              </>
+            ) : (
+              <>
+                <span className="login-title-brand">慧读</span>
+                <span>圣经</span>
+              </>
+            )}
           </div>
-          <div className="login-slogan">{SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉"}</div>
+          <div className="login-slogan">
+            {isEnglish
+              ? "Wisdom · Scripture · Fellowship"
+              : SHOW_COMMUNITY ? "智慧 · 读经 · 社群 · 共勉" : "智慧 · 读经 · 共勉"}
+          </div>
         </div>
 
         {/* 包成真正的 form：手机键盘的「前往/回车」可以直接提交 */}
@@ -223,7 +244,7 @@ export function LoginPage() {
           className="card login-card"
           onSubmit={(event) => { event.preventDefault(); void submit(); }}
         >
-          <div className="login-mode-tabs" role="tablist" aria-label="登录方式">
+          <div className="login-mode-tabs" role="tablist" aria-label={translate("登录方式")}>
             <button
               type="button"
               role="tab"
@@ -231,7 +252,7 @@ export function LoginPage() {
               className={mode === "code" ? "active" : ""}
               onClick={() => switchMode("code")}
             >
-              验证码登录
+              {translate("验证码登录")}
             </button>
             <button
               type="button"
@@ -240,7 +261,7 @@ export function LoginPage() {
               className={mode === "password" ? "active" : ""}
               onClick={() => switchMode("password")}
             >
-              密码登录
+              {translate("密码登录")}
             </button>
           </div>
 
@@ -251,8 +272,8 @@ export function LoginPage() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="邮箱地址"
-                  aria-label="邮箱地址"
+                  placeholder={translate("邮箱地址")}
+                  aria-label={translate("邮箱地址")}
                   type="email"
                 />
               </label>
@@ -262,14 +283,14 @@ export function LoginPage() {
                   <input
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="6 位验证码"
-                    aria-label="6 位验证码"
+                    placeholder={translate("6 位验证码")}
+                    aria-label={translate("6 位验证码")}
                     inputMode="numeric"
                     maxLength={6}
                   />
                 </label>
                 <button type="button" className="login-send-btn" onClick={sendCode} disabled={busy || cooldown > 0}>
-                  {cooldown > 0 ? `${cooldown}s` : "获取验证码"}
+                  {cooldown > 0 ? `${cooldown}s` : translate("获取验证码")}
                 </button>
               </div>
             </>
@@ -280,8 +301,8 @@ export function LoginPage() {
                 <input
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
-                  placeholder="用户名或邮箱"
-                  aria-label="用户名或邮箱"
+                  placeholder={translate("用户名或邮箱")}
+                  aria-label={translate("用户名或邮箱")}
                   autoComplete="username"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -294,8 +315,8 @@ export function LoginPage() {
                 <input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="密码"
-                  aria-label="密码"
+                  placeholder={translate("密码")}
+                  aria-label={translate("密码")}
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   maxLength={128}
@@ -303,7 +324,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   className="login-password-toggle"
-                  aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                  aria-label={translate(showPassword ? "隐藏密码" : "显示密码")}
                   aria-pressed={showPassword}
                   onClick={() => setShowPassword((value) => !value)}
                 >
@@ -315,31 +336,42 @@ export function LoginPage() {
           {error && <div role="alert" className="login-feedback is-error">{error}</div>}
           {notice && !error && <div role="status" className="login-feedback">{notice}</div>}
           <button className="btn-primary" type="submit" disabled={busy}>
-            {busy ? "请稍候…" : mode === "code" ? "登录 / 注册" : "登录"}
+            {busy ? translate("请稍候…") : translate(mode === "code" ? "登录 / 注册" : "登录")}
           </button>
           <div className="login-hint">
-            {mode === "code" ? "首次使用同一邮箱登录将自动注册" : "密码登录仅限已开通密码的账号"}
+            {translate(mode === "code" ? "首次使用同一邮箱登录将自动注册" : "密码登录仅限已开通密码的账号")}
           </div>
         </form>
 
-        <div className="login-divider" aria-hidden="true"><i /><span>或</span><i /></div>
+        <div className="login-divider" aria-hidden="true"><i /><span>{translate("或")}</span><i /></div>
 
         <div className="login-oauth">
           {showAppleLogin && (
             <button type="button" className="card login-oauth-btn" onClick={signInWithAppleAccount} disabled={busy || appleBusy}>
-              {appleBusy ? "正在连接 Apple…" : "通过 Apple 登录"}
+              {translate(appleBusy ? "正在连接 Apple…" : "通过 Apple 登录")}
             </button>
           )}
           <button type="button" className="card login-oauth-btn" onClick={signInWithGoogleAccount} disabled={!isNative || busy || googleBusy}>
-            {googleBusy ? "正在连接 Google…" : isNative ? "使用 Google 登录" : "Google 登录 · 请在 App 使用"}
+            {translate(googleBusy ? "正在连接 Google…" : isNative ? "使用 Google 登录" : "Google 登录 · 请在 App 使用")}
           </button>
         </div>
 
         <div className="disclaimer">
-          登录即表示同意
-          <button type="button" className="text-link" onClick={() => navigate("/legal/terms")}>《用户协议》</button>
-          与
-          <button type="button" className="text-link" onClick={() => navigate("/legal/privacy")}>《隐私政策》</button>
+          {isEnglish ? (
+            <>
+              By signing in, you agree to the&nbsp;
+              <button type="button" className="text-link" onClick={() => navigate("/legal/terms")}>{translate("用户协议")}</button>
+              &nbsp;and&nbsp;
+              <button type="button" className="text-link" onClick={() => navigate("/legal/privacy")}>{translate("隐私政策")}</button>.
+            </>
+          ) : (
+            <>
+              登录即表示同意
+              <button type="button" className="text-link" onClick={() => navigate("/legal/terms")}>《{translate("用户协议")}》</button>
+              与
+              <button type="button" className="text-link" onClick={() => navigate("/legal/privacy")}>《{translate("隐私政策")}》</button>
+            </>
+          )}
         </div>
       </div>
     </div>

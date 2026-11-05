@@ -917,6 +917,12 @@ a {
   }
 }
 
+/* The approved English login title is longer than its Chinese counterpart. */
+.login-screen .unified-header .bible-reader-selector.chapter {
+  max-width: 170px;
+  font-size: 12px;
+}
+
 .bible-font-mark {
   display: inline-flex;
   align-items: baseline;
