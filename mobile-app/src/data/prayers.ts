@@ -49,3 +49,7 @@ export function removePrayer(id: string): PrayerItem[] {
   save(KEY, next);
   return next;
 }
+
+export function clearPrayersForLogout() {
+  localStorage.removeItem(KEY);
+}

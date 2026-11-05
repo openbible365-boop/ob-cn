@@ -52,6 +52,18 @@ const ENGLISH_LABELS: Record<string, string> = {
   "账号登录": "Account Sign-In",
   "返回我的": "Back to Mine",
   "登录方式": "Sign-In Method",
+  "删除用户": "Delete Account",
+  "永久删除当前账号？": "Permanently delete this account?",
+  "删除后，账号及服务器中的笔记、高亮、慧读记录、社群内容与其他关联数据将永久删除，无法恢复。": "After deletion, your account and associated data will be permanently removed and cannot be recovered.",
+  "请输入 DELETE 确认": "Type DELETE to confirm",
+  "永久删除": "Delete Permanently",
+  "删除中…": "Deleting…",
+  "删除账号失败，请稍后重试": "Account deletion failed. Please try again later.",
+  "Apple 身份确认已取消": "Apple verification was canceled.",
+  "Apple 身份与当前账号不一致": "This Apple account does not match the current account.",
+  "Apple 身份确认失败，请重试": "Apple verification failed. Please try again.",
+  "请输入 DELETE 确认永久删除账号": "Type DELETE to confirm permanent account deletion.",
+  "取消": "Cancel",
 };
 
 function deviceUsesEnglish() {

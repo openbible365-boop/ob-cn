@@ -100,7 +100,11 @@ export async function exchangeAppleCode(code: string, redirectUri: string) {
   if (!res.ok) {
     throw new Error(`Apple token endpoint ${res.status}: ${await res.text()}`);
   }
-  return (await res.json()) as { id_token: string };
+  return (await res.json()) as {
+    id_token: string;
+    access_token?: string;
+    refresh_token?: string;
+  };
 }
 
 export async function exchangeAppleNativeCode(code: string) {
@@ -120,7 +124,28 @@ export async function exchangeAppleNativeCode(code: string) {
   if (!res.ok) {
     throw new Error(`Apple native token exchange failed (${res.status})`);
   }
-  return (await res.json()) as { id_token: string; refresh_token?: string };
+  return (await res.json()) as {
+    id_token: string;
+    access_token?: string;
+    refresh_token?: string;
+  };
+}
+
+export async function revokeAppleToken(token: string, clientId = appleIosClientId()) {
+  const body = new URLSearchParams({
+    token,
+    token_type_hint: "refresh_token",
+    client_id: clientId,
+    client_secret: await generateAppleClientSecret(clientId),
+  });
+  const res = await fetch(`${APPLE_ISSUER}/auth/revoke`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    throw new Error(`Apple revoke endpoint ${res.status}: ${await res.text()}`);
+  }
 }
 
 export async function verifyAppleIdToken(

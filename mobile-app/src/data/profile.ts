@@ -7,6 +7,8 @@ import { clearConversationsForLogout } from "./huidu";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
 import { fetchCommunityGroups } from "./community";
+import { clearPrayersForLogout } from "./prayers";
+import { clearStreakForLogout } from "./streak";
 import {
   clearCommunityWorkspaceCache,
   fetchCommunityWorkspace,
@@ -21,6 +23,7 @@ export type SessionUser = {
   tier: "BASIC_FREE" | "MID" | "HIGH";
   tierPriceCents: number;
   accountType: "PERSONAL";
+  authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE">;
   entitlements: {
     label: string;
     savedItems: number | null;
@@ -119,12 +122,43 @@ export async function verifyAppleLogin(credential: {
 export async function logout() {
   const result = await post("/api/mobile/auth/logout");
   if (result.ok) {
-    clearAnnotationsForLogout();
-    clearConversationsForLogout();
-    clearCommunityWorkspaceCache();
-    await clearGoogleCredentialState().catch(() => {});
+    await clearSessionLocalData();
   }
   return result;
+}
+
+async function clearSessionLocalData() {
+  clearAnnotationsForLogout();
+  clearConversationsForLogout();
+  clearCommunityWorkspaceCache();
+  await clearGoogleCredentialState().catch(() => {});
+}
+
+async function clearAccountLocalData() {
+  await clearSessionLocalData();
+  clearPrayersForLogout();
+  clearStreakForLogout();
+}
+
+export async function deleteAccount(appleAuthorizationCode?: string) {
+  try {
+    const response = await apiRequest<ApiResult>("/api/mobile/me", {
+      method: "DELETE",
+      body: {
+        confirmation: "DELETE",
+        ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}),
+      },
+      readTimeout: 60_000,
+    });
+    const result = response.data ?? {
+      ok: false,
+      message: `服务器返回异常（${response.status}）`,
+    };
+    if (response.ok && result.ok) await clearAccountLocalData();
+    return result;
+  } catch {
+    return { ok: false, message: "网络错误，请稍后重试" };
+  }
 }
 
 export async function fetchMe(): Promise<SessionUser | null> {

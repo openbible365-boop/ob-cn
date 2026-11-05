@@ -4162,6 +4162,84 @@ a {
   text-align: center;
 }
 
+.me-delete-account-button {
+  width: 100%;
+  min-height: 44px;
+  margin: 24px 0 76px;
+  padding: 4px 14px;
+  border: 1px solid color-mix(in srgb, var(--pink) 45%, var(--line));
+  border-radius: 14px;
+  background: var(--white);
+  color: var(--pink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.me-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 24px 0 76px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--pink) 35%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pink) 5%, var(--white));
+}
+
+.me-delete-confirm > b {
+  color: var(--pink);
+  font-size: 13px;
+}
+
+.me-delete-confirm > small,
+.me-delete-confirm > label {
+  color: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.me-delete-confirm > input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: 0.08em;
+}
+
+.me-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.me-delete-actions button {
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 9px;
+  background: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.me-delete-actions .is-danger {
+  background: var(--pink);
+  color: #fff;
+}
+
+.me-delete-actions button:disabled {
+  opacity: 0.45;
+}
+
+.me-delete-error {
+  color: var(--pink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 /* 法务链接和版本号同属页脚，两行贴得更近一些 */
 .me-legal-links + .me-version {
   margin-top: -10px;

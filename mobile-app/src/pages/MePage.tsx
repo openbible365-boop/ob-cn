@@ -1,4 +1,5 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { SkeletonScreen } from "../components/SkeletonScreen";
 import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
@@ -11,6 +12,7 @@ import { syncStoredPushToken, unregisterCurrentPushToken } from "../data/push";
 import { useSettings } from "../context/SettingsContext";
 import {
   announceProfileChanged,
+  deleteAccount,
   fetchMe,
   logout,
   updateAvatar,
@@ -20,6 +22,7 @@ import { SHOW_COMMUNITY, SHOW_DONATION } from "../data/features";
 import { fetchReadingPlans, type ReadingPlan } from "../data/reading-plans";
 import { getStreak } from "../data/streak";
 import { prepareAvatarImage } from "../utils/avatar";
+import { isAppleSignInCanceled, signInWithApple } from "../data/apple-auth";
 
 export function MePage() {
   const { isEnglish, translate } = useSettings();
@@ -30,6 +33,10 @@ export function MePage() {
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState("");
   // null = 还没拿到（横幅不显示，避免闪一下引导文案又变成计划卡）
@@ -182,6 +189,39 @@ export function MePage() {
       // 退出失败：用户仍在登录态，把刚注销的推送登记补回来，否则收不到通知
       void syncStoredPushToken();
       setLogoutError(result.message || translate("退出失败，请稍后重试"));
+    }
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (deleteText !== "DELETE" || deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError("");
+
+    try {
+      let appleAuthorizationCode: string | undefined;
+      const needsAppleVerification = user.authProviders?.includes("APPLE")
+        && Capacitor.isNativePlatform()
+        && Capacitor.getPlatform() === "ios";
+      if (needsAppleVerification) {
+        const credential = await signInWithApple();
+        appleAuthorizationCode = credential.authorizationCode;
+      }
+
+      const result = await deleteAccount(appleAuthorizationCode);
+      if (!result.ok) {
+        setDeleteError(translate(result.message || "删除账号失败，请稍后重试"));
+        return;
+      }
+      setUser(null);
+      navigate("/me", { replace: true });
+    } catch (error) {
+      setDeleteError(translate(
+        isAppleSignInCanceled(error)
+          ? "Apple 身份确认已取消"
+          : "删除账号失败，请稍后重试",
+      ));
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -400,6 +440,60 @@ export function MePage() {
         </div>
 
         <div className="me-version">慧读圣经 · v{__APP_VERSION__}</div>
+
+        {!deleteConfirm ? (
+          <button
+            className="me-delete-account-button"
+            type="button"
+            onClick={() => {
+              setDeleteConfirm(true);
+              setDeleteError("");
+            }}
+          >
+            {translate("删除用户")}
+          </button>
+        ) : (
+          <section className="me-delete-confirm" aria-label={translate("永久删除当前账号？")}>
+            <b>{translate("永久删除当前账号？")}</b>
+            <small>
+              {translate("删除后，账号及服务器中的笔记、高亮、慧读记录、社群内容与其他关联数据将永久删除，无法恢复。")}
+            </small>
+            <label htmlFor="delete-account-confirmation">{translate("请输入 DELETE 确认")}</label>
+            <input
+              id="delete-account-confirmation"
+              type="text"
+              value={deleteText}
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              disabled={deleteBusy}
+              placeholder="DELETE"
+              onChange={(event) => setDeleteText(event.target.value.trim().toUpperCase())}
+            />
+            {deleteError && <div className="me-delete-error" role="alert">{deleteError}</div>}
+            <div className="me-delete-actions">
+              <button
+                type="button"
+                disabled={deleteBusy}
+                onClick={() => {
+                  setDeleteConfirm(false);
+                  setDeleteText("");
+                  setDeleteError("");
+                }}
+              >
+                {translate("取消")}
+              </button>
+              <button
+                className="is-danger"
+                type="button"
+                disabled={deleteBusy || deleteText !== "DELETE"}
+                onClick={confirmDeleteAccount}
+              >
+                {translate(deleteBusy ? "删除中…" : "永久删除")}
+              </button>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
