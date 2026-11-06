@@ -3284,6 +3284,7 @@
             else if (view === 'settings') renderSettingsView();
             else if (view === 'profile') renderProfileView();
             else if (view === 'about') renderAboutView();
+            else if (view === 'download') renderDownloadView();
             else if (view === 'privacy') renderPrivacyView();
         }
     }
@@ -6249,6 +6250,159 @@
     }
 
     // ── About Us & Privacy Policy (premium content pages) ──
+    // ── App 下载页 ──
+    // 下载渠道集中配置：与 App 端 mobile-app/src/data/referral.ts 同一组地址。
+    // 地址变更后需重新生成二维码图片 images/download/qr-android.svg。
+    const APP_DOWNLOADS = {
+        android: {
+            url: 'https://openbible.live/download/android',
+            available: true,
+            version: '1.0',
+            size: '31 MB',
+            minOs: 'Android 7.0',
+            qr: 'images/download/qr-android.svg',
+        },
+        ios: {
+            url: 'https://openbible.live/download/ios',
+            available: false, // App Store 上架后改 true，并补二维码图片
+            version: '1.0',
+            minOs: 'iOS 15',
+            qr: '',
+        },
+    };
+
+    function detectMobilePlatform() {
+        const ua = navigator.userAgent || '';
+        if (/android/i.test(ua)) return 'android';
+        // iPadOS 13+ 的 UA 伪装成 Mac：用触点数补判
+        if (/iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+        return 'desktop';
+    }
+
+    function renderDownloadView() {
+        const c = $('download-render'); if (!c) return;
+        const platform = detectMobilePlatform();
+        const a = APP_DOWNLOADS.android;
+        const i = APP_DOWNLOADS.ios;
+
+        // 首屏主按钮跟随访问设备：安卓直接下载；iPhone 提示即将上线；电脑引导扫码
+        const heroCta = platform === 'android'
+            ? `<a class="dl-btn is-primary" href="${a.url}"><i class="fa-brands fa-android"></i>${t('dl.cta.android')}</a>`
+            : platform === 'ios'
+                ? (i.available
+                    ? `<a class="dl-btn is-primary" href="${i.url}"><i class="fa-brands fa-apple"></i>${t('dl.cta.ios')}</a>`
+                    : `<span class="dl-btn is-primary is-disabled" aria-disabled="true"><i class="fa-brands fa-apple"></i>${t('dl.cta.ios_soon')}</span>`)
+                : `<a class="dl-btn is-primary" href="#dl-channels" data-dl-scroll><i class="fa-solid fa-qrcode"></i>${t('dl.cta.scan')}</a>`;
+
+        const features = [
+            ['fa-cloud-arrow-down', 'dl.f1.title', 'dl.f1.body'],
+            ['fa-wand-magic-sparkles', 'dl.f2.title', 'dl.f2.body'],
+            ['fa-book-open-reader', 'dl.f3.title', 'dl.f3.body'],
+            ['fa-headphones', 'dl.f4.title', 'dl.f4.body'],
+        ];
+        const steps = ['dl.step1', 'dl.step2', 'dl.step3'];
+
+        c.innerHTML = `
+        <div class="dl-page">
+            <section class="dl-hero">
+                <div class="dl-hero-copy">
+                    <div class="dl-app-icon"><img src="images/logo-mark.svg" alt=""></div>
+                    <span class="dl-eyebrow">${t('dl.eyebrow')}</span>
+                    <h1>${t('dl.title')}</h1>
+                    <p>${t('dl.subtitle')}</p>
+                    <div class="dl-hero-actions">
+                        ${heroCta}
+                        <a class="dl-btn is-ghost" href="#dl-channels" data-dl-scroll>${t('dl.cta.all')}</a>
+                    </div>
+                    <ul class="dl-badges">
+                        <li><i class="fa-solid fa-check"></i>${t('dl.badge.free')}</li>
+                        <li><i class="fa-solid fa-check"></i>${t('dl.badge.noads')}</li>
+                        <li><i class="fa-solid fa-check"></i>${t('dl.badge.lang')}</li>
+                    </ul>
+                </div>
+                <div class="dl-hero-visual" aria-hidden="true">
+                    <div class="dl-phone is-back"><img src="images/download/screen-huidu.jpg" alt="" loading="lazy"></div>
+                    <div class="dl-phone is-front"><img src="images/download/screen-bible.jpg" alt=""></div>
+                </div>
+            </section>
+
+            <section class="dl-channels" id="dl-channels" aria-label="${t('dl.channels')}">
+                <article class="dl-card${platform === 'android' ? ' is-current' : ''}">
+                    <header class="dl-card-head">
+                        <span class="dl-platform is-android"><i class="fa-brands fa-android"></i></span>
+                        <div class="dl-card-title"><h2>Android</h2><small>${t('dl.android.sub')}</small></div>
+                        <span class="dl-status is-ready">${t('dl.status.ready')}</span>
+                    </header>
+                    <div class="dl-card-body">
+                        <div class="dl-qr"><img src="${a.qr}" alt="${t('dl.android.qr_alt')}"></div>
+                        <div class="dl-card-info">
+                            <dl class="dl-specs">
+                                <div><dt>${t('dl.spec.version')}</dt><dd>${a.version}</dd></div>
+                                <div><dt>${t('dl.spec.size')}</dt><dd>${a.size}</dd></div>
+                                <div><dt>${t('dl.spec.os')}</dt><dd>${a.minOs} ${t('dl.spec.above')}</dd></div>
+                            </dl>
+                            <a class="dl-btn is-primary is-block" href="${a.url}"><i class="fa-solid fa-download"></i>${t('dl.android.btn')}</a>
+                        </div>
+                    </div>
+                    <p class="dl-card-hint"><i class="fa-solid fa-mobile-screen"></i>${t('dl.android.hint')}</p>
+                </article>
+
+                <article class="dl-card${platform === 'ios' ? ' is-current' : ''}${i.available ? '' : ' is-pending'}">
+                    <header class="dl-card-head">
+                        <span class="dl-platform is-ios"><i class="fa-brands fa-apple"></i></span>
+                        <div class="dl-card-title"><h2>iPhone · iPad</h2><small>${t('dl.ios.sub')}</small></div>
+                        <span class="dl-status ${i.available ? 'is-ready' : 'is-soon'}">${t(i.available ? 'dl.status.ready' : 'dl.status.soon')}</span>
+                    </header>
+                    <div class="dl-card-body">
+                        ${i.available && i.qr
+                            ? `<div class="dl-qr"><img src="${i.qr}" alt="${t('dl.ios.qr_alt')}"></div>`
+                            : `<div class="dl-qr is-placeholder"><i class="fa-brands fa-app-store-ios"></i><span>${t('dl.ios.reviewing')}</span></div>`}
+                        <div class="dl-card-info">
+                            <dl class="dl-specs">
+                                <div><dt>${t('dl.spec.version')}</dt><dd>${i.version}</dd></div>
+                                <div><dt>${t('dl.spec.channel')}</dt><dd>App Store</dd></div>
+                                <div><dt>${t('dl.spec.os')}</dt><dd>${i.minOs} ${t('dl.spec.above')}</dd></div>
+                            </dl>
+                            ${i.available
+                                ? `<a class="dl-btn is-primary is-block" href="${i.url}"><i class="fa-brands fa-apple"></i>${t('dl.ios.btn')}</a>`
+                                : `<span class="dl-btn is-block is-disabled" aria-disabled="true"><i class="fa-regular fa-clock"></i>${t('dl.ios.btn_soon')}</span>`}
+                        </div>
+                    </div>
+                    <p class="dl-card-hint"><i class="fa-solid fa-magnifying-glass"></i>${t('dl.ios.hint')}</p>
+                </article>
+            </section>
+
+            <section class="cpage-section">
+                <div class="cpage-section-head"><span class="bar dl-bar"></span><h2>${t('dl.features.title')}</h2></div>
+                <div class="dl-features">
+                    ${features.map(([icon, title, body]) => `
+                    <div class="dl-feature">
+                        <span class="dl-feature-icon"><i class="fa-solid ${icon}"></i></span>
+                        <h3>${t(title)}</h3>
+                        <p>${t(body)}</p>
+                    </div>`).join('')}
+                </div>
+            </section>
+
+            <section class="cpage-section">
+                <div class="cpage-section-head"><span class="bar dl-bar"></span><h2>${t('dl.guide.title')}</h2></div>
+                <ol class="dl-steps">
+                    ${steps.map((key, index) => `
+                    <li><span class="dl-step-num">${index + 1}</span><p>${t(key)}</p></li>`).join('')}
+                </ol>
+                <p class="dl-safety"><i class="fa-solid fa-shield-halved"></i>${t('dl.guide.safety')}</p>
+            </section>
+        </div>`;
+
+        // 页内锚点：在视图自己的滚动容器里平滑滚动（hash 跳转会被路由占用）
+        c.querySelectorAll('[data-dl-scroll]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                $('dl-channels')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    }
+
     function renderAboutView() {
         const c = $('about-render'); if (!c) return;
         const story = [
@@ -6421,6 +6575,7 @@
         </div>
 
         <div class="mep-menu">
+            <button class="mep-item" data-view="download"><i class="fa-solid fa-mobile-screen-button"></i><span>${t('nav.download') || 'App 下载'}</span><i class="fa-solid fa-chevron-right"></i></button>
             <button class="mep-item" data-view="about"><i class="fa-solid fa-circle-info"></i><span>${t('nav.about') || '关于我们'}</span><i class="fa-solid fa-chevron-right"></i></button>
             <button class="mep-item" data-view="privacy"><i class="fa-solid fa-shield-halved"></i><span>${t('nav.privacy') || '隐私政策'}</span><i class="fa-solid fa-chevron-right"></i></button>
         </div>

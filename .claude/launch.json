@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "admin-app"],
       "port": 3000
+    },
+    {
+      "name": "web-app",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5300", "--directory", "web-app"],
+      "port": 5300
     }
   ]
 }
