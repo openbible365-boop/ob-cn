@@ -39,6 +39,39 @@ export function formatCents(cents: number) {
   return `¥${(cents / 100).toLocaleString("zh-CN", { maximumFractionDigits: 0 })}`;
 }
 
+// 后台时间统一按运营时区显示（服务器在 UTC，直接截 ISO 字符串会差出 8–16 小时）。
+// 默认与站内通知一致用北京时间；运营在其他时区时设 ADMIN_TIMEZONE（如 America/Los_Angeles）。
+export const ADMIN_TIMEZONE = process.env.ADMIN_TIMEZONE || "Asia/Shanghai";
+
+const dateParts = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ADMIN_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function zonedParts(d: Date) {
+  const parts = Object.fromEntries(dateParts.formatToParts(d).map((p) => [p.type, p.value]));
+  return parts as Record<"year" | "month" | "day" | "hour" | "minute", string>;
+}
+
+/** YYYY-MM-DD（运营时区） */
 export function formatDate(d: Date) {
-  return d.toISOString().slice(0, 10);
+  const p = zonedParts(d);
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/** YYYY-MM-DD HH:mm（运营时区） */
+export function formatDateTime(d: Date) {
+  const p = zonedParts(d);
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
+}
+
+/** MM-DD HH:mm（运营时区，列表里的紧凑时间） */
+export function formatShortDateTime(d: Date) {
+  const p = zonedParts(d);
+  return `${p.month}-${p.day} ${p.hour}:${p.minute}`;
 }

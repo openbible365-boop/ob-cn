@@ -2456,6 +2456,33 @@ a {
   opacity: 0.45;
 }
 
+/* 编辑已有笔记时的删除：单独占一行、文字按钮，避免与「更新」挨着误触；
+   待确认态变危险色 */
+.verse-compact-note-form {
+  flex-wrap: wrap;
+}
+
+.verse-compact-note-form textarea {
+  flex: 1 1 0;
+}
+
+.verse-compact-note-form button.verse-note-delete {
+  flex: 1 0 100%;
+  height: 34px;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.verse-compact-note-form button.verse-note-delete.is-armed {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pink) 10%, transparent);
+  color: var(--pink);
+}
+
 .verse-action-sheet-header {
   display: flex;
   align-items: center;

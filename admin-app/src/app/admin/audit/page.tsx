@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Primitives";
 import { Pagination } from "@/components/Pagination";
 import { CreateOperatorControl } from "@/components/CreateOperatorControl";
 import { ResetPasswordControl } from "@/components/ResetPasswordControl";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 const OPERATOR_COLUMNS: Column[] = [
   { key: "username", label: "用户名", width: "1fr" },
@@ -70,7 +71,7 @@ export default async function AuditPage({
               <DataTable.Cell>
                 <Badge tone={op.role === "SUPER_ADMIN" ? "warn" : "info"}>{ROLE_LABEL[op.role]}</Badge>
               </DataTable.Cell>
-              <DataTable.Cell>{op.createdAt.toISOString().slice(0, 10)}</DataTable.Cell>
+              <DataTable.Cell>{formatDate(op.createdAt)}</DataTable.Cell>
               <DataTable.Cell>
                 <div className="row-actions"><ResetPasswordControl operatorId={op.id} /></div>
               </DataTable.Cell>
@@ -88,7 +89,7 @@ export default async function AuditPage({
           <DataTable.Head />
           {logs.map((l) => (
             <DataTable.Row key={l.id}>
-              <DataTable.Cell>{l.createdAt.toISOString().slice(0, 16).replace("T", " ")}</DataTable.Cell>
+              <DataTable.Cell>{formatDateTime(l.createdAt)}</DataTable.Cell>
               <DataTable.Cell truncate title={l.operator.name}>
                 <strong>{l.operator.name}</strong>
               </DataTable.Cell>

@@ -8,6 +8,7 @@ import { Badge, PageHeader } from "@/components/ui/Primitives";
 import { EmptyState } from "@/components/ui/States";
 import type { Tone } from "@/components/ui/Primitives";
 import { auth } from "@/auth";
+import { formatDateTime } from "@/lib/format";
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "草稿中",
@@ -187,7 +188,7 @@ export default async function CommentaryPage({
                 <div style={{ flex: 1 }} />
                 {entry.revisions[0] && (
                   <span className="commentary-revised">
-                    上次修改 {entry.revisions[0].createdAt.toISOString().slice(0, 16).replace("T", " ")}
+                    上次修改 {formatDateTime(entry.revisions[0].createdAt)}
                   </span>
                 )}
               </div>

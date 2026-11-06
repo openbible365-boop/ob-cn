@@ -68,6 +68,8 @@ export function toWebNote(stored: {
     ref: verseRefLabel(stored.book, stored.chapter, stored.verse),
     refs: [ref],
     text: stored.content,
-    date: stored.createdAt.toISOString().slice(0, 10),
+    // 返回完整时间戳，由浏览器按用户本地时区格式化——
+    // 服务端截 ISO 日期得到的是 UTC 日，跨时区会多/少一天
+    date: stored.createdAt.toISOString(),
   };
 }

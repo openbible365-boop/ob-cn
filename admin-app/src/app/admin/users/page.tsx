@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
-import { formatLoginMethods, formatUserTier } from "@/lib/format";
+import { formatDateTime, formatLoginMethods, formatUserTier } from "@/lib/format";
 import { muteUser, unbanUser } from "@/lib/actions/users";
 import { BanUserControl } from "@/components/BanUserControl";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -72,7 +72,7 @@ export default async function UsersPage({
   const info = pageInfo(page, total);
 
   const fmtLogin = (d: Date | null) =>
-    d ? d.toISOString().slice(0, 16).replace("T", " ") : "从未登录";
+    d ? formatDateTime(d) : "从未登录";
 
   return (
     <>

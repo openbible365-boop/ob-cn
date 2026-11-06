@@ -45,12 +45,16 @@
     
     getPlanDayNumber(startDateISO) {
         if (!startDateISO) return 1;
-        const start = new Date(startDateISO);
+        // 「YYYY-MM-DD」按本地日期解析：new Date('2026-11-05') 会当作 UTC 零点，
+        // 在 UTC 以西时区等于本地前一天，开始当天就会算成第 2 天
+        const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startDateISO);
+        const start = ymd ? new Date(+ymd[1], +ymd[2] - 1, +ymd[3]) : new Date(startDateISO);
         start.setHours(0, 0, 0, 0);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const diffMs = today - start;
-        const diffDays = Math.floor(diffMs / 86400000);
+        // round 而非 floor：跨夏令时的那天只有 23 小时，floor 会少算一天
+        const diffDays = Math.round(diffMs / 86400000);
         return Math.max(1, Math.min(this.plan.days || 365, diffDays + 1));
     }
     

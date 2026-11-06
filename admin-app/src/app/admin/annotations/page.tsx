@@ -24,6 +24,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { deleteNote, deleteHighlight } from "@/lib/actions/content";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
+import { formatDateTime } from "@/lib/format";
 
 export default async function AnnotationsPage({
   searchParams,
@@ -48,7 +49,7 @@ export default async function AnnotationsPage({
   ]);
 
   const fmtTime = (d: Date) =>
-    d ? d.toISOString().slice(0, 16).replace("T", " ") : "";
+    d ? formatDateTime(d) : "";
 
   // Query records depending on tab
   let highlights: Prisma.HighlightGetPayload<{ include: { user: true } }>[] = [];

@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { NotificationComposer } from "@/components/NotificationComposer";
 import { db } from "@/lib/db";
+import { ADMIN_TIMEZONE } from "@/lib/format";
 
 // 本地时区格式化（禁止 ISO slice：那是 UTC 时间，会与运营者的钟差好几个小时）
 const dateFormat = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: ADMIN_TIMEZONE,
   month: "2-digit",
   day: "2-digit",
   hour: "2-digit",

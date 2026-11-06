@@ -36,6 +36,7 @@ import {
   getNotes,
   addNote,
   updateNote,
+  deleteNote,
 } from "../data/annotations";
 import { startConversation } from "../data/huidu";
 import { fetchChapterAudio, type AudioTimestamp } from "../data/audio";
@@ -51,6 +52,7 @@ import { PlayingAudioIcon } from "../components/PlayingAudioIcon";
 import { schedulePushReadingPosition } from "../data/reading-sync";
 import { FirstRunGuide, shouldShowFirstRunGuide } from "../components/FirstRunGuide";
 import { ANDROID_BACK_EVENT } from "../native/android-back";
+import { useArmedConfirm } from "../hooks/useArmedConfirm";
 
 // 诗歌体书卷（纯诗体四卷）：无结构标记的译本按书卷近似判定。
 // cuv 数据已合入 USFM 底本的节级标记（v.q 诗体 / v.p 段首 / v.b 诗节空行），
@@ -600,6 +602,8 @@ export function BiblePage() {
     };
   }, [selected, noteOpen]);
 
+  // 删除笔记的页内两步确认（第一次点进入待命，再点才删）
+  const { armedKey, confirm: confirmDelete } = useArmedConfirm();
   const openNoteEditor = (
     verseNumber: number,
     existing?: (typeof notes)[number],
@@ -1982,6 +1986,24 @@ export function BiblePage() {
                   placeholder="写下你的笔记…"
                 />
                 <button type="submit" disabled={!noteText.trim()}>{editingNoteId ? "更新" : "保存"}</button>
+                {/* 编辑已有笔记时提供删除（两步确认）：这是 App 内删除笔记的入口 */}
+                {editingNoteId && (
+                  <button
+                    type="button"
+                    className={`verse-note-delete${armedKey === "note-delete" ? " is-armed" : ""}`}
+                    aria-label={armedKey === "note-delete" ? "再点一次确认删除这条笔记" : "删除这条笔记"}
+                    onClick={() => confirmDelete("note-delete", () => {
+                      deleteNote(editingNoteId);
+                      setStoreVersion((v) => v + 1);
+                      setSelected(new Set());
+                      setNoteText("");
+                      setNoteOpen(false);
+                      setEditingNoteId(null);
+                    })}
+                  >
+                    {armedKey === "note-delete" ? "确认删除" : "删除这条笔记"}
+                  </button>
+                )}
               </form>
             ) : (
               <div className="verse-dock-body">

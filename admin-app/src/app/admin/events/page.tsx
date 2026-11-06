@@ -5,6 +5,7 @@ import { Pagination } from "@/components/Pagination";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Badge, type Tone } from "@/components/ui/Primitives";
 import { EmptyState } from "@/components/ui/States";
+import { formatDateTime } from "@/lib/format";
 
 type Status = "UPCOMING" | "ONGOING" | "ENDED";
 
@@ -25,10 +26,6 @@ function computeStatus(startAt: Date, endAt: Date | null, now: Date): Status {
   if (now < startAt) return "UPCOMING";
   if (endAt && now > endAt) return "ENDED";
   return "ONGOING";
-}
-
-function formatDateTime(d: Date) {
-  return d.toISOString().slice(0, 16).replace("T", " ");
 }
 
 export default async function EventsPage({

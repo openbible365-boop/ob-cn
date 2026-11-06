@@ -4,6 +4,19 @@
     // false 时隐藏右栏「社群」标签与个人页「我的社群」入口；面板代码与接口全部保留，翻回 true 即恢复。
     const SHOW_COMMUNITY = false;
 
+    // 本地时区日期（YYYY-MM-DD / YYYY-MM）：禁止 toISOString().slice——那是 UTC 日，
+    // 太平洋时区傍晚、北京时间凌晨都会差出一天
+    function localDateKey(d = new Date()) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    // 笔记日期显示：云端笔记带完整时间戳，按本地时区取日期；本地笔记是已格式化的字符串，原样显示
+    function noteDateLabel(value) {
+        if (!value) return '';
+        if (!/T\d{2}:\d{2}/.test(value)) return value;
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? value : localDateKey(d);
+    }
+
     // ── State ──
     const S = {
         book: 'gen', chapter: '1', version: 'cuv', lang: 'zh', theme: 'light',
@@ -1720,7 +1733,7 @@
             <div class="note-meta">
                 ${refHtml}
                 ${isAi ? `<span class="note-kind">${t('notes.kindAi') || '慧读'}</span>` : ''}
-                <time>${escapeNoteHTML(n.date || '')}</time>
+                <time>${escapeNoteHTML(noteDateLabel(n.date))}</time>
                 <span class="note-acts">
                     <button class="note-act" onclick="event.stopPropagation();shareNote(${i})" title="${t('sel.share') || '分享'}" aria-label="${t('sel.share') || '分享'}"><i class="fa-solid fa-share-from-square"></i></button>
                     <button class="note-act is-danger" onclick="event.stopPropagation();deleteNote(${i})" title="${t('notes.delete') || '删除'}" aria-label="${t('notes.delete') || '删除'}"><i class="fa-solid fa-trash"></i></button>
@@ -1960,9 +1973,9 @@
         const n = S.notes[i];
         if (!n) return;
         if (n.type === 'ai_qa') {
-            generateShareCard('ai', { ref: n.ref, question: n.question, answer: n.answer, date: n.date });
+            generateShareCard('ai', { ref: n.ref, question: n.question, answer: n.answer, date: noteDateLabel(n.date) });
         } else {
-            generateShareCard('note', { ref: n.ref, text: _stripLeadingRef(n.text, n.ref), date: n.date });
+            generateShareCard('note', { ref: n.ref, text: _stripLeadingRef(n.text, n.ref), date: noteDateLabel(n.date) });
         }
     };
 
@@ -2368,13 +2381,13 @@
     }
 
     function getAIUsageToday() {
-        const thisMonth = new Date().toISOString().slice(0, 7);
+        const thisMonth = localDateKey().slice(0, 7);
         const key = `ob_ai_usage_${thisMonth}`;
         return parseInt(localStorage.getItem(key) || '0');
     }
 
     function incrementAIUsage() {
-        const thisMonth = new Date().toISOString().slice(0, 7);
+        const thisMonth = localDateKey().slice(0, 7);
         const key = `ob_ai_usage_${thisMonth}`;
         const count = parseInt(localStorage.getItem(key) || '0') + 1;
         localStorage.setItem(key, String(count));
@@ -5084,7 +5097,7 @@
 
         // ── No plan started yet: auto-start with today's date ──
         if (!startDate) {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = localDateKey();
             M.setStartDate(today);
             
             // Sync start to backend if logged in
@@ -5272,7 +5285,7 @@
 
     // ── Plan Setup Wizard ──
     function renderPlanSetup(c, M, lang) {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = localDateKey();
         const t_setup = lang === 'en' ? "Start M'Cheyne Reading Plan" : lang === 'ko' ? '맥체인 읽기 계획 시작' : '开始麦琴读经计划';
         const t_desc = lang === 'en'
             ? "Read through the entire Bible in one year with 4 daily chapters. NT & Psalms twice, OT once."

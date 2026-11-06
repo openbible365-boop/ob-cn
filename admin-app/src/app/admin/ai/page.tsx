@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Badge, type Tone } from "@/components/ui/Primitives";
 import { EmptyState } from "@/components/ui/States";
-import { formatCents, formatTokensPerDay } from "@/lib/format";
+import { formatCents, formatDate, formatTokensPerDay } from "@/lib/format";
 import { toggleAutoFallback, toggleRateLimit, expandCanary, rollbackToVersion } from "@/lib/actions/ai";
 import { ApiKeyControl } from "@/components/ApiKeyControl";
 import { EditPromptVersionControl } from "@/components/EditPromptVersionControl";
@@ -106,7 +106,7 @@ export default async function AiManagementPage() {
               <ApiKeyControl
                 modelId={primary.id}
                 apiKeyLast4={primary.apiKeyLast4}
-                apiKeyUpdatedAt={primary.apiKeyUpdatedAt ? primary.apiKeyUpdatedAt.toISOString().slice(0, 10) : null}
+                apiKeyUpdatedAt={primary.apiKeyUpdatedAt ? formatDate(primary.apiKeyUpdatedAt) : null}
               />
             )}
           </div>

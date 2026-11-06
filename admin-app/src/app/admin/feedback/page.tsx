@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { ADMIN_TIMEZONE } from "@/lib/format";
 
 // 用户意见反馈：App 端表单提交的留言在这里查看与处理
 const dateFormat = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: ADMIN_TIMEZONE,
   month: "2-digit",
   day: "2-digit",
   hour: "2-digit",

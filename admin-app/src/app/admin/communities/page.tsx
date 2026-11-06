@@ -15,7 +15,7 @@ const COMMUNITY_COLUMNS: Column[] = [
   { key: "tier", label: "群组等级", width: "160px" },
   { key: "ops", label: "操作", width: "220px" },
 ];
-import { formatTier } from "@/lib/format";
+import { formatDate, formatTier } from "@/lib/format";
 import { warnCommunity, banCommunity, unbanCommunity, dissolveCommunity, changeCommunityTier } from "@/lib/actions/communities";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { auth } from "@/auth";
@@ -107,7 +107,7 @@ export default async function CommunitiesPage({
               <DataTable.Cell>
                 <Badge tone={c.status === "ACTIVE" ? "ok" : "err"}>{statusLabel}</Badge>
               </DataTable.Cell>
-              <DataTable.Cell>{c.createdAt.toISOString().slice(0, 10)}</DataTable.Cell>
+              <DataTable.Cell>{formatDate(c.createdAt)}</DataTable.Cell>
               <DataTable.Cell>
                 {c.isOfficial || c.parent || !canChangeTier ? (
                   <Badge tone="info">{formatTier(c.tier, c.tierPriceCents)}</Badge>
