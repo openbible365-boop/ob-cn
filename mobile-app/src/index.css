@@ -4950,6 +4950,27 @@ body.dark .app-exit-toast {
   color: var(--muted);
 }
 
+/* 「换一批」：靠右的轻量文字按钮，不和推荐问法抢视觉 */
+.huidu-suggests-shuffle {
+  display: inline-flex;
+  align-self: flex-end;
+  min-height: 36px;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.huidu-suggests-shuffle:active .app-icon {
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
 /* 第二入口提示：经文慧读路径可被发现 */
 .huidu-scripture-hint {
   display: flex;

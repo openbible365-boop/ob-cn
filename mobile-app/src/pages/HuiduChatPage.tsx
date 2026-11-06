@@ -33,12 +33,61 @@ function TypingDots() {
 // 空态建议提示词：主流 AI 应用的起步方式——给出可点的具体问法，
 // 点击后填入输入框（可改可发），而不是替用户直接发送。
 // 每条配一个灰色线性小图标，列表扫读更快（与设计画布一致）。
-const STARTER_PROMPTS: Array<{ icon: string; text: string }> = [
-  { icon: "book", text: "解释一段经文的背景与生活应用" },
-  { icon: "heart", text: "今天用一节经文鼓励我" },
-  { icon: "info", text: "祷告可以从哪里开始？" },
-  { icon: "search", text: "圣经里的「恩典」是什么意思？" },
-];
+// 新对话的推荐问法：按类别分组的问题库，每次随机抽 4 题（尽量各来自不同类别），
+// 可「换一批」。图标按类别统一，便于一眼分辨问题类型。
+type StarterPrompt = { icon: string; text: string };
+const STARTER_PROMPT_POOL: Record<string, StarterPrompt[]> = {
+  scripture: [
+    { icon: "book", text: "解释一段经文的背景与生活应用" },
+    { icon: "book", text: "约翰福音 3:16 为什么这么重要？" },
+    { icon: "book", text: "诗篇 23 篇在讲什么？" },
+    { icon: "book", text: "登山宝训的核心信息是什么？" },
+  ],
+  comfort: [
+    { icon: "heart", text: "今天用一节经文鼓励我" },
+    { icon: "heart", text: "焦虑的时候可以读哪些经文？" },
+    { icon: "heart", text: "失落难过时，圣经怎么安慰人？" },
+  ],
+  prayer: [
+    { icon: "info", text: "祷告可以从哪里开始？" },
+    { icon: "info", text: "主祷文可以怎样一句句地祷告？" },
+    { icon: "info", text: "为家人祷告可以怎么说？" },
+  ],
+  meaning: [
+    { icon: "search", text: "圣经里的「恩典」是什么意思？" },
+    { icon: "search", text: "「信心」在圣经里怎么理解？" },
+    { icon: "search", text: "圣经里说的「平安」和一般的平安有什么不同？" },
+  ],
+  people: [
+    { icon: "users", text: "大卫一生给我们什么启示？" },
+    { icon: "users", text: "彼得三次不认主之后发生了什么？" },
+    { icon: "users", text: "路得记为什么常被称为忠诚的故事？" },
+  ],
+  life: [
+    { icon: "sun", text: "圣经怎么看待工作与休息？" },
+    { icon: "sun", text: "怎样用圣经的方式面对冲突？" },
+    { icon: "sun", text: "圣经对饶恕别人有什么教导？" },
+  ],
+  reading: [
+    { icon: "calendar", text: "第一次读圣经，应该从哪卷书开始？" },
+    { icon: "calendar", text: "怎样养成每天读经的习惯？" },
+  ],
+};
+
+function pickStarterPrompts(count = 4): StarterPrompt[] {
+  const shuffle = <T,>(items: T[]) => {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  };
+  // 先随机选出 count 个类别，每类抽一题，保证问题类型不重样
+  return shuffle(Object.values(STARTER_PROMPT_POOL))
+    .slice(0, count)
+    .map((group) => group[Math.floor(Math.random() * group.length)]);
+}
 
 function BlockView({ block }: { block: HuiduBlock }) {
   return (
@@ -78,6 +127,8 @@ export function HuiduChatPage() {
     return [1, 1.15, 1.3].includes(saved) ? saved : 1;
   });
   const [fontPanelOpen, setFontPanelOpen] = useState(false);
+  // 推荐问法：每次打开页面随机抽一组，「换一批」再抽
+  const [starterPrompts, setStarterPrompts] = useState(pickStarterPrompts);
   useEffect(() => {
     localStorage.setItem("ob.huidu.fontScale", String(fontScale));
   }, [fontScale]);
@@ -386,7 +437,7 @@ export function HuiduChatPage() {
             <h1>平安，今天想聊什么？</h1>
             <p>可以直接提问，也可以从下面的问法开始。</p>
             <div className="huidu-suggests" role="group" aria-label="推荐提示词">
-              {STARTER_PROMPTS.map((prompt) => (
+              {starterPrompts.map((prompt) => (
                 <button
                   key={prompt.text}
                   type="button"
@@ -400,6 +451,10 @@ export function HuiduChatPage() {
                 </button>
               ))}
             </div>
+            <button type="button" className="huidu-suggests-shuffle" onClick={() => setStarterPrompts(pickStarterPrompts())}>
+              <Icon name="rotate-cw" size={13} />
+              换一批
+            </button>
             {/* 第二入口：经文慧读的路径此前不可被发现（信息架构补洞） */}
             <button type="button" className="huidu-scripture-hint" onClick={() => navigate("/bible")}>
               <Icon name="book" size={13} />
