@@ -6590,37 +6590,53 @@
         </div>`;
     }
 
+    // 隐私政策正文：与 App 端 mobile-app/src/pages/LegalPage.tsx 同一套条款（中文为准），
+    // 按网页版场景调整个别措辞。修改条款时两端同步更新，并改这里的日期。
+    const PRIVACY_UPDATED = '2026 年 11 月 5 日';
+    const PRIVACY_SECTIONS = [
+        ['fa-hand-holding-heart', '引言', '慧读圣经（OpenBible）尊重并保护你的个人信息。本政策适用于慧读圣经网页版与手机 App，说明我们收集哪些信息、如何使用与存储、与谁共享，以及你享有的权利。我们遵循最小必要原则：能在本机完成的，就不上传。'],
+        ['fa-clipboard-list', '我们收集的信息', '账号信息：注册登录时的邮箱、昵称与头像（使用 Google 或 Apple 登录时由对应平台按其政策提供基本资料）。使用数据：阅读位置、高亮、笔记、祷告记录、读经计划进度、慧读对话、社群发布内容——其中多数仅在你登录后才与账号关联。设备信息：仅收集保障服务所必需的基本信息（如应用版本），不收集通讯录、精确位置、设备唯一标识等与功能无关的信息。'],
+        ['fa-laptop', '本机优先与云端同步', '未登录时，高亮、笔记、祷告与慧读记录等个人数据保存在你的浏览器或设备本机，不会上传。登录后，为了多设备同步（包括网页版与 App 之间同步阅读位置、笔记与高亮），相关数据会加密传输至我们的服务器。退出登录时，本机上的个人数据会被清除。'],
+        ['fa-wand-magic-sparkles', 'AI 功能的数据处理', '使用慧读问答时，你的提问与所选经文会发送至我们自建的 AI 服务进行处理，仅用于生成回答与改进回答质量；我们不会将你的提问用于广告，也不会出售给任何第三方。语音朗读为预生成音频，不涉及你的个人数据。'],
+        ['fa-microphone', '语音输入', '在慧读中使用语音输入时，你的语音由你所用设备的系统语音识别服务（如 Google、Apple）或浏览器厂商提供的识别服务转换为文字，并按其各自的隐私政策处理；我们只接收识别后的文字，不接收、不保存你的录音。语音输入需要你授权麦克风权限，你可以随时在系统或浏览器设置中关闭。'],
+        ['fa-gears', '信息的使用', '我们使用收集的信息用于：提供并维护各项功能；多设备同步；向你发送你订阅的读经提醒、每日金句等通知；保障账号与服务安全；在匿名化、聚合化的前提下统计分析以改进产品。我们不做个性化广告，也没有任何广告系统。'],
+        ['fa-bell', '推送通知', '在手机 App 中开启系统通知后，我们会登记推送所需的设备令牌、设备平台与应用版本，以及登记时的 IP 地址和据此推算的大致地区（国家、省份、城市级别，不是精确位置），用于送达你订阅的通知与排查推送问题。关闭系统通知或退出登录后，对应的设备登记会停用。'],
+        ['fa-comment-dots', '意见反馈', '你通过 App「我的 → 意见反馈」提交留言时，我们会保存留言内容、你选填的联系方式，以及提交时的账号昵称与邮箱（如已登录），仅用于阅读、回复和改进产品。'],
+        ['fa-share-nodes', '信息的共享', '我们不出售你的个人信息。仅在以下情形共享：你在社群公开发布的内容对小组成员可见；获得你的明确同意；法律法规或主管机关依法要求。为提供服务使用的基础设施服务商（如服务器托管）仅在必要范围内处理数据并受保密义务约束。'],
+        ['fa-lock', '数据安全', '我们采取加密传输（HTTPS）、访问控制、最小授权等措施保护你的数据。虽然没有任何系统能保证绝对安全，但我们会在发生可能影响你权益的安全事件时，依法及时告知你。'],
+        ['fa-trash-can', '数据保留与删除', '账号数据在你使用服务期间保留。你删除的笔记、帖子会从服务器移除（备份副本将在备份周期内随之清除）。你可以申请注销账号，注销后我们将删除或匿名化你的个人信息，法律要求留存的除外。'],
+        ['fa-user-shield', '你的权利', '你有权访问、更正、导出自己的数据，撤回授权、关闭通知、删除内容、注销账号。多数操作可在网页版「我的」面板或 App「我的 → 数据与账户」中完成；其余可通过下方联系方式向我们提出，我们将在合理期限内响应。'],
+        ['fa-child', '未成年人保护', '我们不会在明知的情况下收集未满 14 周岁儿童的个人信息。如监护人发现儿童未经同意使用了本应用，请联系我们删除相关信息。'],
+        ['fa-puzzle-piece', '第三方服务', '本应用集成的第三方服务仅限：Google 登录（可选）、Apple 登录（可选）、系统推送通道（Apple APNs / Google FCM，仅在 App 中用于送达你订阅的通知）、设备或浏览器自带的语音识别（仅在你使用语音输入时）。使用这些服务时适用其各自的隐私政策。本应用不接入任何广告 SDK 或数据分析售卖服务。'],
+        ['fa-clock-rotate-left', '政策的更新', '本政策可能适时更新，重大变更会在应用内显著位置公告并更新本页日期。继续使用即视为接受更新后的政策。'],
+        ['fa-envelope', '联系我们', '对本政策或你的个人信息处理有任何疑问，可通过 App「我的 → 意见反馈」或发送邮件至 mushengbooks@gmail.com 与我们联系。'],
+    ];
+
     function renderPrivacyView() {
         const c = $('privacy-render'); if (!c) return;
-        const items = [
-            ['fa-clipboard-list', 'privacy.s1.title', 'privacy.s1.body'],
-            ['fa-gears', 'privacy.s2.title', 'privacy.s2.body'],
-            ['fa-lock', 'privacy.s3.title', 'privacy.s3.body'],
-            ['fa-user-shield', 'privacy.s4.title', 'privacy.s4.body'],
-        ];
         c.innerHTML = `
         <div class="cpage">
             <div class="cpage-hero">
                 <div class="cpage-hero-badge"><i class="fa-solid fa-shield-halved"></i></div>
                 <h1>${t('nav.privacy')}</h1>
-                <p>${t('privacy.intro')}</p>
-                <div class="cpage-hero-meta"><i class="fa-solid fa-clock-rotate-left"></i> ${t('privacy.updated')}</div>
+                <p>我们遵循最小必要原则：能在本机完成的，就不上传。</p>
+                <div class="cpage-hero-meta"><i class="fa-solid fa-clock-rotate-left"></i> 更新于 ${PRIVACY_UPDATED}</div>
             </div>
 
             <div class="cpage-section">
                 <div class="policy-list">
-                    ${items.map(([ico, tk, bk]) => `
+                    ${PRIVACY_SECTIONS.map(([ico, title, body]) => `
                     <div class="policy-card">
                         <div class="policy-ico"><i class="fa-solid ${ico}"></i></div>
                         <div>
-                            <h3>${t(tk)}</h3>
-                            <p>${t(bk)}</p>
+                            <h3>${title}</h3>
+                            <p>${body}</p>
                         </div>
                     </div>`).join('')}
                 </div>
             </div>
 
-            <div class="cpage-note">${t('privacy.note')}</div>
+            <div class="cpage-note">本政策同时适用于慧读圣经网页版与手机 App，以中文版本为准。</div>
         </div>`;
     }
 
