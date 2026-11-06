@@ -10,7 +10,7 @@
         selection: new Set(), lastRef: null, highlights: {},
         notes: JSON.parse(localStorage.getItem('ob_notes') || '[]'),
         bookmarks: JSON.parse(localStorage.getItem('ob_bookmarks') || '[]'),
-        view: 'reading', panelTab: 'ai', fontSize: parseInt(localStorage.getItem('ob_fontsize')) || 18, panelOpen: true, navOpen: false,
+        view: 'reading', panelTab: 'ai', fontSize: parseInt(localStorage.getItem('ob_fontsize')) || 20, panelOpen: true, navOpen: false,
         spiritualStages: [], // Cache for general category stages
         spiritualVerseQuestions: [], // Cache for verse_drawer category stages
         // NOTE: 新约默认声音——启动时从后端拉取，前端不提供用户切换入口
@@ -6326,8 +6326,8 @@
                 <label class="toggle"><input type="checkbox" id="settings-dark" ${S.theme === 'dark' ? 'checked' : ''}><span class="toggle-track"></span></label>
             </div>
             <div class="settings-row">
-                <div><div class="settings-label">${t('settings.font-size') || '字体大小'}</div></div>
-                <input type="range" class="range-input" min="14" max="24" value="${S.fontSize}" id="font-size-range">
+                <div><div class="settings-label">${t('settings.font-size') || '字体大小'}</div><div class="settings-desc" id="font-size-readout">${S.fontSize}px</div></div>
+                <input type="range" class="range-input" min="14" max="26" value="${S.fontSize}" id="font-size-range">
             </div>
         </div>
     </div>
@@ -6381,9 +6381,19 @@
         });
         document.getElementById('font-size-range')?.addEventListener('input', e => {
             S.fontSize = +e.target.value;
-            document.documentElement.style.setProperty('--font-size-verse', S.fontSize + 'px');
+            applyVerseFontSize();
             localStorage.setItem('ob_fontsize', S.fontSize);
+            const readout = $('font-size-readout');
+            if (readout) readout.textContent = `${S.fontSize}px`;
         });
+    }
+
+    // 经文字号：以 20px 为基准换算缩放系数（CSS 里各断点的经文字号都乘 --verse-scale），
+    // 这样手机/平板宽度原有的字号比例保留，用户只调整相对大小
+    function applyVerseFontSize() {
+        const root = document.documentElement.style;
+        root.setProperty('--verse-scale', String(S.fontSize / 20));
+        root.setProperty('--font-size-verse', S.fontSize + 'px');
     }
 
     // ── About Us & Privacy Policy (premium content pages) ──
@@ -8635,9 +8645,7 @@
         handlePaymentCallback();
 
         // Apply saved font size to Bible text
-        if (S.fontSize !== 18) {
-            document.documentElement.style.setProperty('--font-size-verse', S.fontSize + 'px');
-        }
+        applyVerseFontSize();
 
         document.addEventListener('click', e => {
             const card = e.target.closest('.media-card');

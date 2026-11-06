@@ -1189,7 +1189,9 @@ body[data-theme="dark"] .sel-close-btn:hover {
     /* 避头尾：标点不落行首（与注释一致） */
     line-break: strict;
     font-family: var(--font-text);
-    font-size: 1.22rem;
+    /* 字号 = 各断点的基准值 × 用户缩放（设置页「字体大小」，--verse-scale = 字号/20）。
+       断点里的覆盖规则也必须乘这个系数，否则该宽度下字号滑块失效 */
+    font-size: calc(1.22rem * var(--verse-scale, 1));
     color: var(--text-primary);
     position: relative;
     border: 1px solid transparent;
@@ -5985,7 +5987,7 @@ body[data-theme="dark"] .toast {
     }
 
     .verse {
-        font-size: 1.05rem;
+        font-size: calc(1.05rem * var(--verse-scale, 1));
     }
 
     .view {
@@ -6216,7 +6218,7 @@ body[data-theme="dark"] .toast {
     /* Larger verse tap targets on touch */
     .verse {
         padding: 8px 10px;
-        font-size: 1.08rem;
+        font-size: calc(1.08rem * var(--verse-scale, 1));
     }
 
     .verse-num {
@@ -6473,7 +6475,7 @@ body[data-theme="dark"] .toast {
     }
 
     .verse {
-        font-size: 1.02rem;
+        font-size: calc(1.02rem * var(--verse-scale, 1));
     }
 
     .bottom-nav-btn {
@@ -6528,7 +6530,7 @@ body[data-theme="dark"] .toast {
     }
 
     .verse {
-        font-size: 1.1rem;
+        font-size: calc(1.1rem * var(--verse-scale, 1));
         line-height: 1.7;
     }
 
