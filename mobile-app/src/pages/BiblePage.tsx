@@ -591,14 +591,29 @@ export function BiblePage() {
       });
     };
 
-    revealSelectedVerse();
-    const resizeObserver = new ResizeObserver(revealSelectedVerse);
-    resizeObserver.observe(sheet);
-    resizeObserver.observe(scroller);
-
-    return () => {
+    // 只在「刚选中 / 刚开关笔记框」后的短窗口内跟随面板展开校正一次位置；
+    // 用户一旦触摸、滚轮或拖动阅读区就立即停手。
+    // 以前持续监听阅读区尺寸：手机上滚动会让标签栏隐藏、浏览器工具栏收起，
+    // 阅读区尺寸随之变化，又把画面拽回选中经节——表现为「选中后上下滑不动」。
+    let active = true;
+    const stop = () => {
+      active = false;
       resizeObserver.disconnect();
       window.cancelAnimationFrame(revealFrame);
+    };
+    const resizeObserver = new ResizeObserver(() => {
+      if (active) revealSelectedVerse();
+    });
+    revealSelectedVerse();
+    resizeObserver.observe(sheet);
+    const settleTimer = window.setTimeout(stop, 450);
+    const userEvents = ["pointerdown", "touchstart", "wheel"] as const;
+    for (const type of userEvents) scroller.addEventListener(type, stop, { passive: true });
+
+    return () => {
+      stop();
+      window.clearTimeout(settleTimer);
+      for (const type of userEvents) scroller.removeEventListener(type, stop);
     };
   }, [selected, noteOpen]);
 
