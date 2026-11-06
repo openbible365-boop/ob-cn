@@ -48,8 +48,9 @@ describe("toStoredNote / toWebNote 往返", () => {
       id: "n2", book: "jhn", chapter: 3, verse: 16,
       content: "神爱世人", createdAt: new Date("2026-08-06T00:00:00Z"),
     });
+    // 日期返回完整时间戳，由浏览器按用户本地时区格式化（避免服务端截 UTC 日跨时区差一天）
     expect(web).toEqual({
-      id: "n2", ref: "约翰福音 3:16", refs: ["jhn-3-16"], text: "神爱世人", date: "2026-08-06",
+      id: "n2", ref: "约翰福音 3:16", refs: ["jhn-3-16"], text: "神爱世人", date: "2026-08-06T00:00:00.000Z",
     });
   });
 });
