@@ -15,11 +15,10 @@
         spiritualVerseQuestions: [], // Cache for verse_drawer category stages
         // NOTE: 新约默认声音——启动时从后端拉取，前端不提供用户切换入口
         ntVoice: 'female',
-        // 整合后统一由 admin-app（Next.js）提供接口，本地开发指向 :3000。
-        // 部署时网页版与接口同源，直接用相对路径即可。
-        apiBase: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3000/api/web'
-            : '/api/web'
+        // 接口由 admin-app 提供，网页版始终同源访问（线上 nginx 转发 /api/）。
+        // 本地开发用 scripts/web-dev-server.mjs：静态托管 + /api 转发到 :3000。
+        // 注意不要写成 http://localhost:3000——跨端口会被 CORS 拦截，且登录 Cookie 也带不上。
+        apiBase: '/api/web'
     };
 
     let isVerifyingPayment = false;
