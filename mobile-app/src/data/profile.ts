@@ -7,6 +7,8 @@ import { clearConversationsForLogout } from "./huidu";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
 import { fetchCommunityGroups } from "./community";
+import { clearPrayersForLogout } from "./prayers";
+import { clearStreakForLogout } from "./streak";
 import {
   clearCommunityWorkspaceCache,
   fetchCommunityWorkspace,
@@ -21,6 +23,7 @@ export type SessionUser = {
   tier: "BASIC_FREE" | "MID" | "HIGH";
   tierPriceCents: number;
   accountType: "PERSONAL";
+  authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE">;
   entitlements: {
     label: string;
     savedItems: number | null;
@@ -86,6 +89,18 @@ export async function verifyLoginCode(email: string, code: string) {
   return result;
 }
 
+/**
+ * 账号密码登录（仅限后台开通了密码的账号）
+ * @param account 用户名或邮箱
+ * @param password 密码
+ * @returns 登录结果
+ */
+export async function verifyPasswordLogin(account: string, password: string) {
+  const result = await post("/api/mobile/auth/password", { account, password });
+  if (result.ok) clearCommunityWorkspaceCache();
+  return result;
+}
+
 export async function verifyGoogleLogin(idToken: string) {
   const result = await post("/api/mobile/auth/google", { idToken });
   if (result.ok) clearCommunityWorkspaceCache();
@@ -107,12 +122,43 @@ export async function verifyAppleLogin(credential: {
 export async function logout() {
   const result = await post("/api/mobile/auth/logout");
   if (result.ok) {
-    clearAnnotationsForLogout();
-    clearConversationsForLogout();
-    clearCommunityWorkspaceCache();
-    await clearGoogleCredentialState().catch(() => {});
+    await clearSessionLocalData();
   }
   return result;
+}
+
+async function clearSessionLocalData() {
+  clearAnnotationsForLogout();
+  clearConversationsForLogout();
+  clearCommunityWorkspaceCache();
+  await clearGoogleCredentialState().catch(() => {});
+}
+
+async function clearAccountLocalData() {
+  await clearSessionLocalData();
+  clearPrayersForLogout();
+  clearStreakForLogout();
+}
+
+export async function deleteAccount(appleAuthorizationCode?: string) {
+  try {
+    const response = await apiRequest<ApiResult>("/api/mobile/me", {
+      method: "DELETE",
+      body: {
+        confirmation: "DELETE",
+        ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}),
+      },
+      readTimeout: 60_000,
+    });
+    const result = response.data ?? {
+      ok: false,
+      message: `服务器返回异常（${response.status}）`,
+    };
+    if (response.ok && result.ok) await clearAccountLocalData();
+    return result;
+  } catch {
+    return { ok: false, message: "网络错误，请稍后重试" };
+  }
 }
 
 export async function fetchMe(): Promise<SessionUser | null> {
@@ -122,6 +168,25 @@ export async function fetchMe(): Promise<SessionUser | null> {
     return response.data?.user ?? null;
   } catch {
     return null;
+  }
+}
+
+export type LoginState = "signed-in" | "signed-out" | "unknown";
+
+/**
+ * 检查当前是否已登录
+ * NOTE: 与 fetchMe 不同，这里区分「服务端明确返回 401」与「网络异常」：
+ * 网络不通时返回 unknown，调用方不应据此误判为未登录而弹出登录提示。
+ * @returns 登录状态
+ */
+export async function checkLoginState(): Promise<LoginState> {
+  try {
+    const response = await apiRequest<ApiResult>("/api/mobile/me");
+    if (response.status === 401) return "signed-out";
+    if (response.ok && response.data?.user) return "signed-in";
+    return "unknown";
+  } catch {
+    return "unknown";
   }
 }
 

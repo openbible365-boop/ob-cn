@@ -11,11 +11,18 @@ import {
   resolvedAvatarPath,
 } from "@/lib/avatar-storage";
 import {
+  appleIosClientId,
+  exchangeAppleNativeCode,
+  revokeAppleToken,
+  verifyAppleIdToken,
+} from "@/lib/apple";
+import {
   COMMUNITY_ENTITLEMENTS,
   countCommunityPlanMembers,
   countCommunityPlanResources,
 } from "@/lib/community-access";
-import { getSessionUser } from "@/lib/current-user";
+import { resolvedStoragePath } from "@/lib/community-resource-storage";
+import { destroySession, getSessionUser } from "@/lib/current-user";
 import { db } from "@/lib/db";
 
 // 头像写盘需要 Node 运行时。
@@ -32,7 +39,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ ok: false, message: "未登录" }, { status: 401 });
   }
-  const [groupAccounts, highlightCount, noteCount, conversationCount, eventSignupCount] = await Promise.all([
+  const [groupAccounts, authAccounts, highlightCount, noteCount, conversationCount, eventSignupCount] = await Promise.all([
     db.membership.findMany({
       where: {
         userId: user.id,
@@ -53,6 +60,10 @@ export async function GET() {
         },
       },
       orderBy: { joinedAt: "asc" },
+    }),
+    db.authAccount.findMany({
+      where: { userId: user.id },
+      select: { provider: true },
     }),
     db.highlight.count({ where: { userId: user.id } }),
     db.note.count({ where: { userId: user.id } }),
@@ -78,6 +89,7 @@ export async function GET() {
       tier: user.tier,
       tierPriceCents: user.tierPriceCents,
       accountType: "PERSONAL",
+      authProviders: authAccounts.map((account) => account.provider),
       entitlements: PERSONAL_ENTITLEMENTS[user.tier],
       counts: {
         highlights: highlightCount,
@@ -97,6 +109,165 @@ export async function GET() {
       })),
     },
   });
+}
+
+type DeleteAccountBody = {
+  confirmation?: unknown;
+  appleAuthorizationCode?: unknown;
+};
+
+export async function DELETE(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ ok: false, message: "未登录" }, { status: 401 });
+  }
+
+  let body: DeleteAccountBody;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, message: "请求格式不正确" }, { status: 400 });
+  }
+  if (body.confirmation !== "DELETE") {
+    return NextResponse.json(
+      { ok: false, message: "请输入 DELETE 确认永久删除账号" },
+      { status: 400 },
+    );
+  }
+
+  const account = await db.user.findUnique({
+    where: { id: user.id },
+    select: {
+      email: true,
+      avatarUrl: true,
+      authAccounts: {
+        where: { provider: "APPLE" },
+        select: { providerAccountId: true },
+      },
+    },
+  });
+  if (!account) {
+    await destroySession();
+    return NextResponse.json({ ok: true, message: "账号已删除" });
+  }
+
+  // iOS asks the user to authenticate with Apple again immediately before
+  // deletion. Exchange that one-time code, ensure it belongs to this account,
+  // then revoke Apple's token before removing our local account record.
+  const appleAccount = account.authAccounts[0];
+  const appleCode = typeof body.appleAuthorizationCode === "string"
+    ? body.appleAuthorizationCode.trim()
+    : "";
+  if (appleAccount?.providerAccountId && appleCode) {
+    try {
+      const tokens = await exchangeAppleNativeCode(appleCode);
+      const claims = await verifyAppleIdToken(tokens.id_token, {
+        audience: appleIosClientId(),
+      });
+      if (claims.sub !== appleAccount.providerAccountId) {
+        return NextResponse.json(
+          { ok: false, message: "Apple 身份与当前账号不一致" },
+          { status: 403 },
+        );
+      }
+      const tokenToRevoke = tokens.refresh_token || tokens.access_token;
+      if (tokenToRevoke) await revokeAppleToken(tokenToRevoke);
+    } catch (error) {
+      console.error("[account-delete] Apple 授权撤销失败：", error);
+      return NextResponse.json(
+        { ok: false, message: "Apple 身份确认失败，请重试" },
+        { status: 401 },
+      );
+    }
+  }
+
+  const [resources, comments, likes, signups, ownPosts] = await Promise.all([
+    db.communityResource.findMany({
+      where: { uploaderId: user.id },
+      select: { storageKey: true },
+    }),
+    db.postComment.findMany({ where: { authorId: user.id }, select: { postId: true } }),
+    db.postLike.findMany({ where: { userId: user.id }, select: { postId: true } }),
+    db.eventSignup.findMany({ where: { userId: user.id }, select: { eventId: true } }),
+    db.post.findMany({ where: { authorId: user.id }, select: { id: true } }),
+  ]);
+  const ownPostIds = new Set(ownPosts.map((post) => post.id));
+  const affectedPostIds = [...new Set([...comments, ...likes].map((item) => item.postId))]
+    .filter((id) => !ownPostIds.has(id));
+  const affectedEventIds = [...new Set(signups.map((item) => item.eventId))];
+
+  await db.$transaction(async (tx) => {
+    // Feedback is intentionally retained for support history, but all account
+    // identifiers and contact snapshots are removed.
+    await tx.feedback.updateMany({
+      where: { userId: user.id },
+      data: { userId: null, userEmail: null, userName: null, contact: null },
+    });
+    if (account.email) {
+      await tx.verificationCode.deleteMany({ where: { email: account.email } });
+    }
+    await tx.community.updateMany({
+      where: { ownerId: user.id },
+      data: { ownerId: null },
+    });
+    // Post.author is intentionally RESTRICT in the schema; delete the user's
+    // shared content before deleting the user record. Child data cascades.
+    await tx.post.deleteMany({ where: { authorId: user.id } });
+    await tx.user.delete({ where: { id: user.id } });
+
+    if (affectedPostIds.length > 0) {
+      const [commentCounts, likeCounts] = await Promise.all([
+        tx.postComment.groupBy({
+          by: ["postId"],
+          where: { postId: { in: affectedPostIds } },
+          _count: { _all: true },
+        }),
+        tx.postLike.groupBy({
+          by: ["postId"],
+          where: { postId: { in: affectedPostIds } },
+          _count: { _all: true },
+        }),
+      ]);
+      const commentByPost = new Map(commentCounts.map((item) => [item.postId, item._count._all]));
+      const likeByPost = new Map(likeCounts.map((item) => [item.postId, item._count._all]));
+      await Promise.all(affectedPostIds.map((postId) => tx.post.updateMany({
+        where: { id: postId },
+        data: {
+          commentCount: commentByPost.get(postId) ?? 0,
+          likeCount: likeByPost.get(postId) ?? 0,
+        },
+      })));
+    }
+    if (affectedEventIds.length > 0) {
+      const signupCounts = await tx.eventSignup.groupBy({
+        by: ["eventId"],
+        where: { eventId: { in: affectedEventIds } },
+        _count: { _all: true },
+      });
+      const signupByEvent = new Map(signupCounts.map((item) => [item.eventId, item._count._all]));
+      await Promise.all(affectedEventIds.map((eventId) => tx.event.updateMany({
+        where: { id: eventId },
+        data: { signupCount: signupByEvent.get(eventId) ?? 0 },
+      })));
+    }
+  });
+
+  await destroySession();
+
+  const avatarFile = avatarFileNameFromPublicPath(account.avatarUrl);
+  const avatarPath = avatarFile ? resolvedAvatarPath(avatarFile) : null;
+  if (avatarPath) await unlink(avatarPath).catch((error) => {
+    console.error("[account-delete] 删除头像文件失败：", error);
+  });
+  await Promise.all(resources.map(async ({ storageKey }) => {
+    const storagePath = storageKey ? resolvedStoragePath(storageKey) : null;
+    if (!storagePath) return;
+    await unlink(storagePath).catch((error) => {
+      console.error("[account-delete] 删除用户上传文件失败：", error);
+    });
+  }));
+
+  return NextResponse.json({ ok: true, message: "账号和关联数据已永久删除" });
 }
 
 const ALLOWED_AVATAR_TYPES = new Set(["jpeg", "jpg", "png", "webp"]);

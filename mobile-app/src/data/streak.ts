@@ -44,3 +44,7 @@ export function getStreak(): number {
   }
   return streak;
 }
+
+export function clearStreakForLogout() {
+  localStorage.removeItem(KEY);
+}
