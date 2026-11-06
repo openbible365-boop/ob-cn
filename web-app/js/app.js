@@ -6389,13 +6389,14 @@
     // ── About Us & Privacy Policy (premium content pages) ──
     // ── App 下载页 ──
     // 下载渠道集中配置：与 App 端 mobile-app/src/data/referral.ts 同一组地址。
+    // 安卓包放在 App 端 nginx 的 /downloads/（见 downloads/README.md），换版本只覆盖文件；
     // 地址变更后需重新生成二维码图片 images/download/qr-android.svg。
     const APP_DOWNLOADS = {
         android: {
-            url: 'https://openbible.live/download/android',
+            url: 'https://app.openbible.live/downloads/openbible-android.apk',
             available: true,
             version: '1.0',
-            size: '31 MB',
+            size: '32.5 MB',
             minOs: 'Android 7.0',
             qr: 'images/download/qr-android.svg',
         },

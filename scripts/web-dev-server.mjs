@@ -33,6 +33,7 @@ const MIME = {
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
   ".pdf": "application/pdf",
+  ".apk": "application/vnd.android.package-archive",
 };
 
 function proxyApi(req, res) {
@@ -66,8 +67,11 @@ function proxyApi(req, res) {
 function serveStatic(req, res) {
   const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
   const isData = urlPath.startsWith("/data/");
-  const base = isData ? DATA_ROOT : ROOT;
-  let filePath = path.normalize(path.join(base, isData ? urlPath.slice("/data".length) : urlPath));
+  // 安装包目录（线上由 App 端 nginx 提供 /downloads/）
+  const isDownload = urlPath.startsWith("/downloads/");
+  const base = isData ? DATA_ROOT : isDownload ? path.join(REPO, "downloads") : ROOT;
+  const rel = isData ? urlPath.slice("/data".length) : isDownload ? urlPath.slice("/downloads".length) : urlPath;
+  let filePath = path.normalize(path.join(base, rel));
   if (!filePath.startsWith(base)) {
     res.writeHead(403).end();
     return;
@@ -78,7 +82,7 @@ function serveStatic(req, res) {
   if (!fs.existsSync(filePath)) {
     // 带扩展名的资源（json/js/图片…）找不到就是 404——不能回退成 index.html，
     // 否则调用方拿到 200 + 网页，JSON 解析失败却查不出原因
-    if (isData || path.extname(urlPath)) {
+    if (isData || isDownload || path.extname(urlPath)) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not found");
       return;
     }

@@ -78,6 +78,8 @@ services:
     volumes:
       - ../mobile-app/dist:/usr/share/nginx/html:ro
       - ../data:/usr/share/nginx/html/data:ro
+      # App 安装包下载（https://app.openbible.live/downloads/），APK 不进版本库、单独上传
+      - ../downloads:/usr/share/nginx/html/downloads:ro
       - ./app-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - caddy

@@ -16,7 +16,7 @@ export const DOWNLOAD_CHANNELS: DownloadChannel[] = [
     id: "android",
     label: "安卓版",
     desc: "扫码下载安装包，或把链接发给朋友",
-    url: "https://openbible.live/download/android", // 上线前替换：APK 直链或应用商店地址
+    url: "https://app.openbible.live/downloads/openbible-android.apk", // 与网页版下载页同一文件（downloads/README.md）
     available: true,
   },
   {
