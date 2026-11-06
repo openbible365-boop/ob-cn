@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppBack } from "../hooks/useAppBack";
-import { EmptyState } from "../components/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
@@ -9,10 +8,8 @@ import {
   NOTIFICATION_PREFS,
   fetchNotificationCenter,
   getPrefs,
-  markAccountNotificationRead,
   togglePref,
   updateAccountNotificationPreference,
-  type AccountNotification,
 } from "../data/profile";
 import { Capacitor } from "@capacitor/core";
 import { SHOW_COMMUNITY } from "../data/features";
@@ -26,8 +23,6 @@ export function NotificationsPage() {
   const goBack = useAppBack("/me");
   const sessionUser = useSessionUser();
   const [prefs, setPrefs] = useState(getPrefs);
-  const [notifications, setNotifications] = useState<AccountNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [dailyVersePreviewOpen, setDailyVersePreviewOpen] = useState(false);
@@ -65,8 +60,6 @@ export function NotificationsPage() {
         return;
       }
       setPrefs(result.preferences);
-      setNotifications(result.notifications);
-      setUnreadCount(result.unreadCount);
     });
     return () => {
       active = false;
@@ -92,25 +85,6 @@ export function NotificationsPage() {
         setFeedback((current) => (current === "通知偏好已同步到账号" ? "" : current));
       }, 2500);
     }
-  };
-
-  const openNotification = async (item: AccountNotification) => {
-    if (!item.readAt && (await markAccountNotificationRead(item.id))) {
-      setNotifications((items) =>
-        items.map((candidate) =>
-          candidate.id === item.id ? { ...candidate, readAt: new Date().toISOString() } : candidate,
-        ),
-      );
-      setUnreadCount((count) => Math.max(0, count - 1));
-    }
-    if (item.href) navigate(item.href);
-  };
-
-  const markAllRead = async () => {
-    if (!(await markAccountNotificationRead())) return;
-    const now = new Date().toISOString();
-    setNotifications((items) => items.map((item) => ({ ...item, readAt: item.readAt ?? now })));
-    setUnreadCount(0);
   };
 
   const toggleReminder = async () => {
@@ -194,7 +168,7 @@ export function NotificationsPage() {
 
       <div className="screen-scroll notification-scroll">
         {!sessionUser && (
-          <button type="button" className="notification-login-note" onClick={() => navigate("/me/login")}>登录后可跨设备同步通知偏好和站内消息</button>
+          <button type="button" className="notification-login-note" onClick={() => navigate("/me/login")}>登录后可跨设备同步通知偏好</button>
         )}
 
         <section className="notification-section notification-preferences-section" aria-labelledby="notification-pref-title">
@@ -290,34 +264,7 @@ export function NotificationsPage() {
           )}
         </section>
 
-        {sessionUser && (
-          <section className="notification-section notification-inbox-section" aria-labelledby="notification-inbox-title">
-            <div className="notification-section-heading compact">
-              <div>
-                <h2 id="notification-inbox-title">消息中心 {unreadCount > 0 && <span>{unreadCount}</span>}</h2>
-                <p>{SHOW_COMMUNITY ? "活动、评论、入群审核和 AI 任务" : "金句推送与 AI 任务"}</p>
-              </div>
-              {unreadCount > 0 && <button type="button" className="notification-text-action" onClick={() => void markAllRead()}>全部已读</button>}
-            </div>
-            {notifications.length ? (
-              <div className="notification-inbox-list">
-                {notifications.map((item) => (
-                  <button key={item.id} type="button" className={`notification-inbox-item${item.readAt ? "" : " is-unread"}`} onClick={() => void openNotification(item)}>
-                    <span className="notification-inbox-icon"><Icon name="bell" size={16} /></span>
-                    <span className="notification-inbox-copy">
-                      <strong>{item.title}</strong>
-                      <small>{item.body}</small>
-                      <time>{new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(item.createdAt))}</time>
-                    </span>
-                    {item.href && <Icon name="chevron-right" size={16} />}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <EmptyState compact art="inbox" title="暂无通知" desc={SHOW_COMMUNITY ? "有新的活动、互动或审核结果时会显示在这里" : "有新的消息时会显示在这里"} />
-            )}
-          </section>
-        )}
+        {/* 消息中心已迁到「我的」页（components/NotificationInbox），这里只管通知偏好 */}
 
         {feedback && <div className="notification-feedback" role="status">{feedback}</div>}
       </div>

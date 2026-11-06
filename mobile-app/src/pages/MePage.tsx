@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { CompactToolbar } from "../components/CompactToolbar";
 import { Icon } from "../components/Icon";
 import { UserAvatar } from "../components/UserAvatar";
+import { NotificationInbox } from "../components/NotificationInbox";
 import { getHighlights, getNotes, HIGHLIGHTS_CHANGED_EVENT } from "../data/annotations";
 import { getConversations } from "../data/huidu";
 import { getPrayers } from "../data/prayers";
@@ -359,6 +360,9 @@ export function MePage() {
             </button>
           ))}
         </div>
+
+        {/* 消息中心：从「通知设置」迁来，登录后的站内消息直接在「我的」里看 */}
+        <NotificationInbox translate={translate} />
 
         {!logoutConfirm ? (
           <button className="me-logout-button" type="button" onClick={() => setLogoutConfirm(true)}>
