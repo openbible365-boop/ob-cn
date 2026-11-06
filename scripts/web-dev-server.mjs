@@ -13,7 +13,11 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.argv[2] || process.env.PORT || 5300);
 const API_ORIGIN = new URL(process.env.API_ORIGIN || "http://127.0.0.1:3000");
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../web-app");
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.join(REPO, "web-app");
+// 线上网页版容器把仓库根目录 data/ 挂在 /data（docker-compose: ../data:/data），
+// 注释（data/commentary/jingdu/*.json）等静态数据从这里取
+const DATA_ROOT = path.join(REPO, "data");
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -61,8 +65,10 @@ function proxyApi(req, res) {
 
 function serveStatic(req, res) {
   const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
-  let filePath = path.normalize(path.join(ROOT, urlPath));
-  if (!filePath.startsWith(ROOT)) {
+  const isData = urlPath.startsWith("/data/");
+  const base = isData ? DATA_ROOT : ROOT;
+  let filePath = path.normalize(path.join(base, isData ? urlPath.slice("/data".length) : urlPath));
+  if (!filePath.startsWith(base)) {
     res.writeHead(403).end();
     return;
   }
@@ -70,7 +76,13 @@ function serveStatic(req, res) {
     filePath = path.join(filePath, "index.html");
   }
   if (!fs.existsSync(filePath)) {
-    // 网页版是单页应用：未知路径回退 index.html（与线上 try_files 一致）
+    // 带扩展名的资源（json/js/图片…）找不到就是 404——不能回退成 index.html，
+    // 否则调用方拿到 200 + 网页，JSON 解析失败却查不出原因
+    if (isData || path.extname(urlPath)) {
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not found");
+      return;
+    }
+    // 网页版是单页应用：无扩展名的未知路径回退 index.html（与线上一致）
     filePath = path.join(ROOT, "index.html");
   }
   res.writeHead(200, {
