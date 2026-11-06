@@ -1,5 +1,9 @@
 'use strict';
 (function () {
+    // 社群功能总开关（与 App 端 mobile-app/src/data/features.ts 的 SHOW_COMMUNITY 同步）：
+    // false 时隐藏右栏「社群」标签与个人页「我的社群」入口；面板代码与接口全部保留，翻回 true 即恢复。
+    const SHOW_COMMUNITY = false;
+
     // ── State ──
     const S = {
         book: 'gen', chapter: '1', version: 'cuv', lang: 'zh', theme: 'light',
@@ -1256,6 +1260,7 @@
 
     // ── Panel Tabs ──
     function switchPanelTab(tab) {
+        if (tab === 'community' && !SHOW_COMMUNITY) tab = 'ai';
         S.panelTab = tab;
         document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
         document.querySelectorAll('.tab-content').forEach(c => {
@@ -6552,7 +6557,7 @@
         const menu = [
             ['info', 'fa-id-card', t('profile.info_title') || '个人信息'],
             ['notify', 'fa-bell', t('profile.notify') || '通知设置'],
-            ['community', 'fa-user-group', t('profile.myCommunity') || '我的社群'],
+            ...(SHOW_COMMUNITY ? [['community', 'fa-user-group', t('profile.myCommunity') || '我的社群']] : []),
         ];
         c.innerHTML = `
         <div class="mep-hero">
@@ -7459,7 +7464,11 @@
             if (S.panelTab === 'study') renderStudyTabContent();
         });
 
-        // Panel tabs
+        // Panel tabs（社群关闭时先把标签与面板从 DOM 摘掉，避免空占位）
+        if (!SHOW_COMMUNITY) {
+            document.querySelector('.panel-tab[data-tab="community"]')?.remove();
+            $('tab-community')?.remove();
+        }
         document.querySelectorAll('.panel-tab').forEach(tab => {
             tab.addEventListener('click', () => switchPanelTab(tab.dataset.tab));
         });
