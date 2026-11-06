@@ -1134,11 +1134,129 @@
         });
     }
 
+    // ── 书卷绪论（精读本各卷的「0」章，版式对齐 App 端 BookIntroduction）──
+    // 卷首扉页 → 书卷档案卡 → 节内目录 → 论述专文 → 层级大纲 → 「进入第 1 章」
+    const INTRO_FACT_LABELS = ['标题', '作者', '写作年代', '写作目的', '写作背景', '特点'];
+    // 只有这三项有真正的「值」（书名/人名/年代）；目的与特点是整段论述，首行只是折行产物
+    const INTRO_VALUED = ['标题', '作者', '写作年代'];
+    let _studyIntroBook = null; // 正在看绪论的书卷；null = 显示本章注释
+
+    function introText(s) {
+        return zhTypeset(_escapeHtml(s || ''));
+    }
+
+    // 大纲行层级：第一部 → 一．→ 1．→ 1）
+    function introOutlineLevel(line) {
+        if (/^第[一二三四五六七八九十]+部/.test(line)) return 0;
+        if (/^[一二三四五六七八九十]+[．.、]/.test(line)) return 1;
+        if (/^\d+[．.]/.test(line)) return 2;
+        if (/^\d+[）)]/.test(line)) return 3;
+        return 2;
+    }
+
+    // 行尾经文范围（…/1:1-2:25）拆出来弱化显示
+    function introSplitRef(line) {
+        const at = line.lastIndexOf('/');
+        if (at > 0 && /^\d+:\d/.test(line.slice(at + 1))) return [line.slice(0, at), line.slice(at + 1)];
+        return [line, ''];
+    }
+
+    function bookIntroEntryHtml(book) {
+        return `<button type="button" class="win-entry" data-intro-open>
+            <span class="win-entry-index">绪论</span>
+            <span class="win-entry-copy">
+                <b>读${_escapeHtml(bookDisplayName(book))}前，先看这一篇</b>
+                <small>书卷档案 · 综览 · 全书大纲</small>
+            </span>
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>`;
+    }
+
+    function bookIntroductionHtml(book, sections) {
+        const name = bookDisplayName(book);
+        const isOT = Object.keys(BOOK_CHAPTERS).indexOf(book) < 39;
+        const items = sections.map((s) => ({ title: s.verses, body: s.text || '' }));
+        const facts = items.filter((s) => INTRO_FACT_LABELS.includes(s.title));
+        const articles = items.filter((s) => !INTRO_FACT_LABELS.includes(s.title));
+
+        const factsHtml = facts.length ? `<section class="win-facts" aria-label="书卷档案">
+            ${facts.map((fact) => {
+                const [value, ...rest] = fact.body.split('\n');
+                const detail = rest.join('\n').trim();
+                const hasValue = INTRO_VALUED.includes(fact.title) && value.length <= 24 && detail;
+                return `<div class="win-fact">
+                    <small>${introText(fact.title)}</small>
+                    <div>${hasValue
+                        ? `<b>${introText(value)}</b><p>${introText(detail)}</p>`
+                        : `<p>${introText(fact.body.replace(/\n/g, ''))}</p>`}</div>
+                </div>`;
+            }).join('')}
+        </section>` : '';
+
+        const tocHtml = articles.length > 1 ? `<nav class="win-toc" aria-label="绪论目录">
+            ${articles.map((s, i) => `<button type="button" data-intro-jump="${i}">${introText(s.title)}</button>`).join('')}
+        </nav>` : '';
+
+        const articlesHtml = articles.map((s, i) => `
+        <section class="win-section" id="win-article-${i}">
+            <h2><span>${introText(s.title)}</span></h2>
+            ${s.title === '大纲'
+                ? `<div class="win-outline">${s.body.split('\n').map((raw) => {
+                    const [label, ref] = introSplitRef(raw.trim());
+                    if (!label) return '';
+                    return `<div class="win-outline-row is-l${introOutlineLevel(label)}"><span>${introText(label)}</span>${ref ? `<small>${_escapeHtml(ref)}</small>` : ''}</div>`;
+                }).join('')}</div>`
+                : `<p class="win-body">${introText(s.body)}</p>`}
+        </section>`).join('');
+
+        return `<div class="win-intro">
+            <button type="button" class="win-back" data-intro-close><i class="fa-solid fa-chevron-left"></i> 第 1 章注释</button>
+            <header class="win-hero">
+                <span class="win-watermark" aria-hidden="true">${_escapeHtml(Array.from(name)[0] || '')}</span>
+                <div class="win-eyebrow">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M12 2.5c.9 5.2 3.4 7.7 8.6 8.6-5.2.9-7.7 3.4-8.6 8.6-.9-5.2-3.4-7.7-8.6-8.6 5.2-.9 7.7-3.4 8.6-8.6Z"/></svg>
+                    精读本注释 · 绪论
+                </div>
+                <h1>${_escapeHtml(name)}</h1>
+                <div class="win-meta">
+                    <span>${isOT ? '旧约' : '新约'} · 共 ${BOOK_CHAPTERS[book] || ''} 章</span>
+                    <button type="button" class="win-start-inline" data-intro-close>进入第 1 章 <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </header>
+            ${factsHtml}
+            ${tocHtml}
+            ${articlesHtml}
+            <button type="button" class="win-start" data-intro-close>
+                <span><small>绪论读完</small>进入第 1 章</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>`;
+    }
+
+    function bindBookIntroduction(cont, book, chapter) {
+        const scrollPanelTop = () => cont.closest('.tab-content')?.scrollTo({ top: 0 });
+        cont.querySelectorAll('[data-intro-open]').forEach((btn) => btn.addEventListener('click', () => {
+            _studyIntroBook = book;
+            showChapterCommentary(book, chapter);
+            scrollPanelTop();
+        }));
+        cont.querySelectorAll('[data-intro-close]').forEach((btn) => btn.addEventListener('click', () => {
+            _studyIntroBook = null;
+            showChapterCommentary(book, chapter);
+            scrollPanelTop();
+        }));
+        cont.querySelectorAll('[data-intro-jump]').forEach((btn) => btn.addEventListener('click', () => {
+            $(`win-article-${btn.dataset.introJump}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }));
+    }
+
     // NOTE: 全章注释模式——直接返回本章 jingduCache 里所有条目，不逐节过滤
     // 用于注释 Tab 默认状态（无经文选中时显示全章）
     async function showChapterCommentary(book, chapter) {
         const cont = $('study-tab-commentary-content');
         if (!cont) return;
+        // 换了书卷或离开第 1 章：退出绪论，回到章注释
+        if (_studyIntroBook && (_studyIntroBook !== book || String(chapter) !== '1')) _studyIntroBook = null;
 
         cont.innerHTML = `<div class="skeleton-commentary">
             <div class="skeleton-line skeleton-title"></div>
@@ -1170,6 +1288,15 @@
             }
         }
 
+        const introSections = jingduCache[`${book}-0`] || [];
+
+        // 绪论视图（从第 1 章顶部入口进入）
+        if (_studyIntroBook === book && introSections.length) {
+            cont.innerHTML = bookIntroductionHtml(book, introSections);
+            bindBookIntroduction(cont, book, chapter);
+            return;
+        }
+
         const cacheKey = `${book}-${chapter}`;
         const allComm = jingduCache[cacheKey] || [];
 
@@ -1180,16 +1307,22 @@
             return numA - numB;
         });
 
+        // 第 1 章顶部放绪论入口（与 App 端一致）
+        const introEntry = String(chapter) === '1' && introSections.length ? bookIntroEntryHtml(book) : '';
+
         if (sorted.length) {
-            cont.innerHTML = `<div class="commentary-count">本章共 ${sorted.length} 条注释</div>`
+            cont.innerHTML = introEntry
+                + `<div class="commentary-count">本章共 ${sorted.length} 条注释</div>`
                 + sorted.map(commentaryItemHtml).join('');
+            bindBookIntroduction(cont, book, chapter);
             setupCommentaryCollapse(cont);
             // 绑定防复制事件
             cont.addEventListener('copy', e => e.preventDefault());
             cont.addEventListener('contextmenu', e => e.preventDefault());
             cont.addEventListener('selectstart', e => e.preventDefault());
         } else {
-            cont.innerHTML = '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">本章暂无注释数据</p>';
+            cont.innerHTML = introEntry + '<p style="color:var(--text-tertiary);font-size:0.88rem;padding:8px 0;">本章暂无注释数据</p>';
+            bindBookIntroduction(cont, book, chapter);
         }
     }
 

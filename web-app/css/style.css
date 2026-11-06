@@ -13067,3 +13067,271 @@ body[data-theme="dark"] .dl-phone { border-color: #000; box-shadow: 0 24px 50px 
     .dl-qr { align-self: center; }
     .dl-features { grid-template-columns: 1fr; }
 }
+
+/* ══ 精读本绪论（右栏精读标签；版式对齐 App 端 BookIntroduction）═══════ */
+.win-intro,
+.win-entry {
+    --win-ink: #714a08;      /* 金色文字（App --yellow-ink） */
+}
+body[data-theme="dark"] .win-intro,
+body[data-theme="dark"] .win-entry {
+    --win-ink: #f1c662;
+}
+
+/* 第 1 章顶部入口：金色身份，两行文案说明点进去有什么 */
+.win-entry {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-surface);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.win-entry:hover { border-color: var(--accent-gold); background: var(--accent-gold-light); }
+.win-entry-index {
+    flex: none;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: var(--accent-gold);
+    color: #2b2926;
+    font-size: 12px;
+    font-weight: 700;
+}
+.win-entry-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.win-entry-copy b {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.win-entry-copy small { color: var(--text-tertiary); font-size: 12px; }
+.win-entry > i { flex: none; color: var(--text-tertiary); font-size: 12px; }
+
+/* 绪论正文 */
+.win-intro { display: flex; flex-direction: column; gap: 16px; padding-bottom: 8px; }
+
+.win-back {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+.win-back:hover { color: var(--text-primary); }
+
+/* 扉页：纸面向下渐隐，书名首字作底纹 */
+.win-hero {
+    position: relative;
+    overflow: hidden;
+    margin: -4px -2px 0;
+    padding: 20px 18px 16px;
+    border-radius: 14px;
+    background: linear-gradient(178deg, var(--accent-gold-light) 0%, color-mix(in srgb, var(--accent-gold-light) 45%, transparent) 62%, transparent 100%);
+}
+.win-watermark {
+    position: absolute;
+    top: -24px;
+    right: -12px;
+    color: var(--accent-gold);
+    font-family: var(--font-serif);
+    font-size: 132px;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0.18;
+    pointer-events: none;
+    user-select: none;
+}
+.win-eyebrow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: var(--win-ink);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+}
+.win-hero h1 {
+    position: relative;
+    margin: 0;
+    color: var(--text-primary);
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+}
+.win-meta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+.win-start-inline {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    min-height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent-gold);
+    color: #2b2926;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.win-start-inline i { font-size: 10px; }
+
+/* 档案卡：对应原书绪论开头的框表，label 左、内容右 */
+.win-facts {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-surface);
+}
+.win-fact {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+}
+.win-fact + .win-fact { border-top: 1px solid var(--border); }
+.win-fact > small { padding-top: 2px; color: var(--text-tertiary); font-size: 12px; font-weight: 500; }
+.win-fact b {
+    display: block;
+    color: var(--text-primary);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 700;
+}
+.win-fact p {
+    margin: 3px 0 0;
+    color: var(--text-secondary);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    line-height: 1.75;
+    text-align: justify;
+}
+.win-fact b + p { margin-top: 4px; }
+
+/* 节内目录：换行摊开 */
+.win-toc { display: flex; flex-wrap: wrap; gap: 7px; }
+.win-toc button {
+    min-height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.win-toc button:hover { background: var(--accent-gold-light); color: var(--win-ink); }
+
+/* 论述专文 */
+.win-section { scroll-margin-top: 12px; }
+.win-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 8px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 700;
+}
+.win-section h2::before {
+    content: '';
+    width: 3px;
+    height: 15px;
+    border-radius: 2px;
+    background: var(--accent-gold);
+}
+.win-body {
+    margin: 0;
+    color: var(--text-primary);
+    font-family: var(--font-serif);
+    font-size: 14.5px;
+    line-height: 1.85;
+    text-align: justify;
+    white-space: pre-line;
+}
+
+/* 大纲：第一部 / 一．/ 1．/ 1） 四级缩进，行尾经文范围弱化靠右 */
+.win-outline {
+    display: flex;
+    flex-direction: column;
+    padding-left: 2px;
+    border-left: 2px solid var(--border);
+    font-family: var(--font-serif);
+    font-size: 13px;
+}
+.win-outline-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 3px 0 3px 10px;
+    line-height: 1.6;
+}
+.win-outline-row > span { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.win-outline-row > small {
+    flex: none;
+    margin-left: auto;
+    color: var(--text-tertiary);
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+}
+.win-outline-row.is-l0 { margin-top: 10px; }
+.win-outline-row.is-l0:first-child { margin-top: 0; }
+.win-outline-row.is-l0 > span { color: var(--text-primary); font-weight: 700; }
+.win-outline-row.is-l1 { padding-left: 22px; }
+.win-outline-row.is-l1 > span { color: var(--text-primary); font-weight: 600; }
+.win-outline-row.is-l2 { padding-left: 36px; }
+.win-outline-row.is-l3 { padding-left: 50px; }
+.win-outline-row.is-l3 > span { color: var(--text-tertiary); }
+
+/* 末尾「进入第 1 章」：金色收束键 */
+.win-start {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent-gold), color-mix(in srgb, var(--accent-gold) 76%, #c8821f));
+    color: #2b2926;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent-gold) 40%, transparent);
+    cursor: pointer;
+}
+.win-start > span { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 700; text-align: left; }
+.win-start small { color: rgba(43, 41, 38, 0.62); font-size: 12px; font-weight: 500; }
+.win-start > i {
+    flex: none;
+    padding: 7px;
+    border-radius: 50%;
+    background: rgba(43, 41, 38, 0.1);
+    font-size: 12px;
+}
