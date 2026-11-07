@@ -13337,3 +13337,6 @@ body[data-theme="dark"] .win-entry {
     background: rgba(43, 41, 38, 0.1);
     font-size: 12px;
 }
+
+/* 登录弹窗底部语言切换暂时隐藏：.auth-lang-row 的 display:flex 会盖过 hidden 属性 */
+.auth-lang-row[hidden] { display: none !important; }

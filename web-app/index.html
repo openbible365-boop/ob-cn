@@ -50,7 +50,7 @@
     <!-- 字体与图标全部本地化：与 App 一致的系统字体栈，Font Awesome 自托管（vendor/），
          不再依赖 Google Fonts / cdnjs 外链，弱网与离线场景可用 -->
     <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css?v=104">
+    <link rel="stylesheet" href="css/style.css?v=105">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
@@ -814,7 +814,8 @@
                 <a href="#" data-view="privacy" class="auth-term-link" data-i18n="auth.privacy">《隐私政策》</a>
             </div>
 
-            <div class="auth-lang-row">
+            <!-- 登录弹窗语言切换：暂时隐藏（界面语言先固定中文） -->
+            <div class="auth-lang-row" hidden>
                 <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中文</button>
                 <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
                 <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>

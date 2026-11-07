@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="下载慧读圣经 App：离线读经、精读本注释、慧读 AI 解经与语音圣经。安卓可从 Google Play 或官方安装包下载。" />
+    <meta property="og:title" content="慧读圣经 App 下载" />
+    <meta property="og:description" content="随身的圣经，随时的慧读。永久免费，没有广告。" />
+    <meta property="og:image" content="https://app.openbible.live/download/screen-bible.jpg" />
+    <title>App 下载 | 慧读圣经</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      /* 独立下载页：版式与网页版「App 下载」视图一致（金 = 品牌；紫只留给 AI）。
+         不依赖网页版的样式表和图标字体，单文件即可部署。 */
+      :root {
+        --bg: #f6f5f3;
+        --surface: #fffefc;
+        --hover: #eef0f3;
+        --ink: #202229;
+        --body: #545b66;
+        --muted: #6f7681;
+        --line: #e0e3e8;
+        --line-strong: #c9ced6;
+        --gold: #f4c75f;
+        --gold-light: #fdf3d8;
+        --gold-ink: #714a08;
+        --ok: #1f6b45;
+        --ok-bg: #eaf4ee;
+        --android-bg: #e8f8ef;
+        --android: #2fa864;
+        --hero-bg:
+          radial-gradient(120% 90% at 100% 0%, rgba(244, 199, 95, 0.32), transparent 60%),
+          radial-gradient(90% 80% at 0% 100%, rgba(232, 154, 44, 0.1), transparent 60%),
+          linear-gradient(160deg, #fffdf6 0%, #fff6e0 100%);
+        --ghost-bg: rgba(255, 255, 255, 0.6);
+        --shadow-sm: 0 1px 2px rgba(32, 34, 41, 0.05);
+        --shadow-md: 0 8px 24px rgba(32, 34, 41, 0.08);
+        --phone-shadow: 0 24px 50px rgba(40, 32, 12, 0.22);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #111317;
+          --surface: #17191f;
+          --hover: #1e2027;
+          --ink: #f2f0eb;
+          --body: #c0beb8;
+          --muted: #9297a2;
+          --line: #2a2d35;
+          --line-strong: #3a3e48;
+          --gold: #f1c662;
+          --gold-light: rgba(241, 198, 98, 0.14);
+          --gold-ink: #f1c662;
+          --ok: #7fd0a2;
+          --ok-bg: rgba(127, 208, 162, 0.12);
+          --android-bg: rgba(61, 220, 132, 0.12);
+          --android: #5fe39b;
+          --hero-bg:
+            radial-gradient(120% 90% at 100% 0%, rgba(241, 198, 98, 0.18), transparent 60%),
+            linear-gradient(160deg, #1b1d23 0%, #17191f 100%);
+          --ghost-bg: rgba(255, 255, 255, 0.04);
+          --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+          --phone-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+          color-scheme: dark;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC",
+          "Microsoft YaHei", Arial, sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: inherit; }
+      a:focus-visible { outline: 3px solid rgba(244, 199, 95, 0.6); outline-offset: 3px; }
+      svg.i { width: 1em; height: 1em; flex: none; }
+
+      /* ── 顶栏 ── */
+      .topbar { border-bottom: 1px solid var(--line); background: var(--surface); }
+      .topbar-inner, .page { width: min(100% - 32px, 960px); margin: 0 auto; }
+      .topbar-inner { display: flex; align-items: center; justify-content: space-between; min-height: 60px; }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; }
+      .brand img { width: 28px; height: 28px; }
+      .topbar a.web-link { color: var(--muted); font-size: 0.88rem; text-decoration: none; }
+      .topbar a.web-link:hover { color: var(--ink); }
+
+      .page { padding: 24px 0 72px; }
+
+      /* ── 首屏 ── */
+      .hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        align-items: center;
+        gap: 24px;
+        min-height: 420px;
+        padding: 48px 48px 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--hero-bg);
+        box-shadow: var(--shadow-md);
+      }
+      .hero-copy { padding-bottom: 48px; }
+      .app-icon {
+        display: flex; width: 64px; height: 64px; align-items: center; justify-content: center;
+        margin-bottom: 18px; border: 1px solid #e8e6e3; border-radius: 16px; background: #f0efec;
+        box-shadow: 0 6px 16px rgba(48, 49, 51, 0.1);
+      }
+      .app-icon img { width: 40px; height: 40px; }
+      .eyebrow { display: inline-block; margin-bottom: 10px; color: var(--gold-ink); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; }
+      .hero h1 { margin: 0; font-size: 2.35rem; font-weight: 800; line-height: 1.22; letter-spacing: -0.01em; }
+      .hero-copy > p { max-width: 34ch; margin: 14px 0 0; color: var(--body); font-size: 1rem; line-height: 1.75; }
+      .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+      .badges { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 0; padding: 0; list-style: none; color: var(--body); font-size: 0.85rem; }
+      .badges li { display: inline-flex; align-items: center; gap: 6px; }
+      .badges svg { color: var(--gold-ink); font-size: 0.8rem; }
+
+      /* ── 按钮 ── */
+      .btn {
+        display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 9px;
+        padding: 0 22px; border: 1px solid transparent; border-radius: 999px;
+        font: inherit; font-size: 0.95rem; font-weight: 700; text-decoration: none; cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+      .btn.is-primary { background: var(--gold); color: #2b2108; box-shadow: 0 6px 16px rgba(172, 126, 25, 0.18); }
+      .btn.is-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(172, 126, 25, 0.24); }
+      .btn.is-ghost { border-color: var(--line-strong); background: var(--ghost-bg); color: var(--ink); }
+      .btn.is-ghost:hover { background: var(--surface); }
+      .btn.is-disabled { border-color: var(--line); background: var(--hover); color: var(--muted); box-shadow: none; cursor: not-allowed; }
+      .btn.is-block { width: 100%; white-space: nowrap; }
+
+      /* Google Play 按钮：沿用官方徽章的黑底、双行字样式 */
+      .btn-play {
+        display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 10px;
+        padding: 0 20px 0 16px; border: 1px solid #5f6368; border-radius: 12px;
+        background: #000; color: #fff; text-decoration: none; line-height: 1.1;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      .btn-play:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22); }
+      .btn-play svg { width: 24px; height: 26px; flex: none; }
+      .btn-play span { display: flex; flex-direction: column; align-items: flex-start; }
+      .btn-play small { font-size: 0.66rem; font-weight: 500; letter-spacing: 0.02em; opacity: 0.9; }
+      .btn-play strong { font-size: 1.12rem; font-weight: 600; letter-spacing: 0.01em; }
+      .btn-play.is-block { width: 100%; }
+
+      /* ── 双手机样机 ── */
+      .hero-visual { position: relative; height: 100%; min-height: 380px; }
+      .phone {
+        position: absolute; bottom: -64px; width: 200px; aspect-ratio: 9 / 18; overflow: hidden;
+        border: 7px solid #202229; border-radius: 32px; background: #fff; box-shadow: var(--phone-shadow);
+      }
+      .phone img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+      .phone.is-front { right: 12%; z-index: 2; transform: rotate(4deg); }
+      .phone.is-back { right: 46%; z-index: 1; bottom: -88px; transform: rotate(-7deg) scale(0.9); opacity: 0.92; }
+
+      /* ── 渠道卡 ── */
+      .channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 28px; scroll-margin-top: 20px; }
+      .card { display: flex; flex-direction: column; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+      /* 访问设备对应的渠道：金色描边，一眼看到「我该下哪个」 */
+      .card.is-current { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow-md); }
+      .card-head { display: flex; align-items: center; gap: 12px; }
+      .platform { display: flex; width: 44px; height: 44px; flex: none; align-items: center; justify-content: center; border-radius: 12px; font-size: 1.45rem; }
+      .platform.is-android { background: var(--android-bg); color: var(--android); }
+      .platform.is-ios { background: var(--hover); color: var(--ink); }
+      .card-title { flex: 1; min-width: 0; }
+      .card-title h2 { margin: 0; font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
+      .card-title small { color: var(--muted); font-size: 0.8rem; }
+      .status { flex: none; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+      .status.is-ready { background: var(--ok-bg); color: var(--ok); }
+      .status.is-soon { background: var(--hover); color: var(--muted); }
+      .card-body { display: flex; align-items: center; gap: 20px; margin-top: 20px; }
+      /* 二维码固定白底：深色模式下也要黑码白底，相机才认得出 */
+      .qr { display: flex; width: 136px; height: 136px; flex: none; align-items: center; justify-content: center; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+      .qr img { width: 100%; height: 100%; }
+      .qr.is-placeholder { flex-direction: column; gap: 8px; border-style: dashed; background: var(--hover); color: var(--muted); }
+      .qr.is-placeholder svg { font-size: 2.2rem; }
+      .qr.is-placeholder span { font-size: 0.75rem; font-weight: 600; }
+      .card-info { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 12px; }
+      .specs { display: flex; flex-direction: column; gap: 7px; margin: 0; }
+      .specs > div { display: flex; justify-content: space-between; gap: 12px; font-size: 0.85rem; }
+      .specs dt { color: var(--muted); }
+      .specs dd { margin: 0; font-weight: 600; white-space: nowrap; }
+      .card-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+      .card-hint { display: flex; align-items: flex-start; gap: 8px; margin: 18px 0 0; padding-top: 14px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 0.8rem; line-height: 1.6; }
+      .card-hint svg { margin-top: 3px; }
+
+      /* ── 分节 ── */
+      .section { margin-top: 44px; }
+      .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+      .section-head .bar { width: 4px; height: 24px; border-radius: 2px; background: var(--gold); }
+      .section-head h2 { margin: 0; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; }
+
+      .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+      .feature { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+      .feature-icon { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; margin-bottom: 12px; border-radius: 12px; background: var(--gold-light); color: var(--gold-ink); font-size: 1.15rem; }
+      .feature h3 { margin: 0 0 6px; font-size: 0.98rem; font-weight: 700; }
+      .feature p { margin: 0; color: var(--body); font-size: 0.84rem; line-height: 1.65; }
+
+      .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+      .steps li { display: flex; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+      .step-num { display: flex; width: 28px; height: 28px; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: var(--gold); color: #2b2108; font-size: 0.85rem; font-weight: 800; }
+      .steps p { margin: 3px 0 0; color: var(--body); font-size: 0.86rem; line-height: 1.65; }
+      .safety { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; color: var(--muted); font-size: 0.82rem; }
+      .safety svg { color: var(--ok); }
+
+      footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.82rem; text-align: center; }
+      footer a { color: var(--muted); }
+
+      /* ── 响应式 ── */
+      @media (max-width: 820px) {
+        .hero { grid-template-columns: 1fr; padding: 36px 32px 0; }
+        .hero-copy { padding-bottom: 8px; }
+        .hero-visual { min-height: 300px; }
+        .phone { width: 168px; bottom: -70px; }
+        .phone.is-front { right: calc(50% - 150px); }
+        .phone.is-back { right: calc(50% + 10px); bottom: -92px; }
+        .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .channels { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 600px) {
+        .page { padding-top: 16px; }
+        .hero { padding: 28px 20px 0; border-radius: 16px; }
+        .hero h1 { font-size: 1.85rem; }
+        .hero-actions > * { flex: 1 1 100%; }
+        .channels { gap: 14px; }
+        .steps { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 440px) {
+        .card-body { flex-direction: column; align-items: stretch; }
+        .qr { align-self: center; }
+        .features { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 图标（内联 SVG，避免依赖外部图标字体） -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="i-qr" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></g><g fill="currentColor"><rect x="14" y="14" width="3" height="3" rx=".6"/><rect x="18" y="18" width="3" height="3" rx=".6"/><rect x="18" y="14" width="3" height="3" rx=".6"/><rect x="14" y="18" width="3" height="3" rx=".6"/></g></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="i-android" viewBox="0 0 24 24"><path fill="currentColor" d="M17.6 9.48l1.84-3.18a.38.38 0 00-.66-.38l-1.86 3.22A11.4 11.4 0 0012 8.1c-1.77 0-3.43.38-4.92 1.04L5.22 5.92a.38.38 0 00-.66.38L6.4 9.48A10.8 10.8 0 001 18h22a10.8 10.8 0 00-5.4-8.52zM7 15.25a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5zm10 0a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/></symbol>
+        <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66zM14.1 5.86c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.6-2.66 1.37-.58.67-1.09 1.76-.95 2.8 1.01.08 2.04-.51 2.67-1.28z"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></g></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></g></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6L12 3zm-3.2 9l2.2 2.2 4.4-4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 00.6-7.95A6 6 0 006.4 9.1 4.75 4.75 0 007 18.5zM12 10.5v5m0 0l-2.2-2.2M12 15.5l2.2-2.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path fill="currentColor" d="M10 3l1.7 4.8L16.5 9.5l-4.8 1.7L10 16l-1.7-4.8L3.5 9.5l4.8-1.7L10 3zm8 9l.9 2.6 2.6.9-2.6.9L18 19l-.9-2.6-2.6-.9 2.6-.9L18 12z"/></symbol>
+        <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5C10 5 6.5 4.7 3.5 5.6v13c3-.9 6.5-.6 8.5.9 2-1.5 5.5-1.8 8.5-.9v-13C17.5 4.7 14 5 12 6.5zm0 0v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+        <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0116 0v3M4 15a2 2 0 012-2h1v7H6a2 2 0 01-2-2v-3zm16 0a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+        <!-- Google Play 标志（四色三角） -->
+        <symbol id="i-play" viewBox="0 0 24 26">
+          <path fill="#00d7fe" d="M1.1.6C.8.9.6 1.4.6 2v22c0 .6.2 1.1.5 1.4L13.4 13 1.1.6z"/>
+          <path fill="#ffce00" d="M17.5 17.2L13.4 13l4.1-4.2 4.9 2.8c1.4.8 1.4 2.1 0 2.9l-4.9 2.7z"/>
+          <path fill="#ff3a44" d="M17.5 17.2L13.4 13 1.1 25.4c.5.5 1.2.5 2.1.1l14.3-8.3"/>
+          <path fill="#00f076" d="M17.5 8.8L3.2.5C2.3 0 1.6.1 1.1.6L13.4 13l4.1-4.2z"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/download"><img src="/download/logo-mark.svg" alt="" />慧读圣经</a>
+        <a class="web-link" href="https://openbible.live/" rel="noopener">网页版 →</a>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="app-icon"><img src="/download/logo-mark.svg" alt="" /></div>
+          <span class="eyebrow">慧读圣经 App</span>
+          <h1>随身的圣经，<br />随时的慧读</h1>
+          <p>离线读经、精读本注释、慧读 AI 解经与语音圣经，一起装进口袋。</p>
+          <!-- 首屏按钮由脚本按访问设备切换；无脚本时显示这组通用按钮 -->
+          <div class="hero-actions" id="hero-actions">
+            <a class="btn is-primary" href="#channels"><svg class="i"><use href="#i-qr" /></svg>扫码下载到手机</a>
+            <a class="btn is-ghost" href="#channels">全部下载方式</a>
+          </div>
+          <ul class="badges">
+            <li><svg class="i"><use href="#i-check" /></svg>永久免费</li>
+            <li><svg class="i"><use href="#i-check" /></svg>没有广告</li>
+            <li><svg class="i"><use href="#i-check" /></svg>中文 · 한국어 · English</li>
+          </ul>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="phone is-back"><img src="/download/screen-huidu.jpg" alt="" loading="lazy" /></div>
+          <div class="phone is-front"><img src="/download/screen-bible.jpg" alt="" /></div>
+        </div>
+      </section>
+
+      <section class="channels" id="channels" aria-label="下载渠道">
+        <article class="card" id="card-android">
+          <header class="card-head">
+            <span class="platform is-android"><svg class="i"><use href="#i-android" /></svg></span>
+            <div class="card-title"><h2>Android</h2><small>安卓手机与平板</small></div>
+            <span class="status is-ready">可下载</span>
+          </header>
+          <div class="card-body">
+            <div class="qr"><img src="/download/qr-download.svg" alt="手机扫码打开本下载页" /></div>
+            <div class="card-info">
+              <dl class="specs">
+                <div><dt>版本</dt><dd data-android-version>1.0</dd></div>
+                <div><dt>大小</dt><dd>32.5 MB</dd></div>
+                <div><dt>系统</dt><dd>Android 7.0 及以上</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="card-actions">
+            <a class="btn-play is-block" data-play-link href="https://play.google.com/store/apps/details?id=live.openbible.app" target="_blank" rel="noopener">
+              <svg aria-hidden="true"><use href="#i-play" /></svg>
+              <span><small>下载应用，请到</small><strong>Google Play</strong></span>
+            </a>
+            <a class="btn is-ghost is-block" data-apk-link href="/downloads/openbible-android.apk" download><svg class="i"><use href="#i-download" /></svg>下载安装包（APK）</a>
+          </div>
+          <p class="card-hint"><svg class="i"><use href="#i-phone" /></svg>能打开 Google Play 的手机推荐从商店安装，可自动更新；打不开时下载安装包即可。</p>
+        </article>
+
+        <article class="card" id="card-ios">
+          <header class="card-head">
+            <span class="platform is-ios"><svg class="i"><use href="#i-apple" /></svg></span>
+            <div class="card-title"><h2>iPhone · iPad</h2><small>iPhone 与 iPad</small></div>
+            <span class="status is-soon">即将上线</span>
+          </header>
+          <div class="card-body">
+            <div class="qr is-placeholder"><svg class="i"><use href="#i-apple" /></svg><span>App Store 审核中</span></div>
+            <div class="card-info">
+              <dl class="specs">
+                <div><dt>版本</dt><dd>1.0</dd></div>
+                <div><dt>渠道</dt><dd>App Store</dd></div>
+                <div><dt>系统</dt><dd>iOS 15 及以上</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="card-actions">
+            <span class="btn is-block is-disabled" aria-disabled="true"><svg class="i"><use href="#i-clock" /></svg>敬请期待</span>
+          </div>
+          <p class="card-hint"><svg class="i"><use href="#i-search" /></svg>上架后在 App Store 搜索「慧读圣经」即可安装。</p>
+        </article>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><span class="bar"></span><h2>App 里有什么</h2></div>
+        <div class="features">
+          <div class="feature"><span class="feature-icon"><svg class="i"><use href="#i-cloud" /></svg></span><h3>离线读经</h3><p>和合本、新译本、拼音版与英文译本可下载到手机，没有网络也能读。</p></div>
+          <div class="feature"><span class="feature-icon"><svg class="i"><use href="#i-sparkle" /></svg></span><h3>慧读 AI</h3><p>选中经文即可提问，按经文、背景、应用三段为你解经。</p></div>
+          <div class="feature"><span class="feature-icon"><svg class="i"><use href="#i-book" /></svg></span><h3>精读本注释</h3><p>66 卷逐段注释随应用内置，读到哪一节，注释就在手边。</p></div>
+          <div class="feature"><span class="feature-icon"><svg class="i"><use href="#i-headphones" /></svg></span><h3>语音圣经</h3><p>真人音色朗读，逐节高亮跟读，锁屏也能继续听。</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><span class="bar"></span><h2>安卓安装包安装指南</h2></div>
+        <ol class="steps">
+          <li><span class="step-num">1</span><p>扫码或点击「下载安装包」，在手机上下载 APK 文件。</p></li>
+          <li><span class="step-num">2</span><p>打开下载好的文件；如系统提示，请在设置中允许浏览器「安装未知来源应用」。</p></li>
+          <li><span class="step-num">3</span><p>安装完成后打开慧读圣经，登录即可同步网页版的笔记与高亮。</p></li>
+        </ol>
+        <p class="safety"><svg class="i"><use href="#i-shield" /></svg>安装包由慧读圣经官方签名发布，请只从本页或 Google Play 下载。</p>
+      </section>
+
+      <footer>
+        © 慧读圣经 OpenBible · <a href="/privacy">隐私政策</a> · <a href="mailto:openbible365@gmail.com">openbible365@gmail.com</a>
+      </footer>
+    </main>
+
+    <script>
+      // 按访问设备调整：安卓首屏直接给 Google Play + 安装包；iPhone 提示即将上线；电脑引导扫码
+      (function () {
+        var ua = navigator.userAgent || "";
+        var platform = /android/i.test(ua)
+          ? "android"
+          : /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)
+            ? "ios"
+            : "desktop";
+        var actions = document.getElementById("hero-actions");
+        var play = document.querySelector("[data-play-link]").getAttribute("href");
+        var apk = document.querySelector("[data-apk-link]").getAttribute("href");
+        if (platform === "android") {
+          document.getElementById("card-android").classList.add("is-current");
+          actions.innerHTML =
+            '<a class="btn-play" href="' + play + '" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-play"/></svg><span><small>下载应用，请到</small><strong>Google Play</strong></span></a>' +
+            '<a class="btn is-ghost" href="' + apk + '" download><svg class="i"><use href="#i-download"/></svg>直接下载安装包</a>';
+        } else if (platform === "ios") {
+          document.getElementById("card-ios").classList.add("is-current");
+          actions.innerHTML =
+            '<span class="btn is-primary is-disabled" aria-disabled="true"><svg class="i"><use href="#i-apple"/></svg>iPhone 版即将上线</span>' +
+            '<a class="btn is-ghost" href="#channels">全部下载方式</a>';
+        }
+      })();
+    </script>
+  </body>
+</html>
