@@ -23,12 +23,18 @@ export async function fetchPrayerWall(): Promise<
 }
 
 export async function postWallPrayer(content: string): Promise<
-  { ok: true; prayer: WallPrayer } | { ok: false; status: number; message: string }
+  | { ok: true; prayer: WallPrayer }
+  | { ok: true; pending: true; message: string }
+  | { ok: false; status: number; message: string }
 > {
-  const response = await apiRequest<{ ok: boolean; prayer?: WallPrayer; message?: string }>(
+  const response = await apiRequest<{ ok: boolean; prayer?: WallPrayer; pending?: boolean; message?: string }>(
     "/api/mobile/prayer-wall",
     { method: "POST", body: { action: "create", content } },
   );
+  // 命中待审敏感词：已提交，但要等后台审核通过才上墙
+  if (response.ok && response.data?.ok && response.data.pending) {
+    return { ok: true, pending: true, message: response.data.message ?? "已提交，审核通过后会贴上祷告墙" };
+  }
   if (!response.ok || !response.data?.ok || !response.data.prayer) {
     return { ok: false, status: response.status, message: response.data?.message ?? "发布失败，请稍后再试" };
   }

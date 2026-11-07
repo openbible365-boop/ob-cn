@@ -140,6 +140,11 @@ export function PrayerWallPage() {
       }
       return;
     }
+    if ("pending" in result) {
+      setDraft("");
+      setFeedback(result.message);
+      return;
+    }
     setDraft("");
     setPool((current) => [result.prayer, ...(current ?? [])]);
     // 自己刚贴的便签立即上墙（放在第一格），其余顺延

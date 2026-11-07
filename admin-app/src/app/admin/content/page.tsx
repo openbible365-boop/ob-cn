@@ -138,11 +138,11 @@ export default async function ContentManagementPage({
 
   // 标签上的数量（总数，不受搜索影响）+ 需要关注的数量
   const [postCount, commentCount, resourceCount, wordCount, hiddenPosts, hiddenResources] = await Promise.all([
-    db.post.count({ where: { status: { not: "DELETED" } } }),
+    db.post.count({ where: { status: { not: "DELETED" }, postType: { not: "PRAYER" } } }),
     db.postComment.count(),
     db.communityResource.count({ where: { status: { not: "DELETED" } } }),
     db.sensitiveWord.count(),
-    db.post.count({ where: { status: "HIDDEN" } }),
+    db.post.count({ where: { status: "HIDDEN", postType: { not: "PRAYER" } } }),
     db.communityResource.count({ where: { status: "HIDDEN" } }),
   ]);
   const tabCounts: Record<Tab, number> = { posts: postCount, comments: commentCount, resources: resourceCount, words: wordCount };
@@ -155,6 +155,7 @@ export default async function ContentManagementPage({
 
   if (tab === "posts") {
     const where: Prisma.PostWhereInput = {
+      postType: { not: "PRAYER" }, // 代祷在「祷告墙」页单独管理
       ...(status !== "all" ? { status: status as "VISIBLE" | "HIDDEN" | "DELETED" } : { status: { not: "DELETED" } }),
       ...(q ? { OR: [{ title: ci(q) }, { content: ci(q) }, { author: { name: ci(q) } }, { community: { name: ci(q) } }] } : {}),
     };

@@ -32,6 +32,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hid
 
   { href: "/admin/bible-versions", label: "圣经版本", roles: ["SUPER_ADMIN"], scope: "content" },
   { href: "/admin/commentary", label: "注释校对", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content" },
+  { href: "/admin/prayer-wall", label: "祷告墙", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content" },
   { href: "/admin/content", label: "社群内容", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content" },
   { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content", hidden: !SHOW_COMMUNITY_ADMIN },
   { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content", hidden: !SHOW_COMMUNITY_ADMIN },

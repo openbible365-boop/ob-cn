@@ -78,6 +78,20 @@ export async function POST(request: Request) {
     if (Array.from(content).length > MAX_CONTENT_LENGTH) {
       return NextResponse.json({ ok: false, message: `代祷内容请控制在 ${MAX_CONTENT_LENGTH} 字以内` }, { status: 400 });
     }
+    // 与社群发帖同一套规矩：封禁、禁言中不能发；敏感词拦截级直接拒绝，待审级先隐藏、进后台审核
+    if (user.status === "BANNED") {
+      return NextResponse.json({ ok: false, message: "当前账号暂时无法发布代祷" }, { status: 403 });
+    }
+    if (user.status === "MUTED" && (!user.mutedUntil || user.mutedUntil.getTime() > Date.now())) {
+      return NextResponse.json({ ok: false, message: "你目前处于禁言期，暂时不能发布代祷" }, { status: 403 });
+    }
+    const sensitiveWords = await db.sensitiveWord.findMany({ select: { word: true, level: true } });
+    const hits = sensitiveWords.filter(({ word }) => content.includes(word));
+    if (hits.some(({ level }) => level === "BLOCK")) {
+      return NextResponse.json({ ok: false, message: "内容包含不适合发布的词语，请修改后重试" }, { status: 422 });
+    }
+    const requiresReview = hits.some(({ level }) => level === "REVIEW");
+
     const wall = await ensureWallCommunity();
     const post = await db.post.create({
       data: {
@@ -86,9 +100,24 @@ export async function POST(request: Request) {
         postType: "PRAYER",
         content,
         visibility: "PUBLIC",
+        status: requiresReview ? "HIDDEN" : "VISIBLE",
       },
       select: { id: true, content: true, createdAt: true },
     });
+    if (hits.length) {
+      await db.report.create({
+        data: {
+          postId: post.id,
+          communityId: wall.id,
+          contentSnapshot: content,
+          reason: `敏感词命中：${hits.map(({ word }) => word).join("、")}`,
+          hitLevel: requiresReview ? "REVIEW" : "LOG",
+        },
+      });
+    }
+    if (requiresReview) {
+      return NextResponse.json({ ok: true, pending: true, message: "已提交，审核通过后会贴上祷告墙" });
+    }
     return NextResponse.json({
       ok: true,
       prayer: {
