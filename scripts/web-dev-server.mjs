@@ -69,8 +69,22 @@ function serveStatic(req, res) {
   const isData = urlPath.startsWith("/data/");
   // 安装包目录（线上由 App 端 nginx 提供 /downloads/）
   const isDownload = urlPath.startsWith("/downloads/");
-  const base = isData ? DATA_ROOT : isDownload ? path.join(REPO, "downloads") : ROOT;
-  const rel = isData ? urlPath.slice("/data".length) : isDownload ? urlPath.slice("/downloads".length) : urlPath;
+  // 独立 App 下载页（线上在 app.openbible.live/download，文件在 mobile-app/public/download）
+  const isDownloadPage = urlPath === "/download" || urlPath.startsWith("/download/");
+  const base = isData
+    ? DATA_ROOT
+    : isDownload
+      ? path.join(REPO, "downloads")
+      : isDownloadPage
+        ? path.join(REPO, "mobile-app", "public", "download")
+        : ROOT;
+  const rel = isData
+    ? urlPath.slice("/data".length)
+    : isDownload
+      ? urlPath.slice("/downloads".length)
+      : isDownloadPage
+        ? urlPath.slice("/download".length) || "/"
+        : urlPath;
   let filePath = path.normalize(path.join(base, rel));
   if (!filePath.startsWith(base)) {
     res.writeHead(403).end();
@@ -82,7 +96,7 @@ function serveStatic(req, res) {
   if (!fs.existsSync(filePath)) {
     // 带扩展名的资源（json/js/图片…）找不到就是 404——不能回退成 index.html，
     // 否则调用方拿到 200 + 网页，JSON 解析失败却查不出原因
-    if (isData || isDownload || path.extname(urlPath)) {
+    if (isData || isDownload || isDownloadPage || path.extname(urlPath)) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" }).end("Not found");
       return;
     }
