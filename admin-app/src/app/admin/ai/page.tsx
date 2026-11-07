@@ -1,209 +1,111 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { DataTable, type Column } from "@/components/ui/DataTable";
-import { Badge, type Tone } from "@/components/ui/Primitives";
-import { EmptyState } from "@/components/ui/States";
-import { formatCents, formatDate, formatTokensPerDay } from "@/lib/format";
-import { toggleAutoFallback, toggleRateLimit, expandCanary, rollbackToVersion } from "@/lib/actions/ai";
-import { ApiKeyControl } from "@/components/ApiKeyControl";
-import { EditPromptVersionControl } from "@/components/EditPromptVersionControl";
-import { CreatePromptVersionControl } from "@/components/CreatePromptVersionControl";
-import { CommunityTokenLimitControl } from "@/components/CommunityTokenLimitControl";
-import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { Badge, Card, Grid, PageHeader, Stat } from "@/components/ui/Primitives";
+import { checkAiServices } from "@/lib/ai-status";
+import { formatDateTime } from "@/lib/format";
 
-const STATUS_LABELS: Record<string, string> = {
-  NORMAL: "正常",
-  STANDBY: "待命",
-  DEGRADED: "异常",
-};
+// AI 服务：显示慧读实际使用的模型与检索服务、实时连通性和真实用量。
+// 以前这页的「模型切换 / 成本预算 / Prompt 灰度」读写的是一组演示表，慧读并不使用，
+// 操作了也不会生效，容易误导运营，所以改成只展示真实状态。
 
-// 语义映射：灰度中需要盯着看=告警，全量=正常，已归档=中性
-const PROMPT_STATUS_TONE: Record<string, Tone> = {
-  CANARY: "warn",
-  GA: "ok",
-  ARCHIVED: "neutral",
-};
+const DAY = 24 * 60 * 60 * 1000;
 
-const PROMPT_COLUMNS: Column[] = [
-  { key: "version", label: "版本", width: "90px" },
-  { key: "desc", label: "说明", width: "1fr" },
-  { key: "status", label: "状态", width: "130px" },
-  { key: "like", label: "点赞率", width: "100px", align: "right" },
-  { key: "dislike", label: "点踩率", width: "100px", align: "right" },
-  { key: "ops", label: "操作", width: "200px" },
-];
+const STATUS_BADGE = {
+  ok: { tone: "ok", label: "正常" },
+  down: { tone: "err", label: "异常" },
+  unconfigured: { tone: "warn", label: "未配置" },
+} as const;
 
-function promptStatusLabel(status: string, rolloutPercent: number) {
-  if (status === "GA") return `全量 ${rolloutPercent}%`;
-  if (status === "CANARY") return `灰度 ${rolloutPercent}%`;
-  return "已归档";
-}
-
-export default async function AiManagementPage() {
+export default async function AiServicePage() {
   const session = await auth();
   if (session?.user?.role !== "SUPER_ADMIN") redirect("/admin/dashboard");
 
-  const [models, settings, versions, tokenTop] = await Promise.all([
-    db.aiModel.findMany({ orderBy: { role: "asc" } }),
-    db.aiSettings.findUniqueOrThrow({ where: { id: "singleton" } }),
-    db.promptVersion.findMany({ orderBy: { createdAt: "desc" } }),
-    db.community.findMany({
-      where: { status: "ACTIVE" },
-      orderBy: { aiTokensToday: "desc" },
-      take: 2,
-    }),
-  ]);
+  const now = new Date();
+  const dayAgo = new Date(now.getTime() - DAY);
+  const weekAgo = new Date(now.getTime() - 7 * DAY);
 
-  const primary = models.find((m) => m.role === "PRIMARY");
-  const backup = models.find((m) => m.role === "BACKUP");
-  const spendPct = Math.round((settings.monthSpendCents / settings.monthlyBudgetCents) * 100);
+  const [checks, conversationsDay, conversationsWeek, usersWeek, questionsTotal, latest] = await Promise.all([
+    checkAiServices(),
+    db.conversation.count({ where: { createdAt: { gte: dayAgo } } }),
+    db.conversation.count({ where: { createdAt: { gte: weekAgo } } }),
+    db.user.count({ where: { conversations: { some: { createdAt: { gte: weekAgo } } } } }),
+    db.message.count({ where: { role: "USER" } }),
+    db.conversation.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+  ]);
+  const allOk = checks.every((check) => check.status === "ok");
 
   return (
     <>
-      <div className="admin-header">
-        <div className="title">AI 模型与提示词</div>
+      <PageHeader
+        title="AI 服务"
+        meta={`慧读的模型与检索服务 · 检测于 ${formatDateTime(now)}`}
+        actions={
+          <Link href="/admin/ai" className="action-body" style={{ fontSize: 12, fontWeight: 700 }}>
+            重新检测
+          </Link>
+        }
+      />
+
+      <div
+        className="card"
+        style={{
+          borderRadius: 16, padding: "12px 16px", marginBottom: 12, fontSize: 13, fontWeight: 600,
+          background: allOk ? "var(--white)" : "var(--yellow-soft)",
+          color: allOk ? "var(--ink)" : "var(--yellow-ink)",
+        }}
+      >
+        {allOk ? "✓ 慧读服务运行正常" : "⚠ 有服务未就绪，见下方说明。用户此时提问可能失败或回答不引用注释。"}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-        <div className="card" style={{ padding: "16px 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>核心慧读配置</div>
-            <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "var(--purple)" }}>变更不停服生效</div>
-          </div>
-
-          {[primary, backup].filter(Boolean).length === 0 && (
-            <EmptyState title="尚未配置模型" hint="在数据库 AiModel 表中配置主/备模型后显示" />
-          )}
-          {[primary, backup].filter(Boolean).map((m) => (
-            <div key={m!.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "var(--surface)", borderRadius: 12, marginBottom: 8 }}>
-              <div style={{ width: 8, height: 8, background: m!.status === "NORMAL" ? "var(--purple)" : "var(--line)", borderRadius: 100 }} />
-              <div style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>
-                {m!.role === "PRIMARY" ? "主模型" : "备用模型"} · {m!.modelName}
+      <Grid min="300px">
+        {checks.map((check) => {
+          const badge = STATUS_BADGE[check.status];
+          return (
+            <Card key={check.name}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <strong style={{ fontSize: 15, color: "var(--ink)" }}>{check.name}</strong>
+                <Badge tone={badge.tone}>{badge.label}</Badge>
+                {check.latencyMs !== null && (
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--muted)" }}>{check.latencyMs} ms</span>
+                )}
               </div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-                {m!.role === "PRIMARY" ? `温度 ${m!.temperature} · ` : ""}{STATUS_LABELS[m!.status]}
-              </div>
-            </div>
-          ))}
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>{check.purpose}</div>
+              <dl style={{ margin: 0, display: "grid", gap: 6, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <dt style={{ color: "var(--muted)" }}>配置</dt>
+                  <dd style={{ margin: 0, fontWeight: 600 }}>{check.detail}</dd>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <dt style={{ color: "var(--muted)" }}>服务地址</dt>
+                  <dd style={{ margin: 0, fontWeight: 600 }}>{check.host ?? "—"}</dd>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <dt style={{ color: "var(--muted)" }}>状态</dt>
+                  <dd style={{ margin: 0, fontWeight: 600, color: check.status === "ok" ? "var(--ink)" : "var(--pink)" }}>{check.message}</dd>
+                </div>
+              </dl>
+            </Card>
+          );
+        })}
+      </Grid>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 12, fontWeight: 700 }}>主模型异常自动降级</div>
-            <form action={toggleAutoFallback}>
-              <button
-                type="submit"
-                style={{
-                  display: "flex", justifyContent: settings.autoFallbackEnabled ? "flex-end" : "flex-start",
-                  width: 40, height: 24, background: settings.autoFallbackEnabled ? "var(--purple)" : "var(--surface-2)",
-                  borderRadius: 100, padding: 3, border: "none", cursor: "pointer",
-                }}
-              >
-                <div style={{ width: 18, height: 18, background: "#fff", borderRadius: 100 }} />
-              </button>
-            </form>
-            <div style={{ flex: 1 }} />
-            {primary && (
-              <ApiKeyControl
-                modelId={primary.id}
-                apiKeyLast4={primary.apiKeyLast4}
-                apiKeyUpdatedAt={primary.apiKeyUpdatedAt ? formatDate(primary.apiKeyUpdatedAt) : null}
-              />
-            )}
-          </div>
-        </div>
+      <Grid min="160px">
+        <Card><Stat label="近 24 小时新对话" value={conversationsDay.toLocaleString()} /></Card>
+        <Card><Stat label="近 7 天新对话" value={conversationsWeek.toLocaleString()} hint={`${usersWeek} 人使用`} /></Card>
+        <Card><Stat label="累计提问" value={questionsTotal.toLocaleString()} /></Card>
+        <Card>
+          <Stat label="最近一次对话" value={latest ? formatDateTime(latest.createdAt).slice(5) : "—"} />
+        </Card>
+      </Grid>
 
-        <div className="card" style={{ padding: "16px 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>成本告警</div>
-            <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: "var(--body)" }}>邮件 / IM 触达值班</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-            <span>{settings.monthLabel}预算 {formatCents(settings.monthlyBudgetCents)}</span>
-            <span>已用 {formatCents(settings.monthSpendCents)} · {spendPct}%</span>
-          </div>
-          <div style={{ height: 10, background: "var(--surface-2)", borderRadius: 100, marginBottom: 14 }}>
-            <div style={{ width: `${Math.min(100, spendPct)}%`, height: "100%", background: "var(--orange)", borderRadius: 100 }} />
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--body)" }}>
-              {settings.rateLimited ? "已开启全局限流" : "超限自动告警，可一键全局限流"}
-            </div>
-            <form action={toggleRateLimit} style={{ marginLeft: "auto" }}>
-              <button
-                type="submit"
-                style={{
-                  display: "flex", alignItems: "center", height: 32, padding: "0 14px", borderRadius: 100,
-                  fontSize: 12, fontWeight: 700, color: settings.rateLimited ? "var(--ink)" : "#fff",
-                  background: settings.rateLimited ? "var(--surface-2)" : "var(--pink)", border: "none", cursor: "pointer",
-                }}
-              >
-                {settings.rateLimited ? "解除限流" : "一键限流"}
-              </button>
-            </form>
-          </div>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--surface-2)" }}>
-            <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>社群 AI 助理 Token 消耗 Top</div>
-            {tokenTop.length === 0 && (
-              <div style={{ padding: "12px 0", color: "var(--body)", fontSize: 12, fontWeight: 600 }}>
-                今日暂无社群 AI 助理消耗
-              </div>
-            )}
-            {tokenTop.map((c) => (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, padding: "5px 0" }}>
-                <div style={{ flex: 1, fontWeight: 700 }}>{c.name}</div>
-                <div style={{ color: "var(--body)", fontWeight: 600 }}>{formatTokensPerDay(c.aiTokensToday)}</div>
-                <CommunityTokenLimitControl communityId={c.id} limit={c.aiTokenDailyLimit} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="card" style={{ flex: 1, borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 800 }}>系统 Prompt 版本管理</div>
-          <CreatePromptVersionControl />
-        </div>
-        <DataTable columns={PROMPT_COLUMNS} label="提示词版本列表">
-        {versions.length === 0 && (
-          <EmptyState title="还没有提示词版本" hint="用上方表单新建第一个版本，灰度发布后可在此对比点赞率" />
-        )}
-        {versions.map((v) => (
-          <DataTable.Row key={v.id}>
-            <DataTable.Cell><strong>{v.version}</strong></DataTable.Cell>
-            <DataTable.Cell truncate title={v.description}>{v.description}</DataTable.Cell>
-            <DataTable.Cell>
-              <Badge tone={PROMPT_STATUS_TONE[v.status]}>{promptStatusLabel(v.status, v.rolloutPercent)}</Badge>
-            </DataTable.Cell>
-            <DataTable.Cell align="right"><strong>{v.likeRatePct != null ? `${v.likeRatePct}%` : "—"}</strong></DataTable.Cell>
-            <DataTable.Cell align="right"><strong>{v.dislikeRatePct != null ? `${v.dislikeRatePct}%` : "—"}</strong></DataTable.Cell>
-            <DataTable.Cell>
-            <div className="row-actions">
-              {v.status === "CANARY" && (
-                <form action={expandCanary}>
-                  <input type="hidden" name="id" value={v.id} />
-                  <button type="submit" className="action-purple">扩大灰度</button>
-                </form>
-              )}
-              {v.status !== "ARCHIVED" && (
-                <EditPromptVersionControl id={v.id} description={v.description} rolloutPercent={v.rolloutPercent} />
-              )}
-              {v.status === "ARCHIVED" && (
-                <form action={rollbackToVersion}>
-                  <input type="hidden" name="id" value={v.id} />
-                  <ConfirmSubmitButton
-                    className="action-purple"
-                    confirmMessage={`确定要回滚到 ${v.version} 吗？当前全量版本将被归档。`}
-                  >
-                    回滚至此版
-                  </ConfirmSubmitButton>
-                </form>
-              )}
-            </div>
-            </DataTable.Cell>
-          </DataTable.Row>
-        ))}
-        </DataTable>
+      <div className="card" style={{ borderRadius: 16, padding: "14px 16px", fontSize: 12, lineHeight: 1.9, color: "var(--body)" }}>
+        <strong style={{ color: "var(--ink)" }}>怎么调整：</strong>
+        模型与服务地址在服务器环境变量里配置（<code>OPENBIBLE_LLM_MODEL</code>、<code>OPENBIBLE_LLM_BASE_URL</code>、
+        <code>OPENBIBLE_LLM_API_KEY</code>、<code>OPENBIBLE_RAG_BASE_URL</code>、<code>OPENBIBLE_RAG_INTERNAL_API_KEY</code>），
+        修改后重启后台服务生效。想看用户实际问了什么、回答得怎样，去
+        <Link href="/admin/ai-records" style={{ color: "var(--purple)", fontWeight: 700 }}> AI 对话记录 </Link>抽查。
       </div>
     </>
   );

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { purgeAudioCache, toggleAudioCache } from "@/lib/actions/audio-cache";
 import { audioCacheStats, getAudioCacheSettings } from "@/lib/audio-cache";
 import { Badge, Grid, PageHeader, Section, Stat } from "@/components/ui/Primitives";
@@ -17,6 +19,9 @@ const VOICE_LABEL: Record<string, string> = {
 };
 
 export default async function AudioCachePage() {
+  // 与侧边栏一致：仅超级管理员（操作本身也只允许超级管理员）
+  const session = await auth();
+  if (session?.user?.role !== "SUPER_ADMIN") redirect("/admin/dashboard");
   const [settings, stats] = await Promise.all([
     getAudioCacheSettings(),
     audioCacheStats(),

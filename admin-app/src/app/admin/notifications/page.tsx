@@ -53,7 +53,7 @@ export default async function NotificationsManagementPage() {
   return (
     <>
       <div className="admin-header">
-        <div className="title">通知管理</div>
+        <div className="title">通知推送</div>
         <div className="meta">
           {activeUsers} 名用户 · {activeDevices.length} 台已启用手机
         </div>

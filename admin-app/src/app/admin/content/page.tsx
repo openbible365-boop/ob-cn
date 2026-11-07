@@ -363,7 +363,7 @@ export default async function ContentManagementPage({
     <>
       <SearchShortcut />
       <div className="admin-header">
-        <div className="title">内容管理</div>
+        <div className="title">社群内容</div>
         <div className="meta">
           社群里用户发布的内容
           {hiddenPosts + hiddenResources > 0 ? ` · 屏蔽中：动态 ${hiddenPosts} 条、资料 ${hiddenResources} 份` : ""}

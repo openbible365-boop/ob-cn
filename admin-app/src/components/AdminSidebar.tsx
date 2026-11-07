@@ -1,53 +1,62 @@
 "use client";
 
 import Link from "next/link";
+import { SHOW_AUDIO_CACHE_ADMIN, SHOW_COMMUNITY_ADMIN } from "@/lib/admin-features";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 type Role = "SUPER_ADMIN" | "MODERATOR";
 
-type Scope = "shared" | "app";
+type Scope = "overview" | "users" | "content" | "ops" | "system";
 
-// 后台按「这块内容归哪一端用」分组：
-//   共用   —— 两端读写同一份数据（笔记、高亮已互通）
-//   App 端 —— 网页版没有对应功能（网页版无社群，也就没有群活动）
+// 按运营要做的事分组（以前按「两端共用 / App 端」分，找功能要先想它属于哪一端）。
 // 原「网页版」组（研经笔记/百科/影音/灵修）因全部为零内容空壳已裁撤——
 // 对应 /api/web 只读接口保留，待网页版真正启用这些栏目时再恢复管理页
 const SCOPE_LABEL: Record<Scope, string> = {
-  shared: "两端共用",
-  app: "App 端",
+  overview: "概览",
+  users: "用户与反馈",
+  content: "内容",
+  ops: "运营",
+  system: "系统",
 };
 
-// 以 App 端实际开放的功能为标准，对应功能未上线的管理模块先藏入口（页面与接口保留）：
-//   社群管理 / 活动监管 / 内容审核（审核对象是社群帖子）—— App 端 SHOW_COMMUNITY=false
-//   音频缓存 —— App 端整卷音频缓存功能已下线
-// App 端恢复对应功能时翻回 true 即可。
-const SHOW_COMMUNITY_ADMIN = false;
-const SHOW_AUDIO_CACHE_ADMIN = false;
+// 功能开关见 lib/admin-features.ts（以 App 端实际开放的功能为标准）
 
 const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hidden?: boolean }[] = [
-  { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/commentary", label: "注释校对", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/bible-versions", label: "圣经版本", roles: ["SUPER_ADMIN"], scope: "shared" },
-  { href: "/admin/annotations", label: "用户标注", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
-  { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared", hidden: !SHOW_COMMUNITY_ADMIN },
-  { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"], scope: "shared" },
-  { href: "/admin/ai-records", label: "AI 对话记录", roles: ["SUPER_ADMIN"], scope: "shared" },
-  { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"], scope: "shared" },
+  { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "overview" },
 
-  { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app", hidden: !SHOW_COMMUNITY_ADMIN },
-  { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app", hidden: !SHOW_COMMUNITY_ADMIN },
-  { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
-  { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "app", hidden: !SHOW_AUDIO_CACHE_ADMIN },
-  { href: "/admin/notifications", label: "通知推送", roles: ["SUPER_ADMIN"], scope: "app" },
-  { href: "/admin/feedback", label: "意见反馈", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app" },
+  { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "users" },
+  { href: "/admin/feedback", label: "意见反馈", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "users" },
+  { href: "/admin/ai-records", label: "AI 对话记录", roles: ["SUPER_ADMIN"], scope: "users" },
+  { href: "/admin/annotations", label: "笔记与高亮", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "users" },
+
+  { href: "/admin/bible-versions", label: "圣经版本", roles: ["SUPER_ADMIN"], scope: "content" },
+  { href: "/admin/commentary", label: "注释校对", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content" },
+  { href: "/admin/content", label: "社群内容", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content" },
+  { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content", hidden: !SHOW_COMMUNITY_ADMIN },
+  { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content", hidden: !SHOW_COMMUNITY_ADMIN },
+  { href: "/admin/events", label: "活动监管", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "content", hidden: !SHOW_COMMUNITY_ADMIN },
+
+  { href: "/admin/notifications", label: "通知推送", roles: ["SUPER_ADMIN"], scope: "ops" },
+  { href: "/admin/share-cards", label: "分享模板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "ops" },
+  { href: "/admin/audio-cache", label: "音频缓存", roles: ["SUPER_ADMIN"], scope: "ops", hidden: !SHOW_AUDIO_CACHE_ADMIN },
+
+  { href: "/admin/ai", label: "AI 服务", roles: ["SUPER_ADMIN"], scope: "system" },
+  { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"], scope: "system" },
 ];
 
-const SCOPE_ORDER: Scope[] = ["shared", "app"];
+const SCOPE_ORDER: Scope[] = ["overview", "users", "content", "ops", "system"];
 
-export function AdminSidebar({ operatorName, role }: { operatorName: string; role?: string }) {
+export function AdminSidebar({
+  operatorName,
+  role,
+  badges = {},
+}: {
+  operatorName: string;
+  role?: string;
+  /** 待处理数量（如未处理的意见反馈），显示在对应菜单右侧 */
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const visibleItems = NAV_ITEMS.filter((item) => !item.hidden && item.roles.includes(role as Role));
 
@@ -81,6 +90,11 @@ export function AdminSidebar({ operatorName, role }: { operatorName: string; rol
                   className={`admin-nav-item${pathname === item.href || pathname.startsWith(`${item.href}/`) ? " active" : ""}`}
                 >
                   {item.label}
+                  {(badges[item.href] ?? 0) > 0 && (
+                    <span className="admin-nav-badge" aria-label={`${badges[item.href]} 条待处理`}>
+                      {badges[item.href]! > 99 ? "99+" : badges[item.href]}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>

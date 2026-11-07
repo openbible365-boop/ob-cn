@@ -59,7 +59,8 @@ export default async function AiRecordsPage({
       : {}),
   };
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const [totalConversations, totalQuestions, activeUsers, weekConversations, rows, listTotal] = await Promise.all([
     db.conversation.count(),
     db.message.count({ where: { role: "USER" } }),

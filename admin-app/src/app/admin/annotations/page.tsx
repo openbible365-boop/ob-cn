@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { SearchShortcut, ShortcutHint } from "@/components/ui/SearchShortcut";
+import { SearchShortcut } from "@/components/ui/SearchShortcut";
 import { pageInfo, pageQuery, parsePage } from "@/lib/pagination";
 import { Pagination } from "@/components/Pagination";
 import { DataTable, type Column } from "@/components/ui/DataTable";
@@ -100,7 +100,7 @@ export default async function AnnotationsPage({
     <>
       <SearchShortcut />
       <div className="admin-header">
-        <div className="title">用户标注管理</div>
+        <div className="title">笔记与高亮</div>
         <div className="meta">记录并统计所有登录用户的阅读标注数据</div>
         <div style={{ flex: 1 }} />
         <form className="search-box" action="/admin/annotations">

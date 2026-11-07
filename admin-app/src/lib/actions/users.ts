@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { requireRole } from "@/lib/authz";
+import { formatDateTime } from "@/lib/format";
 
 export async function muteUser(formData: FormData) {
   const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
@@ -21,7 +22,7 @@ export async function muteUser(formData: FormData) {
     action: "禁言用户",
     targetType: "User",
     targetId: user.id,
-    detail: `${user.name} · 禁言至 ${mutedUntil.toISOString().slice(0, 10)}`,
+    detail: `${user.name} · 禁言至 ${formatDateTime(mutedUntil)}`,
   });
 
   revalidatePath("/admin/users");
@@ -61,6 +62,26 @@ export async function unbanUser(formData: FormData) {
   await logAudit({
     operatorId: session.user.id,
     action: "解封用户",
+    targetType: "User",
+    targetId: user.id,
+    detail: user.name,
+  });
+
+  revalidatePath("/admin/users");
+}
+
+export async function unmuteUser(formData: FormData) {
+  const session = await requireRole(["SUPER_ADMIN", "MODERATOR"]);
+  const userId = String(formData.get("userId"));
+
+  const user = await db.user.update({
+    where: { id: userId },
+    data: { status: "ACTIVE", mutedUntil: null },
+  });
+
+  await logAudit({
+    operatorId: session.user.id,
+    action: "解除禁言",
     targetType: "User",
     targetId: user.id,
     detail: user.name,

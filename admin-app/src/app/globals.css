@@ -163,6 +163,27 @@ input {
   font-weight: 800;
 }
 
+/* 侧边栏待办角标（未处理的意见反馈等） */
+.admin-nav-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--pink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-nav-item.active .admin-nav-badge {
+  background: var(--ink);
+  color: var(--yellow);
+}
+
 .admin-sidebar .operator {
   display: flex;
   align-items: center;

@@ -1,184 +1,161 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
-import { Badge, Card, Grid, PageHeader, Split, Stat } from "@/components/ui/Primitives";
-import { EmptyState } from "@/components/ui/States";
-import { formatCompactNumber, formatDate } from "@/lib/format";
+import { Card, Grid, PageHeader, Split, Stat } from "@/components/ui/Primitives";
+import { REAL_USER_WHERE, countByDay, recentDayKeys } from "@/lib/admin-metrics";
+import { formatDateTime } from "@/lib/format";
 
-const MODULE_BARS = [
-  { key: "bibleReadingPct", label: "读经", color: "var(--yellow)" },
-  { key: "huiduPct", label: "慧读", color: "var(--purple)" },
-  { key: "communityPct", label: "社群", color: "var(--orange)" },
-  { key: "annotationPct", label: "注释", color: "var(--body)" },
-] as const;
+// 数据看板：全部直接统计业务表，不再读种子写入的 DailyMetric 演示快照（DAU/留存等假数据）。
+// 口径与「用户管理」一致：只算真实注册用户。
 
-// 实时概览：直接数业务表，不依赖 T+1 快照——空快照库也有真实数据可看
-async function loadLiveOverview() {
-  const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
-  const [users, active7d, notes, highlights, conversations, posts] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { lastLoginAt: { gte: weekAgo } } }),
-    db.note.count(),
-    db.highlight.count(),
-    db.conversation.count(),
-    db.post.count(),
-  ]);
-  return [
-    { label: "注册用户", value: users },
-    { label: "7 日活跃", value: active7d },
-    { label: "笔记（双端）", value: notes },
-    { label: "高亮（双端）", value: highlights },
-    { label: "慧读会话", value: conversations },
-    { label: "社群帖子", value: posts },
-  ];
+const DAY = 24 * 60 * 60 * 1000;
+const TREND_DAYS = 14;
+
+function TrendBars({ title, values, dayKeys, color, unit }: {
+  title: string;
+  values: number[];
+  dayKeys: string[];
+  color: string;
+  unit: string;
+}) {
+  const max = Math.max(1, ...values);
+  const total = values.reduce((sum, value) => sum + value, 0);
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
+        <strong style={{ fontSize: 13, color: "var(--ink)" }}>{title}</strong>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>近 {TREND_DAYS} 天共 {total} {unit}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 96 }} role="img" aria-label={`${title}，近 ${TREND_DAYS} 天共 ${total} ${unit}`}>
+        {values.map((value, index) => (
+          <div
+            key={dayKeys[index]}
+            title={`${dayKeys[index]}：${value} ${unit}`}
+            style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}
+          >
+            <div
+              style={{
+                height: `${Math.max(value ? 6 : 2, (value / max) * 100)}%`,
+                background: value ? color : "var(--surface-2)",
+                borderRadius: "4px 4px 2px 2px",
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: "var(--muted)" }}>
+        <span>{dayKeys[0]?.slice(5)}</span>
+        <span>今天</span>
+      </div>
+    </div>
+  );
 }
 
-function LiveOverview({ stats }: { stats: { label: string; value: number }[] }) {
+function TodoRow({ label, count, href, hint }: { label: string; count: number; href: string; hint: string }) {
   return (
-    <Grid min="150px">
-      {stats.map((s) => (
-        <Card key={s.label}>
-          <Stat label={s.label} value={s.value.toLocaleString()} />
-        </Card>
-      ))}
-    </Grid>
+    <Link
+      href={href}
+      style={{
+        display: "flex", alignItems: "center", gap: 10, padding: "10px 0",
+        borderTop: "1px solid var(--surface-2)", color: "var(--ink)",
+      }}
+    >
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 13, fontWeight: 600 }}>{label}</span>
+        <span style={{ display: "block", fontSize: 11, color: "var(--muted)" }}>{hint}</span>
+      </span>
+      <span style={{
+        minWidth: 28, padding: "2px 9px", borderRadius: 100, textAlign: "center", fontSize: 12, fontWeight: 700,
+        background: count > 0 ? "var(--yellow-soft)" : "var(--surface-2)",
+        color: count > 0 ? "var(--yellow-ink)" : "var(--muted)",
+      }}>
+        {count}
+      </span>
+      <span style={{ color: "var(--muted)", fontSize: 12 }}>→</span>
+    </Link>
   );
 }
 
 export default async function DashboardPage() {
-  const [latest, liveStats] = await Promise.all([
-    db.dailyMetric.findFirst({ orderBy: { date: "desc" } }),
-    loadLiveOverview(),
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * DAY);
+  const monthAgo = new Date(now.getTime() - 30 * DAY);
+  const trendStart = new Date(now.getTime() - TREND_DAYS * DAY);
+  const dayKeys = recentDayKeys(TREND_DAYS, now);
+
+  // 「活跃」= 期间内登录过、同步过阅读位置、写过笔记/高亮或开过慧读对话（登录态通常长期保持，只看登录会严重低估）
+  const activeSince = (since: Date) => ({
+    AND: [
+      REAL_USER_WHERE,
+      {
+        OR: [
+          { lastLoginAt: { gte: since } },
+          { readingPositionAt: { gte: since } },
+          { notes: { some: { createdAt: { gte: since } } } },
+          { highlights: { some: { createdAt: { gte: since } } } },
+          { conversations: { some: { createdAt: { gte: since } } } },
+        ],
+      },
+    ],
+  });
+
+  const [
+    totalUsers, newUsersWeek, active7, active30,
+    conversationsTotal, questionsTotal, conversationsWeek, huiduUsersWeek,
+    notesWeek, highlightsWeek, pendingFeedback, pushDevices,
+    newUserDates, conversationDates, latestFeedback,
+  ] = await Promise.all([
+    db.user.count({ where: REAL_USER_WHERE }),
+    db.user.count({ where: { AND: [REAL_USER_WHERE, { createdAt: { gte: weekAgo } }] } }),
+    db.user.count({ where: activeSince(weekAgo) }),
+    db.user.count({ where: activeSince(monthAgo) }),
+    db.conversation.count(),
+    db.message.count({ where: { role: "USER" } }),
+    db.conversation.count({ where: { createdAt: { gte: weekAgo } } }),
+    db.user.count({ where: { conversations: { some: { createdAt: { gte: weekAgo } } } } }),
+    db.note.count({ where: { createdAt: { gte: weekAgo } } }),
+    db.highlight.count({ where: { createdAt: { gte: weekAgo } } }),
+    db.feedback.count({ where: { handled: false } }),
+    db.devicePushToken.count({ where: { enabled: true } }),
+    db.user.findMany({ where: { AND: [REAL_USER_WHERE, { createdAt: { gte: trendStart } }] }, select: { createdAt: true } }),
+    db.conversation.findMany({ where: { createdAt: { gte: trendStart } }, select: { createdAt: true } }),
+    db.feedback.findFirst({ where: { handled: false }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
   ]);
 
-  if (!latest) {
-    return (
-      <>
-        <PageHeader title="数据看板" meta="实时统计 · 快照指标（DAU/留存等）待每日汇总任务生成" />
-        <LiveOverview stats={liveStats} />
-        <Card padded={false}>
-          <EmptyState
-            title="快照指标尚未生成"
-            hint="DAU / 留存 / 热点话题由每日汇总任务在次日 06:00 产出，首次运行后这里会显示完整看板。"
-          />
-        </Card>
-      </>
-    );
-  }
-
-  const weekAgoDate = new Date(latest.date);
-  weekAgoDate.setUTCDate(weekAgoDate.getUTCDate() - 7);
-  const weekAgo = await db.dailyMetric.findUnique({ where: { date: weekAgoDate } });
-  const dauDeltaPct = weekAgo ? ((latest.dau - weekAgo.dau) / weekAgo.dau) * 100 : null;
-
-  const [ranking, hotTopics] = await Promise.all([
-    db.community.findMany({
-      where: { status: "ACTIVE" },
-      orderBy: { dailyActivity: "desc" },
-      take: 4,
-    }),
-    db.hotTopic.findMany({ where: { date: latest.date }, orderBy: { rank: "asc" } }),
-  ]);
+  const newUserSeries = countByDay(newUserDates.map((row) => row.createdAt), dayKeys);
+  const conversationSeries = countByDay(conversationDates.map((row) => row.createdAt), dayKeys);
 
   return (
     <>
-      <PageHeader
-        title="数据看板"
-        meta={`实时统计 + 快照（T+1，更新于 ${formatDate(latest.date)} 06:00）`}
-      />
+      <PageHeader title="数据看板" meta={`实时统计 · ${formatDateTime(now)} · 仅计真实注册用户`} />
 
-      <LiveOverview stats={liveStats} />
-
-      <Grid min="170px">
-        <Card>
-          <Stat
-            label="DAU（双端）"
-            value={latest.dau.toLocaleString()}
-            hint={
-              dauDeltaPct !== null
-                ? `${dauDeltaPct >= 0 ? "↑" : "↓"} ${Math.abs(dauDeltaPct).toFixed(1)}% 周环比`
-                : undefined
-            }
-            tone={dauDeltaPct === null ? undefined : dauDeltaPct >= 0 ? "ok" : "err"}
-          />
-        </Card>
-        <Card>
-          <Stat
-            label="MAU"
-            value={latest.mau.toLocaleString()}
-            hint={`DAU/MAU ${((latest.dau / latest.mau) * 100).toFixed(1)}%`}
-          />
-        </Card>
-        <Card>
-          <Stat
-            label="次日留存"
-            value={`${latest.retentionD1Pct}%`}
-            hint={`7 日 ${latest.retentionD7Pct}% · 30 日 ${latest.retentionD30Pct}%`}
-          />
-        </Card>
-        <Card>
-          <Stat
-            label="慧读渗透（周）"
-            value={`${latest.huiduPenetrationPct}%`}
-            hint={`人均 ${latest.avgRoundsPerSession} 轮/会话`}
-          />
-        </Card>
+      <Grid min="160px">
+        <Card><Stat label="注册用户" value={totalUsers.toLocaleString()} hint={`近 7 天新增 ${newUsersWeek}`} /></Card>
+        <Card><Stat label="7 日活跃" value={active7.toLocaleString()} hint={totalUsers ? `占注册用户 ${Math.round((active7 / totalUsers) * 100)}%` : undefined} /></Card>
+        <Card><Stat label="30 日活跃" value={active30.toLocaleString()} /></Card>
+        <Card><Stat label="慧读对话" value={conversationsTotal.toLocaleString()} hint={`累计提问 ${questionsTotal.toLocaleString()} 次`} /></Card>
+        <Card><Stat label="近 7 天用慧读" value={`${huiduUsersWeek} 人`} hint={`新对话 ${conversationsWeek} 个`} /></Card>
+        <Card><Stat label="近 7 天笔记 / 高亮" value={`${notesWeek} / ${highlightsWeek}`} /></Card>
       </Grid>
 
-      <Split ratio="1.3fr 1fr">
-        <div className="card" style={{ borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-          <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 14 }}>各模块使用时长占比</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {MODULE_BARS.map((m) => {
-              const pct = latest[m.key];
-              return (
-                <div key={m.key}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, marginBottom: 5 }}>
-                    <span>{m.label}</span><span>{pct}%</span>
-                  </div>
-                  <div style={{ height: 10, background: "var(--surface-2)", borderRadius: 100 }}>
-                    <div style={{ width: `${pct}%`, height: "100%", background: m.color, borderRadius: 100 }} />
-                  </div>
-                </div>
-              );
-            })}
+      <Split ratio="1.4fr 1fr">
+        <Card>
+          <div style={{ display: "grid", gap: 22 }}>
+            <TrendBars title="每日新注册" values={newUserSeries} dayKeys={dayKeys} color="var(--yellow)" unit="人" />
+            <TrendBars title="每日新慧读对话" values={conversationSeries} dayKeys={dayKeys} color="var(--purple)" unit="个" />
           </div>
-          <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--surface-2)" }}>
-            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>AI 用量（今日）</div>
-            <Grid min="110px" gap="10px">
-              <Stat label="调用量" value={latest.aiCallCount.toLocaleString()} />
-              <Stat label="Token" value={formatCompactNumber(latest.aiTokenCount)} />
-              <Stat label="平均首字" value={`${(latest.aiAvgFirstTokenMs / 1000).toFixed(1)}s`} />
-              <Stat label="点赞率" value={`${latest.aiLikeRatePct}%`} />
-            </Grid>
-          </div>
-        </div>
+        </Card>
 
-        <div className="card" style={{ borderRadius: "16px 16px 0 0", padding: "16px 18px", overflow: "auto" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 800 }}>社群活跃度排行</div>
-            <div style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: "var(--body)" }}>每日更新 · 可下钻</div>
-          </div>
-          {ranking.length > 0 ? (
-            ranking.map((c, i) => (
-              <div key={c.id} className="rank-row">
-                <span className="rank-no">{i + 1}</span>
-                <span className="rank-name" title={c.name}>{c.name}</span>
-                <span className="rank-value">日互动 {c.dailyActivity}</span>
-              </div>
-            ))
-          ) : (
-            <EmptyState title="暂无活跃社群" hint="社群产生互动后会按日互动量排名显示在这里" />
-          )}
-          <div className="rank-subtitle">热门 AI 话题</div>
-          {hotTopics.length > 0 ? (
-            <div className="tag-row">
-              {hotTopics.map((t) => (
-                <Badge key={t.id} tone="info">{t.label}</Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="rank-empty-hint">今日尚未汇总出热门话题</p>
-          )}
-        </div>
+        <Card>
+          <strong style={{ display: "block", fontSize: 13, color: "var(--ink)", marginBottom: 4 }}>待办</strong>
+          <TodoRow
+            label="待处理意见反馈"
+            count={pendingFeedback}
+            href="/admin/feedback"
+            hint={latestFeedback ? `最新一条 ${formatDateTime(latestFeedback.createdAt)}` : "暂无新留言"}
+          />
+          <TodoRow label="AI 对话记录" count={conversationsWeek} href="/admin/ai-records" hint="近 7 天新对话，可抽查回答质量" />
+          <TodoRow label="可推送设备" count={pushDevices} href="/admin/notifications" hint="已开启通知的手机，可发送推送" />
+        </Card>
       </Split>
     </>
   );
