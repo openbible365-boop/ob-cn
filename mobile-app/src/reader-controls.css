@@ -1569,6 +1569,21 @@ body.dark .verse-dock-actions button.is-huidu .app-icon { color: #c4b5fd; }
   text-underline-offset: 0.3em;
 }
 
+/* 拼音版专名（人名、地名）：整词不拆行；下划线用底边框画成一条连续的线
+   （文字下划线遇到注音单元之间的间距会断成一截一截）。
+   放在这里而不是 index.css：index.css 在 @layer 里，优先级低于本文件 */
+.bible-verse-content.is-pinyin .verse-text mark {
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(71, 74, 87, 0.3);
+  padding-bottom: 1px;
+}
+
+.bible-verse-content.is-pinyin .bible-verse-main.is-selected .verse-text mark {
+  text-decoration: none;
+  border-bottom-color: currentColor;
+}
+
 /* ── 注释页与经文页同一副「书面脸」：阅读内容统一宋体，界面件保持黑体 ── */
 .annotation-section-body,
 .annotation-scripture-quote,

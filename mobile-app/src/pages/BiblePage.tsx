@@ -65,6 +65,13 @@ const POETRY_BOOKS = new Set(["psa", "pro", "sng", "lam"]);
 // 已合入 USFM 节级结构标记（p 段首 / q 诗体 / b 诗节空行）的译本
 const STRUCTURED_VERSIONS = new Set(["cuv", "kjv", "bsb"]);
 
+// 拼音版数据整理（只影响显示）：
+// - 和合本在「神」前留的全角空格（敬称留白）在注音排版里会变成一个大空洞，去掉；
+// - 源数据用的是 IPA 字母「ɡ」(U+0261)，部分字体里比普通 g 宽、字形也不一致，换成普通 g。
+function normalizePinyinHtml(html: string) {
+  return html.replace(/\u3000/g, "").replace(/\u0261/g, "g");
+}
+
 function toPoetryHtml(html: string) {
   // 只在不含标签的纯文本上断行，含内嵌 HTML 的内容原样返回，避免拆坏标签
   if (html.includes("<")) return html;
@@ -1848,7 +1855,9 @@ export function BiblePage() {
                       textUnderlineOffset: isSelected ? "5px" : undefined,
                     }}
                     dangerouslySetInnerHTML={{
-                      __html: poetic ? toPoetryHtml(translate(v.text)) : translate(v.text),
+                      __html: version.code === "pinyin"
+                        ? normalizePinyinHtml(translate(v.text))
+                        : poetic ? toPoetryHtml(translate(v.text)) : translate(v.text),
                     }}
                   />
                 </span>

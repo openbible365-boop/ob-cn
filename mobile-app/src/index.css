@@ -5552,17 +5552,25 @@ body.dark .app-exit-toast {
   color: var(--yellow-ink) !important;
 }
 
-.bible-verse-content.is-pinyin .verse-text ruby rt {
-  color: #747985;
-  font-size: 0.62em;
-  font-weight: 400;
-  line-height: 1.2;
-  letter-spacing: 0.015em;
-}
-
+/* 拼音版：每个「字 + 注音」是一个单元，单元之间留固定小间距——
+   以前注音宽于汉字时相邻音节连成一串（rénruò bú chóngshēng），
+   汉字又被注音撑开、字距忽大忽小。现在音节一一分开、字字对齐，节奏均匀。
+   注音用无衬线体：声调符号更清楚，字号略小以减少对汉字间距的拉扯。 */
 .bible-verse-content.is-pinyin .verse-text ruby {
   ruby-align: center;
   ruby-position: over;
+  margin: 0 0.11em;
+}
+
+.bible-verse-content.is-pinyin .verse-text ruby rt {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Noto Sans", sans-serif;
+  color: #6b7080;
+  font-size: 0.56em;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0;
+  /* 注音与汉字之间留一点呼吸，不贴着字顶 */
+  padding-bottom: 0.08em;
 }
 
 .screen-scroll.is-pinyin-reader {
@@ -5571,7 +5579,7 @@ body.dark .app-exit-toast {
 
 .bible-verse-content.is-pinyin > .bible-verse {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .bible-verse-content.is-pinyin .bible-verse-number {
@@ -5579,13 +5587,6 @@ body.dark .app-exit-toast {
   color: var(--purple-deep) !important;
   font-size: 12px !important;
   font-weight: 600;
-}
-
-.bible-verse-content.is-pinyin .verse-text mark {
-  text-decoration-style: solid;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgba(71, 74, 87, 0.35);
-  text-underline-offset: 4px;
 }
 
 .screen-scroll.is-korean-reader {
