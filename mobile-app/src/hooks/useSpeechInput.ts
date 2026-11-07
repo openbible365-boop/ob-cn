@@ -5,7 +5,7 @@ import { Capacitor } from "@capacitor/core";
 // - 原生 App 走 @capacitor-community/speech-recognition（安卓/iOS 系统识别引擎，
 //   WebView 不提供 Web Speech API，这是 App 内唯一可行的路）；
 // - 浏览器走 Web Speech API（Chrome/Edge 可用，识别由浏览器云服务完成）。
-// 两条通道行为一致：单句模式、中文、实时上屏、追加在已有文字之后。
+// 两条通道行为一致：单句模式、语言跟随手机系统、实时上屏、追加在已有文字之后。
 
 type SpeechRecognitionResultLike = {
   isFinal: boolean;
@@ -46,6 +46,25 @@ declare global {
 }
 
 const IS_NATIVE = Capacitor.isNativePlatform();
+
+/**
+ * 识别语言跟随手机系统语言：韩语系统识别韩语、英语系统识别英语；
+ * 繁体中文系统（台湾 / 香港）或 App 里开了繁体，识别繁体中文；其余识别简体中文。
+ */
+export function speechRecognitionLanguage(): string {
+  if (typeof navigator === "undefined") return "zh-CN";
+  const device = (navigator.languages?.[0] || navigator.language || "").toLowerCase();
+  if (device.startsWith("ko")) return "ko-KR";
+  if (device.startsWith("en")) return "en-US";
+  let traditional = false;
+  try {
+    traditional = localStorage.getItem("ob.bible.isTraditional") === "true";
+  } catch {
+    // 读不了本机设置就按系统语言判断
+  }
+  if (traditional || /^zh-(tw|hk|mo|hant)/.test(device)) return "zh-TW";
+  return "zh-CN";
+}
 const MAX_LENGTH = 1200;
 
 function recognitionConstructor() {
@@ -131,7 +150,7 @@ export function useSpeechInput(input: {
     setIsListening(true);
     try {
       // 单句模式：说完一句系统自动停止，与网页端行为一致
-      await plugin.start({ language: "zh-CN", partialResults: true, popup: false, maxResults: 2 });
+      await plugin.start({ language: speechRecognitionLanguage(), partialResults: true, popup: false, maxResults: 2 });
     } catch {
       nativeActiveRef.current = false;
       setIsListening(false);
@@ -172,7 +191,7 @@ export function useSpeechInput(input: {
     const initialValue = value.trimEnd();
     const prefix = initialValue ? `${initialValue} ` : "";
     let finalTranscript = "";
-    recognition.lang = "zh-CN";
+    recognition.lang = speechRecognitionLanguage();
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.onresult = (event) => {
