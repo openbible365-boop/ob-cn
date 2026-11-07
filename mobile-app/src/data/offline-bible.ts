@@ -124,6 +124,8 @@ async function removePack(key: string) {
 //   kjv 2026-11-07：修复约 6,700 处粘连空格（"theLordis" → "the LORD is"），LORD/GOD 还原大写
 const DATA_REVISIONS: Record<string, string> = {
   kjv: "2026-11-07T00:00:00.000Z",
+  //   cnvs：按和合本补齐小标题 / 诗体 / 段落结构，修复合并节编号，清理残留空格
+  cnvs: "2026-11-07T02:59:00.000Z",
 };
 
 /** App 启动时调用：有修订且本机离线包过旧的译本，在后台重新下载（失败下次再试） */

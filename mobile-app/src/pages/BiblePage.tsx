@@ -63,7 +63,7 @@ import { useArmedConfirm } from "../hooks/useArmedConfirm";
 const POETRY_BOOKS = new Set(["psa", "pro", "sng", "lam"]);
 
 // 已合入 USFM 节级结构标记（p 段首 / q 诗体 / b 诗节空行）的译本
-const STRUCTURED_VERSIONS = new Set(["cuv", "kjv", "bsb"]);
+const STRUCTURED_VERSIONS = new Set(["cuv", "cnvs", "kjv", "bsb"]);
 
 // 拼音版数据整理（只影响显示）：
 // - 和合本在「神」前留的全角空格（敬称留白）在注音排版里会变成一个大空洞，去掉；
@@ -1801,6 +1801,22 @@ export function BiblePage() {
         )}
         {loadError && (
           <EmptyState compact art="content" title="经文加载失败" desc="请检查网络后重试。" />
+        )}
+        {/* 译本数据缺这一章（如新译本个别章节）：说明原因并一键切到和合本，而不是一片空白 */}
+        {data && !loadError && verses.length === 0 && (
+          <EmptyState
+            compact
+            art="content"
+            title={`${version.label}暂缺这一章`}
+            desc="这一章的经文数据还在补齐中，可以先用和合本阅读。"
+            action={
+              version.code !== "cuv" ? (
+                <button type="button" className="empty-state-action" onClick={() => gotoVersion("cuv")}>
+                  用和合本阅读本章
+                </button>
+              ) : undefined
+            }
+          />
         )}
         <div
           key={`${version.code}-${book.code}-${chapter}`}
