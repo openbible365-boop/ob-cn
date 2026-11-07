@@ -72,6 +72,21 @@ function normalizePinyinHtml(html: string) {
   return html.replace(/\u3000/g, "").replace(/\u0261/g, "g");
 }
 
+// 小标题原本按纯文本渲染；改用 innerHTML 后中文标题仍须转义，保持与纯文本等价
+function escapeHeading(text: string) {
+  return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
+}
+
+// 英文译本按英文圣经排版惯例显示：
+// - 神名 LORD / GOD（希伯来文 YHWH）用小型大写，与普通称呼 Lord / God 区分；
+// - KJV 数据里的直撇号换成排版用的弯撇号（his name's → his name’s）。
+function englishScriptureHtml(html: string) {
+  return html
+    .replace(/\bLORD(?=\b|’|')/g, '<span class="sc">Lord</span>')
+    .replace(/\bGOD(?=\b|’|')/g, '<span class="sc">God</span>')
+    .replace(/([A-Za-z])'(?=[A-Za-z])/g, "$1’");
+}
+
 function toPoetryHtml(html: string) {
   // 只在不含标签的纯文本上断行，含内嵌 HTML 的内容原样返回，避免拆坏标签
   if (html.includes("<")) return html;
@@ -1790,6 +1805,8 @@ export function BiblePage() {
         <div
           key={`${version.code}-${book.code}-${chapter}`}
           className={`bible-verse-content${version.code === "pinyin" ? " is-pinyin" : ""}${version.lang === "ko" ? " is-korean" : ""}${version.lang === "en" ? " is-english" : ""}`}
+          // lang 让浏览器按英文规则断词（hyphens: auto 需要它）
+          lang={version.lang === "en" ? "en" : undefined}
           style={{
             fontSize: version.lang === "ko" ? Math.max(16, fontSize - 1) : fontSize,
             lineHeight: version.code === "pinyin" ? 2.18 : version.lang === "ko" ? 1.82 : version.lang === "en" ? 1.68 : 1.8,
@@ -1815,7 +1832,20 @@ export function BiblePage() {
                   <span className={`verse-break${v.b && !v.p ? " is-stanza" : ""}`} aria-hidden="true" />
                 )}
                 {showHeadings && v.heading && (
-                  <span className="bible-heading">{translate(v.heading)}</span>
+                  version.lang === "en" && v.heading.includes(" · ") ? (
+                    // 诗篇：标题与题记（如「A Psalm of David.」）分两行，题记用斜体
+                    <span className="bible-heading">
+                      <span dangerouslySetInnerHTML={{ __html: englishScriptureHtml(v.heading.split(" · ")[0]) }} />
+                      <span className="bible-psalm-title">{v.heading.split(" · ").slice(1).join(" · ")}</span>
+                    </span>
+                  ) : (
+                    <span
+                      className="bible-heading"
+                      dangerouslySetInnerHTML={{
+                        __html: version.lang === "en" ? englishScriptureHtml(v.heading) : escapeHeading(translate(v.heading)),
+                      }}
+                    />
+                  )
                 )}
                 <span
                   id={`bible-verse-${v.verse}`}
@@ -1857,6 +1887,8 @@ export function BiblePage() {
                     dangerouslySetInnerHTML={{
                       __html: version.code === "pinyin"
                         ? normalizePinyinHtml(translate(v.text))
+                        : version.lang === "en"
+                        ? englishScriptureHtml(v.text)
                         : poetic ? toPoetryHtml(translate(v.text)) : translate(v.text),
                     }}
                   />

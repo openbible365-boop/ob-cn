@@ -1,0 +1,133 @@
+/* ══ 英文译本（KJV / BSB）排版：按英文印刷圣经惯例 ══════════════════════
+   放在 index.css（@layer pages，优先级低）与 reader-controls.css 之后加载，保证生效。
+
+   - 字体：英文书籍衬线体。iOS 用 Iowan Old Style（Apple Books 的阅读字体），
+     安卓用系统 Noto Serif；栈里不放中文字体——以前英文落到中文宋体上，
+     弯引号 “ ” ’ 按中文全角宽度显示，出现 said,  “Rabbi、mother’ s 这样的大空隙。
+   - 散文：段落首行缩进、段间不空行（英文书惯例）；小标题后的首段不缩进。
+   - 诗体：每节独占一行，折行悬挂缩进；诗节之间留小空白。
+   - 神名 LORD / GOD 小型大写；节号小号上标、不撑开行距；左对齐 + 英文断词。 */
+
+.bible-verse-content.is-english {
+  font-family: "Iowan Old Style", "Charter", "Palatino", "Book Antiqua", Georgia, "Noto Serif", "Source Serif 4", "Times New Roman", serif;
+  font-weight: 400;
+  -webkit-text-stroke: 0;
+  letter-spacing: 0.003em;
+  word-spacing: 0.01em;
+  text-align: left;
+  line-break: auto;
+  word-break: normal;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
+  hanging-punctuation: first;
+}
+
+/* 神名（YHWH）：小型大写，略加字距 */
+.bible-verse-content.is-english .sc {
+  font-variant-caps: small-caps;
+  letter-spacing: 0.04em;
+}
+
+/* 节号：小号上标、次要色，line-height 0 不把这一行撑高 */
+.bible-verse-content.is-english .bible-verse-number {
+  margin: 0 0.16em 0 0.28em;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.6em;
+  font-weight: 600;
+  line-height: 0;
+  vertical-align: super;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.bible-verse-content.is-english .bible-verse:first-child .bible-verse-number {
+  margin-left: 0;
+}
+
+/* 章首大号章码 */
+.bible-verse-content.is-english .chapter-dropcap {
+  margin: 0.08em 0.16em 0 0;
+  font-family: inherit;
+  font-size: 2.65em;
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+/* ── 散文：段落 = 换行 + 首行缩进，段间不空行 ── */
+.bible-verse-content.is-english .verse-break {
+  display: block;
+  height: 0;
+}
+
+.bible-verse-content.is-english .bible-verse:not(.is-poetic) .verse-break + .bible-verse-main::before {
+  content: "";
+  display: inline-block;
+  width: 1.5em;
+}
+
+/* ── 诗体：每节一行，折行悬挂缩进 ── */
+/* 悬挂缩进用「块左内边距 + 行内元素负左外边距」：负外边距只作用于该节第一行，
+   比 text-indent 可靠——诗节空行（块级元素）后面的那一行 text-indent 不生效 */
+.bible-verse-content.is-english .bible-verse.is-poetic {
+  display: block;
+  padding-left: 1.5em;
+}
+
+.bible-verse-content.is-english .bible-verse.is-poetic > .bible-verse-main {
+  margin-left: -1.5em;
+  /* 节元素默认 clone（高亮底色每行都圆角），会把负外边距复制到每一行，悬挂缩进失效 */
+  -webkit-box-decoration-break: slice;
+  box-decoration-break: slice;
+}
+
+/* 带章首大号章码的第一节：章码浮动占位，不做悬挂缩进，否则章码压住首词 */
+.bible-verse-content.is-english .bible-verse.is-poetic:has(.chapter-dropcap) {
+  padding-left: 0;
+}
+
+.bible-verse-content.is-english .bible-verse.is-poetic:has(.chapter-dropcap) > .bible-verse-main {
+  margin-left: 0;
+}
+
+.bible-verse-content.is-english .bible-verse.is-poetic .verse-break {
+  height: 0.6em;
+}
+
+.bible-verse-content.is-english .bible-verse.is-poetic .bible-heading {
+  margin-left: -1.5em;
+}
+
+/* ── 小标题：同族衬线粗体；诗篇题记另起一行斜体 ── */
+.bible-verse-content.is-english .bible-heading {
+  display: block;
+  margin: 28px 0 6px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.92em;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+  -webkit-text-stroke: 0;
+  text-indent: 0;
+}
+
+.bible-verse-content.is-english .bible-verse:first-child .bible-heading {
+  margin-top: 6px;
+}
+
+.bible-verse-content.is-english .bible-psalm-title {
+  display: block;
+  margin-top: 4px;
+  color: var(--body);
+  font-size: 0.95em;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.bible-verse-content.is-english .bible-verse.is-poetic:has(.chapter-dropcap) .bible-heading {
+  margin-left: 0;
+}

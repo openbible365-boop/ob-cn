@@ -55,7 +55,8 @@ async function downloadPack(
   const cache = await caches.open(CACHE_NAME);
   let bytes = 0;
   for (let i = 0; i < urls.length; i++) {
-    const res = await fetch(urls[i]);
+    // reload：绕过 HTTP 缓存，数据修订后重新下载拿到的一定是新文件
+    const res = await fetch(urls[i], { cache: "reload" });
     if (!res.ok) throw new Error(`下载失败（第 ${i + 1} 卷：HTTP ${res.status}）`);
     // 读成字节再手工构造 Response 存入：既能统计体积，也不依赖原响应流的可重用性
     const buf = await res.arrayBuffer();
@@ -116,6 +117,28 @@ async function removePack(key: string) {
   const meta = getOfflineMeta();
   delete meta[key];
   save(META_KEY, meta);
+}
+
+// 经文数据修订记录：译本代码 → 修订日期。本机离线包早于这个日期就在后台静默重新下载，
+// 否则已下载的用户会一直读到缓存里的旧数据。
+//   kjv 2026-11-07：修复约 6,700 处粘连空格（"theLordis" → "the LORD is"），LORD/GOD 还原大写
+const DATA_REVISIONS: Record<string, string> = {
+  kjv: "2026-11-07T00:00:00.000Z",
+};
+
+/** App 启动时调用：有修订且本机离线包过旧的译本，在后台重新下载（失败下次再试） */
+export async function refreshStaleOfflinePacks() {
+  if (!offlineSupported()) return;
+  const meta = getOfflineMeta();
+  for (const [key, revisedAt] of Object.entries(DATA_REVISIONS)) {
+    const pack = meta[key];
+    if (!pack || pack.at >= revisedAt) continue;
+    try {
+      await downloadPack(key, () => {});
+    } catch {
+      // 离线或下载中断：保留旧包可读，下次启动再试
+    }
+  }
 }
 
 export function downloadVersion(version: string, onProgress: (done: number, total: number) => void) {
