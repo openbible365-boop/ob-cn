@@ -10287,3 +10287,75 @@ button.daily-verse-kicker {
   font-size: 11px;
   font-weight: 600;
 }
+
+/* 「我的」页消息中心：与菜单同款的一行，展开后消息以无边框的行列在卡片内 */
+.notification-inbox-card > button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.notification-inbox-card .me-menu-copy small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.notification-inbox-badge {
+  min-width: 18px;
+  height: 18px;
+  flex: none;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--pink, #d4566e);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.notification-inbox-card .notification-inbox-list {
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.notification-inbox-card .notification-text-action {
+  min-height: 36px;
+  justify-self: end;
+  background: none;
+}
+
+.notification-inbox-card .notification-inbox-item {
+  min-height: 0;
+  padding: 10px 12px 10px 54px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
+
+.notification-inbox-card .notification-text-action + .notification-inbox-item,
+.notification-inbox-card .notification-inbox-list > .notification-inbox-item:first-child {
+  border-top: 0;
+}
+
+.notification-inbox-card .notification-inbox-item.is-unread {
+  box-shadow: none;
+}
+
+.notification-inbox-card .notification-inbox-item.is-unread strong::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 6px 2px 0;
+  border-radius: 50%;
+  background: var(--yellow-ink);
+  vertical-align: middle;
+}
+
+/* 消息正文与上方「消息中心」文字左对齐（图标 34px + 间距；按钮的左内边距会被共用按钮样式覆盖，改用外边距） */
+.notification-inbox-card .notification-inbox-copy {
+  margin-left: 48px;
+}
