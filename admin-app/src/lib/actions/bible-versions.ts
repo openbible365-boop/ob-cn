@@ -52,12 +52,16 @@ export async function moveVersion(formData: FormData) {
   const session = await requireRole(["SUPER_ADMIN"]);
   const code = String(formData.get("code") ?? "");
   const direction = formData.get("direction") === "up" ? -1 : 1;
-  const rows = await db.bibleVersion.findMany({ orderBy: [{ sortOrder: "asc" }, { code: "asc" }] });
+  const all = await db.bibleVersion.findMany({ orderBy: [{ sortOrder: "asc" }, { code: "asc" }] });
+  // 只在「已上架」组内调整顺序（App 里看得到的顺序）；未上架的统一排在后面
+  const isListed = (row: (typeof all)[number]) => row.enabled || row.code === FALLBACK_VERSION;
+  const rows = all.filter(isListed);
   const index = rows.findIndex((row) => row.code === code);
   const target = index + direction;
   if (index < 0 || target < 0 || target >= rows.length) return;
   const reordered = [...rows];
   [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+  reordered.push(...all.filter((row) => !isListed(row)));
   // 统一重排为 10、20、30…，避免历史数据里的重复序号
   await db.$transaction(
     reordered.map((row, position) =>
