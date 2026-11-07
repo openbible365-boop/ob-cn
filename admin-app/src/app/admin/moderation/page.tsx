@@ -57,7 +57,7 @@ export default async function ModerationPage({
         <div className="meta">举报处理 SLA ≤ 24h · 结果反馈举报人</div>
         <div style={{ flex: 1 }} />
         <Link
-          href="/admin/content#words"
+          href="/admin/content?tab=words"
           style={{ display: "flex", alignItems: "center", height: 32, padding: "0 14px", background: "var(--white)", border: "1px solid var(--line)", borderRadius: 100, fontSize: 12, fontWeight: 700 }}
         >
           敏感词库
