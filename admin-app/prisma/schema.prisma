@@ -96,6 +96,7 @@ model User {
   communityJoinRequests CommunityJoinRequest[]  @relation("CommunityJoinRequester")
   reviewedJoinRequests  CommunityJoinRequest[]  @relation("CommunityJoinReviewer")
   pushDevices           DevicePushToken[]
+  readingEvents         ReadingEvent[]
 }
 
 // ---------- Mobile push notification device tokens ----------
@@ -1059,4 +1060,32 @@ model BibleVersion {
   sortOrder Int      @default(0)
   note      String   @default("") // 运营备注：来源、版权情况等，仅后台可见
   updatedAt DateTime @updatedAt
+}
+
+// ---------- 阅读统计（后台「阅读统计」页） ----------
+// App 端每读完一章（停留 ≥ 8 秒）记一条；同一设备同一章每天只记一次。
+// 未登录也记（按设备 id 计人数）；账号删除后事件保留为匿名统计。
+
+enum ReadingKind {
+  BIBLE
+  COMMENTARY
+}
+
+model ReadingEvent {
+  id         String      @id @default(cuid())
+  kind       ReadingKind
+  userId     String?
+  deviceId   String // App 安装时生成的随机 id，不含任何设备信息
+  version    String      @default("") // 读经：译本代码；注释：空
+  book       String
+  chapter    Int // 注释的「书卷绪论」记为 0
+  platform   String      @default("") // ios / android / web
+  occurredAt DateTime // 实际阅读时间（离线时读的，联网后补传）
+  createdAt  DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([kind, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([deviceId, occurredAt])
 }

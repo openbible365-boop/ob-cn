@@ -632,6 +632,8 @@
         window.bibleData[S.version][S.book][S.chapter] = data;
 
         _lastRenderedKey = currentKey;
+        // 阅读统计：这一章停留满 8 秒记一次
+        window.obReadStats?.start('bible', { version: S.version, book: S.book, chapter: Number(S.chapter) });
     }
 
     function syncStateToUrl() {
@@ -1305,6 +1307,7 @@
 
         // 绪论视图（从第 1 章顶部入口进入）
         if (_studyIntroBook === book && introSections.length) {
+            window.obReadStats?.start('commentary', { book, chapter: 0 }, () => !!cont.offsetParent);
             cont.innerHTML = bookIntroductionHtml(book, introSections);
             bindBookIntroduction(cont, book, chapter);
             return;
@@ -1312,6 +1315,10 @@
 
         const cacheKey = `${book}-${chapter}`;
         const allComm = jingduCache[cacheKey] || [];
+        // 阅读统计：注释栏可见且停留满 8 秒才算读过本章注释（侧栏收起或不在注释标签时不算）
+        if (allComm.length) {
+            window.obReadStats?.start('commentary', { book, chapter: Number(chapter) }, () => !!cont.offsetParent);
+        }
 
         // 按节号排序
         const sorted = [...allComm].sort((a, b) => {

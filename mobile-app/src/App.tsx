@@ -38,6 +38,7 @@ import { syncConversations } from "./data/huidu";
 import { initializePushNotifications } from "./data/push";
 import { pullReadingPosition } from "./data/reading-sync";
 import { refreshVersionConfig } from "./data/scripture";
+import { initReadStats } from "./data/reading-stats";
 import { fetchMe } from "./data/profile";
 
 function RequireLogin({ children }: { children: ReactNode }) {
@@ -70,6 +71,8 @@ export default function App() {
     void syncConversations();
     // 圣经版本清单（后台「圣经版本」页管理上架、显示名与顺序）
     void refreshVersionConfig();
+    // 阅读统计：补传离线时的阅读记录，切到后台时上传
+    initReadStats();
     // 系统推送：启动时静默恢复（已授权才注册并向服务器登记 token；未授权不打扰）
     void initializePushNotifications(false);
     // 登录态下取回其他设备的阅读位置（未登录静默失败）

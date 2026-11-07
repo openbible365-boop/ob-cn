@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startReadTimer } from "../data/reading-stats";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { READING_THEMES, useReadingTheme } from "../theme";
 import { Icon } from "../components/Icon";
@@ -444,6 +445,12 @@ export function BiblePage() {
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
   }, [version.code, book.code]);
+
+  // 阅读统计：这一章停留满 8 秒记为读过一次（快速翻页不计）
+  useEffect(() => {
+    if (!data) return;
+    return startReadTimer({ kind: "bible", version: version.code, book: book.code, chapter });
+  }, [data, version.code, book.code, chapter]);
 
   useEffect(() => {
     localStorage.setItem("ob.bible.fontSize.v2", String(fontSize));

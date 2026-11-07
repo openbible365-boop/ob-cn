@@ -24,6 +24,7 @@ const SCOPE_LABEL: Record<Scope, string> = {
 
 const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hidden?: boolean }[] = [
   { href: "/admin/dashboard", label: "数据看板", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "overview" },
+  { href: "/admin/reading-stats", label: "阅读统计", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "overview" },
 
   { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "users" },
   { href: "/admin/feedback", label: "意见反馈", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "users" },

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { startReadTimer } from "../data/reading-stats";
 import { useSearchParams } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { Icon } from "../components/Icon";
@@ -229,6 +230,13 @@ export function AnnotationsPage() {
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
   }, [book.order, chapter, commentaryChapterKey, isIntroduction]);
+
+  // 阅读统计：注释（含书卷绪论，记为第 0 章）停留满 8 秒记为读过一次
+  const commentaryReady = isIntroduction ? introSections !== null : loadedCommentaryKey === commentaryChapterKey;
+  useEffect(() => {
+    if (!commentaryReady) return;
+    return startReadTimer({ kind: "commentary", book: book.code, chapter: isIntroduction ? 0 : chapter });
+  }, [commentaryReady, book.code, chapter, isIntroduction]);
 
   useEffect(() => {
     if (!commentary || !targetVerse || isIntroduction) return;

@@ -19,7 +19,7 @@ import { SHOW_COMMUNITY_ADMIN } from "@/lib/admin-features";
 
 const USER_COLUMNS: Column[] = [
   { key: "user", label: "用户", width: "1.6fr" },
-  { key: "usage", label: "使用情况", width: "150px" },
+  { key: "usage", label: "使用情况", width: "170px" },
   { key: "login", label: "登录方式", width: "110px" },
   { key: "last", label: "注册 / 最近登录", width: "150px" },
   ...(SHOW_COMMUNITY_ADMIN ? [{ key: "groups", label: "所属群组", width: "80px", align: "right" as const }] : []),
@@ -98,6 +98,16 @@ export default async function UsersPage({
     ),
   ]);
   const info = pageInfo(page, total);
+  // 本页用户的累计阅读章次（读经 / 注释）
+  const readingRows = users.length
+    ? await db.readingEvent.groupBy({
+        by: ["userId", "kind"],
+        where: { userId: { in: users.map((u) => u.id) } },
+        _count: { _all: true },
+      })
+    : [];
+  const readsOf = (userId: string, kind: "BIBLE" | "COMMENTARY") =>
+    readingRows.find((row) => row.userId === userId && row.kind === kind)?._count._all ?? 0;
 
   const tabHref = (key: string) => {
     const search = new URLSearchParams();
@@ -173,6 +183,7 @@ export default async function UsersPage({
                 </DataTable.Cell>
                 <DataTable.Cell>
                   <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--body)" }}>
+                    <div>读经 {readsOf(u.id, "BIBLE")} 章 · 注释 {readsOf(u.id, "COMMENTARY")} 章</div>
                     <div>高亮 {u._count.highlights} · 笔记 {u._count.notes}</div>
                     {u._count.conversations > 0 ? (
                       <Link href={`/admin/ai-records?q=${encodeURIComponent(u.email || u.name)}`} style={{ color: "var(--purple)" }}>
