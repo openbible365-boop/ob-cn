@@ -10219,3 +10219,70 @@ button.daily-verse-kicker {
 .bible-verse-content .verse-break.is-stanza {
   height: 0.5em;
 }
+
+/* 推荐朋友：本机系统的渠道金色描边并标注；另一系统未上线时收成一行小卡片 */
+.referral-channel.is-primary {
+  border-color: var(--yellow-medium);
+  box-shadow: 0 0 0 1px var(--yellow-medium), var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+}
+
+.referral-device-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--yellow-soft);
+  color: var(--yellow-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.referral-compact-kicker {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.referral-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--body);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.referral-channel.is-compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.referral-compact-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.referral-compact-text h2 {
+  font-size: 14px;
+}
+
+.referral-compact-text p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.referral-compact-status {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
