@@ -108,6 +108,12 @@ export function syncHighlights(): Promise<boolean> {
   return syncPromise;
 }
 
+// 还有没传到云端的高亮/笔记改动（退出登录前要先传完，否则清空本机后就丢了）
+export function hasPendingAnnotationSync() {
+  return load<PendingOperation[]>(PENDING_KEY, []).length > 0
+    || load<PendingNoteOperation[]>(NOTE_PENDING_KEY, []).length > 0;
+}
+
 // 退出登录时清掉所有本机批注数据：高亮、笔记和两条待同步队列。
 // 不清笔记队列的话，残留的操作会同步进下一个登录的账号。
 export function clearAnnotationsForLogout() {

@@ -55,10 +55,9 @@ export async function POST(request: Request) {
   if (noteInputs.length > 3000) {
     return NextResponse.json({ ok: false, message: "笔记数量超出限制" }, { status: 400 });
   }
-  const notes = noteInputs.map(parseNote);
-  if (notes.some((note) => !note)) {
-    return NextResponse.json({ ok: false, message: "笔记数据无效" }, { status: 400 });
-  }
+  // 单条不合格就跳过，不拒绝整批：以前一条坏数据会让这台设备的笔记永远同步不上去，
+  // 退出登录清空本机后就全部丢失
+  const notes = noteInputs.map(parseNote).filter((note) => note !== null);
 
   await db.$transaction(async (tx) => {
     if (deletionIds.length) {
@@ -72,6 +71,11 @@ export async function POST(request: Request) {
         where: { id: note.id, userId: user.id },
         select: { id: true },
       });
+      if (!existing) {
+        // id 已属于其他账号（极少见）：跳过，避免主键冲突让整批事务失败
+        const taken = await tx.note.findUnique({ where: { id: note.id }, select: { id: true } });
+        if (taken) continue;
+      }
       if (existing) {
         await tx.note.update({
           where: { id: existing.id },

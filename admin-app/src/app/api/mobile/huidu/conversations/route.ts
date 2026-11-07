@@ -27,20 +27,26 @@ type ConversationInput = {
 
 function parseConversation(input: ConversationInput) {
   const id = typeof input.id === "string" ? input.id.trim().slice(0, 100) : "";
-  const kind = input.kind === "scripture" ? "scripture" : "general";
+  // 缺书卷/章节的旧版经文对话按普通对话保存，而不是整条丢弃
+  const rawBook = typeof input.bookCode === "string" ? input.bookCode.trim() : "";
+  const kind = input.kind === "scripture" && rawBook && Number(input.chapter) >= 1 && Number(input.verse) >= 1
+    ? "scripture"
+    : "general";
   const translation =
     typeof input.versionCode === "string" ? input.versionCode.trim().slice(0, 20) : "";
-  const book = typeof input.bookCode === "string" ? input.bookCode.trim().slice(0, 20) : "";
+  const book = kind === "scripture" ? rawBook.slice(0, 20) : "";
   const chapter = Number(input.chapter) || 0;
   const verse = Number(input.verse) || 0;
   const verseRefLabel = typeof input.refLabel === "string" ? input.refLabel.trim().slice(0, 120) : "";
   const verseText = typeof input.verseText === "string" ? input.verseText.trim().slice(0, 4000) : "";
-  const title = typeof input.title === "string" ? input.title.trim().slice(0, 80) : "";
+  const title = (typeof input.title === "string" ? input.title.trim().slice(0, 80) : "") || verseRefLabel || "慧读对话";
   const createdAt = typeof input.createdAt === "string" ? new Date(input.createdAt) : new Date();
   const rawMessages = Array.isArray(input.messages) ? input.messages.slice(0, 200) : [];
   if (!id || !title || (kind === "scripture" && (!book || chapter < 1 || verse < 1))) return null;
 
-  const messages = rawMessages.flatMap((raw) => {
+  // 每条消息给递增的时间：同一事务里批量写入时 now() 完全相同，按时间排序会打乱问答顺序
+  const baseTime = Number.isNaN(createdAt.getTime()) ? Date.now() : createdAt.getTime();
+  const messages = rawMessages.flatMap((raw, index) => {
     if (!raw || typeof raw !== "object") return [];
     const message = raw as MessageInput;
     const role = message.role === "assistant" ? "ASSISTANT" as const : message.role === "user" ? "USER" as const : null;
@@ -53,6 +59,7 @@ function parseConversation(input: ConversationInput) {
     if (!content && !blocks) return [];
     return [{
       role,
+      createdAt: new Date(baseTime + index),
       content,
       blocks: blocks || sources ? { blocks, sources } : undefined,
     }];
@@ -89,10 +96,9 @@ export async function POST(request: Request) {
   const deletions = Array.isArray(body.deletions)
     ? body.deletions.filter((id): id is string => typeof id === "string").slice(0, 500)
     : [];
-  const conversations = inputs.map(parseConversation);
-  if (conversations.some((conversation) => !conversation)) {
-    return NextResponse.json({ ok: false, message: "慧读记录数据无效" }, { status: 400 });
-  }
+  // 单条不合格（如缺标题的旧记录）就跳过，不拒绝整批：以前一条坏记录会让这台设备的
+  // 慧读记录全部同步不上去，退出登录清空本机后就全部丢失
+  const conversations = inputs.map(parseConversation).filter((conversation) => conversation !== null);
 
   await db.$transaction(async (tx) => {
     if (deletions.length) {
@@ -106,6 +112,11 @@ export async function POST(request: Request) {
         where: { id: conversation.id, userId: user.id },
         select: { id: true },
       });
+      if (!existing) {
+        // id 已属于其他账号（极少见）：跳过，避免主键冲突让整批事务失败
+        const taken = await tx.conversation.findUnique({ where: { id: conversation.id }, select: { id: true } });
+        if (taken) continue;
+      }
       if (existing) {
         await tx.message.deleteMany({ where: { conversationId: existing.id } });
         await tx.conversation.update({
@@ -137,7 +148,7 @@ export async function POST(request: Request) {
   const stored = await db.conversation.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+    include: { messages: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] } },
   });
   return NextResponse.json({
     ok: true,

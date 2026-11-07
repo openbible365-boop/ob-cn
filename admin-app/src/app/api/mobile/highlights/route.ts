@@ -43,11 +43,9 @@ export async function POST(request: Request) {
   if (!Array.isArray(body.highlights) || !Array.isArray(body.deletions) || body.highlights.length > 3000 || body.deletions.length > 3000) {
     return NextResponse.json({ ok: false, message: "高亮数据无效" }, { status: 400 });
   }
-  const highlights = body.highlights.map(highlight);
-  const deletions = body.deletions.map(reference);
-  if (highlights.some((item) => !item) || deletions.some((item) => !item)) {
-    return NextResponse.json({ ok: false, message: "高亮数据无效" }, { status: 400 });
-  }
+  // 单条不合格（如旧版颜色、越界经节）就跳过，不拒绝整批，避免整台设备的高亮永远同步不上去
+  const highlights = body.highlights.map(highlight).filter((item) => item !== null);
+  const deletions = body.deletions.map(reference).filter((item) => item !== null);
 
   await db.$transaction(async (tx) => {
     for (const item of deletions) {

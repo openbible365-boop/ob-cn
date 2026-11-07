@@ -137,6 +137,11 @@ export function generateBlocks(refLabel: string, verseText: string): HuiduBlock[
   ];
 }
 
+// 还有没传到云端的慧读记录改动
+export function hasPendingConversationSync() {
+  return load<PendingConversationOperation[]>(PENDING_KEY, []).length > 0;
+}
+
 export function clearConversationsForLogout() {
   clearTimeout(syncTimer);
   save(PENDING_KEY, []);

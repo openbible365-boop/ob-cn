@@ -5,8 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { UnifiedHeader } from "../components/UnifiedHeader";
 import { SHOW_COMMUNITY } from "../data/features";
-import { sendLoginCode, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode, verifyPasswordLogin } from "../data/profile";
-import { syncHighlights } from "../data/annotations";
+import { sendLoginCode, syncPersonalData, verifyAppleLogin, verifyGoogleLogin, verifyLoginCode, verifyPasswordLogin } from "../data/profile";
 import { syncStoredPushToken } from "../data/push";
 import { pullReadingPosition } from "../data/reading-sync";
 import { isGoogleSignInCanceled, signInWithGoogle } from "../data/google-auth";
@@ -89,7 +88,7 @@ export function LoginPage() {
     setBusy(true);
     const result = await verifyLoginCode(email, code.trim());
     if (result.ok) {
-      await syncHighlights();
+      await syncPersonalData(); // 取回账号里的高亮、笔记、慧读记录，并上传本机未登录时的记录
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       setBusy(false);
@@ -110,7 +109,7 @@ export function LoginPage() {
     setBusy(true);
     const result = await verifyPasswordLogin(account.trim(), password);
     if (result.ok) {
-      await syncHighlights();
+      await syncPersonalData(); // 取回账号里的高亮、笔记、慧读记录，并上传本机未登录时的记录
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       setBusy(false);
@@ -139,7 +138,7 @@ export function LoginPage() {
         setError(result.message);
         return;
       }
-      await syncHighlights();
+      await syncPersonalData(); // 取回账号里的高亮、笔记、慧读记录，并上传本机未登录时的记录
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       navigate(returnTo, { replace: true, state: returnState });
@@ -175,7 +174,7 @@ export function LoginPage() {
         setError(result.message);
         return;
       }
-      await syncHighlights();
+      await syncPersonalData(); // 取回账号里的高亮、笔记、慧读记录，并上传本机未登录时的记录
       void syncStoredPushToken(); // 把本机推送 token 绑到刚登录的账号
       void pullReadingPosition(); // 取回其他设备的阅读位置
       // 与邮箱/Google 登录一致：回到被登录墙拦下前的目标页，而不是写死「我的」

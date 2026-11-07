@@ -2,8 +2,17 @@
 // serves /api/* by proxying to the admin app (nginx in production, the vite
 // dev proxy locally), so the httpOnly session cookie is first-party here.
 import { load, save } from "./store";
-import { clearAnnotationsForLogout } from "./annotations";
-import { clearConversationsForLogout } from "./huidu";
+import {
+  clearAnnotationsForLogout,
+  hasPendingAnnotationSync,
+  syncHighlights,
+  syncNotes,
+} from "./annotations";
+import {
+  clearConversationsForLogout,
+  hasPendingConversationSync,
+  syncConversations,
+} from "./huidu";
 import { apiRequest } from "./api";
 import { clearGoogleCredentialState } from "./google-auth";
 import { fetchCommunityGroups } from "./community";
@@ -119,7 +128,28 @@ export async function verifyAppleLogin(credential: {
   return result;
 }
 
+// 高亮、笔记、慧读记录与云端双向同步一次：把本机改动传上去，并取回账号里已有的记录。
+// 登录后立刻调用——以前登录只同步了高亮，笔记和慧读记录要重启 App 才回来，
+// 看起来就像「退出再登录，记录全没了」。
+export async function syncPersonalData(): Promise<boolean> {
+  const results = await Promise.all([syncHighlights(), syncNotes(), syncConversations()]);
+  // 同步途中又产生的新改动（或排在进行中的那次同步之后）再补一轮
+  if (hasPendingAnnotationSync() || hasPendingConversationSync()) {
+    const retry = await Promise.all([syncHighlights(), syncNotes(), syncConversations()]);
+    return retry.every(Boolean) && !hasPendingAnnotationSync() && !hasPendingConversationSync();
+  }
+  return results.every(Boolean);
+}
+
 export async function logout() {
+  // 退出会清空本机记录：先把还没传到云端的改动传完。传不上去（离线等）就不退出，
+  // 否则这部分记录会永久丢失
+  if (hasPendingAnnotationSync() || hasPendingConversationSync()) {
+    await syncPersonalData();
+    if (hasPendingAnnotationSync() || hasPendingConversationSync()) {
+      return { ok: false, message: "还有记录没同步到云端，请联网后再退出登录" };
+    }
+  }
   const result = await post("/api/mobile/auth/logout");
   if (result.ok) {
     await clearSessionLocalData();

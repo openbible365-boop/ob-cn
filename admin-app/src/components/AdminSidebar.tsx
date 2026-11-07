@@ -33,6 +33,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hid
   { href: "/admin/annotations", label: "用户标注", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared", hidden: !SHOW_COMMUNITY_ADMIN },
   { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"], scope: "shared" },
+  { href: "/admin/ai-records", label: "AI 对话记录", roles: ["SUPER_ADMIN"], scope: "shared" },
   { href: "/admin/audit", label: "权限与审计", roles: ["SUPER_ADMIN"], scope: "shared" },
 
   { href: "/admin/communities", label: "社群管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "app", hidden: !SHOW_COMMUNITY_ADMIN },
@@ -76,7 +77,7 @@ export function AdminSidebar({ operatorName, role }: { operatorName: string; rol
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`admin-nav-item${pathname === item.href ? " active" : ""}`}
+                  className={`admin-nav-item${pathname === item.href || pathname.startsWith(`${item.href}/`) ? " active" : ""}`}
                 >
                   {item.label}
                 </Link>
