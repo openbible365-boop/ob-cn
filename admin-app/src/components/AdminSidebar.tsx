@@ -30,6 +30,7 @@ const NAV_ITEMS: { href: string; label: string; roles: Role[]; scope: Scope; hid
   { href: "/admin/users", label: "用户管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/content", label: "内容管理", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/commentary", label: "注释校对", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
+  { href: "/admin/bible-versions", label: "圣经版本", roles: ["SUPER_ADMIN"], scope: "shared" },
   { href: "/admin/annotations", label: "用户标注", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared" },
   { href: "/admin/moderation", label: "内容审核", roles: ["SUPER_ADMIN", "MODERATOR"], scope: "shared", hidden: !SHOW_COMMUNITY_ADMIN },
   { href: "/admin/ai", label: "AI 模型与提示词", roles: ["SUPER_ADMIN"], scope: "shared" },

@@ -5,6 +5,7 @@
 import { load, save } from "./store";
 import manifest from "./manifest.json";
 import { cachedResponse } from "./offline-bible";
+import { apiRequest } from "./api";
 
 export type Version = { code: string; label: string; lang: "zh" | "ko" | "en" };
 export type Book = {
@@ -16,7 +17,53 @@ export type Book = {
   chapters: number;
 };
 
-export const VERSIONS = manifest.versions as Version[];
+// ---------- 版本清单（后台「圣经版本」页管理） ----------
+// 安装包内置 manifest.json 作兜底；App 启动时拉取后台清单（上架哪些、显示名、顺序、
+// 新用户默认显示），存本机，下次启动离线也按它显示。经文文件都随安装包内置，
+// 所以后台上架一个已有数据的版本不需要发新版。
+type RemoteVersion = Version & { defaultOn?: boolean };
+const VERSION_CONFIG_KEY = "ob.bible.versionConfig";
+const FALLBACK_VERSION = "cuv";
+
+function sanitizeVersions(input: unknown): RemoteVersion[] | null {
+  if (!Array.isArray(input)) return null;
+  const list = input.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const { code, label, lang, defaultOn } = item as Record<string, unknown>;
+    if (typeof code !== "string" || !/^[a-z0-9_-]{2,20}$/.test(code)) return [];
+    if (typeof label !== "string" || !label.trim()) return [];
+    if (lang !== "zh" && lang !== "ko" && lang !== "en") return [];
+    return [{ code, label: label.trim(), lang: lang as Version["lang"], defaultOn: defaultOn === true }];
+  });
+  // 和合本是兜底版本：清单里没有它（异常数据）就整份不用
+  return list.some((version) => version.code === FALLBACK_VERSION) ? list : null;
+}
+
+const cachedConfig = sanitizeVersions(load<unknown>(VERSION_CONFIG_KEY, null));
+const initialVersions: RemoteVersion[] = cachedConfig ?? (manifest.versions as Version[]);
+
+/** 当前可用的版本（原地更新，保持各处引用有效） */
+export const VERSIONS: Version[] = initialVersions.map(({ code, label, lang }) => ({ code, label, lang }));
+let defaultVersionCodes = initialVersions.filter((v) => v.defaultOn).map((v) => v.code);
+
+export const VERSIONS_CHANGED_EVENT = "ob:versions-changed";
+
+/** 启动时拉取后台版本清单；失败时沿用本机缓存 / 内置清单 */
+export async function refreshVersionConfig(): Promise<void> {
+  try {
+    const response = await apiRequest<{ versions?: unknown }>("/api/mobile/bible/versions", { method: "GET" });
+    if (!response.ok) return;
+    const list = sanitizeVersions(response.data?.versions);
+    if (!list) return;
+    save(VERSION_CONFIG_KEY, list);
+    VERSIONS.splice(0, VERSIONS.length, ...list.map(({ code, label, lang }) => ({ code, label, lang })));
+    defaultVersionCodes = list.filter((v) => v.defaultOn).map((v) => v.code);
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(VERSIONS_CHANGED_EVENT));
+  } catch {
+    // 离线或接口异常：保持现有清单
+  }
+}
+
 export const BOOKS = manifest.books as Book[];
 
 export const OT_BOOKS = BOOKS.slice(0, 39);
@@ -27,11 +74,12 @@ export function getVersion(code: string | null | undefined): Version {
 }
 
 // ---------- 启用的译本（阅读页译本列表只显示勾选项） ----------
-// 默认只显示和合本，其余在「资源管理」勾选后出现；和合本是兜底版本，不可取消。
+// 默认显示哪些由后台设定（缺省只有和合本），其余在「资源管理」勾选后出现；和合本是兜底版本，不可取消。
 const ENABLED_VERSIONS_KEY = "ob.bible.enabledVersions";
 
 export function getEnabledVersionCodes(): string[] {
-  const stored = load<string[]>(ENABLED_VERSIONS_KEY, ["cuv"]);
+  // 没手动勾选过的用户：用后台设定的「新用户默认显示」
+  const stored = load<string[] | null>(ENABLED_VERSIONS_KEY, null) ?? (defaultVersionCodes.length ? defaultVersionCodes : ["cuv"]);
   const valid = stored.filter((code) => VERSIONS.some((v) => v.code === code));
   return valid.includes("cuv") ? valid : ["cuv", ...valid];
 }

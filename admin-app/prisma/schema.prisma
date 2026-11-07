@@ -1047,3 +1047,16 @@ model Feedback {
   @@index([createdAt])
   @@index([handled])
 }
+
+// ---------- 圣经版本（后台「圣经版本」页管理；App 启动时拉取，未拉到时用安装包内置清单） ----------
+
+model BibleVersion {
+  code      String   @id // 对应 data/bible/<code>/ 目录（pinyin 读 pinyin2 目录）
+  label     String
+  lang      String // zh | ko | en
+  enabled   Boolean  @default(false) // 上架：出现在 App「资源管理」的译本列表里
+  defaultOn Boolean  @default(false) // 新用户默认显示在阅读页译本列表（不用手动勾选）
+  sortOrder Int      @default(0)
+  note      String   @default("") // 运营备注：来源、版权情况等，仅后台可见
+  updatedAt DateTime @updatedAt
+}

@@ -13,7 +13,7 @@ import {
   readableBytes,
   removeVersion,
 } from "../data/offline-bible";
-import { VERSIONS, getEnabledVersionCodes, setVersionEnabled } from "../data/scripture";
+import { VERSIONS, VERSIONS_CHANGED_EVENT, getEnabledVersionCodes, setVersionEnabled } from "../data/scripture";
 
 type Progress = { done: number; total: number };
 
@@ -21,6 +21,13 @@ export function ResourcesPage() {
   // 主入口是「我的」直达；兜底也回 /me（本页是设备级功能，不该被登录墙拦）
   const goBack = useAppBack("/me");
   const [meta, setMeta] = useState(getOfflineMeta);
+  // 后台版本清单晚于页面到达时刷新列表
+  const [, setVersionsTick] = useState(0);
+  useEffect(() => {
+    const onChange = () => setVersionsTick((tick) => tick + 1);
+    window.addEventListener(VERSIONS_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(VERSIONS_CHANGED_EVENT, onChange);
+  }, []);
   // 注释内容是否有新版（仅对已下载用户检查；离线/未下载不提示）
   const [commentaryUpdate, setCommentaryUpdate] = useState(false);
 
